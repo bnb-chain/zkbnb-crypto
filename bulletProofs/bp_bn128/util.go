@@ -2,7 +2,6 @@ package bp_bn128
 
 import (
 	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/ecc/p256"
 	"ZKSneak/ZKSneak-crypto/ffmath"
 	"bytes"
 	"crypto/sha256"
@@ -77,9 +76,8 @@ func VectorExp(a []*bn256.G1Affine, b []*big.Int) (*bn256.G1Affine, error) {
 	}
 	i = 0
 	result = bn128.GetG1InfinityPoint()
-	resultJac := new(bn256.G1Jac)
 	for i < n {
-		result.Multiply(result, new(p256.P256).ScalarMult(a[i], b[i]))
+		result = bn128.G1AffineMul(result, new(bn256.G1Affine).ScalarMultiplication(a[i], b[i]))
 		i = i + 1
 	}
 	return result, nil
@@ -129,10 +127,10 @@ func BigFromBase10(value string) *big.Int {
 CommitG1 method corresponds to the Pedersen commitment scheme. Namely, given input
 message x, and randomness r, it outputs g^x.h^r.
 */
-func CommitG1(x, r *big.Int, h *p256.P256) (*p256.P256, error) {
-	var C = new(p256.P256).ScalarBaseMult(x)
-	Hr := new(p256.P256).ScalarMult(h, r)
-	C.Add(C, Hr)
+func CommitG1(x, r *big.Int, h *bn256.G1Affine) (*bn256.G1Affine, error) {
+	var C = bn128.G1ScalarBaseMult(x)
+	Hr := new(bn256.G1Affine).ScalarMultiplication(h, r)
+	C = bn128.G1AffineMul(C, Hr)
 	return C, nil
 }
 
@@ -154,4 +152,3 @@ func Decompose(x *big.Int, u int64, l int64) ([]int64, error) {
 	}
 	return result, nil
 }
-

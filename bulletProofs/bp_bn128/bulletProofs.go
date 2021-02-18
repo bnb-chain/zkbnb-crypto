@@ -2,7 +2,6 @@ package bp_bn128
 
 import (
 	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/ecc/p256"
 	"ZKSneak/ZKSneak-crypto/ffmath"
 	"crypto/rand"
 	"errors"
@@ -64,7 +63,7 @@ func Setup(b int64) (BulletProofSetupParams, error) {
 	}
 
 	params := BulletProofSetupParams{}
-	params.G = new(bn256.G1Affine)(new(big.Int).SetInt64(1))
+	params.G = bn128.GetG1BaseAffine()
 	params.H, _ = bn128.HashToG1(SEEDH)
 	params.N = int64(math.Log2(float64(b)))
 	if !IsPowerOfTwo(params.N) {
@@ -76,8 +75,8 @@ func Setup(b int64) (BulletProofSetupParams, error) {
 	params.Gg = make([]*bn256.G1Affine, params.N)
 	params.Hh = make([]*bn256.G1Affine, params.N)
 	for i := int64(0); i < params.N; i++ {
-		params.Gg[i], _ = p256.MapToGroup(SEEDH + "g" + strconv.FormatInt(i, 10))
-		params.Hh[i], _ = p256.MapToGroup(SEEDH + "h" + strconv.FormatInt(i, 10))
+		params.Gg[i], _ = bn128.HashToG1(SEEDH + "g" + strconv.FormatInt(i, 10))
+		params.Hh[i], _ = bn128.HashToG1(SEEDH + "h" + strconv.FormatInt(i, 10))
 	}
 	return params, nil
 }
@@ -245,31 +244,30 @@ func (proof *BulletProof) Verify() (bool, error) {
 	x2 := ffmath.Multiply(x, x)
 	x2 = ffmath.Mod(x2, ORDER)
 
-	rhs := new(bn256.G1Affine).ScalarMult(proof.V, z2)
+	rhs := new(bn256.G1Affine).ScalarMultiplication(proof.V, z2)
 
 	delta := params.delta(y, z)
 
-	gdelta := new(bn256.G1Affine).ScalarBaseMult(delta)
+	gdelta := bn128.G1ScalarBaseMult(delta)
+	rhs = bn128.G1AffineMul(rhs, gdelta)
 
-	rhs.Multiply(rhs, gdelta)
+	T1x := new(bn256.G1Affine).ScalarMultiplication(proof.T1, x)
+	T2x2 := new(bn256.G1Affine).ScalarMultiplication(proof.T2, x2)
 
-	T1x := new(bn256.G1Affine).ScalarMult(proof.T1, x)
-	T2x2 := new(bn256.G1Affine).ScalarMult(proof.T2, x2)
-
-	rhs.Multiply(rhs, T1x)
-	rhs.Multiply(rhs, T2x2)
+	rhs = bn128.G1AffineMul(rhs, T1x)
+	rhs = bn128.G1AffineMul(rhs, T2x2)
 
 	// Subtract lhs and rhs and compare with poitn at infinity
 	lhs.Neg(lhs)
-	rhs.Multiply(rhs, lhs)
-	c65 := rhs.IsZero() // Condition (65), page 20, from eprint version
+	rhs = bn128.G1AffineMul(rhs, lhs)
+	c65 := rhs.IsInfinity() // Condition (65), page 20, from eprint version
 
 	// Compute P - lhs  #################### Condition (66) ######################
 
 	// S^x
-	Sx := new(bn256.G1Affine).ScalarMult(proof.S, x)
+	Sx := new(bn256.G1Affine).ScalarMultiplication(proof.S, x)
 	// A.S^x
-	ASx := new(bn256.G1Affine).Add(proof.A, Sx)
+	ASx := bn128.G1AffineMul(proof.A, Sx)
 
 	// g^-z
 	mz := ffmath.Sub(ORDER, z)
@@ -289,23 +287,23 @@ func (proof *BulletProof) Verify() (bool, error) {
 	zynz22n, _ := VectorAdd(zyn, z22n)
 
 	lP := new(bn256.G1Affine)
-	lP.Add(ASx, gpmz)
+	lP = bn128.G1AffineMul(ASx, gpmz)
 
 	// h'^(z.y^n + z^2.2^n)
 	hprimeexp, _ := VectorExp(hprime, zynz22n)
 
-	lP.Add(lP, hprimeexp)
+	lP = bn128.G1AffineMul(lP, hprimeexp)
 
 	// Compute P - rhs  #################### Condition (67) ######################
 
 	// h^mu
-	rP := new(bn256.G1Affine).ScalarMult(params.H, proof.Mu)
-	rP.Multiply(rP, proof.Commit)
+	rP := new(bn256.G1Affine).ScalarMultiplication(params.H, proof.Mu)
+	rP = bn128.G1AffineMul(rP, proof.Commit)
 
 	// Subtract lhs and rhs and compare with poitn at infinity
 	lP = lP.Neg(lP)
-	rP.Add(rP, lP)
-	c67 := rP.IsZero()
+	rP = bn128.G1AffineMul(rP, lP)
+	c67 := rP.IsInfinity()
 
 	// Verify Inner Product Proof ################################################
 	ok, _ := proof.InnerProductProof.Verify()
@@ -345,7 +343,7 @@ func updateGenerators(Hh []*bn256.G1Affine, y *big.Int, N int64) []*bn256.G1Affi
 	hprime[0] = Hh[0]
 	i = 1
 	for i < N {
-		hprime[i] = new(bn256.G1Affine).ScalarMult(Hh[i], expy)
+		hprime[i] = new(bn256.G1Affine).ScalarMultiplication(Hh[i], expy)
 		expy = ffmath.Multiply(expy, yinv)
 		i = i + 1
 	}
@@ -371,10 +369,10 @@ func computeAR(x []int64) ([]int64, error) {
 
 func commitVectorBig(aL, aR []*big.Int, alpha *big.Int, H *bn256.G1Affine, g, h []*bn256.G1Affine, n int64) *bn256.G1Affine {
 	// Compute h^alpha.vg^aL.vh^aR
-	R := new(bn256.G1Affine).ScalarMult(H, alpha)
+	R := new(bn256.G1Affine).ScalarMultiplication(H, alpha)
 	for i := int64(0); i < n; i++ {
-		R.Multiply(R, new(bn256.G1Affine).ScalarMult(g[i], aL[i]))
-		R.Multiply(R, new(bn256.G1Affine).ScalarMult(h[i], aR[i]))
+		R = bn128.G1AffineMul(R, new(bn256.G1Affine).ScalarMultiplication(g[i], aL[i]))
+		R = bn128.G1AffineMul(R, new(bn256.G1Affine).ScalarMultiplication(h[i], aR[i]))
 	}
 	return R
 }
@@ -384,12 +382,12 @@ Commitvector computes a commitment to the bit of the secret.
 */
 func commitVector(aL, aR []int64, alpha *big.Int, H *bn256.G1Affine, g, h []*bn256.G1Affine, n int64) *bn256.G1Affine {
 	// Compute h^alpha.vg^aL.vh^aR
-	R := new(bn256.G1Affine).ScalarMult(H, alpha)
+	R := new(bn256.G1Affine).ScalarMultiplication(H, alpha)
 	for i := int64(0); i < n; i++ {
-		gaL := new(bn256.G1Affine).ScalarMult(g[i], new(big.Int).SetInt64(aL[i]))
-		haR := new(bn256.G1Affine).ScalarMult(h[i], new(big.Int).SetInt64(aR[i]))
-		R.Multiply(R, gaL)
-		R.Multiply(R, haR)
+		gaL := new(bn256.G1Affine).ScalarMultiplication(g[i], new(big.Int).SetInt64(aL[i]))
+		haR := new(bn256.G1Affine).ScalarMultiplication(h[i], new(big.Int).SetInt64(aR[i]))
+		R = bn128.G1AffineMul(R, gaL)
+		R = bn128.G1AffineMul(R, haR)
 	}
 	return R
 }

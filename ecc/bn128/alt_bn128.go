@@ -48,8 +48,18 @@ func GetG1InfinityPoint() *bn256.G1Affine {
 	return p
 }
 
-func G1AffineAdd(a, b *bn256.G1Affine) *bn256.G1Affine {
+func G1AffineMul(a, b *bn256.G1Affine) *bn256.G1Affine {
 	aJac := new(bn256.G1Jac).FromAffine(a)
 	p := new(bn256.G1Affine).FromJacobian(aJac.AddMixed(b))
 	return p
+}
+
+func G1ScalarBaseMult(s *big.Int) *bn256.G1Affine {
+	_, _, G1Affine, _ := bn256.Generators()
+	return new(bn256.G1Affine).ScalarMultiplication(&G1Affine, s)
+}
+
+func GetG1BaseAffine() *bn256.G1Affine {
+	_, _, G1Affine, _ := bn256.Generators()
+	return &G1Affine
 }

@@ -146,7 +146,7 @@ func VectorECAdd(a, b []*bn256.G1Affine) ([]*bn256.G1Affine, error) {
 	result = make([]*bn256.G1Affine, n)
 	i = 0
 	for i < n {
-		result[i] = bn128.G1AffineAdd(a[i], b[i])
+		result[i] = bn128.G1AffineMul(a[i], b[i])
 		i = i + 1
 	}
 	return result, nil

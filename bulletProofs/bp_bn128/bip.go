@@ -110,7 +110,7 @@ func proveInnerProduct(a, b []*big.Int, P *bn256.G1Affine, params InnerProductPa
 	// Pprime = P.u^(x.c)
 	ux := new(bn256.G1Affine).ScalarMultiplication(params.Uu, x)
 	uxc := new(bn256.G1Affine).ScalarMultiplication(ux, params.Cc)
-	PP := bn128.G1AffineAdd(P, uxc)
+	PP := bn128.G1AffineMul(P, uxc)
 	// Execute Protocol 2 recursively
 	proof = computeBipRecursive(a, b, params.Gg, params.Hh, ux, PP, n, Ls, Rs)
 	proof.Params = params
@@ -154,14 +154,14 @@ func computeBipRecursive(a, b []*big.Int, g, h []*bn256.G1Affine, u, P *bn256.G1
 		// Compute L = g[n':]^(a[:n']).h[:n']^(b[n':]).u^cL                   // (23)
 		L, _ = VectorExp(g[nprime:], a[:nprime])
 		Lh, _ = VectorExp(h[:nprime], b[nprime:])
-		L = bn128.G1AffineAdd(L, Lh)
-		L = bn128.G1AffineAdd(L, new(bn256.G1Affine).ScalarMultiplication(u, cL))
+		L = bn128.G1AffineMul(L, Lh)
+		L = bn128.G1AffineMul(L, new(bn256.G1Affine).ScalarMultiplication(u, cL))
 
 		// Compute R = g[:n']^(a[n':]).h[n':]^(b[:n']).u^cR                   // (24)
 		R, _ = VectorExp(g[:nprime], a[nprime:])
 		Rh, _ = VectorExp(h[nprime:], b[:nprime])
-		R = bn128.G1AffineAdd(R, Rh)
-		R = bn128.G1AffineAdd(R, new(bn256.G1Affine).ScalarMultiplication(u, cR))
+		R = bn128.G1AffineMul(R, Rh)
+		R = bn128.G1AffineMul(R, new(bn256.G1Affine).ScalarMultiplication(u, cR))
 
 		// Fiat-Shamir:                                                       // (26)
 		x, _, _ = HashBP(L, R)
@@ -180,8 +180,8 @@ func computeBipRecursive(a, b []*big.Int, g, h []*bn256.G1Affine, u, P *bn256.G1
 		x2 = ffmath.Mod(ffmath.Multiply(x, x), ORDER)
 		x2inv = ffmath.ModInverse(x2, ORDER)
 		Pprime = new(bn256.G1Affine).ScalarMultiplication(L, x2)
-		Pprime = bn128.G1AffineAdd(Pprime, P)
-		Pprime = bn128.G1AffineAdd(Pprime, new(bn256.G1Affine).ScalarMultiplication(R, x2inv))
+		Pprime = bn128.G1AffineMul(Pprime, P)
+		Pprime = bn128.G1AffineMul(Pprime, new(bn256.G1Affine).ScalarMultiplication(R, x2inv))
 
 		// Compute a' = a[:n'].x      + a[n':].x^(-1)                         // (33)
 		aprime, _ = VectorScalarMul(a[:nprime], x)
@@ -231,8 +231,8 @@ func (proof InnerProductProof) Verify() (bool, error) {
 		// Compute P' = L^(x^2).P.R^(x^-2)                                    // (31)
 		x2 = ffmath.Mod(ffmath.Multiply(x, x), ORDER)
 		x2inv = ffmath.ModInverse(x2, ORDER)
-		Pprime  = bn128.G1AffineAdd(Pprime, new(bn256.G1Affine).ScalarMultiplication(proof.Ls[i], x2))
-		Pprime  = bn128.G1AffineAdd(Pprime, new(bn256.G1Affine).ScalarMultiplication(proof.Rs[i], x2inv))
+		Pprime  = bn128.G1AffineMul(Pprime, new(bn256.G1Affine).ScalarMultiplication(proof.Ls[i], x2))
+		Pprime  = bn128.G1AffineMul(Pprime, new(bn256.G1Affine).ScalarMultiplication(proof.Rs[i], x2inv))
 	}
 
 	// c == a*b and checks if P = g^a.h^b.u^c                                     // (16)
@@ -241,11 +241,11 @@ func (proof InnerProductProof) Verify() (bool, error) {
 	// Compute right hand side
 	rhs := new(bn256.G1Affine).ScalarMultiplication(gprime[0], proof.A)
 	hb := new(bn256.G1Affine).ScalarMultiplication(hprime[0], proof.B)
-	rhs = bn128.G1AffineAdd(rhs, hb)
-	rhs = bn128.G1AffineAdd(rhs, new(bn256.G1Affine).ScalarMultiplication(proof.U, ab))
+	rhs = bn128.G1AffineMul(rhs, hb)
+	rhs = bn128.G1AffineMul(rhs, new(bn256.G1Affine).ScalarMultiplication(proof.U, ab))
 	// Compute inverse of left hand side
 	nP := Pprime.Neg(Pprime)
-	nP = bn128.G1AffineAdd(nP, rhs)
+	nP = bn128.G1AffineMul(nP, rhs)
 	// If both sides are equal then nP must be zero                               // (17)
 	c := nP.IsInfinity()
 
@@ -282,7 +282,7 @@ func commitInnerProduct(g, h []*bn256.G1Affine, a, b []*big.Int) *bn256.G1Affine
 
 	ga, _ := VectorExp(g, a)
 	hb, _ := VectorExp(h, b)
-	result = bn128.G1AffineAdd(ga, hb)
+	result = bn128.G1AffineMul(ga, hb)
 	return result
 }
 
