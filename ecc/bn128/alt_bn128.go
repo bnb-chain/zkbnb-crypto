@@ -9,7 +9,7 @@ import (
 
 var (
 	ORDER, _ = new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
-	SEEDH    = "ZKSneakBulletProofsSetupH"
+	SEEDH    = "ZKSneakBN128SetupH"
 )
 
 func HashToG1(m string) (*bn256.G1Affine, error) {
@@ -47,8 +47,13 @@ func G1AffineMul(a, b *bn256.G1Affine) *bn256.G1Affine {
 }
 
 func G1ScalarBaseMult(s *big.Int) *bn256.G1Affine {
-	_, _, G1Affine, _ := bn256.Generators()
-	return new(bn256.G1Affine).ScalarMultiplication(&G1Affine, s)
+	G1Affine := GetG1BaseAffine()
+	return new(bn256.G1Affine).ScalarMultiplication(G1Affine, s)
+}
+
+func G1ScalarHBaseMult(s *big.Int) *bn256.G1Affine {
+	_, HAffine := GetG1TwoBaseAffine()
+	return new(bn256.G1Affine).ScalarMultiplication(HAffine, s)
 }
 
 func GetG1BaseAffine() (*bn256.G1Affine) {
