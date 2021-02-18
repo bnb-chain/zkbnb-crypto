@@ -12,9 +12,6 @@ import (
 	"strconv"
 )
 
-var ORDER = bn128.ORDER
-var SEEDH = "ZKSneakBulletproofsSetupH"
-
 /*
 BulletProofSetupParams is the structure that stores the parameters for
 the Zero Knowledge Proof system.
@@ -63,8 +60,7 @@ func Setup(b int64) (BulletProofSetupParams, error) {
 	}
 
 	params := BulletProofSetupParams{}
-	params.G = bn128.GetG1BaseAffine()
-	params.H, _ = bn128.HashToG1(SEEDH)
+	params.G, params.H = bn128.GetG1TwoBaseAffine()
 	params.N = int64(math.Log2(float64(b)))
 	if !IsPowerOfTwo(params.N) {
 		return BulletProofSetupParams{}, fmt.Errorf("range end is a power of 2, but it's exponent should also be. Exponent: %d", params.N)
@@ -258,9 +254,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 	rhs = bn128.G1AffineMul(rhs, T2x2)
 
 	// Subtract lhs and rhs and compare with poitn at infinity
-	lhs.Neg(lhs)
-	rhs = bn128.G1AffineMul(rhs, lhs)
-	c65 := rhs.IsInfinity() // Condition (65), page 20, from eprint version
+	c65 := rhs.Equal(lhs) // Condition (65), page 20, from eprint version
 
 	// Compute P - lhs  #################### Condition (66) ######################
 
@@ -301,9 +295,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 	rP = bn128.G1AffineMul(rP, proof.Commit)
 
 	// Subtract lhs and rhs and compare with poitn at infinity
-	lP = lP.Neg(lP)
-	rP = bn128.G1AffineMul(rP, lP)
-	c67 := rP.IsInfinity()
+	c67 := rP.Equal(lP)
 
 	// Verify Inner Product Proof ################################################
 	ok, _ := proof.InnerProductProof.Verify()

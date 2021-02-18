@@ -52,7 +52,7 @@ func HashBP(A, S *p256.P256) (*big.Int, *big.Int, error) {
 	buffer2.WriteString(S.X.String())
 	buffer2.WriteString(S.Y.String())
 	buffer2.WriteString(result1.String())
-	digest2.Write(buffer.Bytes())
+	digest2.Write(buffer2.Bytes())
 	output2 := digest2.Sum(nil)
 	tmp2 := output2[0:]
 	result2 := new(big.Int).SetBytes(tmp2)

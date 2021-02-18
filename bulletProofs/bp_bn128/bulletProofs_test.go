@@ -18,8 +18,6 @@ func TestXWithinRange(t *testing.T) {
 	}
 }
 
-const MAX_RANGE_END = 4294967296
-
 func TestJsonEncodeDecode(t *testing.T) {
 	params, _ := Setup(MAX_RANGE_END)
 	proof, _ := Prove(new(big.Int).SetInt64(18), params)

@@ -11,8 +11,6 @@ import (
 	"strconv"
 )
 
-var SEEDU = "ZKSneakBulletproofsSetupU"
-
 /*
 InnerProductParams contains elliptic curve generators used to compute Pedersen
 commitments.
@@ -56,7 +54,7 @@ func setupInnerProduct(H *bn256.G1Affine, g, h []*bn256.G1Affine, c *big.Int, N 
 		params.N = N
 	}
 	if H == nil {
-		params.H, _ = bn128.HashToG1(SEEDH)
+		_, params.H = bn128.GetG1TwoBaseAffine()
 	} else {
 		params.H = H
 	}
@@ -231,8 +229,8 @@ func (proof InnerProductProof) Verify() (bool, error) {
 		// Compute P' = L^(x^2).P.R^(x^-2)                                    // (31)
 		x2 = ffmath.Mod(ffmath.Multiply(x, x), ORDER)
 		x2inv = ffmath.ModInverse(x2, ORDER)
-		Pprime  = bn128.G1AffineMul(Pprime, new(bn256.G1Affine).ScalarMultiplication(proof.Ls[i], x2))
-		Pprime  = bn128.G1AffineMul(Pprime, new(bn256.G1Affine).ScalarMultiplication(proof.Rs[i], x2inv))
+		Pprime = bn128.G1AffineMul(Pprime, new(bn256.G1Affine).ScalarMultiplication(proof.Ls[i], x2))
+		Pprime = bn128.G1AffineMul(Pprime, new(bn256.G1Affine).ScalarMultiplication(proof.Rs[i], x2inv))
 	}
 
 	// c == a*b and checks if P = g^a.h^b.u^c                                     // (16)
@@ -244,10 +242,8 @@ func (proof InnerProductProof) Verify() (bool, error) {
 	rhs = bn128.G1AffineMul(rhs, hb)
 	rhs = bn128.G1AffineMul(rhs, new(bn256.G1Affine).ScalarMultiplication(proof.U, ab))
 	// Compute inverse of left hand side
-	nP := Pprime.Neg(Pprime)
-	nP = bn128.G1AffineMul(nP, rhs)
 	// If both sides are equal then nP must be zero                               // (17)
-	c := nP.IsInfinity()
+	c := rhs.Equal(Pprime)
 
 	return c, nil
 }

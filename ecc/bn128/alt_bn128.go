@@ -2,12 +2,14 @@ package bn128
 
 import (
 	"ZKSneak/ZKSneak-crypto/ffmath"
+	"ZKSneak/ZKSneak-crypto/util"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
 )
 
 var (
 	ORDER, _ = new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
+	SEEDH    = "ZKSneakBulletProofsSetupH"
 )
 
 func HashToG1(m string) (*bn256.G1Affine, error) {
@@ -49,7 +51,21 @@ func G1ScalarBaseMult(s *big.Int) *bn256.G1Affine {
 	return new(bn256.G1Affine).ScalarMultiplication(&G1Affine, s)
 }
 
-func GetG1BaseAffine() *bn256.G1Affine {
+func GetG1BaseAffine() (*bn256.G1Affine) {
 	_, _, G1Affine, _ := bn256.Generators()
 	return &G1Affine
+}
+
+func GetG1TwoBaseAffine() (*bn256.G1Affine, *bn256.G1Affine) {
+	_, _, G1Affine, _ := bn256.Generators()
+	HAffine, _ := HashToG1(SEEDH)
+	return &G1Affine, HAffine
+}
+
+func ToBytes(a *bn256.G1Affine) []byte {
+	aXFixBytes := a.X.Bytes()
+	aYFixBytes := a.Y.Bytes()
+	aXBytes := aXFixBytes[:]
+	aYBytes := aYFixBytes[:]
+	return util.ContactBytes(aXBytes, aYBytes)
 }

@@ -3,7 +3,7 @@ package bp_bn128
 import (
 	"ZKSneak/ZKSneak-crypto/ecc/bn128"
 	"ZKSneak/ZKSneak-crypto/ffmath"
-	"bytes"
+	"ZKSneak/ZKSneak-crypto/util"
 	"crypto/sha256"
 	"errors"
 	"github.com/consensys/gurvy/bn256"
@@ -30,34 +30,15 @@ func powerOf(x *big.Int, n int64) []*big.Int {
 	return result
 }
 
-/*
-Hash is responsible for the computing a Zp element given elements from GT and G1.
-*/
 func HashBP(A, S *bn256.G1Affine) (*big.Int, *big.Int, error) {
-
-	digest1 := sha256.New()
-	var buffer bytes.Buffer
-	buffer.WriteString(A.X.String())
-	buffer.WriteString(A.Y.String())
-	buffer.WriteString(S.X.String())
-	buffer.WriteString(S.Y.String())
-	digest1.Write(buffer.Bytes())
-	output1 := digest1.Sum(nil)
-	tmp1 := output1[0:]
-	result1 := new(big.Int).SetBytes(tmp1)
-
-	digest2 := sha256.New()
-	var buffer2 bytes.Buffer
-	buffer2.WriteString(A.X.String())
-	buffer2.WriteString(A.Y.String())
-	buffer2.WriteString(S.X.String())
-	buffer2.WriteString(S.Y.String())
-	buffer2.WriteString(result1.String())
-	digest2.Write(buffer.Bytes())
-	output2 := digest2.Sum(nil)
-	tmp2 := output2[0:]
-	result2 := new(big.Int).SetBytes(tmp2)
-
+	// H(A,S)
+	buffer := util.ContactBytes(bn128.ToBytes(A), bn128.ToBytes(S))
+	output1, _ := util.CalHash(buffer, sha256.New)
+	result1 := new(big.Int).SetBytes(output1)
+	// H(A,S,H(A,S))
+	buffer2 := util.ContactBytes(buffer, result1.Bytes())
+	output2, _ := util.CalHash(buffer2, sha256.New)
+	result2 := new(big.Int).SetBytes(output2)
 	return result1, result2, nil
 }
 
