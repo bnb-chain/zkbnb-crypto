@@ -10,16 +10,6 @@ var (
 	ORDER, _ = new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
 )
 
-/*
-MapToGroup is a hash function that returns a valid elliptic curve point given as
-input a string. It is also known as hash-to-point and is used to obtain a generator
-that has no discrete logarithm known relation, thus addressing the concept of
-NUMS (nothing up my sleeve).
-This implementation is based on the paper:
-Short signatures from the Weil pairing
-Boneh, Lynn and Shacham
-Journal of Cryptology, September 2004, Volume 17, Issue 4, pp 297–319
-*/
 func HashToG1(m string) (*bn256.G1Affine, error) {
 	p, err := bn256.HashToCurveG1Svdw([]byte(m), []byte(m))
 	return &p, err

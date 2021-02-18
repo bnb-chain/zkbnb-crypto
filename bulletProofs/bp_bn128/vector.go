@@ -133,7 +133,7 @@ func VectorMul(a, b []*big.Int) ([]*big.Int, error) {
 /*
 VectorECMul computes vector EC addition componentwisely.
 */
-func VectorECAdd(a, b []*bn256.G1Affine) ([]*bn256.G1Affine, error) {
+func VectorECMul(a, b []*bn256.G1Affine) ([]*bn256.G1Affine, error) {
 	var (
 		result  []*bn256.G1Affine
 		i, n, m int64
