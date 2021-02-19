@@ -17,7 +17,7 @@ func Prove(x *big.Int, base *bn256.G1Affine, R *bn256.G1Affine) (z *big.Int, A *
 	// c = H(A,R)
 	c := HashSchnorr(A, R)
 	// z = r + c*x
-	z = ffmath.Add(r, ffmath.Multiply(c, x))
+	z = ffmath.AddMod(r, ffmath.MultiplyMod(c, x, ORDER), ORDER)
 	return z, A
 }
 
