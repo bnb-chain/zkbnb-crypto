@@ -46,10 +46,7 @@ func setupInnerProduct(H *bn256.G1Affine, g, h []*bn256.G1Affine, c *big.Int, N 
 	}
 	params.Cc = c
 	params.Uu, _ = bn128.HashToG1(SEEDU)
-	infinity := new(bn256.G1Affine)
-	infinity.X.SetZero()
-	infinity.Y.SetZero()
-	params.P = infinity
+	params.P = bn128.GetG1InfinityPoint()
 
 	return params, nil
 }
@@ -125,7 +122,7 @@ func computeBipRecursive(a, b []*big.Int, g, h []*bn256.G1Affine, u, P *bn256.G1
 		L = bn128.G1AffineMul(L, Lh)
 		L = bn128.G1AffineMul(L, new(bn256.G1Affine).ScalarMultiplication(u, cL))
 
-		// Compute R = g[:n']^(a[n':]).h[n':]^(b[:n']).u^cR                   // (24)
+		// Compute r = g[:n']^(a[n':]).h[n':]^(b[:n']).u^cR                   // (24)
 		R, _ = VectorExp(g[:nprime], a[nprime:])
 		Rh, _ = VectorExp(h[nprime:], b[:nprime])
 		R = bn128.G1AffineMul(R, Rh)
@@ -144,7 +141,7 @@ func computeBipRecursive(a, b []*big.Int, g, h []*bn256.G1Affine, u, P *bn256.G1
 		hprime2 = vectorScalarExp(h[nprime:], xinv)
 		hprime, _ = VectorECMul(hprime, hprime2)
 
-		// Compute P' = L^(x^2).P.R^(x^-2)                                    // (31)
+		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.Mod(ffmath.Multiply(x, x), ORDER)
 		x2inv = ffmath.ModInverse(x2, ORDER)
 		Pprime = new(bn256.G1Affine).ScalarMultiplication(L, x2)
@@ -196,7 +193,7 @@ func (proof InnerProductProof) Verify() (bool, error) {
 		nhprime = vectorScalarExp(hprime[:nprime], x)
 		nhprime2 = vectorScalarExp(hprime[nprime:], xinv)
 		hprime, _ = VectorECMul(nhprime, nhprime2)
-		// Compute P' = L^(x^2).P.R^(x^-2)                                    // (31)
+		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.Mod(ffmath.Multiply(x, x), ORDER)
 		x2inv = ffmath.ModInverse(x2, ORDER)
 		Pprime = bn128.G1AffineMul(Pprime, new(bn256.G1Affine).ScalarMultiplication(proof.Ls[i], x2))

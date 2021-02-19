@@ -61,7 +61,7 @@ func GetG1BaseAffine() (*bn256.G1Affine) {
 	return &G1Affine
 }
 
-func GetG1TwoBaseAffine() (*bn256.G1Affine, *bn256.G1Affine) {
+func GetG1TwoBaseAffine() (g *bn256.G1Affine, h *bn256.G1Affine) {
 	_, _, G1Affine, _ := bn256.Generators()
 	HAffine, _ := HashToG1(SEEDH)
 	return &G1Affine, HAffine

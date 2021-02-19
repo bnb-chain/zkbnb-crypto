@@ -44,13 +44,10 @@ Prove computes the ZK rangeproof. The documentation and comments are based on
 eprint version of Bulletproofs papers:
 https://eprint.iacr.org/2017/1066.pdf
 */
-func Prove(secret *big.Int, params BulletProofSetupParams) (BulletProof, error) {
+func Prove(secret *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProofSetupParams) (BulletProof, error) {
 	var (
 		proof BulletProof
 	)
-	// commitment to v and gamma
-	gamma, _ := rand.Int(rand.Reader, ORDER)
-	V, _ := CommitG1(secret, gamma, params.H)
 
 	// aL, aR and commitment: (A, alpha)
 	aL, _ := Decompose(secret, 2, params.N)                                    // (41)
@@ -104,8 +101,7 @@ func Prove(secret *big.Int, params BulletProofSetupParams) (BulletProof, error) 
 	sp2, _ := ScalarProduct(sL, ynaRzn)
 
 	// sp1 + sp2
-	t1 := ffmath.Add(sp1, sp2)
-	t1 = ffmath.Mod(t1, ORDER)
+	t1 := ffmath.AddMod(sp1, sp2, ORDER)
 
 	// compute t2: < sL, y^n . sR >
 	t2, _ := ScalarProduct(sL, ynsR)
@@ -142,13 +138,11 @@ func Prove(secret *big.Int, params BulletProofSetupParams) (BulletProof, error) 
 	// Compute taux = tau2 . x^2 + tau1 . x + z^2 . gamma                  // (61)
 	taux := ffmath.Multiply(tau2, ffmath.Multiply(x, x))
 	taux = ffmath.Add(taux, ffmath.Multiply(tau1, x))
-	taux = ffmath.Add(taux, ffmath.Multiply(ffmath.Multiply(z, z), gamma))
-	taux = ffmath.Mod(taux, ORDER)
+	taux = ffmath.AddMod(taux, ffmath.Multiply(ffmath.Multiply(z, z), gamma), ORDER)
 
 	// Compute mu = alpha + rho.x                                          // (62)
 	mu := ffmath.Multiply(rho, x)
-	mu = ffmath.Add(mu, alpha)
-	mu = ffmath.Mod(mu, ORDER)
+	mu = ffmath.AddMod(mu, alpha, ORDER)
 
 	// Inner Product over (g, h', P.h^-mu, tprime)
 	hprime := updateGenerators(params.Hh, y, params.N)
@@ -242,8 +236,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 	// z.y^n + z^2.2^n
 	zynz22n, _ := VectorAdd(zyn, z22n)
 
-	lP := new(bn256.G1Affine)
-	lP = bn128.G1AffineMul(ASx, gpmz)
+	lP := bn128.G1AffineMul(ASx, gpmz)
 
 	// h'^(z.y^n + z^2.2^n)
 	hprimeexp, _ := VectorExp(hprime, zynz22n)
@@ -354,10 +347,8 @@ func (params *BulletProofSetupParams) delta(y, z *big.Int) *big.Int {
 		result *big.Int
 	)
 	// delta(y,z) = (z-z^2) . < 1^n, y^n > - z^3 . < 1^n, 2^n >
-	z2 := ffmath.Multiply(z, z)
-	z2 = ffmath.Mod(z2, ORDER)
-	z3 := ffmath.Multiply(z2, z)
-	z3 = ffmath.Mod(z3, ORDER)
+	z2 := ffmath.MultiplyMod(z, z, ORDER)
+	z3 := ffmath.MultiplyMod(z2, z, ORDER)
 
 	// < 1^n, y^n >
 	v1, _ := VectorCopy(new(big.Int).SetInt64(1), params.N)
@@ -368,12 +359,9 @@ func (params *BulletProofSetupParams) delta(y, z *big.Int) *big.Int {
 	p2n := powerOf(new(big.Int).SetInt64(2), params.N)
 	sp12, _ := ScalarProduct(v1, p2n)
 
-	result = ffmath.Sub(z, z2)
-	result = ffmath.Mod(result, ORDER)
-	result = ffmath.Multiply(result, sp1y)
-	result = ffmath.Mod(result, ORDER)
-	result = ffmath.Sub(result, ffmath.Multiply(z3, sp12))
-	result = ffmath.Mod(result, ORDER)
+	result = ffmath.SubMod(z, z2, ORDER)
+	result = ffmath.MultiplyMod(result, sp1y, ORDER)
+	result = ffmath.SubMod(result, ffmath.Multiply(z3, sp12), ORDER)
 
 	return result
 }

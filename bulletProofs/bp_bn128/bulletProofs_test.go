@@ -1,7 +1,9 @@
 package bp_bn128
 
 import (
+	"crypto/rand"
 	"encoding/json"
+	"github.com/consensys/gurvy/bn256"
 	"github.com/stretchr/testify/assert"
 	"math"
 	"math/big"
@@ -11,16 +13,22 @@ import (
 func TestXWithinRange(t *testing.T) {
 	rangeEnd := int64(math.Pow(2, 32))
 	x := new(big.Int).SetInt64(3)
-
+	// commitment to v and gamma
+	gamma, _ := rand.Int(rand.Reader, ORDER)
 	params := setupRange(t, rangeEnd)
-	if proveAndVerifyRange(x, params) != true {
+	V, _ := CommitG1(x, gamma, params.H)
+	if proveAndVerifyRange(x, gamma, V, params) != true {
 		t.Errorf("x within range should verify successfully")
 	}
 }
 
 func TestJsonEncodeDecode(t *testing.T) {
 	params, _ := Setup(MAX_RANGE_END)
-	proof, _ := Prove(new(big.Int).SetInt64(18), params)
+	secret := new(big.Int).SetInt64(18)
+	// commitment to v and gamma
+	gamma, _ := rand.Int(rand.Reader, ORDER)
+	V, _ := CommitG1(secret, gamma, params.H)
+	proof, _ := Prove(secret, gamma, V, params)
 	jsonEncoded, err := json.Marshal(proof)
 	if err != nil {
 		t.Fatal("encode error:", err)
@@ -52,8 +60,8 @@ func setupRange(t *testing.T, rangeEnd int64) BulletProofSetupParams {
 	return params
 }
 
-func proveAndVerifyRange(x *big.Int, params BulletProofSetupParams) bool {
-	proof, _ := Prove(x, params)
+func proveAndVerifyRange(x *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProofSetupParams) bool {
+	proof, _ := Prove(x, gamma, V, params)
 	ok, _ := proof.Verify()
 	return ok
 }

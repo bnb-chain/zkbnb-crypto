@@ -23,8 +23,7 @@ func powerOf(x *big.Int, n int64) []*big.Int {
 	i = 0
 	for i < n {
 		result[i] = current
-		current = ffmath.Multiply(current, x)
-		current = ffmath.Mod(current, ORDER)
+		current = ffmath.MultiplyMod(current, x, ORDER)
 		i = i + 1
 	}
 	return result

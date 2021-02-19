@@ -8,6 +8,7 @@ import (
 	"math/big"
 )
 
+// u = \prod_{i=1}^n g_{i}^{x_i}
 func Prove(xArr []*big.Int, gArr, uArr []*bn256.G1Affine) (zArr []*big.Int, UtArr []*bn256.G1Affine) {
 	m := len(uArr)
 	n := len(xArr)

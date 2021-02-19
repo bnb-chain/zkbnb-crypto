@@ -13,6 +13,12 @@ type ElGamalEnc struct {
 	CR *bn256.G1Affine // g^r h^b
 }
 
+func EncAdd(C1 *ElGamalEnc, C2 *ElGamalEnc) *ElGamalEnc {
+	CL := bn128.G1AffineMul(C1.CL, C2.CL)
+	CR := bn128.G1AffineMul(C1.CR, C2.CR)
+	return &ElGamalEnc{CL: CL, CR: CR}
+}
+
 func GenKeyPair() (sk *big.Int, pk *bn256.G1Affine) {
 	sk, _ = rand.Int(rand.Reader, ORDER)
 	pk = bn128.G1ScalarBaseMult(sk)

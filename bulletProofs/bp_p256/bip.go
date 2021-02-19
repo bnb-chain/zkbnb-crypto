@@ -153,7 +153,7 @@ func computeBipRecursive(a, b []*big.Int, g, h []*p256.P256, u, P *p256.P256, n 
 		L.Multiply(L, Lh)
 		L.Multiply(L, new(p256.P256).ScalarMult(u, cL))
 
-		// Compute R = g[:n']^(a[n':]).h[n':]^(b[:n']).u^cR                   // (24)
+		// Compute r = g[:n']^(a[n':]).h[n':]^(b[:n']).u^cR                   // (24)
 		R, _ = VectorExp(g[:nprime], a[nprime:])
 		Rh, _ = VectorExp(h[nprime:], b[:nprime])
 		R.Multiply(R, Rh)
@@ -172,7 +172,7 @@ func computeBipRecursive(a, b []*big.Int, g, h []*p256.P256, u, P *p256.P256, n 
 		hprime2 = vectorScalarExp(h[nprime:], xinv)
 		hprime, _ = VectorECAdd(hprime, hprime2)
 
-		// Compute P' = L^(x^2).P.R^(x^-2)                                    // (31)
+		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.Mod(ffmath.Multiply(x, x), ORDER)
 		x2inv = ffmath.ModInverse(x2, ORDER)
 		Pprime = new(p256.P256).ScalarMult(L, x2)
@@ -224,7 +224,7 @@ func (proof InnerProductProof) Verify() (bool, error) {
 		nhprime = vectorScalarExp(hprime[:nprime], x)
 		nhprime2 = vectorScalarExp(hprime[nprime:], xinv)
 		hprime, _ = VectorECAdd(nhprime, nhprime2)
-		// Compute P' = L^(x^2).P.R^(x^-2)                                    // (31)
+		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.Mod(ffmath.Multiply(x, x), ORDER)
 		x2inv = ffmath.ModInverse(x2, ORDER)
 		Pprime.Multiply(Pprime, new(p256.P256).ScalarMult(proof.Ls[i], x2))

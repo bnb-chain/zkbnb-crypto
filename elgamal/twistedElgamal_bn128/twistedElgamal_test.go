@@ -9,7 +9,7 @@ import (
 
 func TestEncDec(t *testing.T) {
 	sk, pk := GenKeyPair()
-	b := big.NewInt(int64(5))
+	b := big.NewInt(int64(1000000))
 	r, _ := rand.Int(rand.Reader, ORDER)
 	enc := Enc(b, r, pk)
 	dec := Dec(enc, sk)
