@@ -12,36 +12,6 @@ import (
 )
 
 /*
-InnerProductParams contains elliptic curve generators used to compute Pedersen
-commitments.
-*/
-type InnerProductParams struct {
-	N  int64
-	Cc *big.Int
-	Uu *bn256.G1Affine
-	H  *bn256.G1Affine
-	Gg []*bn256.G1Affine
-	Hh []*bn256.G1Affine
-	P  *bn256.G1Affine
-}
-
-/*
-InnerProductProof contains the elements used to verify the Inner Product Proof.
-*/
-type InnerProductProof struct {
-	N      int64
-	Ls     []*bn256.G1Affine
-	Rs     []*bn256.G1Affine
-	U      *bn256.G1Affine
-	P      *bn256.G1Affine
-	Gg     *bn256.G1Affine
-	Hh     *bn256.G1Affine
-	A      *big.Int
-	B      *big.Int
-	Params InnerProductParams
-}
-
-/*
 SetupInnerProduct is responsible for computing the inner product basic parameters that are common to both
 ProveInnerProduct and Verify algorithms.
 */
