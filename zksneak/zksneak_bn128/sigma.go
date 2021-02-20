@@ -6,6 +6,7 @@ import (
 	"ZKSneak/ZKSneak-crypto/sigmaProtocol/chaum-pedersen_bn128"
 	"ZKSneak/ZKSneak-crypto/sigmaProtocol/linear_bn128"
 	"ZKSneak/ZKSneak-crypto/sigmaProtocol/schnorr_bn128"
+	"errors"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
 )
@@ -35,6 +36,9 @@ func (proof *ZKSneakProof) ProveAnonRange(statement *ZKSneakStatement, params *B
 		// TODO OR proof
 		// bDelta range proof
 		if relation.BDelta.Cmp(big.NewInt(0)) < 0 {
+			if relation.Sk == nil || relation.BPrime == nil {
+				return errors.New("you cannot transfer funds to accounts that do not belong to you")
+			}
 			// u = C'_{i,r} / \tilde{C}_{i,r}
 			u := bn128.G1AffineMul(relation.CPrime.CR, new(bn256.G1Affine).Neg(relation.CTilde.CR))
 			w := new(bn256.G1Affine).ScalarMultiplication(u, relation.Sk)

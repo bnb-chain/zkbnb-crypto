@@ -13,10 +13,10 @@ func TestProveVerify(t *testing.T) {
 	statement := NewStatement()
 	// user1
 	sk1, pk1 := twistedElgamal_bn128.GenKeyPair()
-	b1 := big.NewInt(5)
+	b1 := big.NewInt(8)
 	r1, _ := rand.Int(rand.Reader, ORDER)
 	C1 := twistedElgamal_bn128.Enc(b1, r1, pk1)
-	b1Delta := big.NewInt(-3)
+	b1Delta := big.NewInt(-6)
 	// user2
 	_, pk2 := twistedElgamal_bn128.GenKeyPair()
 	b2 := big.NewInt(2)
@@ -28,7 +28,7 @@ func TestProveVerify(t *testing.T) {
 	b3 := big.NewInt(3)
 	r3, _ := rand.Int(rand.Reader, ORDER)
 	C3 := twistedElgamal_bn128.Enc(b3, r3, pk3)
-	b3Delta := big.NewInt(2)
+	b3Delta := big.NewInt(5)
 	statement.AddRelation(C1, pk1, b1, b1Delta, sk1)
 	statement.AddRelation(C2, pk2, nil, b2Delta, nil)
 	statement.AddRelation(C3, pk3, nil, b3Delta, nil)

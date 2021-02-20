@@ -71,9 +71,12 @@ func (statement *ZKSneakStatement) AddRelation(C *ElGamalEnc, pk *bn256.G1Affine
 	var bPrime *big.Int
 	var CTilde *ElGamalEnc
 	if b != nil {
-		bPrime = ffmath.Sub(b, bDelta)
+		bPrime = ffmath.Add(b, bDelta)
 		// refresh bPrime Enc
 		CTilde = twistedElgamal_bn128.Enc(bPrime, statement.RStar, pk)
+	}
+	if bDelta.Cmp(big.NewInt(0)) < 0 && b == nil {
+		return errors.New("you cannot transfer funds to accounts that do not belong to you")
 	}
 	// r \gets_R Z_p
 	r, _ := rand.Int(rand.Reader, ORDER)
