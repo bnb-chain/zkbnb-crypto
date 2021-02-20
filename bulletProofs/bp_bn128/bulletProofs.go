@@ -22,7 +22,7 @@ func Setup(b int64) (BulletProofSetupParams, error) {
 	}
 
 	params := BulletProofSetupParams{}
-	params.G, params.H = bn128.GetG1TwoBaseAffine()
+	params.H, params.G = bn128.GetG1TwoBaseAffine()
 	params.N = int64(math.Log2(float64(b)))
 	if !IsPowerOfTwo(params.N) {
 		return BulletProofSetupParams{}, fmt.Errorf("range end is a power of 2, but it's exponent should also be. Exponent: %d", params.N)
@@ -191,16 +191,14 @@ func (proof *BulletProof) Verify() (bool, error) {
 	lhs, _ := CommitG1(proof.Tprime, proof.Taux, params.H)
 
 	// Compute right hand side
-	z2 := ffmath.Multiply(z, z)
-	z2 = ffmath.Mod(z2, ORDER)
-	x2 := ffmath.Multiply(x, x)
-	x2 = ffmath.Mod(x2, ORDER)
+	z2 := ffmath.MultiplyMod(z, z, ORDER)
+	x2 := ffmath.MultiplyMod(x, x, ORDER)
 
 	rhs := new(bn256.G1Affine).ScalarMultiplication(proof.V, z2)
 
 	delta := params.delta(y, z)
 
-	gdelta := bn128.G1ScalarBaseMult(delta)
+	gdelta := bn128.G1ScalarHBaseMult(delta)
 	rhs = bn128.G1AffineMul(rhs, gdelta)
 
 	T1x := new(bn256.G1Affine).ScalarMultiplication(proof.T1, x)

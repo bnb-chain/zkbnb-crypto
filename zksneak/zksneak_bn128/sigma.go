@@ -37,7 +37,7 @@ func (proof *ZKSneakProof) ProveAnonRange(statement *ZKSneakStatement, params *B
 		if relation.BDelta.Cmp(big.NewInt(0)) < 0 {
 			// u = C'_{i,r} / \tilde{C}_{i,r}
 			u := bn128.G1AffineMul(relation.CPrime.CR, new(bn256.G1Affine).Neg(relation.CTilde.CR))
-			w := bn128.G1AffineMul(relation.CTilde.CL, new(bn256.G1Affine).Neg(relation.CPrime.CL))
+			w := new(bn256.G1Affine).ScalarMultiplication(u, relation.Sk)
 			g := bn128.GetG1BaseAffine()
 			v := relation.Pk
 			z, Vt, Wt := chaum_pedersen_bn128.Prove(relation.Sk, g, u, v, w)

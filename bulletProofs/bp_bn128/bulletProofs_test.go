@@ -1,6 +1,7 @@
 package bp_bn128
 
 import (
+	"ZKSneak/ZKSneak-crypto/elgamal/twistedElgamal_bn128"
 	"crypto/rand"
 	"encoding/json"
 	"github.com/consensys/gurvy/bn256"
@@ -13,11 +14,13 @@ import (
 func TestXWithinRange(t *testing.T) {
 	rangeEnd := int64(math.Pow(2, 32))
 	x := new(big.Int).SetInt64(3)
+	params := setupRange(t, rangeEnd)
 	// commitment to v and gamma
 	gamma, _ := rand.Int(rand.Reader, ORDER)
-	params := setupRange(t, rangeEnd)
-	V, _ := CommitG1(x, gamma, params.H)
-	if proveAndVerifyRange(x, gamma, V, params) != true {
+	//V, _ := CommitG1(x, gamma, params.H)
+	_, pk := twistedElgamal_bn128.GenKeyPair()
+	C := twistedElgamal_bn128.Enc(x, gamma, pk)
+	if proveAndVerifyRange(x, gamma, C.CR, params) != true {
 		t.Errorf("x within range should verify successfully")
 	}
 }

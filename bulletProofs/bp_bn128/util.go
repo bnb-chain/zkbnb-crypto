@@ -108,7 +108,7 @@ CommitG1 method corresponds to the Pedersen commitment scheme. Namely, given inp
 message x, and randomness r, it outputs g^x.h^r.
 */
 func CommitG1(x, r *big.Int, h *bn256.G1Affine) (*bn256.G1Affine, error) {
-	var C = bn128.G1ScalarBaseMult(x)
+	var C = bn128.G1ScalarHBaseMult(x)
 	Hr := new(bn256.G1Affine).ScalarMultiplication(h, r)
 	C = bn128.G1AffineMul(C, Hr)
 	return C, nil
