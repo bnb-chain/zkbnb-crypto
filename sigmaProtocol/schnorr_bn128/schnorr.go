@@ -25,7 +25,7 @@ func Prove(x *big.Int, base *bn256.G1Affine, R *bn256.G1Affine) (z *big.Int, A *
 func Verify(z *big.Int, A *bn256.G1Affine, R *bn256.G1Affine, base *bn256.G1Affine) bool {
 	// cal c = H(A,r)
 	c := HashSchnorr(A, R)
-	left := new(bn256.G1Affine).ScalarMultiplication(base, z)
-	right := bn128.G1AffineMul(A, new(bn256.G1Affine).ScalarMultiplication(R, c))
-	return left.Equal(right)
+	l := new(bn256.G1Affine).ScalarMultiplication(base, z)
+	r := bn128.G1AffineMul(A, new(bn256.G1Affine).ScalarMultiplication(R, c))
+	return l.Equal(r)
 }

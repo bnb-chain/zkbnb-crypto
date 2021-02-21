@@ -96,12 +96,12 @@ func (proof *ZKSneakProof) ProveEqual(relations []*ZKSneakRelation) {
 	}
 	uArr := []*bn256.G1Affine{bn128.GetG1InfinityPoint()}
 	zArr, UtArr := linear_bn128.Prove(xArr, gArr, uArr)
-	proof.EqualProof = &AnonEqualProof{ZArr: zArr, gArr: gArr, UtArr: UtArr, uArr: uArr}
+	proof.EqualProof = &AnonEqualProof{zArr: zArr, gArr: gArr, UtArr: UtArr, uArr: uArr}
 }
 
 func (proof *ZKSneakProof) VerifyEqual() bool {
 	linearProof := proof.EqualProof
-	linearVerifyRes := linear_bn128.Verify(linearProof.ZArr, linearProof.gArr, linearProof.uArr, linearProof.UtArr)
+	linearVerifyRes := linear_bn128.Verify(linearProof.zArr, linearProof.gArr, linearProof.uArr, linearProof.UtArr)
 	if !linearVerifyRes {
 		return false
 	}

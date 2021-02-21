@@ -43,7 +43,7 @@ type ChaumPedersenProof struct {
 }
 
 type AnonEqualProof struct {
-	ZArr  []*big.Int
+	zArr  []*big.Int
 	UtArr []*bn256.G1Affine
 	gArr  []*bn256.G1Affine
 	uArr  []*bn256.G1Affine

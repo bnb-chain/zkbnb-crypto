@@ -74,3 +74,11 @@ func ToBytes(a *bn256.G1Affine) []byte {
 	aYBytes := aYFixBytes[:]
 	return util.ContactBytes(aXBytes, aYBytes)
 }
+
+func VecToBytes(arr []*bn256.G1Affine) []byte {
+	var res []byte
+	for _, value := range arr {
+		res = util.ContactBytes(res, ToBytes(value))
+	}
+	return res
+}

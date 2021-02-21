@@ -10,12 +10,11 @@ import (
 )
 
 func HashLinear(UtArr, uArr []*bn256.G1Affine) *big.Int {
-	var cBytes []byte
-	for i := 0; i < len(UtArr); i++ {
-		cBytes = append(cBytes, util.ContactBytes(bn128.ToBytes(UtArr[i]), bn128.ToBytes(uArr[i]))...)
-	}
+	UtBytes := bn128.VecToBytes(UtArr)
+	uBytes := bn128.VecToBytes(uArr)
 	var buffer bytes.Buffer
-	buffer.Write(cBytes)
+	buffer.Write(UtBytes)
+	buffer.Write(uBytes)
 	c, _ := util.HashToInt(buffer, sha256.New)
 	return c
 }
