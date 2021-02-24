@@ -47,3 +47,17 @@ func Dec(enc *ElGamalEnc, sk *big.Int) (*big.Int) {
 	}
 	return nil
 }
+
+func DecByStart(enc *ElGamalEnc, sk *big.Int, start int) (*big.Int) {
+	// (pk^r)^{sk^{-1}}
+	skInv := ffmath.ModInverse(sk, ORDER)
+	gExpr := new(bn256.G1Affine).ScalarMultiplication(enc.CL, skInv)
+	hExpb := bn128.G1AffineMul(enc.CR, new(bn256.G1Affine).Neg(gExpr))
+	for i := start; i < MAX_VALUE; i++ {
+		hi := bn128.G1ScalarHBaseMult(big.NewInt(int64(i)))
+		if hi.Equal(hExpb) {
+			return big.NewInt(int64(i))
+		}
+	}
+	return nil
+}
