@@ -224,7 +224,7 @@ func Prove(secret *big.Int, params BulletProofSetupParams) (BulletProof, error) 
 }
 
 /*
-Verify returns true if and only if the proof is valid.
+VerifyTransfer returns true if and only if the proof is valid.
 */
 func (proof *BulletProof) Verify() (bool, error) {
 	params := proof.Params
@@ -310,7 +310,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 	rP.Add(rP, lP)
 	c67 := rP.IsZero()
 
-	// Verify Inner Product Proof ################################################
+	// VerifyTransfer Inner Product Proof ################################################
 	ok, _ := proof.InnerProductProof.Verify()
 
 	result := c65 && c67 && ok

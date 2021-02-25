@@ -172,7 +172,7 @@ func Prove(secret *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProo
 }
 
 /*
-Verify returns true if and only if the proof is valid.
+VerifyTransfer returns true if and only if the proof is valid.
 */
 func (proof *BulletProof) Verify() (bool, error) {
 	params := proof.Params
@@ -250,7 +250,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 	// Subtract lhs and rhs and compare with poitn at infinity
 	c67 := rP.Equal(lP)
 
-	// Verify Inner Product Proof ################################################
+	// VerifyTransfer Inner Product Proof ################################################
 	ok, _ := proof.InnerProductProof.Verify()
 
 	result := c65 && c67 && ok

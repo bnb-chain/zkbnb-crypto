@@ -17,7 +17,7 @@ type (
 	BulletProof = bp_bn128.BulletProof
 )
 
-type ZKSneakProof struct {
+type ZKSneakTransferProof struct {
 	EncProofs   []*AnonEncProof
 	RangeProofs []*AnonRangeProof
 	EqualProof  *AnonEqualProof
@@ -49,17 +49,17 @@ type AnonEqualProof struct {
 	uArr  []*bn256.G1Affine
 }
 
-type ZKSneakStatement struct {
-	Relations []*ZKSneakRelation
-	RStar     *big.Int
+type ZKSneakTransferStatement struct {
+	Relations []*ZKSneakTransferRelation
+	rStar     *big.Int
 }
 
-func NewStatement() *ZKSneakStatement {
+func NewStatement() *ZKSneakTransferStatement {
 	rStar, _ := rand.Int(rand.Reader, ORDER)
-	return &ZKSneakStatement{RStar: rStar}
+	return &ZKSneakTransferStatement{rStar: rStar}
 }
 
-func (statement *ZKSneakStatement) AddRelation(C *ElGamalEnc, pk *bn256.G1Affine, b *big.Int, bDelta *big.Int, sk *big.Int) error {
+func (statement *ZKSneakTransferStatement) AddRelation(C *ElGamalEnc, pk *bn256.G1Affine, b *big.Int, bDelta *big.Int, sk *big.Int) error {
 	// valid pk or not
 	if sk != nil {
 		oriPk := bn128.G1ScalarBaseMult(sk)
@@ -73,7 +73,7 @@ func (statement *ZKSneakStatement) AddRelation(C *ElGamalEnc, pk *bn256.G1Affine
 	if b != nil {
 		bPrime = ffmath.Add(b, bDelta)
 		// refresh bPrime Enc
-		CTilde = twistedElgamal_bn128.Enc(bPrime, statement.RStar, pk)
+		CTilde = twistedElgamal_bn128.Enc(bPrime, statement.rStar, pk)
 	}
 	if bDelta.Cmp(big.NewInt(0)) < 0 && b == nil {
 		return errors.New("you cannot transfer funds to accounts that do not belong to you")
@@ -84,21 +84,26 @@ func (statement *ZKSneakStatement) AddRelation(C *ElGamalEnc, pk *bn256.G1Affine
 	CDelta := twistedElgamal_bn128.Enc(bDelta, r, pk)
 	// C' = C * C^{\Delta}
 	CPrime := twistedElgamal_bn128.EncAdd(C, CDelta)
-	relation := &ZKSneakRelation{
-		CPrime: CPrime,
-		CTilde: CTilde,
-		CDelta: CDelta,
-		Pk:     pk,
-		BDelta: bDelta,
-		BPrime: bPrime,
-		Sk:     sk,
-		r:      r,
+	relation := &ZKSneakTransferRelation{
+		Public: &ZKSneakTransferPublic{CPrime: CPrime,
+			CTilde: CTilde,
+			CDelta: CDelta,
+			Pk:     pk,},
+		Witness: &ZKSneakTransferWitness{bDelta: bDelta,
+			bPrime: bPrime,
+			sk:     sk,
+			r:      r,},
 	}
 	statement.Relations = append(statement.Relations, relation)
 	return nil
 }
 
-type ZKSneakRelation struct {
+type ZKSneakTransferRelation struct {
+	Public  *ZKSneakTransferPublic
+	Witness *ZKSneakTransferWitness
+}
+
+type ZKSneakTransferPublic struct {
 	// public
 	CPrime *ElGamalEnc
 	// public
@@ -107,12 +112,15 @@ type ZKSneakRelation struct {
 	CDelta *ElGamalEnc
 	// public
 	Pk *bn256.G1Affine
+}
+
+type ZKSneakTransferWitness struct {
 	// secret
-	BDelta *big.Int
+	bDelta *big.Int
 	// secret
-	BPrime *big.Int
+	bPrime *big.Int
 	// secret
-	Sk *big.Int
+	sk *big.Int
 	// secret
 	r *big.Int
 }

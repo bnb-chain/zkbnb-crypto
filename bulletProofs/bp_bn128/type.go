@@ -25,11 +25,11 @@ InnerProductProof contains the elements used to verify the Inner Product Proof.
 type InnerProductProof struct {
 	N      int64
 	Ls     []*bn256.G1Affine
-	Rs     []*bn256.G1Affine
 	U      *bn256.G1Affine
 	P      *bn256.G1Affine
 	Gg     *bn256.G1Affine
 	Hh     *bn256.G1Affine
+	Rs     []*bn256.G1Affine
 	A      *big.Int
 	B      *big.Int
 	Params InnerProductParams

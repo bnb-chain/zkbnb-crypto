@@ -8,14 +8,14 @@ func Setup(b int64) (BulletProofSetupParams, error) {
 	return bp_bn128.Setup(b)
 }
 
-func Prove(statement *ZKSneakStatement, params *BulletProofSetupParams) (proof *ZKSneakProof, err error) {
-	proof = new(ZKSneakProof)
+func ProveTransfer(statement *ZKSneakTransferStatement, params *BulletProofSetupParams) (proof *ZKSneakTransferProof, err error) {
+	proof = new(ZKSneakTransferProof)
 	proof.ProveAnonEnc(statement.Relations)
 	proof.ProveAnonRange(statement, params)
 	proof.ProveEqual(statement.Relations)
 	return proof, nil
 }
 
-func (proof *ZKSneakProof) Verify() bool {
+func (proof *ZKSneakTransferProof) VerifyTransfer() bool {
 	return proof.VerifyAnonEnc() && proof.VerifyAnonRange() && proof.VerifyEqual()
 }
