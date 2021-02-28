@@ -1,7 +1,7 @@
 package zksneak_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/bulletProofs/bp_bn128"
+	"ZKSneak-crypto/bulletProofs/bp_bn128"
 )
 
 func Setup(b int64) (BulletProofSetupParams, error) {

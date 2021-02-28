@@ -1,11 +1,11 @@
 package zksneak_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/bulletProofs/bp_bn128"
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/sigmaProtocol/chaum-pedersen_bn128"
-	"ZKSneak/ZKSneak-crypto/sigmaProtocol/linear_bn128"
-	"ZKSneak/ZKSneak-crypto/sigmaProtocol/schnorr_bn128"
+	"ZKSneak-crypto/bulletProofs/bp_bn128"
+	"ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/sigmaProtocol/chaum-pedersen_bn128"
+	"ZKSneak-crypto/sigmaProtocol/linear_bn128"
+	"ZKSneak-crypto/sigmaProtocol/schnorr_bn128"
 	"errors"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"

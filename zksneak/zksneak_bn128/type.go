@@ -1,10 +1,10 @@
 package zksneak_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/bulletProofs/bp_bn128"
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/elgamal/twistedElgamal_bn128"
-	"ZKSneak/ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/bulletProofs/bp_bn128"
+	"ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/elgamal/twistedElgamal_bn128"
+	"ZKSneak-crypto/ffmath"
 	"crypto/rand"
 	"errors"
 	"github.com/consensys/gurvy/bn256"

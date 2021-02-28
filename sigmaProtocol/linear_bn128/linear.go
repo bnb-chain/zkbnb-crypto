@@ -1,8 +1,8 @@
 package linear_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/ffmath"
 	"crypto/rand"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"

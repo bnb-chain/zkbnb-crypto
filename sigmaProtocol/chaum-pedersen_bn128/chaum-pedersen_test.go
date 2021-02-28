@@ -1,8 +1,8 @@
 package chaum_pedersen_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/elgamal/twistedElgamal_bn128"
+	"ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/elgamal/twistedElgamal_bn128"
 	"crypto/rand"
 	"fmt"
 	"github.com/consensys/gurvy/bn256"

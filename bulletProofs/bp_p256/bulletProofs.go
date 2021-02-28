@@ -1,8 +1,8 @@
 package bulletProofs
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/p256"
-	"ZKSneak/ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/ecc/p256"
+	"ZKSneak-crypto/ffmath"
 	"crypto/rand"
 	"errors"
 	"fmt"

@@ -1,7 +1,7 @@
 package bp_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/elgamal/twistedElgamal_bn128"
+	"ZKSneak-crypto/elgamal/twistedElgamal_bn128"
 	"crypto/rand"
 	"encoding/json"
 	"github.com/consensys/gurvy/bn256"

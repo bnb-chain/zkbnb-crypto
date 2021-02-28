@@ -1,8 +1,8 @@
 package schnorr_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/elgamal/twistedElgamal_bn128"
+	"ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/elgamal/twistedElgamal_bn128"
 	"github.com/magiconair/properties/assert"
 	"testing"
 )

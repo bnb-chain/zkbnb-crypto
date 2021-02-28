@@ -1,7 +1,7 @@
 package linear_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/ecc/bn128"
 	"github.com/consensys/gurvy/bn256"
 	"github.com/stretchr/testify/assert"
 	"math/big"

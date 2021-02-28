@@ -1,9 +1,9 @@
 package bp_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/ffmath"
-	"ZKSneak/ZKSneak-crypto/util"
+	"ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/util"
 	"crypto/sha256"
 	"errors"
 	"github.com/consensys/gurvy/bn256"

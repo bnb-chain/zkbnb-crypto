@@ -1,8 +1,8 @@
 package okamoto_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/util"
+	"ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"github.com/consensys/gurvy/bn256"
