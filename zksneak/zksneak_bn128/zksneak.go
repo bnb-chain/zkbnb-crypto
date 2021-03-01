@@ -16,6 +16,6 @@ func ProveTransfer(statement *ZKSneakTransferStatement, params *BulletProofSetup
 	return proof, nil
 }
 
-func (proof *ZKSneakTransferProof) VerifyTransfer() bool {
+func (proof *ZKSneakTransferProof) Verify() bool {
 	return proof.VerifyAnonEnc() && proof.VerifyAnonRange() && proof.VerifyEqual()
 }

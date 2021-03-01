@@ -13,7 +13,7 @@ import (
 
 /*
 SetupInnerProduct is responsible for computing the inner product basic parameters that are common to both
-ProveInnerProduct and VerifyTransfer algorithms.
+ProveInnerProduct and Verify algorithms.
 */
 func setupInnerProduct(H *bn256.G1Affine, g, h []*bn256.G1Affine, c *big.Int, N int64) (InnerProductParams, error) {
 	var params InnerProductParams
@@ -167,7 +167,7 @@ func computeBipRecursive(a, b []*big.Int, g, h []*bn256.G1Affine, u, P *bn256.G1
 }
 
 /*
-VerifyTransfer is responsible for the verification of the Inner Product Proof.
+Verify is responsible for the verification of the Inner Product Proof.
 */
 func (proof InnerProductProof) Verify() (bool, error) {
 

@@ -1,8 +1,8 @@
 package bp_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/ffmath"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -52,13 +52,13 @@ func Prove(secret *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProo
 	// aL, aR and commitment: (A, alpha)
 	aL, _ := Decompose(secret, 2, params.N)                                    // (41)
 	aR, _ := computeAR(aL)                                                     // (42)
-	alpha, _ := ZKSneak-crypto                                   // (43)
+	alpha, _ := rand.Int(rand.Reader, ORDER)                                   // (43)
 	A := commitVector(aL, aR, alpha, params.H, params.Gg, params.Hh, params.N) // (44)
 
 	// sL, sR and commitment: (S, rho)                                     // (45)
 	sL := sampleRandomVector(params.N)
 	sR := sampleRandomVector(params.N)
-	rho, _ := ZKSneak-crypto                                      // (46)
+	rho, _ := rand.Int(rand.Reader, ORDER)                                      // (46)
 	S := commitVectorBig(sL, sR, rho, params.H, params.Gg, params.Hh, params.N) // (47)
 
 	// Fiat-Shamir heuristic to compute challenges y and z, corresponds to    (49)
@@ -67,8 +67,8 @@ func Prove(secret *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProo
 	// ////////////////////////////////////////////////////////////////////////////
 	// Second phase: page 20
 	// ////////////////////////////////////////////////////////////////////////////
-	tau1, _ := ZKSneak-crypto // (52)
-	tau2, _ := ZKSneak-crypto // (52)
+	tau1, _ := rand.Int(rand.Reader, ORDER) // (52)
+	tau2, _ := rand.Int(rand.Reader, ORDER) // (52)
 
 	/*
 	   The paper does not describe how to compute t1 and t2.
@@ -172,7 +172,7 @@ func Prove(secret *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProo
 }
 
 /*
-VerifyTransfer returns true if and only if the proof is valid.
+Verify returns true if and only if the proof is valid.
 */
 func (proof *BulletProof) Verify() (bool, error) {
 	params := proof.Params
@@ -250,7 +250,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 	// Subtract lhs and rhs and compare with poitn at infinity
 	c67 := rP.Equal(lP)
 
-	// VerifyTransfer Inner Product Proof ################################################
+	// Verify Inner Product Proof ################################################
 	ok, _ := proof.InnerProductProof.Verify()
 
 	result := c65 && c67 && ok
@@ -264,7 +264,7 @@ SampleRandomVector generates a vector composed by random big numbers.
 func sampleRandomVector(N int64) []*big.Int {
 	s := make([]*big.Int, N)
 	for i := int64(0); i < N; i++ {
-		s[i], _ = ZKSneak-crypto
+		s[i], _ = rand.Int(rand.Reader, ORDER)
 	}
 	return s
 }

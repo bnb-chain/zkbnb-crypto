@@ -24,10 +24,10 @@ type ZKSneakTransferProof struct {
 }
 
 type AnonEncProof struct {
-	z *big.Int
+	Z *big.Int
 	A *bn256.G1Affine
 	R *bn256.G1Affine
-	g *bn256.G1Affine
+	G *bn256.G1Affine
 }
 
 type AnonRangeProof struct {
@@ -36,27 +36,27 @@ type AnonRangeProof struct {
 }
 
 type ChaumPedersenProof struct {
-	z      *big.Int
-	g, u   *bn256.G1Affine
+	Z      *big.Int
+	G, U   *bn256.G1Affine
 	Vt, Wt *bn256.G1Affine
-	v, w   *bn256.G1Affine
+	V, W   *bn256.G1Affine
 }
 
 type AnonEqualProof struct {
-	zArr  []*big.Int
+	ZArr  []*big.Int
 	UtArr []*bn256.G1Affine
-	gArr  []*bn256.G1Affine
-	uArr  []*bn256.G1Affine
+	GArr  []*bn256.G1Affine
+	UArr  []*bn256.G1Affine
 }
 
 type ZKSneakTransferStatement struct {
 	Relations []*ZKSneakTransferRelation
-	rStar     *big.Int
+	RStar     *big.Int
 }
 
 func NewStatement() *ZKSneakTransferStatement {
 	rStar, _ := rand.Int(rand.Reader, ORDER)
-	return &ZKSneakTransferStatement{rStar: rStar}
+	return &ZKSneakTransferStatement{RStar: rStar}
 }
 
 func (statement *ZKSneakTransferStatement) AddRelation(C *ElGamalEnc, pk *bn256.G1Affine, b *big.Int, bDelta *big.Int, sk *big.Int) error {
@@ -73,14 +73,14 @@ func (statement *ZKSneakTransferStatement) AddRelation(C *ElGamalEnc, pk *bn256.
 	if b != nil {
 		bPrime = ffmath.Add(b, bDelta)
 		// refresh bPrime Enc
-		CTilde = twistedElgamal_bn128.Enc(bPrime, statement.rStar, pk)
+		CTilde = twistedElgamal_bn128.Enc(bPrime, statement.RStar, pk)
 	}
 	if bDelta.Cmp(big.NewInt(0)) < 0 && b == nil {
 		return errors.New("you cannot transfer funds to accounts that do not belong to you")
 	}
 	// r \gets_R Z_p
 	r, _ := rand.Int(rand.Reader, ORDER)
-	// C^{\Delta} = (pk^r,g^r h^{b^{\Delta}})
+	// C^{\Delta} = (pk^r,G^r h^{b^{\Delta}})
 	CDelta := twistedElgamal_bn128.Enc(bDelta, r, pk)
 	// C' = C * C^{\Delta}
 	CPrime := twistedElgamal_bn128.EncAdd(C, CDelta)
