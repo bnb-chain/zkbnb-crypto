@@ -25,6 +25,11 @@ func GenKeyPair() (sk *big.Int, pk *bn256.G1Affine) {
 	return sk, pk
 }
 
+func (value *ElGamalEnc) Set(enc *ElGamalEnc) {
+	value.CL = new(bn256.G1Affine).Set(enc.CL)
+	value.CR = new(bn256.G1Affine).Set(enc.CR)
+}
+
 func GetPk(sk *big.Int) (pk *bn256.G1Affine) {
 	pk = bn128.G1ScalarBaseMult(sk)
 	return pk
