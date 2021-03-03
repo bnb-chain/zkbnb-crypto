@@ -1,11 +1,11 @@
 package zksneak_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/bulletProofs/bp_bn128"
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/sigmaProtocol/chaum-pedersen_bn128"
-	"ZKSneak/ZKSneak-crypto/sigmaProtocol/linear_bn128"
-	"ZKSneak/ZKSneak-crypto/sigmaProtocol/schnorr_bn128"
+	"ZKSneak-crypto/bulletProofs/bp_bn128"
+	"ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/sigmaProtocol/chaum-pedersen_bn128"
+	"ZKSneak-crypto/sigmaProtocol/linear_bn128"
+	"ZKSneak-crypto/sigmaProtocol/schnorr_bn128"
 	"errors"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
@@ -15,13 +15,13 @@ import (
 func (proof *ZKSneakTransferProof) ProveAnonEnc(relations []*ZKSneakTransferRelation) {
 	for _, relation := range relations {
 		zi, Ai := schnorr_bn128.Prove(relation.Witness.r, relation.Public.Pk, relation.Public.CDelta.CL)
-		proof.EncProofs = append(proof.EncProofs, &AnonEncProof{z: zi, A: Ai, R: relation.Public.CDelta.CL, g: relation.Public.Pk})
+		proof.EncProofs = append(proof.EncProofs, &AnonEncProof{Z: zi, A: Ai, R: relation.Public.CDelta.CL, G: relation.Public.Pk})
 	}
 }
 
 func (proof *ZKSneakTransferProof) VerifyAnonEnc() bool {
 	for _, encProof := range proof.EncProofs {
-		res := schnorr_bn128.Verify(encProof.z, encProof.A, encProof.R, encProof.g)
+		res := schnorr_bn128.Verify(encProof.Z, encProof.A, encProof.R, encProof.G)
 		if !res {
 			return false
 		}
@@ -39,17 +39,17 @@ func (proof *ZKSneakTransferProof) ProveAnonRange(statement *ZKSneakTransferStat
 			if relation.Witness.sk == nil || relation.Witness.bPrime == nil {
 				return errors.New("you cannot transfer funds to accounts that do not belong to you")
 			}
-			// u = C'_{i,r} / \tilde{C}_{i,r}
+			// U = C'_{i,r} / \tilde{C}_{i,r}
 			u := bn128.G1AffineMul(relation.Public.CPrime.CR, new(bn256.G1Affine).Neg(relation.Public.CTilde.CR))
 			w := new(bn256.G1Affine).ScalarMultiplication(u, relation.Witness.sk)
 			g := bn128.GetG1BaseAffine()
 			v := relation.Public.Pk
 			z, Vt, Wt := chaum_pedersen_bn128.Prove(relation.Witness.sk, g, u, v, w)
-			bulletProof, err := bp_bn128.Prove(relation.Witness.bPrime, statement.rStar, relation.Public.CTilde.CR, *params)
+			bulletProof, err := bp_bn128.Prove(relation.Witness.bPrime, statement.RStar, relation.Public.CTilde.CR, *params)
 			if err != nil {
 				return err
 			}
-			proof.RangeProofs = append(proof.RangeProofs, &AnonRangeProof{RangeProof: &bulletProof, SkProof: &ChaumPedersenProof{z: z, g: g, u: u, Vt: Vt, Wt: Wt, v: relation.Public.Pk, w: w}})
+			proof.RangeProofs = append(proof.RangeProofs, &AnonRangeProof{RangeProof: &bulletProof, SkProof: &ChaumPedersenProof{Z: z, G: g, U: u, Vt: Vt, Wt: Wt, V: relation.Public.Pk, W: w}})
 		} else {
 			bulletProof, err := bp_bn128.Prove(relation.Witness.bDelta, relation.Witness.r, relation.Public.CDelta.CR, *params)
 			if err != nil {
@@ -74,7 +74,7 @@ func (proof *ZKSneakTransferProof) VerifyAnonRange() bool {
 				return false
 			}
 			pedersenProof := rangeProof.SkProof
-			pedersenVerifyRes := chaum_pedersen_bn128.Verify(pedersenProof.z, pedersenProof.g, pedersenProof.u, pedersenProof.Vt, pedersenProof.Wt, pedersenProof.v, pedersenProof.w)
+			pedersenVerifyRes := chaum_pedersen_bn128.Verify(pedersenProof.Z, pedersenProof.G, pedersenProof.U, pedersenProof.Vt, pedersenProof.Wt, pedersenProof.V, pedersenProof.W)
 			if !pedersenVerifyRes {
 				return false
 			}
@@ -96,12 +96,12 @@ func (proof *ZKSneakTransferProof) ProveEqual(relations []*ZKSneakTransferRelati
 	}
 	uArr := []*bn256.G1Affine{bn128.GetG1InfinityPoint()}
 	zArr, UtArr := linear_bn128.Prove(xArr, gArr, uArr)
-	proof.EqualProof = &AnonEqualProof{zArr: zArr, gArr: gArr, UtArr: UtArr, uArr: uArr}
+	proof.EqualProof = &AnonEqualProof{ZArr: zArr, GArr: gArr, UtArr: UtArr, UArr: uArr}
 }
 
 func (proof *ZKSneakTransferProof) VerifyEqual() bool {
 	linearProof := proof.EqualProof
-	linearVerifyRes := linear_bn128.Verify(linearProof.zArr, linearProof.gArr, linearProof.uArr, linearProof.UtArr)
+	linearVerifyRes := linear_bn128.Verify(linearProof.ZArr, linearProof.GArr, linearProof.UArr, linearProof.UtArr)
 	if !linearVerifyRes {
 		return false
 	}

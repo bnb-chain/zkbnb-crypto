@@ -1,8 +1,8 @@
 package bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/ffmath"
-	"ZKSneak/ZKSneak-crypto/util"
+	"ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/util"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
 )

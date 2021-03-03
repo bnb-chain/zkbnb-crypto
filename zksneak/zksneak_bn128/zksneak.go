@@ -1,7 +1,7 @@
 package zksneak_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/bulletProofs/bp_bn128"
+	"ZKSneak-crypto/bulletProofs/bp_bn128"
 )
 
 func Setup(b int64) (BulletProofSetupParams, error) {
@@ -16,6 +16,6 @@ func ProveTransfer(statement *ZKSneakTransferStatement, params *BulletProofSetup
 	return proof, nil
 }
 
-func (proof *ZKSneakTransferProof) VerifyTransfer() bool {
+func (proof *ZKSneakTransferProof) Verify() bool {
 	return proof.VerifyAnonEnc() && proof.VerifyAnonRange() && proof.VerifyEqual()
 }

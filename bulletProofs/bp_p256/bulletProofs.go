@@ -1,8 +1,8 @@
 package bulletProofs
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/p256"
-	"ZKSneak/ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/ecc/p256"
+	"ZKSneak-crypto/ffmath"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -224,7 +224,7 @@ func Prove(secret *big.Int, params BulletProofSetupParams) (BulletProof, error) 
 }
 
 /*
-VerifyTransfer returns true if and only if the proof is valid.
+Verify returns true if and only if the proof is valid.
 */
 func (proof *BulletProof) Verify() (bool, error) {
 	params := proof.Params
@@ -310,7 +310,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 	rP.Add(rP, lP)
 	c67 := rP.IsZero()
 
-	// VerifyTransfer Inner Product Proof ################################################
+	// Verify Inner Product Proof ################################################
 	ok, _ := proof.InnerProductProof.Verify()
 
 	result := c65 && c67 && ok

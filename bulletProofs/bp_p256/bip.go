@@ -1,9 +1,9 @@
 package bulletProofs
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/p256"
-	"ZKSneak/ZKSneak-crypto/ffmath"
-	"ZKSneak/ZKSneak-crypto/util"
+	"ZKSneak-crypto/ecc/p256"
+	"ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/util"
 	"crypto/sha256"
 	"errors"
 	"math/big"
@@ -44,7 +44,7 @@ type InnerProductProof struct {
 
 /*
 SetupInnerProduct is responsible for computing the inner product basic parameters that are common to both
-ProveInnerProduct and VerifyTransfer algorithms.
+ProveInnerProduct and Verify algorithms.
 */
 func setupInnerProduct(H *p256.P256, g, h []*p256.P256, c *big.Int, N int64) (InnerProductParams, error) {
 	var params InnerProductParams
@@ -198,7 +198,7 @@ func computeBipRecursive(a, b []*big.Int, g, h []*p256.P256, u, P *p256.P256, n 
 }
 
 /*
-VerifyTransfer is responsible for the verification of the Inner Product Proof.
+Verify is responsible for the verification of the Inner Product Proof.
 */
 func (proof InnerProductProof) Verify() (bool, error) {
 

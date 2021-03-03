@@ -1,8 +1,8 @@
 package p256
 
 import (
-	"ZKSneak/ZKSneak-crypto/ffmath"
-	"ZKSneak/ZKSneak-crypto/util"
+	"ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"errors"

@@ -1,8 +1,8 @@
 package twistedElgamal_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/ecc/bn128"
-	"ZKSneak/ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/ecc/bn128"
+	"ZKSneak-crypto/ffmath"
 	"crypto/rand"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
@@ -23,6 +23,16 @@ func GenKeyPair() (sk *big.Int, pk *bn256.G1Affine) {
 	sk, _ = rand.Int(rand.Reader, ORDER)
 	pk = bn128.G1ScalarBaseMult(sk)
 	return sk, pk
+}
+
+func (value *ElGamalEnc) Set(enc *ElGamalEnc) {
+	value.CL = new(bn256.G1Affine).Set(enc.CL)
+	value.CR = new(bn256.G1Affine).Set(enc.CR)
+}
+
+func GetPk(sk *big.Int) (pk *bn256.G1Affine) {
+	pk = bn128.G1ScalarBaseMult(sk)
+	return pk
 }
 
 func Enc(b *big.Int, r *big.Int, pk *bn256.G1Affine) (*ElGamalEnc) {

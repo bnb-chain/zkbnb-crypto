@@ -1,9 +1,10 @@
 package zksneak_bn128
 
 import (
-	"ZKSneak/ZKSneak-crypto/bulletProofs/bp_bn128"
-	"ZKSneak/ZKSneak-crypto/elgamal/twistedElgamal_bn128"
+	"ZKSneak-crypto/bulletProofs/bp_bn128"
+	"ZKSneak-crypto/elgamal/twistedElgamal_bn128"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"math/big"
@@ -47,7 +48,11 @@ func TestProveVerify(t *testing.T) {
 	statement.AddRelation(C4, pk4, nil, b4Delta, nil)
 	params, _ := Setup(bp_bn128.MAX_RANGE_END)
 	proof, _ := ProveTransfer(statement, &params)
-	res := proof.VerifyTransfer()
+	proofBytes, _ := json.Marshal(proof)
+	var genProof *ZKSneakTransferProof
+	json.Unmarshal(proofBytes, &genProof)
+	fmt.Println("gen proof:", genProof.EncProofs[0])
+	res := genProof.Verify()
 	sks := []*big.Int{sk1, sk2, sk3, sk4}
 	if res {
 		for i, relation := range statement.Relations {
