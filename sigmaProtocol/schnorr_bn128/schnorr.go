@@ -8,7 +8,7 @@ import (
 	"math/big"
 )
 
-// want to prove r = base^x
+// want to prove R = base^x
 func Prove(x *big.Int, base *bn256.G1Affine, R *bn256.G1Affine) (z *big.Int, A *bn256.G1Affine) {
 	// r
 	r, _ := rand.Int(rand.Reader, ORDER)

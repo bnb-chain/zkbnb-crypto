@@ -11,7 +11,7 @@ import (
 	"math/big"
 )
 
-// prove CL
+// prove CL = pk^r
 func (proof *ZKSneakTransferProof) ProveAnonEnc(relations []*ZKSneakTransferRelation) {
 	for _, relation := range relations {
 		zi, Ai := schnorr_bn128.Prove(relation.Witness.r, relation.Public.Pk, relation.Public.CDelta.CL)

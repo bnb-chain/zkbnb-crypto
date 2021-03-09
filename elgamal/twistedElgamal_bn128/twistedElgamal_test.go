@@ -12,7 +12,7 @@ import (
 func TestEncDec(t *testing.T) {
 	sk, pk := GenKeyPair()
 	fmt.Println("pk len:", len(pk.Bytes()))
-	b := big.NewInt(int64(6))
+	b := big.NewInt(100000)
 	r, _ := rand.Int(rand.Reader, ORDER)
 	enc := Enc(b, r, pk)
 	encBytes, _ := json.Marshal(enc)
