@@ -2,31 +2,31 @@ package okamoto
 
 import (
 	"ZKSneak-crypto/ecc/zbn256"
-	"ZKSneak-crypto/math/bn256/ffmath"
+	"ZKSneak-crypto/ffmath"
 	"github.com/consensys/gurvy/bn256"
-	"github.com/consensys/gurvy/bn256/fr"
+	"math/big"
 )
 
 // prove \alpha,\beta st. U = g^{\alpha} h^{\beta}
-func Prove(alpha, beta *fr.Element, g, h *bn256.G1Affine, U *bn256.G1Affine) (a, z *fr.Element, A *bn256.G1Affine) {
+func Prove(alpha, beta *big.Int, g, h *bn256.G1Affine, U *bn256.G1Affine) (a, z *big.Int, A *bn256.G1Affine) {
 	// at,bt \gets_R Z_p
-	at, _ := new(fr.Element).SetRandom()
-	bt, _ := new(fr.Element).SetRandom()
+	at := zbn256.RandomValue()
+	bt := zbn256.RandomValue()
 	// A = g^a h^b
-	A = zbn256.G1AffineMul(zbn256.G1ScalarBaseMult(at), zbn256.G1ScalarHBaseMult(bt))
+	A = zbn256.G1Add(zbn256.G1ScalarBaseMult(at), zbn256.G1ScalarHBaseMult(bt))
 	// c = H(A,U)
 	c := HashOkamoto(A, U)
 	// a = at + c * alpha, z = bt + c * beta
-	a = ffmath.Add(at, ffmath.Multiply(c, alpha))
-	z = ffmath.Add(bt, ffmath.Multiply(c, beta))
+	a = ffmath.AddMod(at, ffmath.MultiplyMod(c, alpha, Order), Order)
+	z = ffmath.AddMod(bt, ffmath.MultiplyMod(c, beta, Order), Order)
 	return a, z, A
 }
 
-func Verify(a, z *fr.Element, g, h, A, U *bn256.G1Affine) bool {
+func Verify(a, z *big.Int, g, h, A, U *bn256.G1Affine) bool {
 	// cal c = H(A,U)
 	c := HashOkamoto(A, U)
 	// check if g^a h^z = A * U^c
-	l := zbn256.G1AffineMul(zbn256.G1ScalarBaseMult(a), zbn256.G1ScalarHBaseMult(z))
-	r := zbn256.G1AffineMul(A, zbn256.G1ScalarMult(U, c))
+	l := zbn256.G1Add(zbn256.G1ScalarBaseMult(a), zbn256.G1ScalarHBaseMult(z))
+	r := zbn256.G1Add(A, zbn256.G1ScalarMult(U, c))
 	return l.Equal(r)
 }

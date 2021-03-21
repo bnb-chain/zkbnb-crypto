@@ -1,25 +1,22 @@
 package bp_bn128
 
 import (
-	"ZKSneak-crypto/elgamal/twistedElgamal_bn128"
-	"crypto/rand"
+	"ZKSneak-crypto/elgamal/bn256/twistedElgamal"
 	"encoding/json"
 	"github.com/consensys/gurvy/bn256"
+	"github.com/consensys/gurvy/bn256/fr"
 	"github.com/stretchr/testify/assert"
-	"math"
-	"math/big"
 	"testing"
 )
 
 func TestXWithinRange(t *testing.T) {
-	rangeEnd := int64(math.Pow(2, 32))
-	x := new(big.Int).SetInt64(3)
-	params := setupRange(t, rangeEnd)
+	x := new(fr.Element).SetUint64(3)
+	params := setupRange(t, MAX_RANGE_END)
 	// commitment to v and gamma
-	gamma, _ := rand.Int(rand.Reader, ORDER)
+	gamma, _ := new(fr.Element).SetRandom()
 	//V, _ := CommitG1(x, gamma, params.H)
-	_, pk := twistedElgamal_bn128.GenKeyPair()
-	C := twistedElgamal_bn128.Enc(x, gamma, pk)
+	_, pk := twistedElgamal.GenKeyPair()
+	C := twistedElgamal.Enc(x, gamma, pk)
 	if proveAndVerifyRange(x, gamma, C.CR, params) != true {
 		t.Errorf("x within range should verify successfully")
 	}
@@ -27,9 +24,9 @@ func TestXWithinRange(t *testing.T) {
 
 func TestJsonEncodeDecode(t *testing.T) {
 	params, _ := Setup(MAX_RANGE_END)
-	secret := new(big.Int).SetInt64(18)
+	secret := new(fr.Element).SetUint64(18)
 	// commitment to v and gamma
-	gamma, _ := rand.Int(rand.Reader, ORDER)
+	gamma, _ := new(fr.Element).SetRandom()
 	V, _ := CommitG1(secret, gamma, params.H)
 	proof, _ := Prove(secret, gamma, V, params)
 	jsonEncoded, err := json.Marshal(proof)
@@ -63,7 +60,7 @@ func setupRange(t *testing.T, rangeEnd int64) BulletProofSetupParams {
 	return params
 }
 
-func proveAndVerifyRange(x *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProofSetupParams) bool {
+func proveAndVerifyRange(x *fr.Element, gamma *fr.Element, V *bn256.G1Affine, params BulletProofSetupParams) bool {
 	proof, _ := Prove(x, gamma, V, params)
 	ok, _ := proof.Verify()
 	return ok

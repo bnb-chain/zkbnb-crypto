@@ -1,7 +1,7 @@
 package bulletProofs
 
 import (
-	"ZKSneak-crypto/ecc/p256"
+	"ZKSneak-crypto/ecc/zp256"
 	"ZKSneak-crypto/ffmath"
 	"ZKSneak-crypto/util"
 	"crypto/sha256"
@@ -19,11 +19,11 @@ commitments.
 type InnerProductParams struct {
 	N  int64
 	Cc *big.Int
-	Uu *p256.P256
-	H  *p256.P256
-	Gg []*p256.P256
-	Hh []*p256.P256
-	P  *p256.P256
+	Uu *zp256.P256
+	H  *zp256.P256
+	Gg []*zp256.P256
+	Hh []*zp256.P256
+	P  *zp256.P256
 }
 
 /*
@@ -31,12 +31,12 @@ InnerProductProof contains the elements used to verify the Inner Product Proof.
 */
 type InnerProductProof struct {
 	N      int64
-	Ls     []*p256.P256
-	Rs     []*p256.P256
-	U      *p256.P256
-	P      *p256.P256
-	Gg     *p256.P256
-	Hh     *p256.P256
+	Ls     []*zp256.P256
+	Rs     []*zp256.P256
+	U      *zp256.P256
+	P      *zp256.P256
+	Gg     *zp256.P256
+	Hh     *zp256.P256
 	A      *big.Int
 	B      *big.Int
 	Params InnerProductParams
@@ -46,7 +46,7 @@ type InnerProductProof struct {
 SetupInnerProduct is responsible for computing the inner product basic parameters that are common to both
 ProveInnerProduct and Verify algorithms.
 */
-func setupInnerProduct(H *p256.P256, g, h []*p256.P256, c *big.Int, N int64) (InnerProductParams, error) {
+func setupInnerProduct(H *zp256.P256, g, h []*zp256.P256, c *big.Int, N int64) (InnerProductParams, error) {
 	var params InnerProductParams
 
 	if N <= 0 {
@@ -55,29 +55,29 @@ func setupInnerProduct(H *p256.P256, g, h []*p256.P256, c *big.Int, N int64) (In
 		params.N = N
 	}
 	if H == nil {
-		params.H, _ = p256.MapToGroup(SEEDH)
+		params.H, _ = zp256.MapToGroup(SEEDH)
 	} else {
 		params.H = H
 	}
 	if g == nil {
-		params.Gg = make([]*p256.P256, params.N)
+		params.Gg = make([]*zp256.P256, params.N)
 		for i := int64(0); i < params.N; i++ {
-			params.Gg[i], _ = p256.MapToGroup(SEEDH + "g" + strconv.FormatInt(i,10))
+			params.Gg[i], _ = zp256.MapToGroup(SEEDH + "g" + strconv.FormatInt(i, 10))
 		}
 	} else {
 		params.Gg = g
 	}
 	if h == nil {
-		params.Hh = make([]*p256.P256, params.N)
+		params.Hh = make([]*zp256.P256, params.N)
 		for i := int64(0); i < params.N; i++ {
-			params.Hh[i], _ = p256.MapToGroup(SEEDH + "h" + strconv.FormatInt(i,10))
+			params.Hh[i], _ = zp256.MapToGroup(SEEDH + "h" + strconv.FormatInt(i, 10))
 		}
 	} else {
 		params.Hh = h
 	}
 	params.Cc = c
-	params.Uu, _ = p256.MapToGroup(SEEDU)
-	params.P = new(p256.P256).SetInfinity()
+	params.Uu, _ = zp256.MapToGroup(SEEDU)
+	params.P = new(zp256.P256).SetInfinity()
 
 	return params, nil
 }
@@ -85,12 +85,12 @@ func setupInnerProduct(H *p256.P256, g, h []*p256.P256, c *big.Int, N int64) (In
 /*
 proveInnerProduct calculates the Zero Knowledge Proof for the Inner Product argument.
 */
-func proveInnerProduct(a, b []*big.Int, P *p256.P256, params InnerProductParams) (InnerProductProof, error) {
+func proveInnerProduct(a, b []*big.Int, P *zp256.P256, params InnerProductParams) (InnerProductProof, error) {
 	var (
 		proof InnerProductProof
 		n, m  int64
-		Ls    []*p256.P256
-		Rs    []*p256.P256
+		Ls    []*zp256.P256
+		Rs    []*zp256.P256
 	)
 
 	n = int64(len(a))
@@ -104,9 +104,9 @@ func proveInnerProduct(a, b []*big.Int, P *p256.P256, params InnerProductParams)
 	// x = Hash(g,h,P,c)
 	x, _ := hashIP(params.Gg, params.Hh, P, params.Cc, params.N)
 	// Pprime = P.u^(x.c)
-	ux := new(p256.P256).ScalarMult(params.Uu, x)
-	uxc := new(p256.P256).ScalarMult(ux, params.Cc)
-	PP := new(p256.P256).Multiply(P, uxc)
+	ux := new(zp256.P256).ScalarMult(params.Uu, x)
+	uxc := new(zp256.P256).ScalarMult(ux, params.Cc)
+	PP := new(zp256.P256).Multiply(P, uxc)
 	// Execute Protocol 2 recursively
 	proof = computeBipRecursive(a, b, params.Gg, params.Hh, ux, PP, n, Ls, Rs)
 	proof.Params = params
@@ -117,12 +117,12 @@ func proveInnerProduct(a, b []*big.Int, P *p256.P256, params InnerProductParams)
 /*
 computeBipRecursive is the main recursive function that will be used to compute the inner product argument.
 */
-func computeBipRecursive(a, b []*big.Int, g, h []*p256.P256, u, P *p256.P256, n int64, Ls, Rs []*p256.P256) InnerProductProof {
+func computeBipRecursive(a, b []*big.Int, g, h []*zp256.P256, u, P *zp256.P256, n int64, Ls, Rs []*zp256.P256) InnerProductProof {
 	var (
 		proof                            InnerProductProof
 		cL, cR, x, xinv, x2, x2inv       *big.Int
-		L, R, Lh, Rh, Pprime             *p256.P256
-		gprime, hprime, gprime2, hprime2 []*p256.P256
+		L, R, Lh, Rh, Pprime             *zp256.P256
+		gprime, hprime, gprime2, hprime2 []*zp256.P256
 		aprime, bprime, aprime2, bprime2 []*big.Int
 	)
 
@@ -151,13 +151,13 @@ func computeBipRecursive(a, b []*big.Int, g, h []*p256.P256, u, P *p256.P256, n 
 		L, _ = VectorExp(g[nprime:], a[:nprime])
 		Lh, _ = VectorExp(h[:nprime], b[nprime:])
 		L.Multiply(L, Lh)
-		L.Multiply(L, new(p256.P256).ScalarMult(u, cL))
+		L.Multiply(L, new(zp256.P256).ScalarMult(u, cL))
 
 		// Compute r = g[:n']^(a[n':]).h[n':]^(b[:n']).u^cR                   // (24)
 		R, _ = VectorExp(g[:nprime], a[nprime:])
 		Rh, _ = VectorExp(h[nprime:], b[:nprime])
 		R.Multiply(R, Rh)
-		R.Multiply(R, new(p256.P256).ScalarMult(u, cR))
+		R.Multiply(R, new(zp256.P256).ScalarMult(u, cR))
 
 		// Fiat-Shamir:                                                       // (26)
 		x, _, _ = HashBP(L, R)
@@ -175,9 +175,9 @@ func computeBipRecursive(a, b []*big.Int, g, h []*p256.P256, u, P *p256.P256, n 
 		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.Mod(ffmath.Multiply(x, x), ORDER)
 		x2inv = ffmath.ModInverse(x2, ORDER)
-		Pprime = new(p256.P256).ScalarMult(L, x2)
+		Pprime = new(zp256.P256).ScalarMult(L, x2)
 		Pprime.Multiply(Pprime, P)
-		Pprime.Multiply(Pprime, new(p256.P256).ScalarMult(R, x2inv))
+		Pprime.Multiply(Pprime, new(zp256.P256).ScalarMult(R, x2inv))
 
 		// Compute a' = a[:n'].x      + a[n':].x^(-1)                         // (33)
 		aprime, _ = VectorScalarMul(a[:nprime], x)
@@ -205,7 +205,7 @@ func (proof InnerProductProof) Verify() (bool, error) {
 	logn := len(proof.Ls)
 	var (
 		x, xinv, x2, x2inv                   *big.Int
-		ngprime, nhprime, ngprime2, nhprime2 []*p256.P256
+		ngprime, nhprime, ngprime2, nhprime2 []*zp256.P256
 	)
 
 	gprime := proof.Params.Gg
@@ -227,18 +227,18 @@ func (proof InnerProductProof) Verify() (bool, error) {
 		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.Mod(ffmath.Multiply(x, x), ORDER)
 		x2inv = ffmath.ModInverse(x2, ORDER)
-		Pprime.Multiply(Pprime, new(p256.P256).ScalarMult(proof.Ls[i], x2))
-		Pprime.Multiply(Pprime, new(p256.P256).ScalarMult(proof.Rs[i], x2inv))
+		Pprime.Multiply(Pprime, new(zp256.P256).ScalarMult(proof.Ls[i], x2))
+		Pprime.Multiply(Pprime, new(zp256.P256).ScalarMult(proof.Rs[i], x2inv))
 	}
 
 	// c == a*b and checks if P = g^a.h^b.u^c                                     // (16)
 	ab := ffmath.Multiply(proof.A, proof.B)
 	ab = ffmath.Mod(ab, ORDER)
 	// Compute right hand side
-	rhs := new(p256.P256).ScalarMult(gprime[0], proof.A)
-	hb := new(p256.P256).ScalarMult(hprime[0], proof.B)
+	rhs := new(zp256.P256).ScalarMult(gprime[0], proof.A)
+	hb := new(zp256.P256).ScalarMult(hprime[0], proof.B)
 	rhs.Multiply(rhs, hb)
-	rhs.Multiply(rhs, new(p256.P256).ScalarMult(proof.U, ab))
+	rhs.Multiply(rhs, new(zp256.P256).ScalarMult(proof.U, ab))
 	// Compute inverse of left hand side
 	nP := Pprime.Neg(Pprime)
 	nP.Multiply(nP, rhs)
@@ -251,7 +251,7 @@ func (proof InnerProductProof) Verify() (bool, error) {
 /*
 hashIP is responsible for the computing a Zp element given elements from GT and G1.
 */
-func hashIP(g, h []*p256.P256, P *p256.P256, c *big.Int, n int64) (*big.Int, error) {
+func hashIP(g, h []*zp256.P256, P *zp256.P256, c *big.Int, n int64) (*big.Int, error) {
 	digest := sha256.New()
 	digest.Write([]byte(P.String()))
 
@@ -271,29 +271,29 @@ func hashIP(g, h []*p256.P256, P *p256.P256, c *big.Int, n int64) (*big.Int, err
 /*
 commitInnerProduct is responsible for calculating g^a.h^b.
 */
-func commitInnerProduct(g, h []*p256.P256, a, b []*big.Int) *p256.P256 {
+func commitInnerProduct(g, h []*zp256.P256, a, b []*big.Int) *zp256.P256 {
 	var (
-		result *p256.P256
+		result *zp256.P256
 	)
 
 	ga, _ := VectorExp(g, a)
 	hb, _ := VectorExp(h, b)
-	result = new(p256.P256).Multiply(ga, hb)
+	result = new(zp256.P256).Multiply(ga, hb)
 	return result
 }
 
 /*
 VectorScalarExp computes a[i]^b for each i.
 */
-func vectorScalarExp(a []*p256.P256, b *big.Int) []*p256.P256 {
+func vectorScalarExp(a []*zp256.P256, b *big.Int) []*zp256.P256 {
 	var (
-		result []*p256.P256
+		result []*zp256.P256
 		n      int64
 	)
 	n = int64(len(a))
-	result = make([]*p256.P256, n)
+	result = make([]*zp256.P256, n)
 	for i := int64(0); i < n; i++ {
-		result[i] = new(p256.P256).ScalarMult(a[i], b)
+		result[i] = new(zp256.P256).ScalarMult(a[i], b)
 	}
 	return result
 }

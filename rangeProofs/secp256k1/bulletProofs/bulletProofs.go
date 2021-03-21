@@ -1,8 +1,8 @@
 package bulletProofs
 
 import (
-	"ZKSneak-crypto/ecc/p256"
-	"ZKSneak-crypto/ffmath"
+	"ZKSneak-crypto/ecc/zp256"
+	localMath "ZKSneak-crypto/ffmath"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-var ORDER = p256.CURVE.N
+var ORDER = zp256.Curve.N
 var SEEDH = "ZKSneakBulletproofsSetupH"
 
 /*
@@ -22,14 +22,14 @@ type BulletProofSetupParams struct {
 	// N is the bit-length of the range.
 	N int64
 	// G is the Elliptic Curve generator.
-	G *p256.P256
+	G *zp256.P256
 	// H is a new generator, computed using MapToGroup function,
 	// such that there is no discrete logarithm relation with G.
-	H *p256.P256
+	H *zp256.P256
 	// Gg and Hh are sets of new generators obtained using MapToGroup.
 	// They are used to compute Pedersen Vector Commitments.
-	Gg []*p256.P256
-	Hh []*p256.P256
+	Gg []*zp256.P256
+	Hh []*zp256.P256
 	// InnerProductParams is the setup parameters for the inner product proof.
 	InnerProductParams InnerProductParams
 }
@@ -39,16 +39,16 @@ BulletProofs structure contains the elements that are necessary for the verifica
 of the Zero Knowledge Proof.
 */
 type BulletProof struct {
-	V                 *p256.P256
-	A                 *p256.P256
-	S                 *p256.P256
-	T1                *p256.P256
-	T2                *p256.P256
+	V                 *zp256.P256
+	A                 *zp256.P256
+	S                 *zp256.P256
+	T1                *zp256.P256
+	T2                *zp256.P256
 	Taux              *big.Int
 	Mu                *big.Int
 	Tprime            *big.Int
 	InnerProductProof InnerProductProof
-	Commit            *p256.P256
+	Commit            *zp256.P256
 	Params            BulletProofSetupParams
 }
 
@@ -63,8 +63,8 @@ func Setup(b int64) (BulletProofSetupParams, error) {
 	}
 
 	params := BulletProofSetupParams{}
-	params.G = new(p256.P256).ScalarBaseMult(new(big.Int).SetInt64(1))
-	params.H, _ = p256.MapToGroup(SEEDH)
+	params.G = new(zp256.P256).ScalarBaseMult(new(big.Int).SetInt64(1))
+	params.H, _ = zp256.MapToGroup(SEEDH)
 	params.N = int64(math.Log2(float64(b)))
 	if !IsPowerOfTwo(params.N) {
 		return BulletProofSetupParams{}, fmt.Errorf("range end is a power of 2, but it's exponent should also be. Exponent: %d", params.N)
@@ -72,11 +72,11 @@ func Setup(b int64) (BulletProofSetupParams, error) {
 	if params.N > 32 {
 		return BulletProofSetupParams{}, errors.New("range end can not be greater than 2**32")
 	}
-	params.Gg = make([]*p256.P256, params.N)
-	params.Hh = make([]*p256.P256, params.N)
+	params.Gg = make([]*zp256.P256, params.N)
+	params.Hh = make([]*zp256.P256, params.N)
 	for i := int64(0); i < params.N; i++ {
-		params.Gg[i], _ = p256.MapToGroup(SEEDH + "g" + strconv.FormatInt(i,10))
-		params.Hh[i], _ = p256.MapToGroup(SEEDH + "h" + strconv.FormatInt(i,10))
+		params.Gg[i], _ = zp256.MapToGroup(SEEDH + "g" + strconv.FormatInt(i, 10))
+		params.Hh[i], _ = zp256.MapToGroup(SEEDH + "h" + strconv.FormatInt(i, 10))
 	}
 	return params, nil
 }
@@ -144,18 +144,18 @@ func Prove(secret *big.Int, params BulletProofSetupParams) (BulletProof, error) 
 	// Add z^2.2^n to the result
 	// z^2 . 2^n
 	p2n := powerOf(new(big.Int).SetInt64(2), params.N)
-	zsquared := ffmath.Multiply(z, z)
+	zsquared := localMath.Multiply(z, z)
 	z22n, _ := VectorScalarMul(p2n, zsquared)
 	ynaRzn, _ = VectorAdd(ynaRzn, z22n)
 	sp2, _ := ScalarProduct(sL, ynaRzn)
 
 	// sp1 + sp2
-	t1 := ffmath.Add(sp1, sp2)
-	t1 = ffmath.Mod(t1, ORDER)
+	t1 := localMath.Add(sp1, sp2)
+	t1 = localMath.Mod(t1, ORDER)
 
 	// compute t2: < sL, y^n . sR >
 	t2, _ := ScalarProduct(sL, ynsR)
-	t2 = ffmath.Mod(t2, ORDER)
+	t2 = localMath.Mod(t2, ORDER)
 
 	// compute T1
 	T1, _ := CommitG1(t1, tau1, params.H) // (53)
@@ -186,15 +186,15 @@ func Prove(secret *big.Int, params BulletProofSetupParams) (BulletProof, error) 
 	tprime, _ := ScalarProduct(bl, br)
 
 	// Compute taux = tau2 . x^2 + tau1 . x + z^2 . gamma                  // (61)
-	taux := ffmath.Multiply(tau2, ffmath.Multiply(x, x))
-	taux = ffmath.Add(taux, ffmath.Multiply(tau1, x))
-	taux = ffmath.Add(taux, ffmath.Multiply(ffmath.Multiply(z, z), gamma))
-	taux = ffmath.Mod(taux, ORDER)
+	taux := localMath.Multiply(tau2, localMath.Multiply(x, x))
+	taux = localMath.Add(taux, localMath.Multiply(tau1, x))
+	taux = localMath.Add(taux, localMath.Multiply(localMath.Multiply(z, z), gamma))
+	taux = localMath.Mod(taux, ORDER)
 
 	// Compute mu = alpha + rho.x                                          // (62)
-	mu := ffmath.Multiply(rho, x)
-	mu = ffmath.Add(mu, alpha)
-	mu = ffmath.Mod(mu, ORDER)
+	mu := localMath.Multiply(rho, x)
+	mu = localMath.Add(mu, alpha)
+	mu = localMath.Mod(mu, ORDER)
 
 	// Inner Product over (g, h', P.h^-mu, tprime)
 	hprime := updateGenerators(params.Hh, y, params.N)
@@ -243,21 +243,21 @@ func (proof *BulletProof) Verify() (bool, error) {
 	lhs, _ := CommitG1(proof.Tprime, proof.Taux, params.H)
 
 	// Compute right hand side
-	z2 := ffmath.Multiply(z, z)
-	z2 = ffmath.Mod(z2, ORDER)
-	x2 := ffmath.Multiply(x, x)
-	x2 = ffmath.Mod(x2, ORDER)
+	z2 := localMath.Multiply(z, z)
+	z2 = localMath.Mod(z2, ORDER)
+	x2 := localMath.Multiply(x, x)
+	x2 = localMath.Mod(x2, ORDER)
 
-	rhs := new(p256.P256).ScalarMult(proof.V, z2)
+	rhs := new(zp256.P256).ScalarMult(proof.V, z2)
 
 	delta := params.delta(y, z)
 
-	gdelta := new(p256.P256).ScalarBaseMult(delta)
+	gdelta := new(zp256.P256).ScalarBaseMult(delta)
 
 	rhs.Multiply(rhs, gdelta)
 
-	T1x := new(p256.P256).ScalarMult(proof.T1, x)
-	T2x2 := new(p256.P256).ScalarMult(proof.T2, x2)
+	T1x := new(zp256.P256).ScalarMult(proof.T1, x)
+	T2x2 := new(zp256.P256).ScalarMult(proof.T2, x2)
 
 	rhs.Multiply(rhs, T1x)
 	rhs.Multiply(rhs, T2x2)
@@ -270,12 +270,12 @@ func (proof *BulletProof) Verify() (bool, error) {
 	// Compute P - lhs  #################### Condition (66) ######################
 
 	// S^x
-	Sx := new(p256.P256).ScalarMult(proof.S, x)
+	Sx := new(zp256.P256).ScalarMult(proof.S, x)
 	// A.S^x
-	ASx := new(p256.P256).Add(proof.A, Sx)
+	ASx := new(zp256.P256).Add(proof.A, Sx)
 
 	// g^-z
-	mz := ffmath.Sub(ORDER, z)
+	mz := localMath.Sub(ORDER, z)
 	vmz, _ := VectorCopy(mz, params.N)
 	gpmz, _ := VectorExp(params.Gg, vmz)
 
@@ -285,13 +285,13 @@ func (proof *BulletProof) Verify() (bool, error) {
 	zyn, _ := VectorMul(vy, vz)
 
 	p2n := powerOf(new(big.Int).SetInt64(2), params.N)
-	zsquared := ffmath.Multiply(z, z)
+	zsquared := localMath.Multiply(z, z)
 	z22n, _ := VectorScalarMul(p2n, zsquared)
 
 	// z.y^n + z^2.2^n
 	zynz22n, _ := VectorAdd(zyn, z22n)
 
-	lP := new(p256.P256)
+	lP := new(zp256.P256)
 	lP.Add(ASx, gpmz)
 
 	// h'^(z.y^n + z^2.2^n)
@@ -302,7 +302,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 	// Compute P - rhs  #################### Condition (67) ######################
 
 	// h^mu
-	rP := new(p256.P256).ScalarMult(params.H, proof.Mu)
+	rP := new(zp256.P256).ScalarMult(params.H, proof.Mu)
 	rP.Multiply(rP, proof.Commit)
 
 	// Subtract lhs and rhs and compare with poitn at infinity
@@ -336,20 +336,20 @@ vector of generators. This method is used both by prover and verifier. After thi
 update we have that A is a vector commitments to (aL, aR . y^n). Also S is a vector
 commitment to (sL, sR . y^n).
 */
-func updateGenerators(Hh []*p256.P256, y *big.Int, N int64) []*p256.P256 {
+func updateGenerators(Hh []*zp256.P256, y *big.Int, N int64) []*zp256.P256 {
 	var (
 		i int64
 	)
 	// Compute h'                                                          // (64)
-	hprime := make([]*p256.P256, N)
+	hprime := make([]*zp256.P256, N)
 	// Switch generators
-	yinv := ffmath.ModInverse(y, ORDER)
+	yinv := localMath.ModInverse(y, ORDER)
 	expy := yinv
 	hprime[0] = Hh[0]
 	i = 1
 	for i < N {
-		hprime[i] = new(p256.P256).ScalarMult(Hh[i], expy)
-		expy = ffmath.Multiply(expy, yinv)
+		hprime[i] = new(zp256.P256).ScalarMult(Hh[i], expy)
+		expy = localMath.Multiply(expy, yinv)
 		i = i + 1
 	}
 	return hprime
@@ -372,12 +372,12 @@ func computeAR(x []int64) ([]int64, error) {
 	return result, nil
 }
 
-func commitVectorBig(aL, aR []*big.Int, alpha *big.Int, H *p256.P256, g, h []*p256.P256, n int64) *p256.P256 {
+func commitVectorBig(aL, aR []*big.Int, alpha *big.Int, H *zp256.P256, g, h []*zp256.P256, n int64) *zp256.P256 {
 	// Compute h^alpha.vg^aL.vh^aR
-	R := new(p256.P256).ScalarMult(H, alpha)
+	R := new(zp256.P256).ScalarMult(H, alpha)
 	for i := int64(0); i < n; i++ {
-		R.Multiply(R, new(p256.P256).ScalarMult(g[i], aL[i]))
-		R.Multiply(R, new(p256.P256).ScalarMult(h[i], aR[i]))
+		R.Multiply(R, new(zp256.P256).ScalarMult(g[i], aL[i]))
+		R.Multiply(R, new(zp256.P256).ScalarMult(h[i], aR[i]))
 	}
 	return R
 }
@@ -385,12 +385,12 @@ func commitVectorBig(aL, aR []*big.Int, alpha *big.Int, H *p256.P256, g, h []*p2
 /*
 Commitvector computes a commitment to the bit of the secret.
 */
-func commitVector(aL, aR []int64, alpha *big.Int, H *p256.P256, g, h []*p256.P256, n int64) *p256.P256 {
+func commitVector(aL, aR []int64, alpha *big.Int, H *zp256.P256, g, h []*zp256.P256, n int64) *zp256.P256 {
 	// Compute h^alpha.vg^aL.vh^aR
-	R := new(p256.P256).ScalarMult(H, alpha)
+	R := new(zp256.P256).ScalarMult(H, alpha)
 	for i := int64(0); i < n; i++ {
-		gaL := new(p256.P256).ScalarMult(g[i], new(big.Int).SetInt64(aL[i]))
-		haR := new(p256.P256).ScalarMult(h[i], new(big.Int).SetInt64(aR[i]))
+		gaL := new(zp256.P256).ScalarMult(g[i], new(big.Int).SetInt64(aL[i]))
+		haR := new(zp256.P256).ScalarMult(h[i], new(big.Int).SetInt64(aR[i]))
 		R.Multiply(R, gaL)
 		R.Multiply(R, haR)
 	}
@@ -405,10 +405,10 @@ func (params *BulletProofSetupParams) delta(y, z *big.Int) *big.Int {
 		result *big.Int
 	)
 	// delta(y,z) = (z-z^2) . < 1^n, y^n > - z^3 . < 1^n, 2^n >
-	z2 := ffmath.Multiply(z, z)
-	z2 = ffmath.Mod(z2, ORDER)
-	z3 := ffmath.Multiply(z2, z)
-	z3 = ffmath.Mod(z3, ORDER)
+	z2 := localMath.Multiply(z, z)
+	z2 = localMath.Mod(z2, ORDER)
+	z3 := localMath.Multiply(z2, z)
+	z3 = localMath.Mod(z3, ORDER)
 
 	// < 1^n, y^n >
 	v1, _ := VectorCopy(new(big.Int).SetInt64(1), params.N)
@@ -419,12 +419,12 @@ func (params *BulletProofSetupParams) delta(y, z *big.Int) *big.Int {
 	p2n := powerOf(new(big.Int).SetInt64(2), params.N)
 	sp12, _ := ScalarProduct(v1, p2n)
 
-	result = ffmath.Sub(z, z2)
-	result = ffmath.Mod(result, ORDER)
-	result = ffmath.Multiply(result, sp1y)
-	result = ffmath.Mod(result, ORDER)
-	result = ffmath.Sub(result, ffmath.Multiply(z3, sp12))
-	result = ffmath.Mod(result, ORDER)
+	result = localMath.Sub(z, z2)
+	result = localMath.Mod(result, ORDER)
+	result = localMath.Multiply(result, sp1y)
+	result = localMath.Mod(result, ORDER)
+	result = localMath.Sub(result, localMath.Multiply(z3, sp12))
+	result = localMath.Mod(result, ORDER)
 
 	return result
 }

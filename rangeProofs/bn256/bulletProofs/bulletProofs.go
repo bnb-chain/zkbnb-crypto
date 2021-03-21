@@ -1,12 +1,12 @@
 package bp_bn128
 
 import (
-	"ZKSneak-crypto/ecc/bn128"
-	"ZKSneak-crypto/ffmath"
-	"crypto/rand"
+	"ZKSneak-crypto/ecc/zbn256"
+	"ZKSneak-crypto/math/bn256/ffmath"
 	"errors"
 	"fmt"
 	"github.com/consensys/gurvy/bn256"
+	"github.com/consensys/gurvy/bn256/fr"
 	"math"
 	"math/big"
 	"strconv"
@@ -22,7 +22,7 @@ func Setup(b int64) (BulletProofSetupParams, error) {
 	}
 
 	params := BulletProofSetupParams{}
-	params.H, params.G = bn128.GetG1TwoBaseAffine()
+	params.H, params.G = zbn256.GetG1TwoBaseAffine()
 	params.N = int64(math.Log2(float64(b)))
 	if !IsPowerOfTwo(params.N) {
 		return BulletProofSetupParams{}, fmt.Errorf("range end is a power of 2, but it's exponent should also be. Exponent: %d", params.N)
@@ -33,8 +33,8 @@ func Setup(b int64) (BulletProofSetupParams, error) {
 	params.Gg = make([]*bn256.G1Affine, params.N)
 	params.Hh = make([]*bn256.G1Affine, params.N)
 	for i := int64(0); i < params.N; i++ {
-		params.Gg[i], _ = bn128.HashToG1(SEEDH + "g" + strconv.FormatInt(i, 10))
-		params.Hh[i], _ = bn128.HashToG1(SEEDH + "h" + strconv.FormatInt(i, 10))
+		params.Gg[i], _ = zbn256.HashToG1(SEEDH + "g" + strconv.FormatInt(i, 10))
+		params.Hh[i], _ = zbn256.HashToG1(SEEDH + "h" + strconv.FormatInt(i, 10))
 	}
 	return params, nil
 }
@@ -44,7 +44,7 @@ Prove computes the ZK rangeproof. The documentation and comments are based on
 eprint version of Bulletproofs papers:
 https://eprint.iacr.org/2017/1066.pdf
 */
-func Prove(secret *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProofSetupParams) (BulletProof, error) {
+func Prove(secret *fr.Element, gamma *fr.Element, V *bn256.G1Affine, params BulletProofSetupParams) (BulletProof, error) {
 	var (
 		proof BulletProof
 	)
@@ -52,13 +52,13 @@ func Prove(secret *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProo
 	// aL, aR and commitment: (A, alpha)
 	aL, _ := Decompose(secret, 2, params.N)                                    // (41)
 	aR, _ := computeAR(aL)                                                     // (42)
-	alpha, _ := rand.Int(rand.Reader, ORDER)                                   // (43)
+	alpha, _ := new(fr.Element).SetRandom()                                    // (43)
 	A := commitVector(aL, aR, alpha, params.H, params.Gg, params.Hh, params.N) // (44)
 
 	// sL, sR and commitment: (S, rho)                                     // (45)
 	sL := sampleRandomVector(params.N)
 	sR := sampleRandomVector(params.N)
-	rho, _ := rand.Int(rand.Reader, ORDER)                                      // (46)
+	rho, _ := new(fr.Element).SetRandom()                                       // (46)
 	S := commitVectorBig(sL, sR, rho, params.H, params.Gg, params.Hh, params.N) // (47)
 
 	// Fiat-Shamir heuristic to compute challenges y and z, corresponds to    (49)
@@ -67,8 +67,8 @@ func Prove(secret *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProo
 	// ////////////////////////////////////////////////////////////////////////////
 	// Second phase: page 20
 	// ////////////////////////////////////////////////////////////////////////////
-	tau1, _ := rand.Int(rand.Reader, ORDER) // (52)
-	tau2, _ := rand.Int(rand.Reader, ORDER) // (52)
+	tau1, _ := new(fr.Element).SetRandom() // (52)
+	tau2, _ := new(fr.Element).SetRandom() // (52)
 
 	/*
 	   The paper does not describe how to compute t1 and t2.
@@ -94,18 +94,17 @@ func Prove(secret *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProo
 
 	// Add z^2.2^n to the result
 	// z^2 . 2^n
-	p2n := powerOf(new(big.Int).SetInt64(2), params.N)
+	p2n := powerOf(new(fr.Element).SetUint64(2), params.N)
 	zsquared := ffmath.Multiply(z, z)
 	z22n, _ := VectorScalarMul(p2n, zsquared)
 	ynaRzn, _ = VectorAdd(ynaRzn, z22n)
 	sp2, _ := ScalarProduct(sL, ynaRzn)
 
 	// sp1 + sp2
-	t1 := ffmath.AddMod(sp1, sp2, ORDER)
+	t1 := ffmath.Add(sp1, sp2)
 
 	// compute t2: < sL, y^n . sR >
 	t2, _ := ScalarProduct(sL, ynsR)
-	t2 = ffmath.Mod(t2, ORDER)
 
 	// compute T1
 	T1, _ := CommitG1(t1, tau1, params.H) // (53)
@@ -138,11 +137,11 @@ func Prove(secret *big.Int, gamma *big.Int, V *bn256.G1Affine, params BulletProo
 	// Compute taux = tau2 . x^2 + tau1 . x + z^2 . gamma                  // (61)
 	taux := ffmath.Multiply(tau2, ffmath.Multiply(x, x))
 	taux = ffmath.Add(taux, ffmath.Multiply(tau1, x))
-	taux = ffmath.AddMod(taux, ffmath.Multiply(ffmath.Multiply(z, z), gamma), ORDER)
+	taux = ffmath.Add(taux, ffmath.Multiply(ffmath.Multiply(z, z), gamma))
 
 	// Compute mu = alpha + rho.x                                          // (62)
 	mu := ffmath.Multiply(rho, x)
-	mu = ffmath.AddMod(mu, alpha, ORDER)
+	mu = ffmath.Add(mu, alpha)
 
 	// Inner Product over (g, h', P.h^-mu, tprime)
 	hprime := updateGenerators(params.Hh, y, params.N)
@@ -191,21 +190,21 @@ func (proof *BulletProof) Verify() (bool, error) {
 	lhs, _ := CommitG1(proof.Tprime, proof.Taux, params.H)
 
 	// Compute right hand side
-	z2 := ffmath.MultiplyMod(z, z, ORDER)
-	x2 := ffmath.MultiplyMod(x, x, ORDER)
+	z2 := ffmath.Multiply(z, z)
+	x2 := ffmath.Multiply(x, x)
 
-	rhs := new(bn256.G1Affine).ScalarMultiplication(proof.V, z2)
+	rhs := zbn256.G1ScalarMult(proof.V, z2)
 
 	delta := params.delta(y, z)
 
-	gdelta := bn128.G1ScalarHBaseMult(delta)
-	rhs = bn128.G1AffineMul(rhs, gdelta)
+	gdelta := zbn256.G1ScalarHBaseMult(delta)
+	rhs = zbn256.G1Add(rhs, gdelta)
 
-	T1x := new(bn256.G1Affine).ScalarMultiplication(proof.T1, x)
-	T2x2 := new(bn256.G1Affine).ScalarMultiplication(proof.T2, x2)
+	T1x := zbn256.G1ScalarMult(proof.T1, x)
+	T2x2 := zbn256.G1ScalarMult(proof.T2, x2)
 
-	rhs = bn128.G1AffineMul(rhs, T1x)
-	rhs = bn128.G1AffineMul(rhs, T2x2)
+	rhs = zbn256.G1Add(rhs, T1x)
+	rhs = zbn256.G1Add(rhs, T2x2)
 
 	// Subtract lhs and rhs and compare with poitn at infinity
 	c65 := rhs.Equal(lhs) // Condition (65), page 20, from eprint version
@@ -213,9 +212,9 @@ func (proof *BulletProof) Verify() (bool, error) {
 	// Compute P - lhs  #################### Condition (66) ######################
 
 	// S^x
-	Sx := new(bn256.G1Affine).ScalarMultiplication(proof.S, x)
+	Sx := zbn256.G1ScalarMult(proof.S, x)
 	// A.S^x
-	ASx := bn128.G1AffineMul(proof.A, Sx)
+	ASx := zbn256.G1Add(proof.A, Sx)
 
 	// g^-z
 	mz := ffmath.Sub(ORDER, z)
@@ -227,25 +226,25 @@ func (proof *BulletProof) Verify() (bool, error) {
 	vy := powerOf(y, params.N)
 	zyn, _ := VectorMul(vy, vz)
 
-	p2n := powerOf(new(big.Int).SetInt64(2), params.N)
+	p2n := powerOf(new(fr.Element).SetUint64(2), params.N)
 	zsquared := ffmath.Multiply(z, z)
 	z22n, _ := VectorScalarMul(p2n, zsquared)
 
 	// z.y^n + z^2.2^n
 	zynz22n, _ := VectorAdd(zyn, z22n)
 
-	lP := bn128.G1AffineMul(ASx, gpmz)
+	lP := zbn256.G1Add(ASx, gpmz)
 
 	// h'^(z.y^n + z^2.2^n)
 	hprimeexp, _ := VectorExp(hprime, zynz22n)
 
-	lP = bn128.G1AffineMul(lP, hprimeexp)
+	lP = zbn256.G1Add(lP, hprimeexp)
 
 	// Compute P - rhs  #################### Condition (67) ######################
 
 	// h^mu
-	rP := new(bn256.G1Affine).ScalarMultiplication(params.H, proof.Mu)
-	rP = bn128.G1AffineMul(rP, proof.Commit)
+	rP := zbn256.G1ScalarMult(params.H, proof.Mu)
+	rP = zbn256.G1Add(rP, proof.Commit)
 
 	// Subtract lhs and rhs and compare with poitn at infinity
 	c67 := rP.Equal(lP)
@@ -261,10 +260,10 @@ func (proof *BulletProof) Verify() (bool, error) {
 /*
 SampleRandomVector generates a vector composed by random big numbers.
 */
-func sampleRandomVector(N int64) []*big.Int {
-	s := make([]*big.Int, N)
+func sampleRandomVector(N int64) []*fr.Element {
+	s := make([]*fr.Element, N)
 	for i := int64(0); i < N; i++ {
-		s[i], _ = rand.Int(rand.Reader, ORDER)
+		s[i], _ = new(fr.Element).SetRandom()
 	}
 	return s
 }
@@ -276,19 +275,19 @@ vector of generators. This method is used both by prover and verifier. After thi
 update we have that A is a vector commitments to (aL, aR . y^n). Also S is a vector
 commitment to (sL, sR . y^n).
 */
-func updateGenerators(Hh []*bn256.G1Affine, y *big.Int, N int64) []*bn256.G1Affine {
+func updateGenerators(Hh []*bn256.G1Affine, y *fr.Element, N int64) []*bn256.G1Affine {
 	var (
 		i int64
 	)
 	// Compute h'                                                          // (64)
 	hprime := make([]*bn256.G1Affine, N)
 	// Switch generators
-	yinv := ffmath.ModInverse(y, ORDER)
+	yinv := ffmath.Inverse(y)
 	expy := yinv
 	hprime[0] = Hh[0]
 	i = 1
 	for i < N {
-		hprime[i] = new(bn256.G1Affine).ScalarMultiplication(Hh[i], expy)
+		hprime[i] = zbn256.G1ScalarMult(Hh[i], expy)
 		expy = ffmath.Multiply(expy, yinv)
 		i = i + 1
 	}
@@ -312,12 +311,12 @@ func computeAR(x []int64) ([]int64, error) {
 	return result, nil
 }
 
-func commitVectorBig(aL, aR []*big.Int, alpha *big.Int, H *bn256.G1Affine, g, h []*bn256.G1Affine, n int64) *bn256.G1Affine {
+func commitVectorBig(aL, aR []*fr.Element, alpha *fr.Element, H *bn256.G1Affine, g, h []*bn256.G1Affine, n int64) *bn256.G1Affine {
 	// Compute h^alpha.vg^aL.vh^aR
-	R := new(bn256.G1Affine).ScalarMultiplication(H, alpha)
+	R := zbn256.G1ScalarHBaseMult(alpha)
 	for i := int64(0); i < n; i++ {
-		R = bn128.G1AffineMul(R, new(bn256.G1Affine).ScalarMultiplication(g[i], aL[i]))
-		R = bn128.G1AffineMul(R, new(bn256.G1Affine).ScalarMultiplication(h[i], aR[i]))
+		R = zbn256.G1Add(R, zbn256.G1ScalarMult(g[i], aL[i]))
+		R = zbn256.G1Add(R, zbn256.G1ScalarMult(h[i], aR[i]))
 	}
 	return R
 }
@@ -325,14 +324,14 @@ func commitVectorBig(aL, aR []*big.Int, alpha *big.Int, H *bn256.G1Affine, g, h 
 /*
 Commitvector computes a commitment to the bit of the secret.
 */
-func commitVector(aL, aR []int64, alpha *big.Int, H *bn256.G1Affine, g, h []*bn256.G1Affine, n int64) *bn256.G1Affine {
+func commitVector(aL, aR []int64, alpha *fr.Element, H *bn256.G1Affine, g, h []*bn256.G1Affine, n int64) *bn256.G1Affine {
 	// Compute h^alpha.vg^aL.vh^aR
-	R := new(bn256.G1Affine).ScalarMultiplication(H, alpha)
+	R := zbn256.G1ScalarHBaseMult(alpha)
 	for i := int64(0); i < n; i++ {
-		gaL := new(bn256.G1Affine).ScalarMultiplication(g[i], new(big.Int).SetInt64(aL[i]))
-		haR := new(bn256.G1Affine).ScalarMultiplication(h[i], new(big.Int).SetInt64(aR[i]))
-		R = bn128.G1AffineMul(R, gaL)
-		R = bn128.G1AffineMul(R, haR)
+		gaL := zbn256.G1ScalarMult(g[i], big.NewInt(aL[i]))
+		haR := zbn256.G1ScalarMult(h[i], big.NewInt(aR[i]))
+		R = zbn256.G1Add(R, gaL)
+		R = zbn256.G1Add(R, haR)
 	}
 	return R
 }
@@ -340,26 +339,26 @@ func commitVector(aL, aR []int64, alpha *big.Int, H *bn256.G1Affine, g, h []*bn2
 /*
 delta(y,z) = (z-z^2) . < 1^n, y^n > - z^3 . < 1^n, 2^n >
 */
-func (params *BulletProofSetupParams) delta(y, z *big.Int) *big.Int {
+func (params *BulletProofSetupParams) delta(y, z *fr.Element) *fr.Element {
 	var (
-		result *big.Int
+		result *fr.Element
 	)
 	// delta(y,z) = (z-z^2) . < 1^n, y^n > - z^3 . < 1^n, 2^n >
-	z2 := ffmath.MultiplyMod(z, z, ORDER)
-	z3 := ffmath.MultiplyMod(z2, z, ORDER)
+	z2 := ffmath.Multiply(z, z)
+	z3 := ffmath.Multiply(z2, z)
 
 	// < 1^n, y^n >
-	v1, _ := VectorCopy(new(big.Int).SetInt64(1), params.N)
+	v1, _ := VectorCopy(new(fr.Element).SetUint64(1), params.N)
 	vy := powerOf(y, params.N)
 	sp1y, _ := ScalarProduct(v1, vy)
 
 	// < 1^n, 2^n >
-	p2n := powerOf(new(big.Int).SetInt64(2), params.N)
+	p2n := powerOf(new(fr.Element).SetUint64(2), params.N)
 	sp12, _ := ScalarProduct(v1, p2n)
 
-	result = ffmath.SubMod(z, z2, ORDER)
-	result = ffmath.MultiplyMod(result, sp1y, ORDER)
-	result = ffmath.SubMod(result, ffmath.Multiply(z3, sp12), ORDER)
+	result = ffmath.Sub(z, z2)
+	result = ffmath.Multiply(result, sp1y)
+	result = ffmath.Sub(result, ffmath.Multiply(z3, sp12))
 
 	return result
 }

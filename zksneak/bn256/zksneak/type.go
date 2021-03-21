@@ -3,7 +3,7 @@ package zksneak
 import (
 	"ZKSneak-crypto/ecc/zbn256"
 	"ZKSneak-crypto/elgamal/bn256/twistedElgamal"
-	"ZKSneak-crypto/math"
+	"ZKSneak-crypto/ffmath"
 	"ZKSneak-crypto/rangeProofs/bn256/bulletProofs"
 	"crypto/rand"
 	"errors"
@@ -71,7 +71,7 @@ func (statement *ZKSneakTransferStatement) AddRelation(C *ElGamalEnc, pk *bn256.
 	var bPrime *big.Int
 	var CTilde *ElGamalEnc
 	if b != nil {
-		bPrime = math.Add(b, bDelta)
+		bPrime = ffmath.Add(b, bDelta)
 		// refresh bPrime Enc
 		CTilde = twistedElgamal.Enc(bPrime, statement.RStar, pk)
 	}

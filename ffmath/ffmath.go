@@ -1,6 +1,7 @@
-package math
+package ffmath
 
 import (
+	"crypto/rand"
 	"math/big"
 )
 
@@ -57,4 +58,9 @@ func MultiplyMod(factor1 *big.Int, factor2 *big.Int, ORDER *big.Int) *big.Int {
 
 func ModInverse(base *big.Int, modulo *big.Int) *big.Int {
 	return new(big.Int).ModInverse(base, modulo)
+}
+
+func RandomValue(Order *big.Int) *big.Int {
+	r, _ := rand.Int(rand.Reader, Order)
+	return r
 }

@@ -2,7 +2,6 @@ package zksneak
 
 import (
 	"ZKSneak-crypto/ecc/zbn256"
-	"ZKSneak-crypto/rangeProofs/bn256/bulletProofs"
 	"ZKSneak-crypto/sigmaProtocol/bn256/chaum-pedersen"
 	"ZKSneak-crypto/sigmaProtocol/bn256/linear"
 	"ZKSneak-crypto/sigmaProtocol/bn256/schnorr"
@@ -40,9 +39,9 @@ func (proof *ZKSneakTransferProof) ProveAnonRange(statement *ZKSneakTransferStat
 				return errors.New("you cannot transfer funds to accounts that do not belong to you")
 			}
 			// U = C'_{i,r} / \tilde{C}_{i,r}
-			u := zbn256.G1AffineMul(relation.Public.CPrime.CR, new(bn256.G1Affine).Neg(relation.Public.CTilde.CR))
+			u := zbn256.G1Add(relation.Public.CPrime.CR, new(bn256.G1Affine).Neg(relation.Public.CTilde.CR))
 			w := new(bn256.G1Affine).ScalarMultiplication(u, relation.Witness.sk)
-			g := zbn256.GetG1BaseAffine()
+			g := zbn256.G1BaseAffine()
 			v := relation.Public.Pk
 			z, Vt, Wt := chaum_pedersen.Prove(relation.Witness.sk, g, u, v, w)
 			bulletProof, err := bulletProofs.Prove(relation.Witness.bPrime, statement.RStar, relation.Public.CTilde.CR, *params)
@@ -90,7 +89,7 @@ func (proof *ZKSneakTransferProof) ProveEqual(relations []*ZKSneakTransferRelati
 	}
 	n := len(xArr)
 	var gArr []*bn256.G1Affine
-	g := zbn256.GetG1BaseAffine()
+	g := zbn256.G1BaseAffine()
 	for i := 0; i < n; i++ {
 		gArr = append(gArr, g)
 	}

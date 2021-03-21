@@ -1,9 +1,12 @@
 package bp_bn128
 
-import "ZKSneak-crypto/ecc/bn128"
+import (
+	"ZKSneak-crypto/ecc/zbn256"
+	"ZKSneak-crypto/math/bn256/ffmath"
+)
 
 var (
-	ORDER = bn128.ORDER
+	ORDER = ffmath.FromBigInt(zbn256.ORDER)
 	SEEDU = "ZKSneakBulletProofsSetupU"
 	SEEDH = "ZKSneakBulletProofsSetupH"
 )

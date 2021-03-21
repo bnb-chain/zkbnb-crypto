@@ -1,16 +1,17 @@
 package elgamal
 
 import (
+	"ZKSneak-crypto/ecc/zbn256"
 	"fmt"
-	"github.com/consensys/gurvy/bn256/fr"
+	"math/big"
 	"testing"
 )
 
 func TestDec(t *testing.T) {
 	sk, pk := GenKeyPair()
-	b := new(fr.Element).SetUint64(100000)
+	b := big.NewInt(100000)
 	//b := big.NewInt(100000)
-	r, _ := new(fr.Element).SetRandom()
+	r := zbn256.RandomValue()
 	bEnc := Enc(b, r, pk)
 	bDec := Dec(bEnc, sk)
 	fmt.Println(bDec)

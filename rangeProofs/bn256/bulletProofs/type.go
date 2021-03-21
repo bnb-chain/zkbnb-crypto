@@ -2,7 +2,7 @@ package bp_bn128
 
 import (
 	"github.com/consensys/gurvy/bn256"
-	"math/big"
+	"github.com/consensys/gurvy/bn256/fr"
 )
 
 /*
@@ -11,7 +11,7 @@ commitments.
 */
 type InnerProductParams struct {
 	N  int64
-	Cc *big.Int
+	Cc *fr.Element
 	Uu *bn256.G1Affine
 	H  *bn256.G1Affine
 	Gg []*bn256.G1Affine
@@ -30,8 +30,8 @@ type InnerProductProof struct {
 	Gg     *bn256.G1Affine
 	Hh     *bn256.G1Affine
 	Rs     []*bn256.G1Affine
-	A      *big.Int
-	B      *big.Int
+	A      *fr.Element
+	B      *fr.Element
 	Params InnerProductParams
 }
 
@@ -65,9 +65,9 @@ type BulletProof struct {
 	S                 *bn256.G1Affine
 	T1                *bn256.G1Affine
 	T2                *bn256.G1Affine
-	Taux              *big.Int
-	Mu                *big.Int
-	Tprime            *big.Int
+	Taux              *fr.Element
+	Mu                *fr.Element
+	Tprime            *fr.Element
 	InnerProductProof InnerProductProof
 	Commit            *bn256.G1Affine
 	Params            BulletProofSetupParams
