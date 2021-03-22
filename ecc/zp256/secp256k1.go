@@ -115,6 +115,7 @@ func init() {
 	theCurve.Gy, _ = new(big.Int).SetString("0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 0)
 	theCurve.BitSize = 256
 	H, _ = MapToGroup(SeedH)
+	U,_ = MapToGroup(SeedU)
 }
 
 func S256() *MyBitCurve {
@@ -124,6 +125,7 @@ func S256() *MyBitCurve {
 var (
 	Curve = S256()
 	H     *P256
+	U     *P256
 )
 
 /*

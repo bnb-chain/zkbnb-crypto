@@ -11,7 +11,10 @@ import (
 	"strconv"
 )
 
-const SeedH = "ZKSneakP256HSeed"
+const (
+	SeedH = "ZKSneakP256HSeed"
+	SeedU = "ZKSnekP256USeed"
+)
 
 func Neg(a *P256) *P256 {
 	return new(P256).Neg(a)

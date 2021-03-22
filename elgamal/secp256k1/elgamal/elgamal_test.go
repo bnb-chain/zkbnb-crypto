@@ -9,7 +9,7 @@ import (
 
 func TestDec(t *testing.T) {
 	sk, pk := GenKeyPair()
-	b := big.NewInt(100000)
+	b := big.NewInt(1000000)
 	//b := big.NewInt(100000)
 	r := zp256.RandomValue()
 	bEnc := Enc(b, r, pk)
