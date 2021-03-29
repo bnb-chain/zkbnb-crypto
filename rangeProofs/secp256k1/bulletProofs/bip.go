@@ -26,16 +26,16 @@ func setupInnerProduct(H *P256, gs, hs []*P256, c *big.Int, N int64) (params *In
 		params.H = H
 	}
 	if gs == nil {
-		params.Gs = make([]*P256, params.N)
-		for i := int64(0); i < params.N; i++ {
+		params.Gs = make([]*P256, N)
+		for i := int64(0); i < N; i++ {
 			params.Gs[i], _ = zp256.MapToGroup(SeedH + "g" + strconv.FormatInt(i, 10))
 		}
 	} else {
 		params.Gs = gs
 	}
 	if hs == nil {
-		params.Hs = make([]*P256, params.N)
-		for i := int64(0); i < params.N; i++ {
+		params.Hs = make([]*P256, N)
+		for i := int64(0); i < N; i++ {
 			params.Hs[i], _ = zp256.MapToGroup(SeedH + "h" + strconv.FormatInt(i, 10))
 		}
 	} else {
@@ -171,7 +171,7 @@ func (proof *InnerProductProof) Verify() (bool, error) {
 	logn := len(proof.Ls)
 	var (
 		x, xinv, x2, x2inv                   *big.Int
-		ngprime, nhprime, ngprime2, nhprime2 []*zp256.P256
+		ngprime, nhprime, ngprime2, nhprime2 []*P256
 	)
 
 	gprime := proof.Params.Gs
@@ -205,8 +205,6 @@ func (proof *InnerProductProof) Verify() (bool, error) {
 	rhs.Multiply(rhs, hb)
 	rhs.Multiply(rhs, zp256.ScalarMult(proof.U, ab))
 	// Compute inverse of left hand side
-	//nP := Pprime.Neg(Pprime)
-	//nP.Multiply(nP, rhs)
 	// If both sides are equal then nP must be zero                               // (17)
 	c := zp256.Equal(Pprime, rhs)
 

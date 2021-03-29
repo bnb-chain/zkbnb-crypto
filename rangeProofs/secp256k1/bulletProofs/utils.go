@@ -64,7 +64,7 @@ func HashBP(A, S *P256) (*big.Int, *big.Int, error) {
 		return nil, nil, err
 	}
 
-	return a, b, nil
+	return ffmath.Mod(a, Order), ffmath.Mod(b, Order), nil
 }
 
 /*
@@ -80,7 +80,7 @@ func hashIP(g, h []*P256, P *P256, c *big.Int, n int64) (result *big.Int, err er
 	buffer.Write(c.Bytes())
 	result, err = util.HashToInt(buffer, sha256.New)
 
-	return result, err
+	return ffmath.Mod(result, Order), err
 }
 
 /*
@@ -147,7 +147,6 @@ func delta(y, z *big.Int, N int64) *big.Int {
 	// delta(y,z) = (z-z^2) . < 1^n, y^n > - z^3 . < 1^n, 2^n >
 	z2 := ffmath.MultiplyMod(z, z, Order)
 	z3 := ffmath.MultiplyMod(z2, z, Order)
-	z3 = ffmath.Mod(z3, Order)
 
 	// < 1^n, y^n >
 	v1, _ := VectorCopy(new(big.Int).SetInt64(1), N)
@@ -161,7 +160,6 @@ func delta(y, z *big.Int, N int64) *big.Int {
 	result = ffmath.SubMod(z, z2, Order)
 	result = ffmath.MultiplyMod(result, sp1y, Order)
 	result = ffmath.SubMod(result, ffmath.MultiplyMod(z3, sp12, Order), Order)
-	result = ffmath.Mod(result, Order)
 
 	return result
 }

@@ -8,14 +8,12 @@ import (
 	"testing"
 )
 
-const MAX_RANGE_END = 4294967296
-
 func TestProveVerify(t *testing.T) {
 	_, pk := twistedElgamal.GenKeyPair()
 	b := big.NewInt(8)
 	r := zp256.RandomValue()
 	bEnc := twistedElgamal.Enc(b, r, pk)
-	params, err := Setup(MAX_RANGE_END)
+	params, err := Setup(32, 1)
 	if err != nil {
 		panic(err)
 	}

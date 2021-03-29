@@ -187,12 +187,12 @@ VectorExp computes Prod_i^n{a[i]^b[i]}.
 func VectorExp(a []*P256, b []*big.Int) (result *P256, err error) {
 	n := int64(len(a))
 	m := int64(len(b))
-	if n != m {
+	if n < m {
 		return nil, errors.New("size of first argument is different from size of second argument")
 	}
 	i := int64(0)
 	result = zp256.InfinityPoint()
-	for i < n {
+	for i < m {
 		result.Multiply(result, zp256.ScalarMult(a[i], b[i]))
 		i = i + 1
 	}

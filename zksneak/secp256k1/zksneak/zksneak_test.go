@@ -48,6 +48,7 @@ func TestProveVerify(t *testing.T) {
 	params, _ := Setup(MAX)
 	proof, _ := ProveTransfer(statement, params)
 	proofBytes, _ := json.Marshal(proof)
+	fmt.Println("proof size:", len(proofBytes))
 	var genProof *ZKSneakTransferProof
 	json.Unmarshal(proofBytes, &genProof)
 	fmt.Println("gen proof:", genProof.EncProofs[0])
