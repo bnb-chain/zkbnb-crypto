@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestProveAggregation(t *testing.T) {
+func TestProveAggregationAndVerify(t *testing.T) {
 	_, pk := twistedElgamal.GenKeyPair()
 	b1 := big.NewInt(8)
 	r1 := zp256.RandomValue()
