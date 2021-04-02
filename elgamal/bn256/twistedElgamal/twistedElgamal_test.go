@@ -1,7 +1,7 @@
 package twistedElgamal
 
 import (
-	"ZKSneak-crypto/ecc/zbn256"
+	"PrivaL-crypto/ecc/zbn256"
 	"encoding/json"
 	"fmt"
 	"github.com/magiconair/properties/assert"
@@ -12,7 +12,7 @@ import (
 func TestEncDec(t *testing.T) {
 	sk, pk := GenKeyPair()
 	fmt.Println("pk len:", len(pk.Bytes()))
-	b := big.NewInt(100000)
+	b := big.NewInt(10)
 	r := zbn256.RandomValue()
 	enc := Enc(b, r, pk)
 	encBytes, _ := json.Marshal(enc)

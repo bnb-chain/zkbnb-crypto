@@ -1,7 +1,7 @@
-package zksneak
+package prival
 
 import (
-	"ZKSneak-crypto/elgamal/secp256k1/twistedElgamal"
+	"PrivaL-crypto/elgamal/secp256k1/twistedElgamal"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"

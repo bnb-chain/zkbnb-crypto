@@ -1,8 +1,8 @@
 package twistedElgamal
 
 import (
-	"ZKSneak-crypto/ecc/zbls377"
-	"ZKSneak-crypto/ffmath"
+	"PrivaL-crypto/ecc/zbls377"
+	"PrivaL-crypto/ffmath"
 	"math/big"
 )
 

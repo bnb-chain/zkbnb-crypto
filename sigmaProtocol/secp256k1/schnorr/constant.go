@@ -1,6 +1,6 @@
 package schnorr
 
-import "ZKSneak-crypto/ecc/zp256"
+import "PrivaL-crypto/ecc/zp256"
 
 var (
 	Order = zp256.Curve.N

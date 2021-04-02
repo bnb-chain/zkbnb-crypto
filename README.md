@@ -1,1 +1,1 @@
-# ZKSneak-crypto
+# PrivaL-crypto

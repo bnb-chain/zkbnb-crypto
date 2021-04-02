@@ -1,8 +1,8 @@
 package okamoto
 
 import (
-	"ZKSneak-crypto/ecc/zp256"
-	"ZKSneak-crypto/elgamal/secp256k1/twistedElgamal"
+	"PrivaL-crypto/ecc/zp256"
+	"PrivaL-crypto/elgamal/secp256k1/twistedElgamal"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"

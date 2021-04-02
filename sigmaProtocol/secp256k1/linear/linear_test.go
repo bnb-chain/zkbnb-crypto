@@ -1,7 +1,7 @@
 package linear
 
 import (
-	"ZKSneak-crypto/ecc/zp256"
+	"PrivaL-crypto/ecc/zp256"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"

@@ -1,8 +1,8 @@
 package zedwards
 
 import (
-	"ZKSneak-crypto/ffmath"
-	"ZKSneak-crypto/util"
+	"PrivaL-crypto/ffmath"
+	"PrivaL-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"errors"

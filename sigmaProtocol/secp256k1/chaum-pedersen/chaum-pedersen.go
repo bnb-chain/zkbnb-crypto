@@ -1,8 +1,8 @@
 package chaum_pedersen
 
 import (
-	"ZKSneak-crypto/ecc/zp256"
-	"ZKSneak-crypto/ffmath"
+	"PrivaL-crypto/ecc/zp256"
+	"PrivaL-crypto/ffmath"
 	"math/big"
 )
 

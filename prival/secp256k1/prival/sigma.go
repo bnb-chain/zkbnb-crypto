@@ -1,11 +1,11 @@
-package zksneak
+package prival
 
 import (
-	"ZKSneak-crypto/ecc/zp256"
-	"ZKSneak-crypto/rangeProofs/secp256k1/bulletProofs"
-	"ZKSneak-crypto/sigmaProtocol/secp256k1/chaum-pedersen"
-	"ZKSneak-crypto/sigmaProtocol/secp256k1/linear"
-	"ZKSneak-crypto/sigmaProtocol/secp256k1/schnorr"
+	"PrivaL-crypto/ecc/zp256"
+	"PrivaL-crypto/rangeProofs/secp256k1/bulletProofs"
+	"PrivaL-crypto/sigmaProtocol/secp256k1/chaum-pedersen"
+	"PrivaL-crypto/sigmaProtocol/secp256k1/linear"
+	"PrivaL-crypto/sigmaProtocol/secp256k1/schnorr"
 	"errors"
 	"math/big"
 )

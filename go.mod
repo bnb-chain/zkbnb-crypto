@@ -1,4 +1,4 @@
-module ZKSneak-crypto
+module PrivaL-crypto
 
 go 1.15
 

@@ -1,7 +1,7 @@
 package zbls377
 
 import (
-	"ZKSneak-crypto/ffmath"
+	"PrivaL-crypto/ffmath"
 	"github.com/consensys/gurvy/bls377"
 	"math/big"
 )

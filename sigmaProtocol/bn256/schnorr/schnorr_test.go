@@ -1,8 +1,8 @@
 package schnorr
 
 import (
-	"ZKSneak-crypto/ecc/zbn256"
-	"ZKSneak-crypto/elgamal/bn256/twistedElgamal"
+	"PrivaL-crypto/ecc/zbn256"
+	"PrivaL-crypto/elgamal/bn256/twistedElgamal"
 	"gotest.tools/assert"
 	"testing"
 )

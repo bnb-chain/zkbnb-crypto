@@ -1,7 +1,7 @@
 package twistedElgamal
 
 import (
-	"ZKSneak-crypto/ecc/zbls377"
+	"PrivaL-crypto/ecc/zbls377"
 	"github.com/magiconair/properties/assert"
 	"math/big"
 	"testing"
@@ -9,7 +9,7 @@ import (
 
 func TestEncDec(t *testing.T) {
 	sk, pk := GenKeyPair()
-	b := big.NewInt(10000)
+	b := big.NewInt(10)
 	r := zbls377.RandomValue()
 	enc := Enc(b, r, pk)
 	dec := Dec(enc, sk)

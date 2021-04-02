@@ -1,10 +1,10 @@
-package zksneak
+package prival
 
 import (
-	"ZKSneak-crypto/ecc/zp256"
-	"ZKSneak-crypto/elgamal/secp256k1/twistedElgamal"
-	"ZKSneak-crypto/ffmath"
-	"ZKSneak-crypto/rangeProofs/secp256k1/bulletProofs"
+	"PrivaL-crypto/ecc/zp256"
+	"PrivaL-crypto/elgamal/secp256k1/twistedElgamal"
+	"PrivaL-crypto/ffmath"
+	"PrivaL-crypto/rangeProofs/secp256k1/bulletProofs"
 	"crypto/rand"
 	"errors"
 	"math/big"
