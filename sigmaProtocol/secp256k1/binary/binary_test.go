@@ -1,8 +1,8 @@
 package binary
 
 import (
-	"ZKSneak-crypto/commitment/secp256k1/pedersen"
-	"ZKSneak-crypto/ecc/zp256"
+	"PrivaL-crypto/commitment/secp256k1/pedersen"
+	"PrivaL-crypto/ecc/zp256"
 	"fmt"
 	"math/big"
 	"testing"

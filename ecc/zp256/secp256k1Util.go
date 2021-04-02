@@ -1,8 +1,8 @@
 package zp256
 
 import (
-	"ZKSneak-crypto/ffmath"
-	"ZKSneak-crypto/util"
+	"PrivaL-crypto/ffmath"
+	"PrivaL-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"

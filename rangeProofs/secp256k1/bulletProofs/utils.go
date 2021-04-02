@@ -1,9 +1,9 @@
 package bulletProofs
 
 import (
-	"ZKSneak-crypto/ecc/zp256"
-	"ZKSneak-crypto/ffmath"
-	"ZKSneak-crypto/util"
+	"PrivaL-crypto/ecc/zp256"
+	"PrivaL-crypto/ffmath"
+	"PrivaL-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"math/big"

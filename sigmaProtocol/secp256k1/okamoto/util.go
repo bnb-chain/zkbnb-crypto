@@ -1,7 +1,7 @@
 package okamoto
 
 import (
-	"ZKSneak-crypto/util"
+	"PrivaL-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"math/big"

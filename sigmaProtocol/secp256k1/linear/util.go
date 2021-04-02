@@ -1,8 +1,8 @@
 package linear
 
 import (
-	"ZKSneak-crypto/ecc/zp256"
-	"ZKSneak-crypto/util"
+	"PrivaL-crypto/ecc/zp256"
+	"PrivaL-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"math/big"

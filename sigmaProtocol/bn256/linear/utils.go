@@ -1,8 +1,8 @@
 package linear
 
 import (
-	"ZKSneak-crypto/ecc/zbn256"
-	"ZKSneak-crypto/util"
+	"PrivaL-crypto/ecc/zbn256"
+	"PrivaL-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"github.com/consensys/gurvy/bn256"

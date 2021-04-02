@@ -1,7 +1,7 @@
-package zksneak
+package prival
 
 import (
-	"ZKSneak-crypto/ecc/zp256"
+	"PrivaL-crypto/ecc/zp256"
 )
 
 var Order = zp256.Curve.N

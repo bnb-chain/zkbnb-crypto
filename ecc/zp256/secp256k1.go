@@ -1,7 +1,7 @@
 package zp256
 
 import (
-	"ZKSneak-crypto/ffmath"
+	"PrivaL-crypto/ffmath"
 	"encoding/json"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"math/big"

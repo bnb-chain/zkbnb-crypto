@@ -1,7 +1,7 @@
 package elgamal
 
 import (
-	"ZKSneak-crypto/ecc/zbn256"
+	"PrivaL-crypto/ecc/zbn256"
 	"fmt"
 	"math/big"
 	"testing"

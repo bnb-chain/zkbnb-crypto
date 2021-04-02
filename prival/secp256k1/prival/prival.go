@@ -1,7 +1,7 @@
-package zksneak
+package prival
 
 import (
-	"ZKSneak-crypto/rangeProofs/secp256k1/bulletProofs"
+	"PrivaL-crypto/rangeProofs/secp256k1/bulletProofs"
 )
 
 func Setup(b int64) (*BulletProofSetupParams, error) {

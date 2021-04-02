@@ -1,8 +1,8 @@
 package twistedElgamal
 
 import (
-	"ZKSneak-crypto/ecc/zbn256"
-	"ZKSneak-crypto/ffmath"
+	"PrivaL-crypto/ecc/zbn256"
+	"PrivaL-crypto/ffmath"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
 )

@@ -1,7 +1,7 @@
 package elgamal
 
 import (
-	"ZKSneak-crypto/ecc/zp256"
+	"PrivaL-crypto/ecc/zp256"
 	"math/big"
 )
 

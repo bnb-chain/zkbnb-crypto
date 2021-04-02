@@ -1,7 +1,7 @@
 package twistedElgamal
 
 import (
-	"ZKSneak-crypto/ecc/zp256"
+	"PrivaL-crypto/ecc/zp256"
 	"github.com/magiconair/properties/assert"
 	"math/big"
 	"testing"

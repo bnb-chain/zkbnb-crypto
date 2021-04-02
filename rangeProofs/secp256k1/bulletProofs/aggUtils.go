@@ -1,7 +1,7 @@
 package bulletProofs
 
 import (
-	"ZKSneak-crypto/ffmath"
+	"PrivaL-crypto/ffmath"
 	"math/big"
 )
 
