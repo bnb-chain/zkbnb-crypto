@@ -4,8 +4,8 @@ import (
 	"PrivaL-crypto/rangeProofs/secp256k1/bulletProofs"
 )
 
-func Setup(b int64) (*BulletProofSetupParams, error) {
-	return bulletProofs.Setup(b)
+func Setup(b int64, m int64) (*BulletProofSetupParams, error) {
+	return bulletProofs.Setup(b, m)
 }
 
 func ProveTransfer(statement *ZKSneakTransferStatement, params *BulletProofSetupParams) (proof *ZKSneakTransferProof, err error) {

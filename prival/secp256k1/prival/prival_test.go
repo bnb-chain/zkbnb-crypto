@@ -45,7 +45,7 @@ func TestProveVerify(t *testing.T) {
 	statement.AddRelation(C2, pk2, b2, b2Delta, sk2)
 	statement.AddRelation(C3, pk3, nil, b3Delta, nil)
 	statement.AddRelation(C4, pk4, nil, b4Delta, nil)
-	params, _ := Setup(MAX)
+	params, _ := Setup(32, 1)
 	proof, _ := ProveTransfer(statement, params)
 	proofBytes, _ := json.Marshal(proof)
 	fmt.Println("proof size:", len(proofBytes))
