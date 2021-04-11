@@ -1,11 +1,11 @@
-package prival
+package zecrey
 
 import (
-	"PrivaL-crypto/ecc/zp256"
-	"PrivaL-crypto/rangeProofs/secp256k1/bulletProofs"
-	"PrivaL-crypto/sigmaProtocol/secp256k1/chaum-pedersen"
-	"PrivaL-crypto/sigmaProtocol/secp256k1/linear"
-	"PrivaL-crypto/sigmaProtocol/secp256k1/schnorr"
+	"Zecrey-crypto/ecc/zp256"
+	"Zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
+	"Zecrey-crypto/sigmaProtocol/secp256k1/chaum-pedersen"
+	"Zecrey-crypto/sigmaProtocol/secp256k1/linear"
+	"Zecrey-crypto/sigmaProtocol/secp256k1/schnorr"
 	"errors"
 	"math/big"
 )

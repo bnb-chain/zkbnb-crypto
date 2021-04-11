@@ -1,8 +1,8 @@
 package binary
 
 import (
-	"PrivaL-crypto/commitment/secp256k1/pedersen"
-	"PrivaL-crypto/ecc/zp256"
+	"Zecrey-crypto/commitment/secp256k1/pedersen"
+	"Zecrey-crypto/ecc/zp256"
 	"fmt"
 	"math/big"
 	"testing"

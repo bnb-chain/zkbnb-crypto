@@ -1,7 +1,7 @@
 package elgamal
 
 import (
-	"PrivaL-crypto/ecc/zbls377"
+	"Zecrey-crypto/ecc/zbls377"
 	"math/big"
 )
 

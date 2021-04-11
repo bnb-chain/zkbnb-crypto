@@ -1,4 +1,4 @@
-module PrivaL-crypto
+module Zecrey-crypto
 
 go 1.15
 

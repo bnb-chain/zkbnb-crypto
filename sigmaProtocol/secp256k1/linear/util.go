@@ -1,8 +1,8 @@
 package linear
 
 import (
-	"PrivaL-crypto/ecc/zp256"
-	"PrivaL-crypto/util"
+	"Zecrey-crypto/ecc/zp256"
+	"Zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"math/big"

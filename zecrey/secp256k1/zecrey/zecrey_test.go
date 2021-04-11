@@ -1,7 +1,7 @@
-package prival
+package zecrey
 
 import (
-	"PrivaL-crypto/elgamal/secp256k1/twistedElgamal"
+	"Zecrey-crypto/elgamal/secp256k1/twistedElgamal"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"

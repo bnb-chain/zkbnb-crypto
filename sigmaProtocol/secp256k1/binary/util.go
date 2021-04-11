@@ -1,7 +1,7 @@
 package binary
 
 import (
-	"PrivaL-crypto/util"
+	"Zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"math/big"

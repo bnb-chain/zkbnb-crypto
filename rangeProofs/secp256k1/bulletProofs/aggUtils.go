@@ -1,7 +1,7 @@
 package bulletProofs
 
 import (
-	"PrivaL-crypto/ffmath"
+	"Zecrey-crypto/ffmath"
 	"math/big"
 )
 

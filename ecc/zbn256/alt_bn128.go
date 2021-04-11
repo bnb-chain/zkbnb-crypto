@@ -1,8 +1,8 @@
 package zbn256
 
 import (
-	"PrivaL-crypto/ffmath"
-	"PrivaL-crypto/util"
+	"Zecrey-crypto/ffmath"
+	"Zecrey-crypto/util"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
 )

@@ -1,7 +1,7 @@
 package linear
 
 import (
-	"PrivaL-crypto/ecc/zbn256"
+	"Zecrey-crypto/ecc/zbn256"
 	"github.com/consensys/gurvy/bn256"
 	"github.com/stretchr/testify/assert"
 	"math/big"

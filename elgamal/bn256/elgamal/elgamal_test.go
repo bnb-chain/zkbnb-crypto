@@ -1,7 +1,7 @@
 package elgamal
 
 import (
-	"PrivaL-crypto/ecc/zbn256"
+	"Zecrey-crypto/ecc/zbn256"
 	"fmt"
 	"math/big"
 	"testing"

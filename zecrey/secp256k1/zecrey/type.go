@@ -1,10 +1,10 @@
-package prival
+package zecrey
 
 import (
-	"PrivaL-crypto/ecc/zp256"
-	"PrivaL-crypto/elgamal/secp256k1/twistedElgamal"
-	"PrivaL-crypto/ffmath"
-	"PrivaL-crypto/rangeProofs/secp256k1/bulletProofs"
+	"Zecrey-crypto/ecc/zp256"
+	"Zecrey-crypto/elgamal/secp256k1/twistedElgamal"
+	"Zecrey-crypto/ffmath"
+	"Zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
 	"crypto/rand"
 	"errors"
 	"math/big"

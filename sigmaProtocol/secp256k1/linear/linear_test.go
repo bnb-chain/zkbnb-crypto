@@ -1,7 +1,7 @@
 package linear
 
 import (
-	"PrivaL-crypto/ecc/zp256"
+	"Zecrey-crypto/ecc/zp256"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"

@@ -1,7 +1,7 @@
-package prival
+package zecrey
 
 import (
-	"PrivaL-crypto/ecc/zp256"
+	"Zecrey-crypto/ecc/zp256"
 )
 
 var Order = zp256.Curve.N

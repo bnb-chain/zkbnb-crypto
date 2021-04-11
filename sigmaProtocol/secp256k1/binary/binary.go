@@ -1,9 +1,9 @@
 package binary
 
 import (
-	"PrivaL-crypto/commitment/secp256k1/pedersen"
-	"PrivaL-crypto/ecc/zp256"
-	"PrivaL-crypto/ffmath"
+	"Zecrey-crypto/commitment/secp256k1/pedersen"
+	"Zecrey-crypto/ecc/zp256"
+	"Zecrey-crypto/ffmath"
 	"errors"
 	"math/big"
 )

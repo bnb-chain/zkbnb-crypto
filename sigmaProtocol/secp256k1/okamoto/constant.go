@@ -1,6 +1,6 @@
 package okamoto
 
-import "PrivaL-crypto/ecc/zp256"
+import "Zecrey-crypto/ecc/zp256"
 
 var (
 	Order = zp256.Curve.N
