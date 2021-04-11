@@ -1,7 +1,7 @@
 package twistedElgamal
 
 import (
-	"PrivaL-crypto/ecc/zbls377"
+	"Zecrey-crypto/ecc/zbls377"
 	"github.com/magiconair/properties/assert"
 	"math/big"
 	"testing"

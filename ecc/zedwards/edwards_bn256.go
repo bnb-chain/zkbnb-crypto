@@ -1,8 +1,8 @@
 package zedwards
 
 import (
-	"PrivaL-crypto/ffmath"
-	"PrivaL-crypto/util"
+	"Zecrey-crypto/ffmath"
+	"Zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"errors"

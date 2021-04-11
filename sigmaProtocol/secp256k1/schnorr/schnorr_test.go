@@ -1,8 +1,8 @@
 package schnorr
 
 import (
-	"PrivaL-crypto/ecc/zp256"
-	"PrivaL-crypto/elgamal/secp256k1/twistedElgamal"
+	"Zecrey-crypto/ecc/zp256"
+	"Zecrey-crypto/elgamal/secp256k1/twistedElgamal"
 	"gotest.tools/assert"
 	"testing"
 )
