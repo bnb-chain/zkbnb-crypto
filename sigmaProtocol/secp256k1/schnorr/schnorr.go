@@ -1,8 +1,8 @@
 package schnorr
 
 import (
-	"Zecrey-crypto/ecc/zp256"
-	"Zecrey-crypto/ffmath"
+	"zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/ffmath"
 	"math/big"
 )
 

@@ -1,8 +1,8 @@
 package linear
 
 import (
-	"Zecrey-crypto/ecc/zbn256"
-	"Zecrey-crypto/util"
+	"zecrey-crypto/ecc/zbn256"
+	"zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"github.com/consensys/gurvy/bn256"

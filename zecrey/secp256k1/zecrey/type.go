@@ -1,10 +1,10 @@
 package zecrey
 
 import (
-	"Zecrey-crypto/ecc/zp256"
-	"Zecrey-crypto/elgamal/secp256k1/twistedElgamal"
-	"Zecrey-crypto/ffmath"
-	"Zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
+	"zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
+	"zecrey-crypto/ffmath"
+	"zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
 	"crypto/rand"
 	"errors"
 	"math/big"

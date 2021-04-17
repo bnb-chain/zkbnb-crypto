@@ -1,7 +1,7 @@
 package okamoto
 
 import (
-	"Zecrey-crypto/util"
+	"zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"math/big"

@@ -1,7 +1,7 @@
 package zecrey
 
 import (
-	"Zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
+	"zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
 )
 
 func Setup(b int64, m int64) (*BulletProofSetupParams, error) {

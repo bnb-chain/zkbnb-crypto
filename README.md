@@ -1,1 +1,1 @@
-# Zecrey-crypto
+# zecrey-crypto

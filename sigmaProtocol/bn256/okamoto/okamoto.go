@@ -1,8 +1,8 @@
 package okamoto
 
 import (
-	"Zecrey-crypto/ecc/zbn256"
-	"Zecrey-crypto/ffmath"
+	"zecrey-crypto/ecc/zbn256"
+	"zecrey-crypto/ffmath"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
 )

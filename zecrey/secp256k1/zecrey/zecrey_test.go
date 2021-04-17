@@ -1,7 +1,7 @@
 package zecrey
 
 import (
-	"Zecrey-crypto/elgamal/secp256k1/twistedElgamal"
+	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"

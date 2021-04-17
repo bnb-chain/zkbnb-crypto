@@ -1,8 +1,8 @@
 package zp256
 
 import (
-	"Zecrey-crypto/ffmath"
-	"Zecrey-crypto/util"
+	"zecrey-crypto/ffmath"
+	"zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"

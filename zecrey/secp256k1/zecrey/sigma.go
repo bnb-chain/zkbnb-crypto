@@ -1,11 +1,11 @@
 package zecrey
 
 import (
-	"Zecrey-crypto/ecc/zp256"
-	"Zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
-	"Zecrey-crypto/sigmaProtocol/secp256k1/chaum-pedersen"
-	"Zecrey-crypto/sigmaProtocol/secp256k1/linear"
-	"Zecrey-crypto/sigmaProtocol/secp256k1/schnorr"
+	"zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
+	"zecrey-crypto/sigmaProtocol/secp256k1/chaum-pedersen"
+	"zecrey-crypto/sigmaProtocol/secp256k1/linear"
+	"zecrey-crypto/sigmaProtocol/secp256k1/schnorr"
 	"errors"
 	"math/big"
 )

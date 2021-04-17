@@ -1,7 +1,7 @@
 package zbls377
 
 import (
-	"Zecrey-crypto/ffmath"
+	"zecrey-crypto/ffmath"
 	"github.com/consensys/gurvy/bls377"
 	"math/big"
 )

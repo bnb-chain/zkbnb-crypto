@@ -1,8 +1,8 @@
 package okamoto
 
 import (
-	"Zecrey-crypto/ecc/zp256"
-	"Zecrey-crypto/elgamal/secp256k1/twistedElgamal"
+	"zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"

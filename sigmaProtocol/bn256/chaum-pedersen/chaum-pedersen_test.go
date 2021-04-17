@@ -1,8 +1,8 @@
 package chaum_pedersen
 
 import (
-	"Zecrey-crypto/ecc/zbn256"
-	"Zecrey-crypto/elgamal/bn256/twistedElgamal"
+	"zecrey-crypto/ecc/zbn256"
+	"zecrey-crypto/elgamal/bn256/twistedElgamal"
 	"fmt"
 	"github.com/consensys/gurvy/bn256"
 	"github.com/stretchr/testify/assert"

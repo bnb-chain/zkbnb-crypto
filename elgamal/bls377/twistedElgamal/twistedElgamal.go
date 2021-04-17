@@ -1,8 +1,8 @@
 package twistedElgamal
 
 import (
-	"Zecrey-crypto/ecc/zbls377"
-	"Zecrey-crypto/ffmath"
+	"zecrey-crypto/ecc/zbls377"
+	"zecrey-crypto/ffmath"
 	"math/big"
 )
 
