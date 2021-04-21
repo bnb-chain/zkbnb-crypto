@@ -182,16 +182,16 @@ func (proof *BulletProof) Verify() (bool, error) {
 	z2 := ffmath.MultiplyMod(z, z, Order)
 	x2 := ffmath.MultiplyMod(x, x, Order)
 
-	rhs := zp256.ScalarMult(proof.V, z2)
+	rhs := zp256.ScalarMul(proof.V, z2)
 
 	delta := delta(y, z, params.N)
 
-	gdelta := zp256.ScalarMult(params.G, delta)
+	gdelta := zp256.ScalarMul(params.G, delta)
 
 	rhs.Multiply(rhs, gdelta)
 
-	T1x := zp256.ScalarMult(proof.T1, x)
-	T2x2 := zp256.ScalarMult(proof.T2, x2)
+	T1x := zp256.ScalarMul(proof.T1, x)
+	T2x2 := zp256.ScalarMul(proof.T2, x2)
 
 	rhs.Multiply(rhs, T1x)
 	rhs.Multiply(rhs, T2x2)
@@ -201,7 +201,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 
 	// P = A \cdot S^x \cdot gs^{-z} \cdot (hs')^{z \cdot y^n + z^2 \cdot 2^n}
 	// S^x
-	Sx := zp256.ScalarMult(proof.S, x)
+	Sx := zp256.ScalarMul(proof.S, x)
 	// A \cdot S^x
 	ASx := zp256.Add(proof.A, Sx)
 
@@ -234,7 +234,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 	// Compute P - rhs  #################### Condition (67) ######################
 
 	// h^mu
-	rP := zp256.ScalarMult(params.H, proof.Mu)
+	rP := zp256.ScalarMul(params.H, proof.Mu)
 	rP.Multiply(rP, proof.Commit)
 
 	c67 := zp256.Equal(lP, rP)
@@ -269,10 +269,10 @@ Commitvector computes a commitment to the bit of the secret.
 */
 func commitVector(aL, aR []int64, alpha *big.Int, H *P256, g, h []*P256, n int64) *P256 {
 	// Compute h^{\alpha} \cdot v \cdot g^{a_L} \cdot v \cdot h^{a_R}
-	R := zp256.ScalarMult(H, alpha)
+	R := zp256.ScalarMul(H, alpha)
 	for i := int64(0); i < n; i++ {
-		gaL := zp256.ScalarMult(g[i], big.NewInt(aL[i]))
-		haR := zp256.ScalarMult(h[i], big.NewInt(aR[i]))
+		gaL := zp256.ScalarMul(g[i], big.NewInt(aL[i]))
+		haR := zp256.ScalarMul(h[i], big.NewInt(aR[i]))
 		R.Multiply(R, gaL)
 		R.Multiply(R, haR)
 	}
@@ -280,10 +280,10 @@ func commitVector(aL, aR []int64, alpha *big.Int, H *P256, g, h []*P256, n int64
 }
 
 func computeS(sL, sR []*big.Int, rho *big.Int, h *P256, gVec, hVec []*P256) *P256 {
-	S := zp256.ScalarMult(h, rho)
+	S := zp256.ScalarMul(h, rho)
 	for i := int64(0); i < int64(len(sL)); i++ {
-		S.Multiply(S, zp256.ScalarMult(gVec[i], sL[i]))
-		S.Multiply(S, zp256.ScalarMult(hVec[i], sR[i]))
+		S.Multiply(S, zp256.ScalarMul(gVec[i], sL[i]))
+		S.Multiply(S, zp256.ScalarMul(hVec[i], sR[i]))
 	}
 	return S
 }

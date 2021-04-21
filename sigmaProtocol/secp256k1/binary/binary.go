@@ -38,14 +38,14 @@ func Verify(c, ca, cb *P256, f, za, zb *big.Int) bool {
 	r1 := pedersen.Commit(f, za, zp256.Base(), zp256.H)
 	// challenge
 	x := HashChallenge(ca, cb)
-	l1 := zp256.Add(zp256.ScalarMult(c, x), ca)
+	l1 := zp256.Add(zp256.ScalarMul(c, x), ca)
 	l1r1 := zp256.Equal(l1, r1)
 	if !l1r1 {
 		return false
 	}
 	// c^{x-f} cb == Com(0,zb)
 	r2 := pedersen.Commit(big.NewInt(0), zb, zp256.Base(), zp256.H)
-	l2 := zp256.Add(zp256.ScalarMult(c, ffmath.SubMod(x, f, Order)), cb)
+	l2 := zp256.Add(zp256.ScalarMul(c, ffmath.SubMod(x, f, Order)), cb)
 	l2r2 := zp256.Equal(l2, r2)
 	if !l2r2 {
 		return false

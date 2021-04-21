@@ -1,7 +1,7 @@
 package elgamal
 
 import (
-	"zecrey-crypto/ecc/zbls377"
+	"zecrey-crypto/ecc/zbls381"
 	"fmt"
 	"math/big"
 	"testing"
@@ -11,7 +11,7 @@ func TestDec(t *testing.T) {
 	sk, pk := GenKeyPair()
 	b := big.NewInt(100000)
 	//b := big.NewInt(100000)
-	r := zbls377.RandomValue()
+	r := zbls381.RandomValue()
 	bEnc := Enc(b, r, pk)
 	bDec := Dec(bEnc, sk)
 	fmt.Println(bDec)

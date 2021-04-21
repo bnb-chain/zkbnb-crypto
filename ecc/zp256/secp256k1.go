@@ -1,10 +1,10 @@
 package zp256
 
 import (
-	"zecrey-crypto/ffmath"
 	"encoding/json"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"math/big"
+	"zecrey-crypto/ffmath"
 )
 
 type MyBitCurve struct {
@@ -115,7 +115,7 @@ func init() {
 	theCurve.Gy, _ = new(big.Int).SetString("0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 0)
 	theCurve.BitSize = 256
 	H, _ = MapToGroup(SeedH)
-	U,_ = MapToGroup(SeedU)
+	U, _ = MapToGroup(SeedU)
 }
 
 func S256() *MyBitCurve {
@@ -207,7 +207,7 @@ func (p *P256) ScalarMult(a *P256, n *big.Int) *P256 {
 }
 
 /*
-ScalarBaseMult returns the Scalar Multiplication by the base generator.
+ScalarBaseMul returns the Scalar Multiplication by the base generator.
 */
 func (p *P256) ScalarBaseMult(n *big.Int) *P256 {
 	cmp := n.Cmp(big.NewInt(0))
@@ -224,7 +224,7 @@ func (p *P256) ScalarBaseMult(n *big.Int) *P256 {
 
 /*
 Multiply actually is reponsible for the addition of elliptic curve points.
-The name here is to maintain compatibility with zbn256 interface.
+The name here is to maintain compatibility with zbn254 interface.
 This algorithm verifies if the given elliptic curve points are equal, in which case it
 returns the result of Double function, otherwise it returns the result of Add function.
 */

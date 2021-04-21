@@ -21,10 +21,10 @@ func Prove(xArr []*big.Int, gArr, uArr []*P256) (zArr []*big.Int, UtArr []*P256)
 		var Uti *P256
 		for j := 0; j < n; j++ {
 			if j == 0 {
-				Uti = zp256.ScalarMult(gArr[i*n+j], xtArr[j])
+				Uti = zp256.ScalarMul(gArr[i*n+j], xtArr[j])
 				continue
 			}
-			Uti = zp256.Add(Uti, zp256.ScalarMult(gArr[i*n+j], xtArr[j]))
+			Uti = zp256.Add(Uti, zp256.ScalarMul(gArr[i*n+j], xtArr[j]))
 		}
 		UtArr = append(UtArr, Uti)
 	}
@@ -46,12 +46,12 @@ func Verify(zArr []*big.Int, gArr, uArr, UtArr []*P256) bool {
 		var l, r *P256
 		for j := 0; j < n; j++ {
 			if j == 0 {
-				l = zp256.ScalarMult(gArr[i*n+j], zArr[j])
+				l = zp256.ScalarMul(gArr[i*n+j], zArr[j])
 				continue
 			}
-			l = zp256.Add(l, zp256.ScalarMult(gArr[i*n+j], zArr[j]))
+			l = zp256.Add(l, zp256.ScalarMul(gArr[i*n+j], zArr[j]))
 		}
-		r = zp256.Add(UtArr[i], zp256.ScalarMult(uArr[i], c))
+		r = zp256.Add(UtArr[i], zp256.ScalarMul(uArr[i], c))
 		if !zp256.Equal(l, r) {
 			return false
 		}

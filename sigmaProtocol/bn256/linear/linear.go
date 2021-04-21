@@ -1,7 +1,7 @@
 package linear
 
 import (
-	"zecrey-crypto/ecc/zbn256"
+	"zecrey-crypto/ecc/zbn254"
 	"zecrey-crypto/ffmath"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
@@ -13,17 +13,17 @@ func Prove(xArr []*big.Int, gArr, uArr []*bn256.G1Affine) (zArr []*big.Int, UtAr
 	n := len(xArr)
 	var xtArr []*big.Int
 	for i := 0; i < n; i++ {
-		xti := zbn256.RandomValue()
+		xti := zbn254.RandomValue()
 		xtArr = append(xtArr, xti)
 	}
 	for i := 0; i < m; i++ {
 		var Uti *bn256.G1Affine
 		for j := 0; j < n; j++ {
 			if j == 0 {
-				Uti = zbn256.G1ScalarMult(gArr[i*n+j], xtArr[j])
+				Uti = zbn254.G1ScalarMult(gArr[i*n+j], xtArr[j])
 				continue
 			}
-			Uti = zbn256.G1Add(Uti, zbn256.G1ScalarMult(gArr[i*n+j], xtArr[j]))
+			Uti = zbn254.G1Add(Uti, zbn254.G1ScalarMult(gArr[i*n+j], xtArr[j]))
 		}
 		UtArr = append(UtArr, Uti)
 	}
@@ -45,12 +45,12 @@ func Verify(zArr []*big.Int, gArr, uArr, UtArr []*bn256.G1Affine) bool {
 		var l, r *bn256.G1Affine
 		for j := 0; j < n; j++ {
 			if j == 0 {
-				l = zbn256.G1ScalarMult(gArr[i*n+j], zArr[j])
+				l = zbn254.G1ScalarMult(gArr[i*n+j], zArr[j])
 				continue
 			}
-			l = zbn256.G1Add(l, zbn256.G1ScalarMult(gArr[i*n+j], zArr[j]))
+			l = zbn254.G1Add(l, zbn254.G1ScalarMult(gArr[i*n+j], zArr[j]))
 		}
-		r = zbn256.G1Add(UtArr[i], zbn256.G1ScalarMult(uArr[i], c))
+		r = zbn254.G1Add(UtArr[i], zbn254.G1ScalarMult(uArr[i], c))
 		if !l.Equal(r) {
 			return false
 		}

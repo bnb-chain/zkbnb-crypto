@@ -1,9 +1,9 @@
 package bulletProofs
 
 import (
+	"math/big"
 	"zecrey-crypto/ecc/zp256"
 	"zecrey-crypto/ffmath"
-	"math/big"
 )
 
 /*
@@ -191,12 +191,12 @@ func (proof *AggBulletProof) Verify() (bool, error) {
 
 	delta := aggDelta(y, z, params.N, m)
 	// g^{\delta(y,z)}
-	gdelta := zp256.ScalarMult(params.G, delta)
+	gdelta := zp256.ScalarMul(params.G, delta)
 
 	rhs.Multiply(rhs, gdelta)
 
-	T1x := zp256.ScalarMult(proof.T1, x)
-	T2x2 := zp256.ScalarMult(proof.T2, x2)
+	T1x := zp256.ScalarMul(proof.T1, x)
+	T2x2 := zp256.ScalarMul(proof.T2, x2)
 
 	rhs.Multiply(rhs, T1x)
 	rhs.Multiply(rhs, T2x2)
@@ -206,7 +206,7 @@ func (proof *AggBulletProof) Verify() (bool, error) {
 
 	// P = A \cdot S^x \cdot gs^{-z} \cdot (hs')^{z \cdot y^{nm}} \cdot \prod_{j=1}^m (hs')_{[(j-1)n: jn -1]}^{z^{j+1} 2^n}
 	// S^x
-	Sx := zp256.ScalarMult(proof.S, x)
+	Sx := zp256.ScalarMul(proof.S, x)
 	// A \cdot S^x
 	ASx := zp256.Add(proof.A, Sx)
 
@@ -241,7 +241,7 @@ func (proof *AggBulletProof) Verify() (bool, error) {
 	// Compute P - rhs  #################### Condition (67) ######################
 
 	// h^mu
-	rP := zp256.ScalarMult(params.H, proof.Mu)
+	rP := zp256.ScalarMul(params.H, proof.Mu)
 	rP.Multiply(rP, proof.Commit)
 
 	c67 := zp256.Equal(lP, rP)

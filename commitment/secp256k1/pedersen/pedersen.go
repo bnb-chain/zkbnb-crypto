@@ -1,14 +1,14 @@
 package pedersen
 
 import (
-	"zecrey-crypto/ecc/zp256"
 	"math/big"
+	"zecrey-crypto/ecc/zp256"
 )
 
 type P256 = zp256.P256
 
 func Commit(a *big.Int, r *big.Int, g, h *P256) *P256 {
-	commitment := zp256.ScalarMult(g, a)
-	commitment = zp256.Add(commitment, zp256.ScalarMult(h, r))
+	commitment := zp256.ScalarMul(g, a)
+	commitment.Add(commitment, zp256.ScalarMul(h, r))
 	return commitment
 }

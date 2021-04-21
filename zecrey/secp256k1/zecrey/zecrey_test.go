@@ -11,7 +11,7 @@ import (
 )
 
 func TestProveVerify(t *testing.T) {
-	statement := NewStatement()
+	statement := NewTransferStatement()
 	// user1
 	sk1, pk1 := twistedElgamal.GenKeyPair()
 	b1 := big.NewInt(8)

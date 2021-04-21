@@ -193,7 +193,7 @@ func VectorExp(a []*P256, b []*big.Int) (result *P256, err error) {
 	i := int64(0)
 	result = zp256.InfinityPoint()
 	for i < m {
-		result.Multiply(result, zp256.ScalarMult(a[i], b[i]))
+		result.Multiply(result, zp256.ScalarMul(a[i], b[i]))
 		i = i + 1
 	}
 	return result, nil
@@ -210,7 +210,7 @@ func vectorScalarExp(a []*P256, b *big.Int) []*P256 {
 	n = int64(len(a))
 	result = make([]*P256, n)
 	for i := int64(0); i < n; i++ {
-		result[i] = zp256.ScalarMult(a[i], b)
+		result[i] = zp256.ScalarMul(a[i], b)
 	}
 	return result
 }

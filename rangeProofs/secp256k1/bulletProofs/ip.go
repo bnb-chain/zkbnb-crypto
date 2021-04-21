@@ -70,8 +70,8 @@ func proveInnerProduct(a, b []*big.Int, P *P256, params *InnerProductParams) (pr
 	// x = Hash(gs,hs,P,c)
 	x, _ := hashIP(params.Gs, params.Hs, P, params.C, params.N)
 	// P' = P \cdot u^(x \cdot c)
-	ux := zp256.ScalarMult(params.U, x)
-	uxc := zp256.ScalarMult(ux, params.C)
+	ux := zp256.ScalarMul(params.U, x)
+	uxc := zp256.ScalarMul(ux, params.C)
 	Pprime := zp256.Add(P, uxc)
 	// Execute Protocol 2 recursively
 	proof = computeBipRecursive(a, b, params.Gs, params.Hs, ux, Pprime, n, Ls, Rs)
@@ -117,7 +117,7 @@ func computeBipRecursive(a, b []*big.Int, g, h []*P256, u, P *P256, n int64, Ls,
 		L, _ = VectorExp(g[nprime:], a[:nprime])
 		Lh, _ = VectorExp(h[:nprime], b[nprime:])
 		L.Multiply(L, Lh)
-		L.Multiply(L, zp256.ScalarMult(u, cL))
+		L.Multiply(L, zp256.ScalarMul(u, cL))
 
 		// Compute r = g_[:n']^(a_[n':]) \cdot h_[n':]^(b_[:n']) \cdot u^{c_R}
 		R, _ = VectorExp(g[:nprime], a[nprime:])
@@ -141,9 +141,9 @@ func computeBipRecursive(a, b []*big.Int, g, h []*P256, u, P *P256, n int64, Ls,
 		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.MultiplyMod(x, x, Order)
 		x2inv = ffmath.ModInverse(x2, Order)
-		Pprime = zp256.ScalarMult(L, x2)
+		Pprime = zp256.ScalarMul(L, x2)
 		Pprime.Multiply(Pprime, P)
-		Pprime.Multiply(Pprime, zp256.ScalarMult(R, x2inv))
+		Pprime.Multiply(Pprime, zp256.ScalarMul(R, x2inv))
 
 		// Compute a' = a_[:n'] \cdot x      + a_[n':] \cdot x^(-1)                         // (33)
 		aprime, _ = VectorScalarMul(a[:nprime], x)
@@ -193,17 +193,17 @@ func (proof *InnerProductProof) Verify() (bool, error) {
 		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.MultiplyMod(x, x, Order)
 		x2inv = ffmath.ModInverse(x2, Order)
-		Pprime.Multiply(Pprime, zp256.ScalarMult(proof.Ls[i], x2))
-		Pprime.Multiply(Pprime, zp256.ScalarMult(proof.Rs[i], x2inv))
+		Pprime.Multiply(Pprime, zp256.ScalarMul(proof.Ls[i], x2))
+		Pprime.Multiply(Pprime, zp256.ScalarMul(proof.Rs[i], x2inv))
 	}
 
 	// c == a*b and checks if P = g^a.h^b.u^c                                     // (16)
 	ab := ffmath.MultiplyMod(proof.A, proof.B, Order)
 	// Compute right hand side
-	rhs := zp256.ScalarMult(gprime[0], proof.A)
-	hb := zp256.ScalarMult(hprime[0], proof.B)
+	rhs := zp256.ScalarMul(gprime[0], proof.A)
+	hb := zp256.ScalarMul(hprime[0], proof.B)
 	rhs.Multiply(rhs, hb)
-	rhs.Multiply(rhs, zp256.ScalarMult(proof.U, ab))
+	rhs.Multiply(rhs, zp256.ScalarMul(proof.U, ab))
 	// Compute inverse of left hand side
 	// If both sides are equal then nP must be zero                               // (17)
 	c := zp256.Equal(Pprime, rhs)

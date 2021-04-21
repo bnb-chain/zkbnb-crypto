@@ -11,7 +11,7 @@ import (
 )
 
 // prove CL = pk^r
-func (proof *ZKSneakTransferProof) ProveAnonEnc(relations []*ZKSneakTransferRelation) {
+func (proof *ZKSneakTransferProof) ProveAnonEnc(relations []*TransferProofRelation) {
 	for _, relation := range relations {
 		zi, Ai := schnorr.Prove(relation.Witness.r, relation.Public.Pk, relation.Public.CDelta.CL)
 		proof.EncProofs = append(proof.EncProofs, &AnonEncProof{Z: zi, A: Ai, R: relation.Public.CDelta.CL, G: relation.Public.Pk})
@@ -29,7 +29,7 @@ func (proof *ZKSneakTransferProof) VerifyAnonEnc() bool {
 }
 
 // prove bDelta range or (sk and bPrime range)
-func (proof *ZKSneakTransferProof) ProveAnonRange(statement *ZKSneakTransferStatement, params *BulletProofSetupParams) error {
+func (proof *ZKSneakTransferProof) ProveAnonRange(statement *TransferProofStatement, params *BulletProofSetupParams) error {
 	relations := statement.Relations
 	for _, relation := range relations {
 		// TODO OR proof
@@ -40,7 +40,7 @@ func (proof *ZKSneakTransferProof) ProveAnonRange(statement *ZKSneakTransferStat
 			}
 			// U = C'_{i,r} / \tilde{C}_{i,r}
 			u := zp256.Add(relation.Public.CPrime.CR, new(P256).Neg(relation.Public.CTilde.CR))
-			w := zp256.ScalarMult(u, relation.Witness.sk)
+			w := zp256.ScalarMul(u, relation.Witness.sk)
 			g := zp256.Base()
 			v := relation.Public.Pk
 			z, Vt, Wt := chaum_pedersen.Prove(relation.Witness.sk, g, u, v, w)
@@ -82,7 +82,7 @@ func (proof *ZKSneakTransferProof) VerifyAnonRange() bool {
 	return true
 }
 
-func (proof *ZKSneakTransferProof) ProveEqual(relations []*ZKSneakTransferRelation) {
+func (proof *ZKSneakTransferProof) ProveEqual(relations []*TransferProofRelation) {
 	var xArr []*big.Int
 	for _, relation := range relations {
 		xArr = append(xArr, relation.Witness.bDelta)

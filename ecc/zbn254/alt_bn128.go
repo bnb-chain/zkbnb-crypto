@@ -1,4 +1,4 @@
-package zbn256
+package zbn254
 
 import (
 	"zecrey-crypto/ffmath"
@@ -41,7 +41,7 @@ func G1ScalarHBaseMult(s *big.Int) *G1Affine {
 	return new(G1Affine).ScalarMultiplication(HAffine, s)
 }
 
-func G1ScalarBaseMult(s *big.Int) *G1Affine {
+func G1ScalarBaseMul(s *big.Int) *G1Affine {
 	base := G1BaseAffine()
 	return new(G1Affine).ScalarMultiplication(base, s)
 }

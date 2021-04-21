@@ -1,4 +1,4 @@
-package zbls377
+package zbls381
 
 import (
 	"zecrey-crypto/ffmath"
@@ -18,11 +18,11 @@ func G1Base() *G1Affine {
 	return &g1Aff
 }
 
-func G1ScalarMult(a *G1Affine, b *big.Int) *G1Affine {
+func G1ScalarMul(a *G1Affine, b *big.Int) *G1Affine {
 	return new(G1Affine).ScalarMultiplication(a, b)
 }
 
-func G1ScalarBaseMult(a *big.Int) *G1Affine {
+func G1ScalarBaseMul(a *big.Int) *G1Affine {
 	return new(G1Affine).ScalarMultiplication(G1Base(), a)
 }
 
@@ -48,7 +48,7 @@ func HashToG1(m string) (*G1Affine, error) {
 	return &p, err
 }
 
-func G1ScalarHBaseMult(a *big.Int) *G1Affine {
+func G1ScalarHBaseMul(a *big.Int) *G1Affine {
 	_, h := GetG1TwoBaseAffine()
 	return new(G1Affine).ScalarMultiplication(h, a)
 }

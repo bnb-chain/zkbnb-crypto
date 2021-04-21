@@ -14,8 +14,8 @@ CommitG1 method corresponds to the Pedersen commitment scheme. Namely, given inp
 message x, and randomness r, it outputs g^x.h^r.
 */
 func CommitG1(x, r *big.Int, g, h *P256) (*P256, error) {
-	C := zp256.ScalarMult(g, x)
-	Hr := zp256.ScalarMult(h, r)
+	C := zp256.ScalarMul(g, x)
+	Hr := zp256.ScalarMul(h, r)
 	C = zp256.Add(C, Hr)
 	return C, nil
 }
@@ -130,7 +130,7 @@ func updateGenerators(Hh []*P256, y *big.Int, N int64) []*P256 {
 	hprimes[0] = Hh[0]
 	i = 1
 	for i < N {
-		hprimes[i] = zp256.ScalarMult(Hh[i], expy)
+		hprimes[i] = zp256.ScalarMul(Hh[i], expy)
 		expy = ffmath.MultiplyMod(expy, yinv, Order)
 		i = i + 1
 	}
