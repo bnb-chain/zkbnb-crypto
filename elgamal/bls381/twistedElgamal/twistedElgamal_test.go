@@ -1,18 +1,22 @@
 package twistedElgamal
 
 import (
-	"zecrey-crypto/ecc/zbls381"
+	"fmt"
 	"github.com/magiconair/properties/assert"
+	"math"
 	"math/big"
 	"testing"
+	"zecrey-crypto/ecc/zp256"
 )
 
 func TestEncDec(t *testing.T) {
 	sk, pk := GenKeyPair()
 	b := big.NewInt(10000)
-	r := zbls381.RandomValue()
+	r := zp256.RandomValue()
+	max := int64(math.Pow(2, 32))
 	enc := Enc(b, r, pk)
-	dec := Dec(enc, sk)
+	bPrime := Dec(enc, sk, max)
+	fmt.Println(bPrime)
 	//assert.Equal(t, b, dec)
-	assert.Equal(t, b, dec)
+	assert.Equal(t, b, bPrime)
 }

@@ -2,12 +2,12 @@ package elgamal
 
 import (
 	"math/big"
-	curve "zecrey-crypto/ecc/zp256"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
-var ORDER = curve.Curve.N
+var ORDER = curve.Order
 
-type Point = curve.P256
+type Point = curve.Point
 
 type ElGamalEnc struct {
 	CL *Point
@@ -27,8 +27,8 @@ func EncAdd(C1 *ElGamalEnc, C2 *ElGamalEnc) *ElGamalEnc {
 }
 
 func (value *ElGamalEnc) Set(enc *ElGamalEnc) {
-	value.CL = curve.Set(enc.CL)
-	value.CR = curve.Set(enc.CR)
+	value.CL = new(Point).Set(enc.CL)
+	value.CR = new(Point).Set(enc.CR)
 }
 
 func Enc(b *big.Int, r *big.Int, pk *Point) (*ElGamalEnc) {
@@ -48,7 +48,7 @@ func Dec(enc *ElGamalEnc, sk *big.Int, Max int64) (*big.Int) {
 	for i := int64(0); i < Max; i++ {
 		b := big.NewInt(i)
 		hi := curve.ScalarBaseMul(b)
-		if curve.Equal(hi, gExpb) {
+		if hi.Equal(gExpb) {
 			return b
 		}
 	}
@@ -63,7 +63,7 @@ func DecByStart(enc *ElGamalEnc, sk *big.Int, start int, Max int64) (*big.Int) {
 	for i := int64(start); i < Max; i++ {
 		b := big.NewInt(i)
 		hi := curve.ScalarBaseMul(b)
-		if curve.Equal(hi, gExpb) {
+		if hi.Equal(gExpb) {
 			return b
 		}
 	}
