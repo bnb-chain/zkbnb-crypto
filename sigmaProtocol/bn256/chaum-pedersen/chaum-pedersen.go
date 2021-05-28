@@ -12,9 +12,9 @@ func Prove(beta *big.Int, g, u, v, w *bn256.G1Affine) (z *big.Int, Vt, Wt *bn256
 	// betat \gets_R Z_p
 	betat := zbn254.RandomValue()
 	// Vt = g^{betat}
-	Vt = zbn254.G1ScalarMult(g, betat)
+	Vt = zbn254.G1ScalarMul(g, betat)
 	// Wt = u^{betat}
-	Wt = zbn254.G1ScalarMult(u, betat)
+	Wt = zbn254.G1ScalarMul(u, betat)
 	// c = H(Vt,Wt,v,w)
 	c := HashChaumPedersen(Vt, Wt, v, w)
 	// z = betat + beta * c
@@ -26,10 +26,10 @@ func Verify(z *big.Int, g, u, Vt, Wt, v, w *bn256.G1Affine) bool {
 	// c = H(Vt,Wt,v,w)
 	c := HashChaumPedersen(Vt, Wt, v, w)
 	// check if g^z = Vt * v^c
-	l1 := zbn254.G1ScalarMult(g, z)
-	r1 := zbn254.G1Add(Vt, zbn254.G1ScalarMult(v, c))
+	l1 := zbn254.G1ScalarMul(g, z)
+	r1 := zbn254.G1Add(Vt, zbn254.G1ScalarMul(v, c))
 	// check if u^z = Wt * w^c
-	l2 := zbn254.G1ScalarMult(u, z)
-	r2 := zbn254.G1Add(Wt, zbn254.G1ScalarMult(w, c))
+	l2 := zbn254.G1ScalarMul(u, z)
+	r2 := zbn254.G1Add(Wt, zbn254.G1ScalarMul(w, c))
 	return l1.Equal(r1) && l2.Equal(r2)
 }

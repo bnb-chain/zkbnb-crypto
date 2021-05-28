@@ -1,108 +1,79 @@
 package zecrey
 
 import (
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
-	"zecrey-crypto/sigmaProtocol/secp256k1/chaum-pedersen"
-	"zecrey-crypto/sigmaProtocol/secp256k1/linear"
-	"zecrey-crypto/sigmaProtocol/secp256k1/schnorr"
-	"errors"
 	"math/big"
+	"zecrey-crypto/ecc/zp256"
 )
 
-// prove CL = pk^r
-func (proof *ZKSneakTransferProof) ProveAnonEnc(relations []*TransferProofRelation) {
-	for _, relation := range relations {
-		zi, Ai := schnorr.Prove(relation.Witness.r, relation.Public.Pk, relation.Public.CDelta.CL)
-		proof.EncProofs = append(proof.EncProofs, &AnonEncProof{Z: zi, A: Ai, R: relation.Public.CDelta.CL, G: relation.Public.Pk})
+// g^{\sum_{i=1}^n b_i} = InfinityPoint
+func ProveSumZero(bs []*big.Int, G *P256) (U *P256, as []*big.Int, err error) {
+	var (
+		n int
+	)
+	if bs == nil || G == nil {
+		return nil, nil, InvalidParams
 	}
+	n = len(bs)
+	// get random vec
+	as = RandomVec(uint(n))
+	asSum := VecSum(as)
+	// U = g^{\sum_{i=1}^n as[i]}
+	U = zp256.ScalarMul(G, asSum)
+	return U, as, nil
 }
 
-func (proof *ZKSneakTransferProof) VerifyAnonEnc() bool {
-	for _, encProof := range proof.EncProofs {
-		res := schnorr.Verify(encProof.Z, encProof.A, encProof.R, encProof.G)
-		if !res {
-			return false
-		}
+func VerifySumZero(c *big.Int, U *P256, zs []*big.Int, G *P256) (bool, error) {
+	// check params
+	if c == nil || U == nil || zs == nil || len(zs) == 0 || G == nil {
+		return false, InvalidParams
 	}
-	return true
+	// compute l = g^{\sum_{i=1}^n zs[i]}
+	zsSum := VecSum(zs)
+	l := zp256.ScalarMul(G, zsSum)
+	// compute r = P \cdot U^c
+	P := zp256.InfinityPoint()
+	r := zp256.Add(P, zp256.ScalarMul(U, c))
+	// verify l == r
+	return zp256.Equal(l, r), nil
 }
 
-// prove bDelta range or (sk and bPrime range)
-func (proof *ZKSneakTransferProof) ProveAnonRange(statement *TransferProofStatement, params *BulletProofSetupParams) error {
-	relations := statement.Relations
-	for _, relation := range relations {
-		// TODO OR proof
-		// bDelta range proof
-		if relation.Witness.bDelta.Cmp(big.NewInt(0)) < 0 {
-			if relation.Witness.sk == nil || relation.Witness.bPrime == nil {
-				return errors.New("you cannot transfer funds to accounts that do not belong to you")
-			}
-			// U = C'_{i,r} / \tilde{C}_{i,r}
-			u := zp256.Add(relation.Public.CPrime.CR, new(P256).Neg(relation.Public.CTilde.CR))
-			w := zp256.ScalarMul(u, relation.Witness.sk)
-			g := zp256.Base()
-			v := relation.Public.Pk
-			z, Vt, Wt := chaum_pedersen.Prove(relation.Witness.sk, g, u, v, w)
-			bulletProof, err := bulletProofs.Prove(relation.Witness.bPrime, statement.RStar, relation.Public.CTilde.CR, params)
-			if err != nil {
-				return err
-			}
-			proof.RangeProofs = append(proof.RangeProofs, &AnonRangeProof{RangeProof: bulletProof, SkProof: &ChaumPedersenProof{Z: z, G: g, U: u, Vt: Vt, Wt: Wt, V: relation.Public.Pk, W: w}})
-		} else {
-			bulletProof, err := bulletProofs.Prove(relation.Witness.bDelta, relation.Witness.r, relation.Public.CDelta.CR, params)
-			if err != nil {
-				return err
-			}
-			proof.RangeProofs = append(proof.RangeProofs, &AnonRangeProof{RangeProof: bulletProof})
-		}
+// C_{i,L}^{\Delta} = pk_i^r \wedge C_{i,R}^{\Delta} = g^{r_i} h^{b_i^{\Delta}}
+func ProveValidEnc(pk, G, H *P256, r, bDelta *big.Int) (A, B *P256, as []*big.Int, err error) {
+	// check params
+	if pk == nil || G == nil || H == nil || r == nil || bDelta == nil {
+		return nil, nil, nil, InvalidParams
 	}
-	return nil
+	// a_i \gets_R Z_p, i = 1,2
+	as = RandomVec(2)
+	// A = pk^{as[0]}
+	A = zp256.ScalarMul(pk, as[0])
+	// B = g^{as[0]} h^{as[1]}
+	B = zp256.ScalarMul(G, as[0])
+	B = zp256.Add(B, zp256.ScalarMul(H, as[1]))
+	return A, B, as, nil
 }
 
-func (proof *ZKSneakTransferProof) VerifyAnonRange() bool {
-	for _, rangeProof := range proof.RangeProofs {
-		if rangeProof.SkProof == nil {
-			res, err := rangeProof.RangeProof.Verify()
-			if err != nil || !res {
-				return false
-			}
-		} else {
-			rangeVerifyRes, err := rangeProof.RangeProof.Verify()
-			if err != nil || !rangeVerifyRes {
-				return false
-			}
-			pedersenProof := rangeProof.SkProof
-			pedersenVerifyRes := chaum_pedersen.Verify(pedersenProof.Z, pedersenProof.G, pedersenProof.U, pedersenProof.Vt, pedersenProof.Wt, pedersenProof.V, pedersenProof.W)
-			if !pedersenVerifyRes {
-				return false
-			}
-		}
+func VerifyValidEnc(c *big.Int, C *ElGamalEnc, A, B *P256, zs []*big.Int, pk, G, H *P256) (bool, error) {
+	// check params
+	if c == nil || C == nil || C.CL == nil || C.CR == nil ||
+		A == nil || B == nil || zs == nil || len(zs) != 2 ||
+		pk == nil || G == nil || H == nil {
+		return false, InvalidParams
 	}
-	return true
-}
-
-func (proof *ZKSneakTransferProof) ProveEqual(relations []*TransferProofRelation) {
-	var xArr []*big.Int
-	for _, relation := range relations {
-		xArr = append(xArr, relation.Witness.bDelta)
+	// compute pk^{zs[0]}
+	l1 := zp256.ScalarMul(pk, zs[0])
+	// compute A C_L^{c}
+	r1 := zp256.ScalarMul(C.CL, c)
+	r1 = zp256.Add(A, r1)
+	res1 := zp256.Equal(l1, r1)
+	if !res1 {
+		return false, nil
 	}
-	n := len(xArr)
-	var gArr []*P256
-	g := zp256.Base()
-	for i := 0; i < n; i++ {
-		gArr = append(gArr, g)
-	}
-	uArr := []*P256{zp256.InfinityPoint()}
-	zArr, UtArr := linear.Prove(xArr, gArr, uArr)
-	proof.EqualProof = &AnonEqualProof{ZArr: zArr, GArr: gArr, UtArr: UtArr, UArr: uArr}
-}
-
-func (proof *ZKSneakTransferProof) VerifyEqual() bool {
-	linearProof := proof.EqualProof
-	linearVerifyRes := linear.Verify(linearProof.ZArr, linearProof.GArr, linearProof.UArr, linearProof.UtArr)
-	if !linearVerifyRes {
-		return false
-	}
-	return true
+	// compute g^{zs[0]} h^{zs[1]}
+	l2 := zp256.ScalarMul(G, zs[0])
+	l2 = zp256.Add(l2, zp256.ScalarMul(H, zs[1]))
+	// compute B C_R^{c}
+	r2 := zp256.ScalarMul(C.CR, c)
+	r2 = zp256.Add(B, r2)
+	return zp256.Equal(l2, r2), nil
 }

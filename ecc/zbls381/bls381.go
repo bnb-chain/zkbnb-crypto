@@ -8,7 +8,7 @@ import (
 
 var (
 	Order, _ = new(big.Int).SetString("8444461749428370424248824938781546531375899335154063827935233455917409239041", 10)
-	SEEDH    = "ZKSneakBLS377SetupH"
+	SEEDH    = "ZecreyBLS377SetupH"
 )
 
 type G1Affine = bls377.G1Affine
@@ -60,5 +60,6 @@ func GetG1TwoBaseAffine() (g *G1Affine, h *G1Affine) {
 }
 
 func RandomValue() *big.Int {
-	return ffmath.RandomValue(Order)
+	r, _ := ffmath.RandomValue(Order)
+	return r
 }

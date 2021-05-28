@@ -36,20 +36,20 @@ func GetPk(sk *big.Int) (pk *bn256.G1Affine) {
 
 func Enc(b *big.Int, r *big.Int, pk *bn256.G1Affine) (*ElGamalEnc) {
 	// pk^r
-	CL := zbn254.G1ScalarMult(pk, r)
+	CL := zbn254.G1ScalarMul(pk, r)
 	// g^r h^b
 	CR := zbn254.G1ScalarBaseMul(r)
-	CR = zbn254.G1Add(CR, zbn254.G1ScalarHBaseMult(b))
+	CR = zbn254.G1Add(CR, zbn254.G1ScalarHBaseMul(b))
 	return &ElGamalEnc{CL: CL, CR: CR}
 }
 
 func Dec(enc *ElGamalEnc, sk *big.Int) (*big.Int) {
 	// (pk^r)^{sk^{-1}}
 	skInv := ffmath.ModInverse(sk, zbn254.Order)
-	gExpr := zbn254.G1ScalarMult(enc.CL, skInv)
+	gExpr := zbn254.G1ScalarMul(enc.CL, skInv)
 	hExpb := zbn254.G1Add(enc.CR, zbn254.G1Neg(gExpr))
 	for i := 0; i < MAX_VALUE; i++ {
-		hi := zbn254.G1ScalarHBaseMult(big.NewInt(int64(i)))
+		hi := zbn254.G1ScalarHBaseMul(big.NewInt(int64(i)))
 		if hi.Equal(hExpb) {
 			return new(big.Int).SetUint64(uint64(i))
 		}
@@ -60,10 +60,10 @@ func Dec(enc *ElGamalEnc, sk *big.Int) (*big.Int) {
 func DecByStart(enc *ElGamalEnc, sk *big.Int, start int) (*big.Int) {
 	// (pk^r)^{sk^{-1}}
 	skInv := ffmath.ModInverse(sk, zbn254.Order)
-	gExpr := zbn254.G1ScalarMult(enc.CL, skInv)
+	gExpr := zbn254.G1ScalarMul(enc.CL, skInv)
 	hExpb := zbn254.G1Add(enc.CR, zbn254.G1Neg(gExpr))
 	for i := start; i < MAX_VALUE; i++ {
-		hi := zbn254.G1ScalarHBaseMult(big.NewInt(int64(i)))
+		hi := zbn254.G1ScalarHBaseMul(big.NewInt(int64(i)))
 		if hi.Equal(hExpb) {
 			return new(big.Int).SetUint64(uint64(i))
 		}

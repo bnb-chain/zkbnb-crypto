@@ -33,13 +33,13 @@ func Enc(b *big.Int, r *big.Int, pk *bn256.G1Affine) (*ElGamalEnc) {
 	CL := zbn254.G1ScalarBaseMul(r)
 	// g^b pk^r
 	CR := zbn254.G1ScalarBaseMul(b)
-	CR = zbn254.G1Add(CR, zbn254.G1ScalarMult(pk, r))
+	CR = zbn254.G1Add(CR, zbn254.G1ScalarMul(pk, r))
 	return &ElGamalEnc{CL: CL, CR: CR}
 }
 
 func Dec(enc *ElGamalEnc, sk *big.Int) (*big.Int) {
 	//  pk^r
-	pkExpr := zbn254.G1ScalarMult(enc.CL, sk)
+	pkExpr := zbn254.G1ScalarMul(enc.CL, sk)
 	// g^b
 	gExpb := zbn254.G1Add(enc.CR, zbn254.G1Neg(pkExpr))
 	for i := int64(0); i < MAX_VALUE; i++ {
@@ -53,7 +53,7 @@ func Dec(enc *ElGamalEnc, sk *big.Int) (*big.Int) {
 
 func DecByStart(enc *ElGamalEnc, sk *big.Int, start int) (*big.Int) {
 	//  pk^r
-	pkExpr := zbn254.G1ScalarMult(enc.CL, sk)
+	pkExpr := zbn254.G1ScalarMul(enc.CL, sk)
 	// g^b
 	gExpb := zbn254.G1Add(enc.CR, zbn254.G1Neg(pkExpr))
 	for i := int64(start); i < MAX_VALUE; i++ {

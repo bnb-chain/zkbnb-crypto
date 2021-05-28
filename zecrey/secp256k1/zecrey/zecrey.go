@@ -9,7 +9,7 @@ func Setup(b int64, m int64) (*TransferParams, error) {
 	return &TransferParams{params}, err
 }
 
-func ProveTransfer(statement *TransferProofStatement, params *BulletProofSetupParams) (proof *ZKSneakTransferProof, err error) {
+func ProveTransfer(statement *TransferProofStatement, params *TransferParams) (proof *ZKSneakTransferProof, err error) {
 	proof = new(ZKSneakTransferProof)
 	proof.ProveAnonEnc(statement.Relations)
 	proof.ProveAnonRange(statement, params)

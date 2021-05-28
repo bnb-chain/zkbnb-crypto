@@ -1,13 +1,15 @@
 package zecrey
 
 import (
-	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
+	"zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
+	"zecrey-crypto/ffmath"
 )
 
 func TestProveVerify(t *testing.T) {
@@ -62,4 +64,15 @@ func TestProveVerify(t *testing.T) {
 		}
 	}
 	assert.True(t, res, "should be true")
+}
+
+func TestVecSum(t *testing.T) {
+	a := zp256.RandomValue()
+	b := zp256.RandomValue()
+	c := zp256.RandomValue()
+	d := ffmath.Add(a, b)
+	d = ffmath.AddMod(d, c, Order)
+	e := ffmath.AddMod(a, b, Order)
+	e = ffmath.AddMod(e, c, Order)
+	fmt.Println(d.Cmp(e) == 0)
 }

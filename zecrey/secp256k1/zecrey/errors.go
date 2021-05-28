@@ -7,5 +7,5 @@ var (
 	InsufficientBalance   = errors.New("insufficient balance")
 	InvalidBalance        = errors.New("invalid balance")
 	InvalidOwnership      = errors.New("you cannot transfer funds to accounts that do not belong to you")
-	InvalidWithdrawParams         = errors.New("params error")
+	InvalidParams         = errors.New("params error")
 )

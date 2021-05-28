@@ -16,6 +16,7 @@ func TestAdd(t *testing.T) {
 	AB := Add(A, B)
 	fmt.Println(AB.IsOnCurve())
 	fmt.Println(Equal(AB, C))
+	fmt.Println(ScalarBaseMul(big.NewInt(0)).IsZero())
 }
 
 func TestNeg(t *testing.T) {
@@ -25,5 +26,6 @@ func TestNeg(t *testing.T) {
 	fmt.Println(A)
 	fmt.Println(ANeg)
 	C := Add(A, ANeg)
+	fmt.Println(C)
 	fmt.Println(C.IsZero())
 }

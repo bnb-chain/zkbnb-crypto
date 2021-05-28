@@ -198,7 +198,7 @@ type WithdrawProofStatement struct {
 
 func NewWithdrawStatement(C *ElGamalEnc, pk *P256, b *big.Int, bDelta *big.Int, sk *big.Int, tokenId uint32) (*WithdrawProofStatement, error) {
 	if C == nil || pk == nil || b == nil || bDelta == nil || sk == nil || tokenId == 0 {
-		return nil, InvalidWithdrawParams
+		return nil, InvalidParams
 	}
 	oriPk := zp256.ScalarBaseMul(sk)
 	if !zp256.Equal(oriPk, pk) {

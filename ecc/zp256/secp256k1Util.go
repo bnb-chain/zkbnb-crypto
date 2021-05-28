@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	SeedH = "ZKSneakP256HSeed"
-	SeedU = "ZKSnekP256USeed"
+	SeedH = "ZecreyP256HSeed"
+	SeedU = "ZecreyP256USeed"
 )
 
 func Neg(a *P256) *P256 {
