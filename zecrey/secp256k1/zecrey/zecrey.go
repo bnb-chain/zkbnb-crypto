@@ -1,14 +1,15 @@
 package zecrey
 
 import (
-	"Zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
+	"zecrey-crypto/rangeProofs/secp256k1/bulletProofs"
 )
 
-func Setup(b int64) (*BulletProofSetupParams, error) {
-	return bulletProofs.Setup(b)
+func Setup(b int64, m int64) (*TransferParams, error) {
+	params, err := bulletProofs.Setup(b, m)
+	return &TransferParams{params}, err
 }
 
-func ProveTransfer(statement *ZKSneakTransferStatement, params *BulletProofSetupParams) (proof *ZKSneakTransferProof, err error) {
+func ProveTransfer(statement *TransferProofStatement, params *TransferParams) (proof *ZKSneakTransferProof, err error) {
 	proof = new(ZKSneakTransferProof)
 	proof.ProveAnonEnc(statement.Relations)
 	proof.ProveAnonRange(statement, params)

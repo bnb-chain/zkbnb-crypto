@@ -1,17 +1,19 @@
 package zecrey
 
 import (
-	"Zecrey-crypto/elgamal/secp256k1/twistedElgamal"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
+	"zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
+	"zecrey-crypto/ffmath"
 )
 
 func TestProveVerify(t *testing.T) {
-	statement := NewStatement()
+	statement := NewTransferStatement()
 	// user1
 	sk1, pk1 := twistedElgamal.GenKeyPair()
 	b1 := big.NewInt(8)
@@ -45,9 +47,10 @@ func TestProveVerify(t *testing.T) {
 	statement.AddRelation(C2, pk2, b2, b2Delta, sk2)
 	statement.AddRelation(C3, pk3, nil, b3Delta, nil)
 	statement.AddRelation(C4, pk4, nil, b4Delta, nil)
-	params, _ := Setup(MAX)
+	params, _ := Setup(32, 1)
 	proof, _ := ProveTransfer(statement, params)
 	proofBytes, _ := json.Marshal(proof)
+	fmt.Println("proof size:", len(proofBytes))
 	var genProof *ZKSneakTransferProof
 	json.Unmarshal(proofBytes, &genProof)
 	fmt.Println("gen proof:", genProof.EncProofs[0])
@@ -61,4 +64,15 @@ func TestProveVerify(t *testing.T) {
 		}
 	}
 	assert.True(t, res, "should be true")
+}
+
+func TestVecSum(t *testing.T) {
+	a := zp256.RandomValue()
+	b := zp256.RandomValue()
+	c := zp256.RandomValue()
+	d := ffmath.Add(a, b)
+	d = ffmath.AddMod(d, c, Order)
+	e := ffmath.AddMod(a, b, Order)
+	e = ffmath.AddMod(e, c, Order)
+	fmt.Println(d.Cmp(e) == 0)
 }
