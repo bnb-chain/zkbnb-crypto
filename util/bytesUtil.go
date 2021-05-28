@@ -65,7 +65,7 @@ func ToByteArray(in *big.Int) []byte {
 func FromByteArray(bytesIn []byte) (*big.Int, error) {
 	const MINUS_ONE = -1
 	if len(bytesIn) == 0 {
-		err := errors.New("Cannot convert empty array to big.Int.")
+		err := errors.New("cannot convert empty array to big.Int")
 		return nil, err
 	}
 	highestByte := bytesIn[0]

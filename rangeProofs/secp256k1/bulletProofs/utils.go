@@ -1,9 +1,9 @@
 package bulletProofs
 
 import (
-	"Zecrey-crypto/ecc/zp256"
-	"Zecrey-crypto/ffmath"
-	"Zecrey-crypto/util"
+	"zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/ffmath"
+	"zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"math/big"
@@ -14,8 +14,8 @@ CommitG1 method corresponds to the Pedersen commitment scheme. Namely, given inp
 message x, and randomness r, it outputs g^x.h^r.
 */
 func CommitG1(x, r *big.Int, g, h *P256) (*P256, error) {
-	C := zp256.ScalarMult(g, x)
-	Hr := zp256.ScalarMult(h, r)
+	C := zp256.ScalarMul(g, x)
+	Hr := zp256.ScalarMul(h, r)
 	C = zp256.Add(C, Hr)
 	return C, nil
 }
@@ -64,7 +64,7 @@ func HashBP(A, S *P256) (*big.Int, *big.Int, error) {
 		return nil, nil, err
 	}
 
-	return a, b, nil
+	return ffmath.Mod(a, Order), ffmath.Mod(b, Order), nil
 }
 
 /*
@@ -80,7 +80,7 @@ func hashIP(g, h []*P256, P *P256, c *big.Int, n int64) (result *big.Int, err er
 	buffer.Write(c.Bytes())
 	result, err = util.HashToInt(buffer, sha256.New)
 
-	return result, err
+	return ffmath.Mod(result, Order), err
 }
 
 /*
@@ -130,7 +130,7 @@ func updateGenerators(Hh []*P256, y *big.Int, N int64) []*P256 {
 	hprimes[0] = Hh[0]
 	i = 1
 	for i < N {
-		hprimes[i] = zp256.ScalarMult(Hh[i], expy)
+		hprimes[i] = zp256.ScalarMul(Hh[i], expy)
 		expy = ffmath.MultiplyMod(expy, yinv, Order)
 		i = i + 1
 	}
@@ -147,7 +147,6 @@ func delta(y, z *big.Int, N int64) *big.Int {
 	// delta(y,z) = (z-z^2) . < 1^n, y^n > - z^3 . < 1^n, 2^n >
 	z2 := ffmath.MultiplyMod(z, z, Order)
 	z3 := ffmath.MultiplyMod(z2, z, Order)
-	z3 = ffmath.Mod(z3, Order)
 
 	// < 1^n, y^n >
 	v1, _ := VectorCopy(new(big.Int).SetInt64(1), N)
@@ -161,7 +160,6 @@ func delta(y, z *big.Int, N int64) *big.Int {
 	result = ffmath.SubMod(z, z2, Order)
 	result = ffmath.MultiplyMod(result, sp1y, Order)
 	result = ffmath.SubMod(result, ffmath.MultiplyMod(z3, sp12, Order), Order)
-	result = ffmath.Mod(result, Order)
 
 	return result
 }

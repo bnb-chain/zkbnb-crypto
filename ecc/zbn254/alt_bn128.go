@@ -1,15 +1,15 @@
-package zbn256
+package zbn254
 
 import (
-	"Zecrey-crypto/ffmath"
-	"Zecrey-crypto/util"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
+	"zecrey-crypto/ffmath"
+	"zecrey-crypto/util"
 )
 
 var (
 	Order, _ = new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
-	SeedH    = "ZKSneakBN128SetupH"
+	SeedH    = "ZecreyBN128SetupH"
 )
 
 type G1Affine = bn256.G1Affine
@@ -32,16 +32,16 @@ func G1Add(a, b *G1Affine) *G1Affine {
 	return p
 }
 
-func G1ScalarMult(a *G1Affine, s *big.Int) *G1Affine {
+func G1ScalarMul(a *G1Affine, s *big.Int) *G1Affine {
 	return new(G1Affine).ScalarMultiplication(a, s)
 }
 
-func G1ScalarHBaseMult(s *big.Int) *G1Affine {
+func G1ScalarHBaseMul(s *big.Int) *G1Affine {
 	_, HAffine := GetG1TwoBaseAffine()
 	return new(G1Affine).ScalarMultiplication(HAffine, s)
 }
 
-func G1ScalarBaseMult(s *big.Int) *G1Affine {
+func G1ScalarBaseMul(s *big.Int) *G1Affine {
 	base := G1BaseAffine()
 	return new(G1Affine).ScalarMultiplication(base, s)
 }
@@ -75,5 +75,6 @@ func VecToBytes(arr []*G1Affine) []byte {
 }
 
 func RandomValue() *big.Int {
-	return ffmath.RandomValue(Order)
+	r, _ := ffmath.RandomValue(Order)
+	return r
 }

@@ -52,7 +52,6 @@ func ModInverse(base *big.Int, modulo *big.Int) *big.Int {
 	return new(big.Int).ModInverse(base, modulo)
 }
 
-func RandomValue(Order *big.Int) *big.Int {
-	r, _ := rand.Int(rand.Reader, Order)
-	return r
+func RandomValue(Order *big.Int) (r *big.Int, err error) {
+	return rand.Int(rand.Reader, Order)
 }
