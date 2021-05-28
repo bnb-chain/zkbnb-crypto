@@ -23,6 +23,7 @@ type ElGamalEnc struct {
 	CR *Point // g^r h^b
 }
 
+// Add encryption entities
 func EncAdd(C1 *ElGamalEnc, C2 *ElGamalEnc) *ElGamalEnc {
 	CL := curve.Add(C1.CL, C2.CL)
 	CR := curve.Add(C1.CR, C2.CR)
@@ -45,6 +46,12 @@ func Pk(sk *big.Int) (pk *Point) {
 	return pk
 }
 
+/**
+Encryption method: C_L = pk^r, C_R = g^r h^b
+@b: the amount needs to be encrypted
+@r: the random value
+@pk: public key
+ */
 func Enc(b *big.Int, r *big.Int, pk *Point) (*ElGamalEnc, error) {
 	if b == nil || r == nil || pk == nil || !pk.IsOnCurve() {
 		return nil, ErrParams
@@ -56,6 +63,12 @@ func Enc(b *big.Int, r *big.Int, pk *Point) (*ElGamalEnc, error) {
 	return &ElGamalEnc{CL: CL, CR: CR}, nil
 }
 
+/**
+Decrypt Method: h^b = C_R / (C_L)^{sk^{-1}}, then compute b by brute-force
+@enc: encryption entity
+@sk: the private key of the encryption public key
+@Max: the max size of b
+ */
 func Dec(enc *ElGamalEnc, sk *big.Int, Max int64) (*big.Int, error) {
 	if enc == nil || enc.CL == nil || enc.CR == nil || sk == nil || Max < 0 {
 		return nil, ErrParams
@@ -74,6 +87,13 @@ func Dec(enc *ElGamalEnc, sk *big.Int, Max int64) (*big.Int, error) {
 	return nil, ErrDec
 }
 
+/**
+Decrypt Method: h^b = C_R / (C_L)^{sk^{-1}}, then compute b by brute-force, start at some value
+@enc: encryption entity
+@sk: the private key of the encryption public key
+@start: the start value
+@Max: the max size of b
+ */
 func DecByStart(enc *ElGamalEnc, sk *big.Int, start int64, Max int64) (*big.Int, error) {
 	if enc == nil || enc.CL == nil || enc.CR == nil ||
 		sk == nil || start < 0 || Max < 0 || start < Max {
