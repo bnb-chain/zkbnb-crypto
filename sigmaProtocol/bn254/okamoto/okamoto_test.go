@@ -2,7 +2,7 @@ package okamoto
 
 import (
 	"zecrey-crypto/ecc/zbn254"
-	"zecrey-crypto/elgamal/bn256/twistedElgamal"
+	"zecrey-crypto/elgamal/bn254/twistedElgamal"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
