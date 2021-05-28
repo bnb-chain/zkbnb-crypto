@@ -1,4 +1,4 @@
-module Zecrey-crypto
+module zecrey-crypto
 
 go 1.15
 

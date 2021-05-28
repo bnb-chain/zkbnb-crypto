@@ -1,19 +1,19 @@
 package zp256
 
 import (
-	"Zecrey-crypto/ffmath"
-	"Zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"math/big"
 	"strconv"
+	"zecrey-crypto/ffmath"
+	"zecrey-crypto/util"
 )
 
 const (
-	SeedH = "ZKSneakP256HSeed"
-	SeedU = "ZKSnekP256USeed"
+	SeedH = "ZecreyP256HSeed"
+	SeedU = "ZecreyP256USeed"
 )
 
 func Neg(a *P256) *P256 {
@@ -24,15 +24,15 @@ func Add(a, b *P256) *P256 {
 	return new(P256).Multiply(a, b)
 }
 
-func ScalarBaseMult(a *big.Int) *P256 {
+func ScalarBaseMul(a *big.Int) *P256 {
 	return new(P256).ScalarBaseMult(a)
 }
 
-func ScalarHBaseMult(a *big.Int) *P256 {
+func ScalarHBaseMul(a *big.Int) *P256 {
 	return new(P256).ScalarMult(H, a)
 }
 
-func ScalarMult(a *P256, n *big.Int) *P256 {
+func ScalarMul(a *P256, n *big.Int) *P256 {
 	return new(P256).ScalarMult(a, n)
 }
 
@@ -45,6 +45,12 @@ func Set(a *P256) *P256 {
 
 func Base() *P256 {
 	return &P256{X: Curve.Gx, Y: Curve.Gy}
+}
+
+func FromBytes(aBytes []byte) (a *P256, err error) {
+	a = new(P256)
+	err = json.Unmarshal(aBytes, &a)
+	return a, err
 }
 
 func VecToBytes(a []*P256) []byte {
@@ -62,8 +68,9 @@ func InfinityPoint() *P256 {
 	return res
 }
 
-func RandomValue() *big.Int {
-	return ffmath.RandomValue(Curve.N)
+func RandomValue() (*big.Int) {
+	r, _ := ffmath.RandomValue(Curve.N)
+	return r
 }
 
 /*

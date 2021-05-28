@@ -1,26 +1,26 @@
 package bulletProofs
 
 import (
-	"Zecrey-crypto/ecc/zp256"
-	"Zecrey-crypto/ffmath"
+	"zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/ffmath"
 	"errors"
-	"math"
 	"math/big"
 	"strconv"
 )
 
-func Setup(b int64) (params *BulletProofSetupParams, err error) {
-	if !IsPowerOfTwo(b) {
-		return nil, errors.New("range end is not a power of 2")
-	}
+func Setup(N int64, M int64) (params *BulletProofSetupParams, err error) {
+	//if !IsPowerOfTwo(N) {
+	//	return nil, errors.New("range end is not a power of 2")
+	//}
 	params = new(BulletProofSetupParams)
 	// TODO change base for twisted_elgamal
 	params.G = zp256.H
 	params.H = zp256.Base()
-	params.N = int64(math.Log2(float64(b)))
-	params.Gs = make([]*P256, params.N)
-	params.Hs = make([]*P256, params.N)
-	for i := int64(0); i < params.N; i++ {
+	params.N = N
+	nm := N * M
+	params.Gs = make([]*P256, nm)
+	params.Hs = make([]*P256, nm)
+	for i := int64(0); i < nm; i++ {
 		params.Gs[i], _ = zp256.MapToGroup(SeedH + "g" + strconv.FormatInt(i, 10))
 		params.Hs[i], _ = zp256.MapToGroup(SeedH + "h" + strconv.FormatInt(i, 10))
 	}
@@ -71,7 +71,7 @@ func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BulletProofSetupPar
 	iaL, _ := ToBigIntVec(aL, params.N)
 	aLvz, _ := VectorSub(iaL, vz)
 
-	// y^n .sR
+	// y^n \cdot s_R
 	vysR, _ := VectorMul(vy, sR)
 
 	// scalar prod: < aL - z \cdot 1^n, y^n \cdot sR >
@@ -131,7 +131,7 @@ func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BulletProofSetupPar
 	mu := ffmath.MultiplyMod(rho, x, Order)
 	mu = ffmath.AddMod(mu, alpha, Order)
 
-	// Inner Product over (g, h', P.h^-mu, that)
+	// Inner Product over (g, h', P \cdot h^{-m \cdot u}, \hat{t})
 	hprimes := updateGenerators(params.Hs, y, params.N)
 
 	// SetupInnerProduct Inner Product (Section 4.2)
@@ -139,6 +139,7 @@ func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BulletProofSetupPar
 	if err != nil {
 		return proof, err
 	}
+	// prove inner product
 	P := commitInnerProduct(params.Gs, hprimes, l, r)
 	proofip, _ := proveInnerProduct(l, r, P, params.InnerProductParams)
 
@@ -181,16 +182,16 @@ func (proof *BulletProof) Verify() (bool, error) {
 	z2 := ffmath.MultiplyMod(z, z, Order)
 	x2 := ffmath.MultiplyMod(x, x, Order)
 
-	rhs := zp256.ScalarMult(proof.V, z2)
+	rhs := zp256.ScalarMul(proof.V, z2)
 
 	delta := delta(y, z, params.N)
 
-	gdelta := zp256.ScalarMult(params.G, delta)
+	gdelta := zp256.ScalarMul(params.G, delta)
 
 	rhs.Multiply(rhs, gdelta)
 
-	T1x := zp256.ScalarMult(proof.T1, x)
-	T2x2 := zp256.ScalarMult(proof.T2, x2)
+	T1x := zp256.ScalarMul(proof.T1, x)
+	T2x2 := zp256.ScalarMul(proof.T2, x2)
 
 	rhs.Multiply(rhs, T1x)
 	rhs.Multiply(rhs, T2x2)
@@ -200,7 +201,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 
 	// P = A \cdot S^x \cdot gs^{-z} \cdot (hs')^{z \cdot y^n + z^2 \cdot 2^n}
 	// S^x
-	Sx := zp256.ScalarMult(proof.S, x)
+	Sx := zp256.ScalarMul(proof.S, x)
 	// A \cdot S^x
 	ASx := zp256.Add(proof.A, Sx)
 
@@ -233,7 +234,7 @@ func (proof *BulletProof) Verify() (bool, error) {
 	// Compute P - rhs  #################### Condition (67) ######################
 
 	// h^mu
-	rP := zp256.ScalarMult(params.H, proof.Mu)
+	rP := zp256.ScalarMul(params.H, proof.Mu)
 	rP.Multiply(rP, proof.Commit)
 
 	c67 := zp256.Equal(lP, rP)
@@ -267,11 +268,11 @@ func computeAR(x []int64) ([]int64, error) {
 Commitvector computes a commitment to the bit of the secret.
 */
 func commitVector(aL, aR []int64, alpha *big.Int, H *P256, g, h []*P256, n int64) *P256 {
-	// Compute h^alpha.vg^aL.vh^aR
-	R := zp256.ScalarMult(H, alpha)
+	// Compute h^{\alpha} \cdot v \cdot g^{a_L} \cdot v \cdot h^{a_R}
+	R := zp256.ScalarMul(H, alpha)
 	for i := int64(0); i < n; i++ {
-		gaL := zp256.ScalarMult(g[i], big.NewInt(aL[i]))
-		haR := zp256.ScalarMult(h[i], big.NewInt(aR[i]))
+		gaL := zp256.ScalarMul(g[i], big.NewInt(aL[i]))
+		haR := zp256.ScalarMul(h[i], big.NewInt(aR[i]))
 		R.Multiply(R, gaL)
 		R.Multiply(R, haR)
 	}
@@ -279,10 +280,10 @@ func commitVector(aL, aR []int64, alpha *big.Int, H *P256, g, h []*P256, n int64
 }
 
 func computeS(sL, sR []*big.Int, rho *big.Int, h *P256, gVec, hVec []*P256) *P256 {
-	S := zp256.ScalarMult(h, rho)
+	S := zp256.ScalarMul(h, rho)
 	for i := int64(0); i < int64(len(sL)); i++ {
-		S.Multiply(S, zp256.ScalarMult(gVec[i], sL[i]))
-		S.Multiply(S, zp256.ScalarMult(hVec[i], sR[i]))
+		S.Multiply(S, zp256.ScalarMul(gVec[i], sL[i]))
+		S.Multiply(S, zp256.ScalarMul(hVec[i], sR[i]))
 	}
 	return S
 }

@@ -1,7 +1,7 @@
 package bulletProofs
 
 import (
-	"Zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/ecc/zp256"
 	"math/big"
 )
 
@@ -46,6 +46,24 @@ type BulletProof struct {
 }
 
 /*
+BulletProofs structure contains the elements that are necessary for the verification
+of the Zero Knowledge Proof.
+*/
+type AggBulletProof struct {
+	Vs                []*P256
+	A                 *P256
+	S                 *P256
+	T1                *P256
+	T2                *P256
+	Taux              *big.Int
+	Mu                *big.Int
+	That              *big.Int
+	InnerProductProof *InnerProductProof
+	Commit            *P256
+	Params            *BulletProofSetupParams
+}
+
+/*
 InnerProductParams contains elliptic curve generators used to compute Pedersen
 commitments.
 */
@@ -73,4 +91,11 @@ type InnerProductProof struct {
 	A      *big.Int
 	B      *big.Int
 	Params *InnerProductParams
+}
+
+// params for aggregation proofs
+type AggProveParam struct {
+	Secret *big.Int
+	Gamma  *big.Int
+	V      *P256
 }

@@ -1,8 +1,8 @@
 package twistedElgamal
 
 import (
-	"Zecrey-crypto/ecc/zbn256"
-	"Zecrey-crypto/ffmath"
+	"zecrey-crypto/ecc/zbn254"
+	"zecrey-crypto/ffmath"
 	"github.com/consensys/gurvy/bn256"
 	"math/big"
 )
@@ -13,14 +13,14 @@ type ElGamalEnc struct {
 }
 
 func EncAdd(C1 *ElGamalEnc, C2 *ElGamalEnc) *ElGamalEnc {
-	CL := zbn256.G1Add(C1.CL, C2.CL)
-	CR := zbn256.G1Add(C1.CR, C2.CR)
+	CL := zbn254.G1Add(C1.CL, C2.CL)
+	CR := zbn254.G1Add(C1.CR, C2.CR)
 	return &ElGamalEnc{CL: CL, CR: CR}
 }
 
 func GenKeyPair() (sk *big.Int, pk *bn256.G1Affine) {
-	sk = zbn256.RandomValue()
-	pk = zbn256.G1ScalarBaseMult(sk)
+	sk = zbn254.RandomValue()
+	pk = zbn254.G1ScalarBaseMul(sk)
 	return sk, pk
 }
 
@@ -30,26 +30,26 @@ func (value *ElGamalEnc) Set(enc *ElGamalEnc) {
 }
 
 func GetPk(sk *big.Int) (pk *bn256.G1Affine) {
-	pk = zbn256.G1ScalarBaseMult(sk)
+	pk = zbn254.G1ScalarBaseMul(sk)
 	return pk
 }
 
 func Enc(b *big.Int, r *big.Int, pk *bn256.G1Affine) (*ElGamalEnc) {
 	// pk^r
-	CL := zbn256.G1ScalarMult(pk, r)
+	CL := zbn254.G1ScalarMul(pk, r)
 	// g^r h^b
-	CR := zbn256.G1ScalarBaseMult(r)
-	CR = zbn256.G1Add(CR, zbn256.G1ScalarHBaseMult(b))
+	CR := zbn254.G1ScalarBaseMul(r)
+	CR = zbn254.G1Add(CR, zbn254.G1ScalarHBaseMul(b))
 	return &ElGamalEnc{CL: CL, CR: CR}
 }
 
 func Dec(enc *ElGamalEnc, sk *big.Int) (*big.Int) {
 	// (pk^r)^{sk^{-1}}
-	skInv := ffmath.ModInverse(sk, zbn256.Order)
-	gExpr := zbn256.G1ScalarMult(enc.CL, skInv)
-	hExpb := zbn256.G1Add(enc.CR, zbn256.G1Neg(gExpr))
+	skInv := ffmath.ModInverse(sk, zbn254.Order)
+	gExpr := zbn254.G1ScalarMul(enc.CL, skInv)
+	hExpb := zbn254.G1Add(enc.CR, zbn254.G1Neg(gExpr))
 	for i := 0; i < MAX_VALUE; i++ {
-		hi := zbn256.G1ScalarHBaseMult(big.NewInt(int64(i)))
+		hi := zbn254.G1ScalarHBaseMul(big.NewInt(int64(i)))
 		if hi.Equal(hExpb) {
 			return new(big.Int).SetUint64(uint64(i))
 		}
@@ -59,11 +59,11 @@ func Dec(enc *ElGamalEnc, sk *big.Int) (*big.Int) {
 
 func DecByStart(enc *ElGamalEnc, sk *big.Int, start int) (*big.Int) {
 	// (pk^r)^{sk^{-1}}
-	skInv := ffmath.ModInverse(sk, zbn256.Order)
-	gExpr := zbn256.G1ScalarMult(enc.CL, skInv)
-	hExpb := zbn256.G1Add(enc.CR, zbn256.G1Neg(gExpr))
+	skInv := ffmath.ModInverse(sk, zbn254.Order)
+	gExpr := zbn254.G1ScalarMul(enc.CL, skInv)
+	hExpb := zbn254.G1Add(enc.CR, zbn254.G1Neg(gExpr))
 	for i := start; i < MAX_VALUE; i++ {
-		hi := zbn256.G1ScalarHBaseMult(big.NewInt(int64(i)))
+		hi := zbn254.G1ScalarHBaseMul(big.NewInt(int64(i)))
 		if hi.Equal(hExpb) {
 			return new(big.Int).SetUint64(uint64(i))
 		}

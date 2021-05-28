@@ -1,8 +1,8 @@
 package linear
 
 import (
-	"Zecrey-crypto/ecc/zbn256"
-	"Zecrey-crypto/util"
+	"zecrey-crypto/ecc/zbn254"
+	"zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"github.com/consensys/gurvy/bn256"
@@ -10,8 +10,8 @@ import (
 )
 
 func HashLinear(UtArr, uArr []*bn256.G1Affine) *big.Int {
-	UtBytes := zbn256.VecToBytes(UtArr)
-	uBytes := zbn256.VecToBytes(uArr)
+	UtBytes := zbn254.VecToBytes(UtArr)
+	uBytes := zbn254.VecToBytes(uArr)
 	var buffer bytes.Buffer
 	buffer.Write(UtBytes)
 	buffer.Write(uBytes)
