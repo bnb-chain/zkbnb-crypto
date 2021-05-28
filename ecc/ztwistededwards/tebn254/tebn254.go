@@ -46,10 +46,6 @@ func ToBytes(p *Point) []byte {
 	return p.Marshal()
 }
 
-func Set(p *Point) *Point {
-	return new(Point).Set(p)
-}
-
 func FromBytes(pBytes []byte) (*Point, error) {
 	var p *Point
 	_, err := p.SetBytes(pBytes)
