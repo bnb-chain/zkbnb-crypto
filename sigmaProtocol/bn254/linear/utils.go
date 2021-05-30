@@ -5,11 +5,11 @@ import (
 	"zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
-	"github.com/consensys/gurvy/bn256"
+	"github.com/consensys/gnark-crypto/bn254"
 	"math/big"
 )
 
-func HashLinear(UtArr, uArr []*bn256.G1Affine) *big.Int {
+func HashLinear(UtArr, uArr []*bn254.G1Affine) *big.Int {
 	UtBytes := zbn254.VecToBytes(UtArr)
 	uBytes := zbn254.VecToBytes(uArr)
 	var buffer bytes.Buffer

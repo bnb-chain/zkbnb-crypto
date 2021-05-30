@@ -11,5 +11,5 @@ func TestG1Neg(t *testing.T) {
 	A := G1ScalarBaseMul(a)
 	ANeg := G1Neg(A)
 	C := G1Add(A, ANeg)
-	fmt.Println(C.IsInfinity())
+	fmt.Println(C)
 }
