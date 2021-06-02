@@ -16,7 +16,7 @@ compute commitment of a: C = g^a h^r
 */
 func Commit(a *big.Int, r *big.Int, g, h *Point) (*Point, error) {
 	if a == nil || r == nil || g == nil || h == nil ||
-		!g.IsOnCurve() || !h.IsOnCurve() || curve.IsInfinity(g) || curve.IsInfinity(h) {
+		!g.IsOnCurve() || !h.IsOnCurve() || curve.IsZero(g) || curve.IsZero(h) {
 		return nil, ErrParams
 	}
 	commitment := curve.ScalarMul(g, a)
@@ -35,7 +35,7 @@ Open a commitment: C' = g^a h^r
 func Open(C *Point, a, r *big.Int, g, h *Point) (bool, error) {
 	if C == nil || a == nil || r == nil ||
 		g == nil || h == nil ||
-		!g.IsOnCurve() || !h.IsOnCurve() || curve.IsInfinity(g) || curve.IsInfinity(h) {
+		!g.IsOnCurve() || !h.IsOnCurve() || curve.IsZero(g) || curve.IsZero(h) {
 		return false, ErrParams
 	}
 	commitment := curve.ScalarMul(g, a)

@@ -7,8 +7,12 @@ import (
 )
 
 func TestNeg(t *testing.T) {
-	a := big.NewInt(5)
-	b := big.NewInt(-5)
+	a := big.NewInt(3)
+	b := big.NewInt(-3)
+	GNeg := Neg(G)
+	GNeg2 := Add(GNeg, GNeg)
+	GNeg3 := Add(GNeg2, GNeg)
+	fmt.Println(GNeg3)
 	A := ScalarBaseMul(a)
 	B := ScalarBaseMul(b)
 	AB := Add(A, B)
@@ -25,7 +29,7 @@ func TestNeg(t *testing.T) {
 	C2 := Add(A, ANeg2)
 	fmt.Println(C)
 	fmt.Println(C2)
-	fmt.Println(IsInfinity(C))
+	fmt.Println(IsZero(C))
 }
 
 func TestMapToGroup(t *testing.T) {
@@ -42,7 +46,7 @@ func TestAdd(t *testing.T) {
 	r1 := big.NewInt(3)
 	r2 := big.NewInt(9)
 	A1 := ScalarBaseMul(r1)
-	Neutral := InfinityPoint()
+	Neutral := ZeroPoint()
 	A1Copy := Add(A1, Neutral)
 	fmt.Println(A1)
 	fmt.Println(A1Copy)

@@ -17,7 +17,7 @@ var (
 	G     = &curve.Base
 	H     *Point
 	U     *Point
-	O     *Point
+	O     = &Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
 )
 
 const (
@@ -32,21 +32,15 @@ func Add(a, b *Point) *Point {
 }
 
 func ScalarBaseMul(a *big.Int) *Point {
-	//if a.Cmp(big.NewInt(0)) < 0 {
-	//	return Neg(new(Point).ScalarMul(G, a))
-	//}
 	return new(Point).ScalarMul(G, a)
 }
 
 func ScalarMul(p *Point, a *big.Int) *Point {
-	if a.Cmp(big.NewInt(0)) < 0 {
-		return Neg(new(Point).ScalarMul(p, a))
-	}
 	return new(Point).ScalarMul(p, a)
 }
 
 func Neg(a *Point) *Point {
-	return new(Point).Set(a).Neg(a)
+	return new(Point).Neg(a)
 }
 
 func ToBytes(p *Point) []byte {
@@ -80,7 +74,7 @@ func MapToGroup(seed string) (H *Point, err error) {
 		yElement := new(fr.Element).SetBigInt(y)
 		x := computeX(y)
 		H = &Point{X: x, Y: *yElement}
-		if H.IsOnCurve() && !IsInfinity(H) {
+		if H.IsOnCurve() && !IsZero(H) {
 			return H, nil
 		}
 		i++
@@ -102,14 +96,14 @@ func computeX(yInt *big.Int) (x fr.Element) {
 	return
 }
 
-func IsInfinity(p *Point) bool {
+func IsZero(p *Point) bool {
 	if p == nil {
 		return true
 	}
 	return p.Equal(O)
 }
 
-func InfinityPoint() *Point {
+func ZeroPoint() *Point {
 	return O
 }
 
@@ -119,7 +113,6 @@ func RandomValue() *big.Int {
 }
 
 func init() {
-	O = ScalarBaseMul(Order)
 	H, _ = MapToGroup(SeedH)
 	U, _ = MapToGroup(SeedU)
 }
