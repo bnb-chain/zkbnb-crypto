@@ -141,7 +141,7 @@ func updateGenerators(Hh []*Point, y *big.Int, N int64) []*Point {
 /*
 delta(y,z) = (z-z^2) . < 1^n, y^n > - z^3 . < 1^n, 2^n >
 */
-func delta(y, z *big.Int, N int64) *big.Int {
+func delta(y, z *big.Int, N int64) (*big.Int, error) {
 	var (
 		result *big.Int
 	)
@@ -150,17 +150,26 @@ func delta(y, z *big.Int, N int64) *big.Int {
 	z3 := ffmath.MultiplyMod(z2, z, Order)
 
 	// < 1^n, y^n >
-	v1, _ := VectorCopy(new(big.Int).SetInt64(1), N)
+	v1, err := VectorCopy(new(big.Int).SetInt64(1), N)
+	if err != nil {
+		return nil, err
+	}
 	vy := powerOfVec(y, N)
-	sp1y, _ := ScalarVecMul(v1, vy)
+	sp1y, err := ScalarVecMul(v1, vy)
+	if err != nil {
+		return nil, err
+	}
 
 	// < 1^n, 2^n >
 	p2n := powerOfVec(big.NewInt(2), N)
-	sp12, _ := ScalarVecMul(v1, p2n)
+	sp12, err := ScalarVecMul(v1, p2n)
+	if err != nil {
+		return nil, err
+	}
 
-	result = ffmath.SubMod(z, z2, Order)
-	result = ffmath.MultiplyMod(result, sp1y, Order)
-	result = ffmath.SubMod(result, ffmath.MultiplyMod(z3, sp12, Order), Order)
+	result = ffmath.Sub(z, z2)
+	result = ffmath.Multiply(result, sp1y)
+	result = ffmath.SubMod(result, ffmath.Multiply(z3, sp12), Order)
 
-	return result
+	return result, nil
 }

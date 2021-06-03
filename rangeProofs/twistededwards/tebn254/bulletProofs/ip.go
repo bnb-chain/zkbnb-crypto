@@ -28,7 +28,10 @@ func setupInnerProduct(H *Point, gs, hs []*Point, c *big.Int, N int64) (params *
 	if gs == nil {
 		params.Gs = make([]*Point, N)
 		for i := int64(0); i < N; i++ {
-			params.Gs[i], _ = curve.MapToGroup(SeedH + "g" + strconv.FormatInt(i, 10))
+			params.Gs[i], err = curve.MapToGroup(SeedH + "g" + strconv.FormatInt(i, 10))
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		params.Gs = gs
@@ -36,7 +39,10 @@ func setupInnerProduct(H *Point, gs, hs []*Point, c *big.Int, N int64) (params *
 	if hs == nil {
 		params.Hs = make([]*Point, N)
 		for i := int64(0); i < N; i++ {
-			params.Hs[i], _ = curve.MapToGroup(SeedH + "h" + strconv.FormatInt(i, 10))
+			params.Hs[i], err = curve.MapToGroup(SeedH + "h" + strconv.FormatInt(i, 10))
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		params.Hs = hs
@@ -68,13 +74,19 @@ func proveInnerProduct(a, b []*big.Int, P *Point, params *InnerProductParams) (p
 
 	// Fiat-Shamir:
 	// x = Hash(gs,hs,P,c)
-	x, _ := hashIP(params.Gs, params.Hs, P, params.C, params.N)
+	x, err := hashIP(params.Gs, params.Hs, P, params.C, params.N)
+	if err != nil {
+		return nil, err
+	}
 	// P' = P \cdot u^(x \cdot c)
 	ux := curve.ScalarMul(params.U, x)
 	uxc := curve.ScalarMul(ux, params.C)
 	Pprime := curve.Add(P, uxc)
 	// Execute Protocol 2 recursively
-	proof = computeBipRecursive(a, b, params.Gs, params.Hs, ux, Pprime, n, Ls, Rs)
+	proof, err = computeBipRecursive(a, b, params.Gs, params.Hs, ux, Pprime, n, Ls, Rs)
+	if err != nil {
+		return nil, err
+	}
 	proof.Params = params
 	proof.Params.P = Pprime
 	return proof, nil
@@ -83,8 +95,8 @@ func proveInnerProduct(a, b []*big.Int, P *Point, params *InnerProductParams) (p
 /*
 computeBipRecursive is the main recursive function that will be used to compute the inner product argument.
 */
-func computeBipRecursive(a, b []*big.Int, g, h []*Point, u, P *Point, n int64, Ls, Rs []*Point) *InnerProductProof {
-	proof := new(InnerProductProof)
+func computeBipRecursive(a, b []*big.Int, g, h []*Point, u, P *Point, n int64, Ls, Rs []*Point) (proof *InnerProductProof, err error) {
+	proof = new(InnerProductProof)
 
 	var (
 		cL, cR, x, xinv, x2, x2inv       *big.Int
@@ -110,33 +122,60 @@ func computeBipRecursive(a, b []*big.Int, g, h []*Point, u, P *Point, n int64, L
 		nprime := n / 2
 
 		// Compute cL = < a[:n'], b[n':] >
-		cL, _ = ScalarVecMul(a[:nprime], b[nprime:])
+		cL, err = ScalarVecMul(a[:nprime], b[nprime:])
+		if err != nil {
+			return nil, err
+		}
 		// Compute cR = < a[n':], b[:n'] >
-		cR, _ = ScalarVecMul(a[nprime:], b[:nprime])
+		cR, err = ScalarVecMul(a[nprime:], b[:nprime])
+		if err != nil {
+			return nil, err
+		}
 		// Compute L = g_[n':]^(a_[:n']) \cdot h_[:n']^(b_[n':]) \cdot u^{c_L}
-		L, _ = VectorExp(g[nprime:], a[:nprime])
-		Lh, _ = VectorExp(h[:nprime], b[nprime:])
+		L, err = VectorExp(g[nprime:], a[:nprime])
+		if err != nil {
+			return nil, err
+		}
+		Lh, err = VectorExp(h[:nprime], b[nprime:])
+		if err != nil {
+			return nil, err
+		}
 		L = curve.Add(L, Lh)
 		L = curve.Add(L, curve.ScalarMul(u, cL))
 
 		// Compute r = g_[:n']^(a_[n':]) \cdot h_[n':]^(b_[:n']) \cdot u^{c_R}
-		R, _ = VectorExp(g[:nprime], a[nprime:])
-		Rh, _ = VectorExp(h[nprime:], b[:nprime])
+		R, err = VectorExp(g[:nprime], a[nprime:])
+		if err != nil {
+			return nil, err
+		}
+		Rh, err = VectorExp(h[nprime:], b[:nprime])
+		if err != nil {
+			return nil, err
+		}
 		R = curve.Add(R, Rh)
 		R = curve.Add(R, curve.ScalarMul(u, cR))
 
 		// Fiat-Shamir:
-		x, _, _ = HashBP(L, R)
+		x, _, err = HashBP(L, R)
+		if err != nil {
+			return nil, err
+		}
 		xinv = ffmath.ModInverse(x, Order)
 
 		// Compute g' = g_[:n']^(x^-1) \cdot g_[n':]^(x)
 		gprime = vectorScalarExp(g[:nprime], xinv)
 		gprime2 = vectorScalarExp(g[nprime:], x)
-		gprime, _ = VectorECAdd(gprime, gprime2)
+		gprime, err = VectorECAdd(gprime, gprime2)
+		if err != nil {
+			return nil, err
+		}
 		// Compute h' = h[:n']^(x)    * h[n':]^(x^-1)                         // (30)
 		hprime = vectorScalarExp(h[:nprime], x)
 		hprime2 = vectorScalarExp(h[nprime:], xinv)
-		hprime, _ = VectorECAdd(hprime, hprime2)
+		hprime, err = VectorECAdd(hprime, hprime2)
+		if err != nil {
+			return nil, err
+		}
 
 		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.MultiplyMod(x, x, Order)
@@ -146,27 +185,48 @@ func computeBipRecursive(a, b []*big.Int, g, h []*Point, u, P *Point, n int64, L
 		Pprime = curve.Add(Pprime, curve.ScalarMul(R, x2inv))
 
 		// Compute a' = a_[:n'] \cdot x      + a_[n':] \cdot x^(-1)                         // (33)
-		aprime, _ = VectorScalarMul(a[:nprime], x)
-		aprime2, _ = VectorScalarMul(a[nprime:], xinv)
-		aprime, _ = VectorAdd(aprime, aprime2)
+		aprime, err = VectorScalarMul(a[:nprime], x)
+		if err != nil {
+			return nil, err
+		}
+		aprime2, err = VectorScalarMul(a[nprime:], xinv)
+		if err != nil {
+			return nil, err
+		}
+		aprime, err = VectorAdd(aprime, aprime2)
+		if err != nil {
+			return nil, err
+		}
 		// Compute b' = b_[:n'] \cdot x^(-1) + b_[n':] \cdot x                              // (34)
-		bprime, _ = VectorScalarMul(b[:nprime], xinv)
-		bprime2, _ = VectorScalarMul(b[nprime:], x)
-		bprime, _ = VectorAdd(bprime, bprime2)
+		bprime, err = VectorScalarMul(b[:nprime], xinv)
+		if err != nil {
+			return nil, err
+		}
+		bprime2, err = VectorScalarMul(b[nprime:], x)
+		if err != nil {
+			return nil, err
+		}
+		bprime, err = VectorAdd(bprime, bprime2)
+		if err != nil {
+			return nil, err
+		}
 
 		Ls = append(Ls, L)
 		Rs = append(Rs, R)
 		// recursion computeBipRecursive(g',h',u,P'; a', b')                  // (35)
-		proof = computeBipRecursive(aprime, bprime, gprime, hprime, u, Pprime, nprime, Ls, Rs)
+		proof, err = computeBipRecursive(aprime, bprime, gprime, hprime, u, Pprime, nprime, Ls, Rs)
+		if err != nil {
+			return nil, err
+		}
 	}
 	proof.N = n
-	return proof
+	return proof, nil
 }
 
 /*
 Verify is responsible for the verification of the Inner Product Proof.
 */
-func (proof *InnerProductProof) Verify() (bool, error) {
+func (proof *InnerProductProof) Verify() (res bool, err error) {
 
 	logn := len(proof.Ls)
 	var (
@@ -179,17 +239,26 @@ func (proof *InnerProductProof) Verify() (bool, error) {
 	Pprime := proof.Params.P
 	nprime := proof.N
 	for i := int64(0); i < int64(logn); i++ {
-		nprime = nprime / 2                        // (20)
-		x, _, _ = HashBP(proof.Ls[i], proof.Rs[i]) // (26)
+		nprime = nprime / 2                          // (20)
+		x, _, err = HashBP(proof.Ls[i], proof.Rs[i]) // (26)
+		if err != nil {
+			return false, err
+		}
 		xinv = ffmath.ModInverse(x, Order)
 		// Compute g' = g[:n']^(x^-1) * g[n':]^(x)                            // (29)
 		ngprime = vectorScalarExp(gprime[:nprime], xinv)
 		ngprime2 = vectorScalarExp(gprime[nprime:], x)
-		gprime, _ = VectorECAdd(ngprime, ngprime2)
+		gprime, err = VectorECAdd(ngprime, ngprime2)
+		if err != nil {
+			return false, err
+		}
 		// Compute h' = h[:n']^(x)    * h[n':]^(x^-1)                         // (30)
 		nhprime = vectorScalarExp(hprime[:nprime], x)
 		nhprime2 = vectorScalarExp(hprime[nprime:], xinv)
-		hprime, _ = VectorECAdd(nhprime, nhprime2)
+		hprime, err = VectorECAdd(nhprime, nhprime2)
+		if err != nil {
+			return false, err
+		}
 		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.MultiplyMod(x, x, Order)
 		x2inv = ffmath.ModInverse(x2, Order)
@@ -214,9 +283,15 @@ func (proof *InnerProductProof) Verify() (bool, error) {
 /*
 commitInnerProduct is responsible for calculating g^a.h^b.
 */
-func commitInnerProduct(g, h []*Point, a, b []*big.Int) *Point {
-	vga, _ := VectorExp(g, a)
-	vhb, _ := VectorExp(h, b)
+func commitInnerProduct(g, h []*Point, a, b []*big.Int) (*Point, error) {
+	vga, err := VectorExp(g, a)
+	if err != nil {
+		return nil, err
+	}
+	vhb, err := VectorExp(h, b)
+	if err != nil {
+		return nil, err
+	}
 	result := curve.Add(vga, vhb)
-	return result
+	return result, nil
 }

@@ -20,8 +20,11 @@ func Setup(N int64, M int64) (params *BulletProofSetupParams, err error) {
 	params.Gs = make([]*Point, nm)
 	params.Hs = make([]*Point, nm)
 	for i := int64(0); i < nm; i++ {
-		params.Gs[i], _ = curve.MapToGroup(SeedH + "g" + strconv.FormatInt(i, 10))
-		params.Hs[i], _ = curve.MapToGroup(SeedH + "h" + strconv.FormatInt(i, 10))
+		params.Gs[i], err = curve.MapToGroup(SeedH + "g" + strconv.FormatInt(i, 10))
+		params.Hs[i], err = curve.MapToGroup(SeedH + "h" + strconv.FormatInt(i, 10))
+		if err != nil {
+			return nil, err
+		}
 	}
 	return params, nil
 }
@@ -35,9 +38,15 @@ func Prove(secret *big.Int, gamma *big.Int, V *Point, params *BulletProofSetupPa
 
 	// aL, aR and commitment: (A, alpha)
 	// a_L = toBinary(secret)
-	aL, _ := Decompose(secret, 2, params.N)
+	aL, err := Decompose(secret, 2, params.N)
+	if err != nil {
+		return nil, err
+	}
 	// a_R = a_L - 1^n
-	aR, _ := computeAR(aL)
+	aR, err := computeAR(aL)
+	if err != nil {
+		return nil, err
+	}
 	// A = h^{\alpha} gs^{a_L} hs^{a_R}
 	alpha := curve.RandomValue()
 	A := commitVector(aL, aR, alpha, params.H, params.Gs, params.Hs, params.N)
@@ -52,7 +61,10 @@ func Prove(secret *big.Int, gamma *big.Int, V *Point, params *BulletProofSetupPa
 
 	// Fiat-Shamir heuristic to compute challenges y and z, corresponds to
 	// y,z are challenges
-	y, z, _ := HashBP(A, S)
+	y, z, err := HashBP(A, S)
+	if err != nil {
+		return nil, err
+	}
 
 	// \tau_1,\tau_2 \gets_R \mathbb{Z}_p
 	tau1 := curve.RandomValue()
@@ -62,63 +74,129 @@ func Prove(secret *big.Int, gamma *big.Int, V *Point, params *BulletProofSetupPa
 	// r(X) = y^n \circ (a_R + z \cdot 1^n + s_R \cdot X) + z^2 \cdot 2^n
 	// t(x) = < l(X),r(X) > = t_0 + t_1 \cdot X + t_2 \cdot X^2
 	// compute t_1: < a_L - z \cdot 1^n, y^n \cdot sR > + < s_L, y^n \cdot (a_R + z \cdot 1^n) + z^2 \cdot 2^n >
-	vz, _ := VectorCopy(z, params.N)
+	vz, err := VectorCopy(z, params.N)
+	if err != nil {
+		return nil, err
+	}
 	vy := powerOfVec(y, params.N)
 
 	// a_L - z \cdot 1^n
-	iaL, _ := ToBigIntVec(aL, params.N)
-	aLvz, _ := VectorSub(iaL, vz)
+	iaL, err := ToBigIntVec(aL, params.N)
+	if err != nil {
+		return nil, err
+	}
+	aLvz, err := VectorSub(iaL, vz)
+	if err != nil {
+		return nil, err
+	}
 
 	// y^n \cdot s_R
-	vysR, _ := VectorMul(vy, sR)
+	vysR, err := VectorMul(vy, sR)
+	if err != nil {
+		return nil, err
+	}
 
 	// scalar prod: < aL - z \cdot 1^n, y^n \cdot sR >
-	sp1, _ := ScalarVecMul(aLvz, vysR)
+	sp1, err := ScalarVecMul(aLvz, vysR)
+	if err != nil {
+		return nil, err
+	}
 
 	// scalar prod: < s_L, y^n \cdot (aR + z \cdot 1^n) + z^2 \cdot 2^n >
-	iaR, _ := ToBigIntVec(aR, params.N)
-	aRvz, _ := VectorAdd(iaR, vz)
-	vyaRvz, _ := VectorMul(vy, aRvz)
+	iaR, err := ToBigIntVec(aR, params.N)
+	if err != nil {
+		return nil, err
+	}
+	aRvz, err := VectorAdd(iaR, vz)
+	if err != nil {
+		return nil, err
+	}
+	vyaRvz, err := VectorMul(vy, aRvz)
+	if err != nil {
+		return nil, err
+	}
 
 	// s_L \cdot z^2 \cdot 2^n
 	p2n := powerOfVec(big.NewInt(2), params.N)
 	zsquared := ffmath.MultiplyMod(z, z, Order)
-	z22n, _ := VectorScalarMul(p2n, zsquared)
-	vyaRvz, _ = VectorAdd(vyaRvz, z22n)
-	sp2, _ := ScalarVecMul(sL, vyaRvz)
+	z22n, err := VectorScalarMul(p2n, zsquared)
+	if err != nil {
+		return nil, err
+	}
+	vyaRvz, err = VectorAdd(vyaRvz, z22n)
+	if err != nil {
+		return nil, err
+	}
+	sp2, err := ScalarVecMul(sL, vyaRvz)
+	if err != nil {
+		return nil, err
+	}
 
 	// t_1 = sp1 + sp2
 	t1 := ffmath.AddMod(sp1, sp2, Order)
 
 	// compute t_2: < sL, y^n \cdot s_R >
-	t2, _ := ScalarVecMul(sL, vysR)
+	t2, err := ScalarVecMul(sL, vysR)
+	if err != nil {
+		return nil, err
+	}
 
 	// compute T1
 	// T_1 = g^{t_1} \cdot h^{\tau_1}
-	T1, _ := CommitG1(t1, tau1, params.G, params.H)
+	T1, err := CommitG1(t1, tau1, params.G, params.H)
+	if err != nil {
+		return nil, err
+	}
 
 	// compute T2
 	// T_2 = g^{t_2} \cdot h^{\tau_2}
-	T2, _ := CommitG1(t2, tau2, params.G, params.H)
+	T2, err := CommitG1(t2, tau2, params.G, params.H)
+	if err != nil {
+		return nil, err
+	}
 
 	// Fiat-Shamir heuristic to compute 'random' challenge x
 	// x is the challenge
-	x, _, _ := HashBP(T1, T2)
+	x, _, err := HashBP(T1, T2)
+	if err != nil {
+		return nil, err
+	}
 
 	// compute l
 	// l = l(x) = a_L - z \cdot 1^n + s_L \cdot x
-	sLx, _ := VectorScalarMul(sL, x)
-	l, _ := VectorAdd(aLvz, sLx)
+	sLx, err := VectorScalarMul(sL, x)
+	if err != nil {
+		return nil, err
+	}
+	l, err := VectorAdd(aLvz, sLx)
+	if err != nil {
+		return nil, err
+	}
 
 	// compute r
 	// r = r(x) = y^n \circ (a_R + z \cdot 1^n + s_R \cdot x) + z^2 \cdot 2^n
-	sRx, _ := VectorScalarMul(sR, x)
-	aRvz, _ = VectorAdd(aRvz, sRx)
-	vyaRvz, _ = VectorMul(vy, aRvz)
-	r, _ := VectorAdd(vyaRvz, z22n)
+	sRx, err := VectorScalarMul(sR, x)
+	if err != nil {
+		return nil, err
+	}
+	aRvz, err = VectorAdd(aRvz, sRx)
+	if err != nil {
+		return nil, err
+	}
+	vyaRvz, err = VectorMul(vy, aRvz)
+	if err != nil {
+		return nil, err
+	}
+	r, err := VectorAdd(vyaRvz, z22n)
+	if err != nil {
+		return nil, err
+	}
 
 	// Compute \hat{t} = < l, r >
-	that, _ := ScalarVecMul(l, r)
+	that, err := ScalarVecMul(l, r)
+	if err != nil {
+		return nil, err
+	}
 
 	// Compute taux = \tau_2 \cdot x^2 + \tau_1 \cdot x + z^2 \cdot gamma
 	taux := ffmath.MultiplyMod(tau2, ffmath.MultiplyMod(x, x, Order), Order)
@@ -139,8 +217,14 @@ func Prove(secret *big.Int, gamma *big.Int, V *Point, params *BulletProofSetupPa
 	}
 
 	// prove inner product
-	P := commitInnerProduct(params.Gs, hprimes, l, r)
-	proofip, _ := proveInnerProduct(l, r, P, params.InnerProductParams)
+	P, err := commitInnerProduct(params.Gs, hprimes, l, r)
+	if err != nil {
+		return nil, err
+	}
+	proofip, err := proveInnerProduct(l, r, P, params.InnerProductParams)
+	if err != nil {
+		return nil, err
+	}
 
 	proof = &BulletProof{
 		V:                 V,
@@ -162,10 +246,19 @@ func Prove(secret *big.Int, gamma *big.Int, V *Point, params *BulletProofSetupPa
 Verify returns true if and only if the proof is valid.
 */
 func (proof *BulletProof) Verify() (bool, error) {
+	if proof == nil {
+		return false, ErrNilParams
+	}
 	params := proof.Params
 	// Recover x, y, z using Fiat-Shamir heuristic
-	x, _, _ := HashBP(proof.T1, proof.T2)
-	y, z, _ := HashBP(proof.A, proof.S)
+	x, _, err := HashBP(proof.T1, proof.T2)
+	if err != nil {
+		return false, err
+	}
+	y, z, err := HashBP(proof.A, proof.S)
+	if err != nil {
+		return false, err
+	}
 
 	// Switch generators                                                   // (64)
 	hprimes := updateGenerators(params.Hs, y, params.N)
@@ -176,7 +269,10 @@ func (proof *BulletProof) Verify() (bool, error) {
 
 	// Compute left hand side
 	// g^{\hat{t}} h^{\tau_x} == V^{z^2} \cdot g^{\delta(y,z)} \cdot T_1^{x} \cdot T_2^{x^2}
-	lhs, _ := CommitG1(proof.That, proof.Taux, params.G, params.H)
+	lhs, err := CommitG1(proof.That, proof.Taux, params.G, params.H)
+	if err != nil {
+		return false, err
+	}
 
 	// Compute right hand side
 	z2 := ffmath.MultiplyMod(z, z, Order)
@@ -184,7 +280,10 @@ func (proof *BulletProof) Verify() (bool, error) {
 
 	rhs := curve.ScalarMul(proof.V, z2)
 
-	delta := delta(y, z, params.N)
+	delta, err := delta(y, z, params.N)
+	if err != nil {
+		return false, err
+	}
 
 	gdelta := curve.ScalarMul(params.G, delta)
 
@@ -208,25 +307,46 @@ func (proof *BulletProof) Verify() (bool, error) {
 	// g^-z
 	//mz := ffmath.ModInverse(z, Order)
 	mz := ffmath.Sub(Order, z)
-	vmz, _ := VectorCopy(mz, params.N)
-	gpmz, _ := VectorExp(params.Gs, vmz)
+	vmz, err := VectorCopy(mz, params.N)
+	if err != nil {
+		return false, err
+	}
+	gpmz, err := VectorExp(params.Gs, vmz)
+	if err != nil {
+		return false, err
+	}
 
 	// z.y^n
-	vz, _ := VectorCopy(z, params.N)
+	vz, err := VectorCopy(z, params.N)
+	if err != nil {
+		return false, err
+	}
 	vy := powerOfVec(y, params.N)
-	zyn, _ := VectorMul(vy, vz)
+	zyn, err := VectorMul(vy, vz)
+	if err != nil {
+		return false, err
+	}
 
 	p2n := powerOfVec(big.NewInt(2), params.N)
 	zsquared := ffmath.MultiplyMod(z, z, Order)
-	z22n, _ := VectorScalarMul(p2n, zsquared)
+	z22n, err := VectorScalarMul(p2n, zsquared)
+	if err != nil {
+		return false, err
+	}
 
 	// z \cdot y^n + z^2 \cdot 2^n
-	zynz22n, _ := VectorAdd(zyn, z22n)
+	zynz22n, err := VectorAdd(zyn, z22n)
+	if err != nil {
+		return false, err
+	}
 
 	lP := curve.Add(ASx, gpmz)
 
 	// h'^(z.y^n + z^2.2^n)
-	hprimeexp, _ := VectorExp(hprimes, zynz22n)
+	hprimeexp, err := VectorExp(hprimes, zynz22n)
+	if err != nil {
+		return false, err
+	}
 
 	lP = curve.Add(lP, hprimeexp)
 
@@ -239,7 +359,10 @@ func (proof *BulletProof) Verify() (bool, error) {
 	c67 := lP.Equal(rP)
 
 	// Verify Inner Product Proof ################################################
-	ok, _ := proof.InnerProductProof.Verify()
+	ok, err := proof.InnerProductProof.Verify()
+	if err != nil {
+		return false, err
+	}
 
 	result := c65 && c67 && ok
 
