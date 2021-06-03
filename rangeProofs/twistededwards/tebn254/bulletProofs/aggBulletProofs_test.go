@@ -4,22 +4,23 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
 func TestProveAggregationAndVerify(t *testing.T) {
+	//for i := 0; i < 100; i++ {
 	_, pk := twistedElgamal.GenKeyPair()
 	b1 := big.NewInt(8)
-	r1 := zp256.RandomValue()
+	r1 := curve.RandomValue()
 	b2 := big.NewInt(3)
-	r2 := zp256.RandomValue()
-	b1Enc := twistedElgamal.Enc(b1, r1, pk)
-	b2Enc := twistedElgamal.Enc(b2, r2, pk)
+	r2 := curve.RandomValue()
+	b1Enc, _ := twistedElgamal.Enc(b1, r1, pk)
+	b2Enc, _ := twistedElgamal.Enc(b2, r2, pk)
 	secrets := []*big.Int{b1, b2}
 	gammas := []*big.Int{r1, r2}
-	Vs := []*P256{b1Enc.CR, b2Enc.CR}
-	params, err := Setup(32, 10)
+	Vs := []*Point{b1Enc.CR, b2Enc.CR}
+	params, err := Setup(32, 2)
 	if err != nil {
 		panic(err)
 	}
@@ -32,4 +33,5 @@ func TestProveAggregationAndVerify(t *testing.T) {
 		panic(err)
 	}
 	fmt.Println(res)
+	//}
 }

@@ -3,12 +3,12 @@ package chaum_pedersen
 import (
 	"zecrey-crypto/ecc/zbn254"
 	"zecrey-crypto/ffmath"
-	"github.com/consensys/gurvy/bn256"
+	"github.com/consensys/gnark-crypto/bn254"
 	"math/big"
 )
 
 // prove v = g^{\beta} \and w = u^{\beta}
-func Prove(beta *big.Int, g, u, v, w *bn256.G1Affine) (z *big.Int, Vt, Wt *bn256.G1Affine) {
+func Prove(beta *big.Int, g, u, v, w *bn254.G1Affine) (z *big.Int, Vt, Wt *bn254.G1Affine) {
 	// betat \gets_R Z_p
 	betat := zbn254.RandomValue()
 	// Vt = g^{betat}
@@ -22,7 +22,7 @@ func Prove(beta *big.Int, g, u, v, w *bn256.G1Affine) (z *big.Int, Vt, Wt *bn256
 	return z, Vt, Wt
 }
 
-func Verify(z *big.Int, g, u, Vt, Wt, v, w *bn256.G1Affine) bool {
+func Verify(z *big.Int, g, u, Vt, Wt, v, w *bn254.G1Affine) bool {
 	// c = H(Vt,Wt,v,w)
 	c := HashChaumPedersen(Vt, Wt, v, w)
 	// check if g^z = Vt * v^c

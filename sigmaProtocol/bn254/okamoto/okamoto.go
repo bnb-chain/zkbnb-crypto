@@ -3,12 +3,12 @@ package okamoto
 import (
 	"zecrey-crypto/ecc/zbn254"
 	"zecrey-crypto/ffmath"
-	"github.com/consensys/gurvy/bn256"
+	"github.com/consensys/gnark-crypto/bn254"
 	"math/big"
 )
 
 // prove \alpha,\beta st. U = g^{\alpha} h^{\beta}
-func Prove(alpha, beta *big.Int, g, h *bn256.G1Affine, U *bn256.G1Affine) (a, z *big.Int, A *bn256.G1Affine) {
+func Prove(alpha, beta *big.Int, g, h *bn254.G1Affine, U *bn254.G1Affine) (a, z *big.Int, A *bn254.G1Affine) {
 	// at,bt \gets_R Z_p
 	at := zbn254.RandomValue()
 	bt := zbn254.RandomValue()
@@ -22,7 +22,7 @@ func Prove(alpha, beta *big.Int, g, h *bn256.G1Affine, U *bn256.G1Affine) (a, z 
 	return a, z, A
 }
 
-func Verify(a, z *big.Int, g, h, A, U *bn256.G1Affine) bool {
+func Verify(a, z *big.Int, g, h, A, U *bn254.G1Affine) bool {
 	// cal c = H(A,U)
 	c := HashOkamoto(A, U)
 	// check if g^a h^z = A * U^c

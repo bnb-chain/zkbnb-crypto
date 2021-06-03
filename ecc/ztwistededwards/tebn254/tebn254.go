@@ -3,8 +3,8 @@ package tebn254
 import (
 	"bytes"
 	"crypto/sha256"
-	"github.com/consensys/gurvy/bn256/fr"
-	"github.com/consensys/gurvy/bn256/twistededwards"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 	"math/big"
 	"strconv"
 	"zecrey-crypto/ffmath"
@@ -17,6 +17,7 @@ var (
 	G     = &curve.Base
 	H     *Point
 	U     *Point
+	O     = &Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
 )
 
 const (
@@ -39,7 +40,7 @@ func ScalarMul(p *Point, a *big.Int) *Point {
 }
 
 func Neg(a *Point) *Point {
-	return new(Point).Set(a).Neg(a)
+	return new(Point).Neg(a)
 }
 
 func ToBytes(p *Point) []byte {
@@ -53,6 +54,14 @@ func FromBytes(pBytes []byte) (*Point, error) {
 		return nil, err
 	}
 	return p, nil
+}
+
+func IsInSubGroup(p *Point) bool {
+	if !p.IsOnCurve() {
+		return false
+	}
+	res := new(Point).ScalarMul(p, Order)
+	return IsZero(res)
 }
 
 func MapToGroup(seed string) (H *Point, err error) {
@@ -73,7 +82,7 @@ func MapToGroup(seed string) (H *Point, err error) {
 		yElement := new(fr.Element).SetBigInt(y)
 		x := computeX(y)
 		H = &Point{X: x, Y: *yElement}
-		if H.IsOnCurve() && !IsZero(H) {
+		if IsInSubGroup(H) && !IsZero(H) {
 			return H, nil
 		}
 		i++
@@ -99,11 +108,11 @@ func IsZero(p *Point) bool {
 	if p == nil {
 		return true
 	}
-	return p.X.IsZero() || p.Y.IsZero()
+	return p.Equal(O)
 }
 
-func InfinityPoint() *Point {
-	return &Point{X: *(new(fr.Element).SetZero()), Y: *(new(fr.Element).SetZero())}
+func ZeroPoint() *Point {
+	return O
 }
 
 func RandomValue() *big.Int {
