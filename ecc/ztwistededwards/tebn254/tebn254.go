@@ -56,6 +56,14 @@ func FromBytes(pBytes []byte) (*Point, error) {
 	return p, nil
 }
 
+func IsInSubGroup(p *Point) bool {
+	if !p.IsOnCurve() {
+		return false
+	}
+	res := new(Point).ScalarMul(p, Order)
+	return IsZero(res)
+}
+
 func MapToGroup(seed string) (H *Point, err error) {
 	var (
 		i      int
@@ -74,7 +82,7 @@ func MapToGroup(seed string) (H *Point, err error) {
 		yElement := new(fr.Element).SetBigInt(y)
 		x := computeX(y)
 		H = &Point{X: x, Y: *yElement}
-		if H.IsOnCurve() && !IsZero(H) {
+		if IsInSubGroup(H) && !IsZero(H) {
 			return H, nil
 		}
 		i++
