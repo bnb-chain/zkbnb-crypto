@@ -1,18 +1,18 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/ffmath"
 	"errors"
 	"math/big"
 	"strconv"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/ffmath"
 )
 
 /*
 SetupInnerProduct is responsible for computing the inner product basic parameters that are common to both
 ProveInnerProduct and Verify algorithms.
 */
-func setupInnerProduct(H *P256, gs, hs []*P256, c *big.Int, N int64) (params *InnerProductParams, err error) {
+func setupInnerProduct(H *Point, gs, hs []*Point, c *big.Int, N int64) (params *InnerProductParams, err error) {
 	params = new(InnerProductParams)
 
 	if N <= 0 {
@@ -21,29 +21,29 @@ func setupInnerProduct(H *P256, gs, hs []*P256, c *big.Int, N int64) (params *In
 		params.N = N
 	}
 	if H == nil {
-		params.H = zp256.H
+		params.H = curve.H
 	} else {
 		params.H = H
 	}
 	if gs == nil {
-		params.Gs = make([]*P256, N)
+		params.Gs = make([]*Point, N)
 		for i := int64(0); i < N; i++ {
-			params.Gs[i], _ = zp256.MapToGroup(SeedH + "g" + strconv.FormatInt(i, 10))
+			params.Gs[i], _ = curve.MapToGroup(SeedH + "g" + strconv.FormatInt(i, 10))
 		}
 	} else {
 		params.Gs = gs
 	}
 	if hs == nil {
-		params.Hs = make([]*P256, N)
+		params.Hs = make([]*Point, N)
 		for i := int64(0); i < N; i++ {
-			params.Hs[i], _ = zp256.MapToGroup(SeedH + "h" + strconv.FormatInt(i, 10))
+			params.Hs[i], _ = curve.MapToGroup(SeedH + "h" + strconv.FormatInt(i, 10))
 		}
 	} else {
 		params.Hs = hs
 	}
 	params.C = c
-	params.U = zp256.U
-	params.P = zp256.InfinityPoint()
+	params.U = curve.U
+	params.P = curve.ZeroPoint()
 
 	return params, nil
 }
@@ -51,12 +51,12 @@ func setupInnerProduct(H *P256, gs, hs []*P256, c *big.Int, N int64) (params *In
 /*
 proveInnerProduct calculates the Zero Knowledge Proof for the Inner Product argument.
 */
-func proveInnerProduct(a, b []*big.Int, P *P256, params *InnerProductParams) (proof *InnerProductProof, err error) {
+func proveInnerProduct(a, b []*big.Int, P *Point, params *InnerProductParams) (proof *InnerProductProof, err error) {
 	proof = new(InnerProductProof)
 
 	var (
-		Ls []*P256
-		Rs []*P256
+		Ls []*Point
+		Rs []*Point
 	)
 
 	n := int64(len(a))
@@ -70,9 +70,9 @@ func proveInnerProduct(a, b []*big.Int, P *P256, params *InnerProductParams) (pr
 	// x = Hash(gs,hs,P,c)
 	x, _ := hashIP(params.Gs, params.Hs, P, params.C, params.N)
 	// P' = P \cdot u^(x \cdot c)
-	ux := zp256.ScalarMul(params.U, x)
-	uxc := zp256.ScalarMul(ux, params.C)
-	Pprime := zp256.Add(P, uxc)
+	ux := curve.ScalarMul(params.U, x)
+	uxc := curve.ScalarMul(ux, params.C)
+	Pprime := curve.Add(P, uxc)
 	// Execute Protocol 2 recursively
 	proof = computeBipRecursive(a, b, params.Gs, params.Hs, ux, Pprime, n, Ls, Rs)
 	proof.Params = params
@@ -83,13 +83,13 @@ func proveInnerProduct(a, b []*big.Int, P *P256, params *InnerProductParams) (pr
 /*
 computeBipRecursive is the main recursive function that will be used to compute the inner product argument.
 */
-func computeBipRecursive(a, b []*big.Int, g, h []*P256, u, P *P256, n int64, Ls, Rs []*P256) *InnerProductProof {
+func computeBipRecursive(a, b []*big.Int, g, h []*Point, u, P *Point, n int64, Ls, Rs []*Point) *InnerProductProof {
 	proof := new(InnerProductProof)
 
 	var (
 		cL, cR, x, xinv, x2, x2inv       *big.Int
-		L, R, Lh, Rh, Pprime             *P256
-		gprime, hprime, gprime2, hprime2 []*P256
+		L, R, Lh, Rh, Pprime             *Point
+		gprime, hprime, gprime2, hprime2 []*Point
 		aprime, bprime, aprime2, bprime2 []*big.Int
 	)
 
@@ -116,14 +116,14 @@ func computeBipRecursive(a, b []*big.Int, g, h []*P256, u, P *P256, n int64, Ls,
 		// Compute L = g_[n':]^(a_[:n']) \cdot h_[:n']^(b_[n':]) \cdot u^{c_L}
 		L, _ = VectorExp(g[nprime:], a[:nprime])
 		Lh, _ = VectorExp(h[:nprime], b[nprime:])
-		L.Multiply(L, Lh)
-		L.Multiply(L, zp256.ScalarMul(u, cL))
+		L = curve.Add(L, Lh)
+		L = curve.Add(L, curve.ScalarMul(u, cL))
 
 		// Compute r = g_[:n']^(a_[n':]) \cdot h_[n':]^(b_[:n']) \cdot u^{c_R}
 		R, _ = VectorExp(g[:nprime], a[nprime:])
 		Rh, _ = VectorExp(h[nprime:], b[:nprime])
-		R.Multiply(R, Rh)
-		R.Multiply(R, new(P256).ScalarMult(u, cR))
+		R = curve.Add(R, Rh)
+		R = curve.Add(R, curve.ScalarMul(u, cR))
 
 		// Fiat-Shamir:
 		x, _, _ = HashBP(L, R)
@@ -141,9 +141,9 @@ func computeBipRecursive(a, b []*big.Int, g, h []*P256, u, P *P256, n int64, Ls,
 		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.MultiplyMod(x, x, Order)
 		x2inv = ffmath.ModInverse(x2, Order)
-		Pprime = zp256.ScalarMul(L, x2)
-		Pprime.Multiply(Pprime, P)
-		Pprime.Multiply(Pprime, zp256.ScalarMul(R, x2inv))
+		Pprime = curve.ScalarMul(L, x2)
+		Pprime = curve.Add(Pprime, P)
+		Pprime = curve.Add(Pprime, curve.ScalarMul(R, x2inv))
 
 		// Compute a' = a_[:n'] \cdot x      + a_[n':] \cdot x^(-1)                         // (33)
 		aprime, _ = VectorScalarMul(a[:nprime], x)
@@ -171,7 +171,7 @@ func (proof *InnerProductProof) Verify() (bool, error) {
 	logn := len(proof.Ls)
 	var (
 		x, xinv, x2, x2inv                   *big.Int
-		ngprime, nhprime, ngprime2, nhprime2 []*P256
+		ngprime, nhprime, ngprime2, nhprime2 []*Point
 	)
 
 	gprime := proof.Params.Gs
@@ -193,20 +193,20 @@ func (proof *InnerProductProof) Verify() (bool, error) {
 		// Compute P' = L^(x^2).P.r^(x^-2)                                    // (31)
 		x2 = ffmath.MultiplyMod(x, x, Order)
 		x2inv = ffmath.ModInverse(x2, Order)
-		Pprime.Multiply(Pprime, zp256.ScalarMul(proof.Ls[i], x2))
-		Pprime.Multiply(Pprime, zp256.ScalarMul(proof.Rs[i], x2inv))
+		Pprime = curve.Add(Pprime, curve.ScalarMul(proof.Ls[i], x2))
+		Pprime = curve.Add(Pprime, curve.ScalarMul(proof.Rs[i], x2inv))
 	}
 
 	// c == a*b and checks if P = g^a.h^b.u^c                                     // (16)
 	ab := ffmath.MultiplyMod(proof.A, proof.B, Order)
 	// Compute right hand side
-	rhs := zp256.ScalarMul(gprime[0], proof.A)
-	hb := zp256.ScalarMul(hprime[0], proof.B)
-	rhs.Multiply(rhs, hb)
-	rhs.Multiply(rhs, zp256.ScalarMul(proof.U, ab))
+	rhs := curve.ScalarMul(gprime[0], proof.A)
+	hb := curve.ScalarMul(hprime[0], proof.B)
+	rhs = curve.Add(rhs, hb)
+	rhs = curve.Add(rhs, curve.ScalarMul(proof.U, ab))
 	// Compute inverse of left hand side
 	// If both sides are equal then nP must be zero                               // (17)
-	c := zp256.Equal(Pprime, rhs)
+	c := Pprime.Equal(rhs)
 
 	return c, nil
 }
@@ -214,9 +214,9 @@ func (proof *InnerProductProof) Verify() (bool, error) {
 /*
 commitInnerProduct is responsible for calculating g^a.h^b.
 */
-func commitInnerProduct(g, h []*P256, a, b []*big.Int) *P256 {
+func commitInnerProduct(g, h []*Point, a, b []*big.Int) *Point {
 	vga, _ := VectorExp(g, a)
 	vhb, _ := VectorExp(h, b)
-	result := zp256.Add(vga, vhb)
+	result := curve.Add(vga, vhb)
 	return result
 }

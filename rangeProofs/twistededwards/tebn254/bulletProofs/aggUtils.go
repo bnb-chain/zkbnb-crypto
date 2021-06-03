@@ -1,8 +1,8 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ffmath"
 	"math/big"
+	"zecrey-crypto/ffmath"
 )
 
 func DecomposeVec(xs []*big.Int, u int64, l int64) ([]int64, error) {

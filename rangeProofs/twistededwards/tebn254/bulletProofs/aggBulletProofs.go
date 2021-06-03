@@ -1,8 +1,9 @@
 package bulletProofs
 
 import (
+	"fmt"
 	"math/big"
-	"zecrey-crypto/ecc/zp256"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/ffmath"
 )
 
@@ -11,16 +12,27 @@ Prove computes the ZK rangeproof. The documentation and comments are based on
 eprint version of Bulletproofs papers:
 https://eprint.iacr.org/2017/1066.pdf
 */
-func ProveAggregation(secrets []*big.Int, gammas []*big.Int, Vs []*P256, params *BulletProofSetupParams) (proof *AggBulletProof, err error) {
-	proof = new(AggBulletProof)
+func ProveAggregation(secrets []*big.Int, gammas []*big.Int, Vs []*Point, params *BulletProofSetupParams) (proof *AggBulletProof, err error) {
+	// check input params if they are nil
+	if secrets == nil || gammas == nil || Vs == nil || params == nil {
+		return nil, ErrNilParams
+	}
+	// check secrets and gammas size
+	if len(secrets) != len(gammas) || len(secrets) != len(Vs) {
+		return nil, ErrUnequalLength
+	}
+	// check if the length of secrets is power of 2
 	m := int64(len(secrets))
+	if m != 1 && !IsPowerOfTwo(m) {
+		return nil, ErrNotPowerOfTwo
+	}
 	nm := m * params.N
 	// aL, aR and commitment: (A, alpha)
 	aL, _ := DecomposeVec(secrets, 2, params.N)
 	// a_R = a_L - 1^n
 	aR, _ := computeAR(aL)
 	// A = h^{\alpha} gs^{a_L} hs^{a_R}
-	alpha := zp256.RandomValue()
+	alpha := curve.RandomValue()
 	A := commitVector(aL, aR, alpha, params.H, params.Gs, params.Hs, nm)
 
 	// sL, sR and commitment: (S, rho)
@@ -28,7 +40,7 @@ func ProveAggregation(secrets []*big.Int, gammas []*big.Int, Vs []*P256, params 
 	sL := RandomVector(nm)
 	sR := RandomVector(nm)
 	// S = h^{\rho} gs^{s_L} hs^{s_R}
-	rho := zp256.RandomValue()
+	rho := curve.RandomValue()
 	S := computeS(sL, sR, rho, params.H, params.Gs, params.Hs)
 
 	// Fiat-Shamir heuristic to compute challenges y and z, corresponds to
@@ -36,8 +48,8 @@ func ProveAggregation(secrets []*big.Int, gammas []*big.Int, Vs []*P256, params 
 	y, z, _ := HashBP(A, S)
 
 	// \tau_1,\tau_2 \gets_R \mathbb{Z}_p
-	tau1 := zp256.RandomValue()
-	tau2 := zp256.RandomValue()
+	tau1 := curve.RandomValue()
+	tau2 := curve.RandomValue()
 
 	// l(X) = (a_L - z \cdot 1^{nm}) + s_L \cdot X
 	// r(X) = y^n \circ (a_R + z \cdot 1^{nm} + s_R \cdot X) + \sum_{j=1}^m z^{1+j} \cdot (0^{(j-1)n} || 2^n || 0^{(m-j)n})
@@ -142,18 +154,19 @@ func ProveAggregation(secrets []*big.Int, gammas []*big.Int, Vs []*P256, params 
 	P := commitInnerProduct(params.Gs, hprimes, l, r)
 	proofip, _ := proveInnerProduct(l, r, P, params.InnerProductParams)
 
-	proof.Vs = Vs
-	proof.A = A
-	proof.S = S
-	proof.T1 = T1
-	proof.T2 = T2
-	proof.Taux = taux
-	proof.Mu = mu
-	proof.That = that
-	proof.InnerProductProof = proofip
-	proof.Commit = P
-	proof.Params = params
-
+	proof = &AggBulletProof{
+		Vs:                Vs,
+		A:                 A,
+		S:                 S,
+		T1:                T1,
+		T2:                T2,
+		Taux:              taux,
+		Mu:                mu,
+		That:              that,
+		InnerProductProof: proofip,
+		Commit:            P,
+		Params:            params,
+	}
 	return proof, nil
 }
 
@@ -163,13 +176,16 @@ Verify returns true if and only if the proof is valid.
 func (proof *AggBulletProof) Verify() (bool, error) {
 	params := proof.Params
 	m := int64(len(proof.Vs))
+	if m != 1 && !IsPowerOfTwo(m) {
+		return false, ErrNotPowerOfTwo
+	}
 	nm := m * params.N
 	// Recover x, y, z using Fiat-Shamir heuristic
 	x, _, _ := HashBP(proof.T1, proof.T2)
 	y, z, _ := HashBP(proof.A, proof.S)
 
 	// Switch generators                                                   // (64)
-	hprimes := updateGenerators(params.Hs, y, nm)
+	hprimes := updateGenerators(params.Hs[:nm], y, nm)
 
 	// ////////////////////////////////////////////////////////////////////////////
 	// Check that tprime  = t(x) = t0 + t1x + t2x^2  ----------  Condition (65) //
@@ -185,30 +201,29 @@ func (proof *AggBulletProof) Verify() (bool, error) {
 
 	// Compute Vs^{z^2 z^m}
 	vzm := powerOfVec(z, m)
-	rhs := new(P256)
 	z2vzm, _ := VectorScalarMul(vzm, z2)
-	rhs, _ = VectorExp(proof.Vs, z2vzm)
+	rhs, _ := VectorExp(proof.Vs, z2vzm)
 
 	delta := aggDelta(y, z, params.N, m)
 	// g^{\delta(y,z)}
-	gdelta := zp256.ScalarMul(params.G, delta)
+	gdelta := curve.ScalarMul(params.G, delta)
 
-	rhs.Multiply(rhs, gdelta)
+	rhs.Add(rhs, gdelta)
 
-	T1x := zp256.ScalarMul(proof.T1, x)
-	T2x2 := zp256.ScalarMul(proof.T2, x2)
+	T1x := curve.ScalarMul(proof.T1, x)
+	T2x2 := curve.ScalarMul(proof.T2, x2)
 
-	rhs.Multiply(rhs, T1x)
-	rhs.Multiply(rhs, T2x2)
-	c65 := zp256.Equal(lhs, rhs)
+	rhs.Add(rhs, T1x)
+	rhs.Add(rhs, T2x2)
+	c65 := lhs.Equal(rhs)
 
 	// Compute P - lhs  #################### Condition (66) ######################
 
 	// P = A \cdot S^x \cdot gs^{-z} \cdot (hs')^{z \cdot y^{nm}} \cdot \prod_{j=1}^m (hs')_{[(j-1)n: jn -1]}^{z^{j+1} 2^n}
 	// S^x
-	Sx := zp256.ScalarMul(proof.S, x)
+	Sx := curve.ScalarMul(proof.S, x)
 	// A \cdot S^x
-	ASx := zp256.Add(proof.A, Sx)
+	ASx := curve.Add(proof.A, Sx)
 
 	// gs^{-z}
 	mz := ffmath.Sub(Order, z)
@@ -223,32 +238,34 @@ func (proof *AggBulletProof) Verify() (bool, error) {
 	p2n := powerOfVec(big.NewInt(2), params.N)
 	zjp1 := new(big.Int).Set(z)
 	// \prod_{j=1}^m (hs')_{[(j-1)n: jn -1]}^{z^{j+1} 2^n}
-	lP := zp256.InfinityPoint()
+	lP := curve.ZeroPoint()
 	for j := int64(1); j <= m; j++ {
 		zjp1 = ffmath.MultiplyMod(zjp1, z, Order)
 		zjp12n, _ := VectorScalarMul(p2n, zjp1)
 		hz, _ := VectorExp(hprimes[(j-1)*params.N:j*params.N], zjp12n)
-		lP = zp256.Add(lP, hz)
+		lP = curve.Add(lP, hz)
 	}
-	lP.Add(lP, ASx)
-	lP.Add(lP, gpmz)
+	lP = curve.Add(lP, ASx)
+	lP = curve.Add(lP, gpmz)
 
 	// h'^(z.y^{nm})
 	hprimeexp, _ := VectorExp(hprimes, zynm)
 
-	lP.Add(lP, hprimeexp)
+	lP = curve.Add(lP, hprimeexp)
 
 	// Compute P - rhs  #################### Condition (67) ######################
 
 	// h^mu
-	rP := zp256.ScalarMul(params.H, proof.Mu)
-	rP.Multiply(rP, proof.Commit)
+	rP := curve.ScalarMul(params.H, proof.Mu)
+	rP = curve.Add(rP, proof.Commit)
 
-	c67 := zp256.Equal(lP, rP)
+	c67 := lP.Equal(rP)
 
 	// Verify Inner Product Proof ################################################
 	ok, _ := proof.InnerProductProof.Verify()
 	result := c65 && c67 && ok
+
+	fmt.Println(c65, c67, ok)
 
 	return result, nil
 }

@@ -1,10 +1,10 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/ffmath"
 	"errors"
 	"math/big"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/ffmath"
 )
 
 /*
@@ -13,7 +13,7 @@ SampleRandomVector generates a vector composed by random big numbers.
 func RandomVector(N int64) []*big.Int {
 	s := make([]*big.Int, N)
 	for i := int64(0); i < N; i++ {
-		s[i] = zp256.RandomValue()
+		s[i] = curve.RandomValue()
 	}
 	return s
 }
@@ -162,9 +162,9 @@ func VectorScalarMul(a []*big.Int, b *big.Int) ([]*big.Int, error) {
 /*
 VectorECMul computes vector EC addition componentwisely.
 */
-func VectorECAdd(a, b []*P256) ([]*P256, error) {
+func VectorECAdd(a, b []*Point) ([]*Point, error) {
 	var (
-		result  []*P256
+		result  []*Point
 		i, n, m int64
 	)
 	n = int64(len(a))
@@ -172,10 +172,10 @@ func VectorECAdd(a, b []*P256) ([]*P256, error) {
 	if n != m {
 		return nil, errors.New("size of first argument is different from size of second argument")
 	}
-	result = make([]*P256, n)
+	result = make([]*Point, n)
 	i = 0
 	for i < n {
-		result[i] = zp256.Add(a[i], b[i])
+		result[i] = curve.Add(a[i], b[i])
 		i = i + 1
 	}
 	return result, nil
@@ -184,16 +184,16 @@ func VectorECAdd(a, b []*P256) ([]*P256, error) {
 /*
 VectorExp computes Prod_i^n{a[i]^b[i]}.
 */
-func VectorExp(a []*P256, b []*big.Int) (result *P256, err error) {
+func VectorExp(a []*Point, b []*big.Int) (result *Point, err error) {
 	n := int64(len(a))
 	m := int64(len(b))
 	if n < m {
 		return nil, errors.New("size of first argument is different from size of second argument")
 	}
 	i := int64(0)
-	result = zp256.InfinityPoint()
+	result = curve.ZeroPoint()
 	for i < m {
-		result.Multiply(result, zp256.ScalarMul(a[i], b[i]))
+		result = curve.Add(result, curve.ScalarMul(a[i], b[i]))
 		i = i + 1
 	}
 	return result, nil
@@ -202,15 +202,15 @@ func VectorExp(a []*P256, b []*big.Int) (result *P256, err error) {
 /*
 VectorScalarExp computes a[i]^b for each i.
 */
-func vectorScalarExp(a []*P256, b *big.Int) []*P256 {
+func vectorScalarExp(a []*Point, b *big.Int) []*Point {
 	var (
-		result []*P256
+		result []*Point
 		n      int64
 	)
 	n = int64(len(a))
-	result = make([]*P256, n)
+	result = make([]*Point, n)
 	for i := int64(0); i < n; i++ {
-		result[i] = zp256.ScalarMul(a[i], b)
+		result[i] = curve.ScalarMul(a[i], b)
 	}
 	return result
 }

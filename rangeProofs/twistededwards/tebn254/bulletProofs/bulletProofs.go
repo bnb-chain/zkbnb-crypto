@@ -1,28 +1,27 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/ffmath"
-	"errors"
 	"math/big"
 	"strconv"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/ffmath"
 )
 
 func Setup(N int64, M int64) (params *BulletProofSetupParams, err error) {
-	//if !IsPowerOfTwo(N) {
-	//	return nil, errors.New("range end is not a power of 2")
-	//}
-	params = new(BulletProofSetupParams)
-	// TODO change base for twisted_elgamal
-	params.G = zp256.H
-	params.H = zp256.Base()
-	params.N = N
+	if M != 1 && !IsPowerOfTwo(M) {
+		return nil, ErrNotPowerOfTwo
+	}
+	params = &BulletProofSetupParams{
+		G: curve.H,
+		H: curve.G,
+		N: N,
+	}
 	nm := N * M
-	params.Gs = make([]*P256, nm)
-	params.Hs = make([]*P256, nm)
+	params.Gs = make([]*Point, nm)
+	params.Hs = make([]*Point, nm)
 	for i := int64(0); i < nm; i++ {
-		params.Gs[i], _ = zp256.MapToGroup(SeedH + "g" + strconv.FormatInt(i, 10))
-		params.Hs[i], _ = zp256.MapToGroup(SeedH + "h" + strconv.FormatInt(i, 10))
+		params.Gs[i], _ = curve.MapToGroup(SeedH + "g" + strconv.FormatInt(i, 10))
+		params.Hs[i], _ = curve.MapToGroup(SeedH + "h" + strconv.FormatInt(i, 10))
 	}
 	return params, nil
 }
@@ -32,8 +31,7 @@ Prove computes the ZK rangeproof. The documentation and comments are based on
 eprint version of Bulletproofs papers:
 https://eprint.iacr.org/2017/1066.pdf
 */
-func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BulletProofSetupParams) (proof *BulletProof, err error) {
-	proof = new(BulletProof)
+func Prove(secret *big.Int, gamma *big.Int, V *Point, params *BulletProofSetupParams) (proof *BulletProof, err error) {
 
 	// aL, aR and commitment: (A, alpha)
 	// a_L = toBinary(secret)
@@ -41,7 +39,7 @@ func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BulletProofSetupPar
 	// a_R = a_L - 1^n
 	aR, _ := computeAR(aL)
 	// A = h^{\alpha} gs^{a_L} hs^{a_R}
-	alpha := zp256.RandomValue()
+	alpha := curve.RandomValue()
 	A := commitVector(aL, aR, alpha, params.H, params.Gs, params.Hs, params.N)
 
 	// sL, sR and commitment: (S, rho)
@@ -49,7 +47,7 @@ func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BulletProofSetupPar
 	sL := RandomVector(params.N)
 	sR := RandomVector(params.N)
 	// S = h^{\rho} gs^{s_L} hs^{s_R}
-	rho := zp256.RandomValue()
+	rho := curve.RandomValue()
 	S := computeS(sL, sR, rho, params.H, params.Gs, params.Hs)
 
 	// Fiat-Shamir heuristic to compute challenges y and z, corresponds to
@@ -57,8 +55,8 @@ func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BulletProofSetupPar
 	y, z, _ := HashBP(A, S)
 
 	// \tau_1,\tau_2 \gets_R \mathbb{Z}_p
-	tau1 := zp256.RandomValue()
-	tau2 := zp256.RandomValue()
+	tau1 := curve.RandomValue()
+	tau2 := curve.RandomValue()
 
 	// l(X) = (a_L - z \cdot 1^{n}) + s_L \cdot X
 	// r(X) = y^n \circ (a_R + z \cdot 1^n + s_R \cdot X) + z^2 \cdot 2^n
@@ -139,22 +137,24 @@ func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BulletProofSetupPar
 	if err != nil {
 		return proof, err
 	}
+
 	// prove inner product
 	P := commitInnerProduct(params.Gs, hprimes, l, r)
 	proofip, _ := proveInnerProduct(l, r, P, params.InnerProductParams)
 
-	proof.V = V
-	proof.A = A
-	proof.S = S
-	proof.T1 = T1
-	proof.T2 = T2
-	proof.Taux = taux
-	proof.Mu = mu
-	proof.That = that
-	proof.InnerProductProof = proofip
-	proof.Commit = P
-	proof.Params = params
-
+	proof = &BulletProof{
+		V:                 V,
+		A:                 A,
+		S:                 S,
+		T1:                T1,
+		T2:                T2,
+		Taux:              taux,
+		Mu:                mu,
+		That:              that,
+		InnerProductProof: proofip,
+		Commit:            P,
+		Params:            params,
+	}
 	return proof, nil
 }
 
@@ -182,28 +182,28 @@ func (proof *BulletProof) Verify() (bool, error) {
 	z2 := ffmath.MultiplyMod(z, z, Order)
 	x2 := ffmath.MultiplyMod(x, x, Order)
 
-	rhs := zp256.ScalarMul(proof.V, z2)
+	rhs := curve.ScalarMul(proof.V, z2)
 
 	delta := delta(y, z, params.N)
 
-	gdelta := zp256.ScalarMul(params.G, delta)
+	gdelta := curve.ScalarMul(params.G, delta)
 
-	rhs.Multiply(rhs, gdelta)
+	rhs.Add(rhs, gdelta)
 
-	T1x := zp256.ScalarMul(proof.T1, x)
-	T2x2 := zp256.ScalarMul(proof.T2, x2)
+	T1x := curve.ScalarMul(proof.T1, x)
+	T2x2 := curve.ScalarMul(proof.T2, x2)
 
-	rhs.Multiply(rhs, T1x)
-	rhs.Multiply(rhs, T2x2)
-	c65 := zp256.Equal(lhs, rhs)
+	rhs.Add(rhs, T1x)
+	rhs.Add(rhs, T2x2)
+	c65 := lhs.Equal(rhs)
 
 	// Compute P - lhs  #################### Condition (66) ######################
 
 	// P = A \cdot S^x \cdot gs^{-z} \cdot (hs')^{z \cdot y^n + z^2 \cdot 2^n}
 	// S^x
-	Sx := zp256.ScalarMul(proof.S, x)
+	Sx := curve.ScalarMul(proof.S, x)
 	// A \cdot S^x
-	ASx := zp256.Add(proof.A, Sx)
+	ASx := curve.Add(proof.A, Sx)
 
 	// g^-z
 	//mz := ffmath.ModInverse(z, Order)
@@ -223,21 +223,20 @@ func (proof *BulletProof) Verify() (bool, error) {
 	// z \cdot y^n + z^2 \cdot 2^n
 	zynz22n, _ := VectorAdd(zyn, z22n)
 
-	lP := new(P256)
-	lP.Add(ASx, gpmz)
+	lP := curve.Add(ASx, gpmz)
 
 	// h'^(z.y^n + z^2.2^n)
 	hprimeexp, _ := VectorExp(hprimes, zynz22n)
 
-	lP.Add(lP, hprimeexp)
+	lP = curve.Add(lP, hprimeexp)
 
 	// Compute P - rhs  #################### Condition (67) ######################
 
 	// h^mu
-	rP := zp256.ScalarMul(params.H, proof.Mu)
-	rP.Multiply(rP, proof.Commit)
+	rP := curve.ScalarMul(params.H, proof.Mu)
+	rP = curve.Add(rP, proof.Commit)
 
-	c67 := zp256.Equal(lP, rP)
+	c67 := lP.Equal(rP)
 
 	// Verify Inner Product Proof ################################################
 	ok, _ := proof.InnerProductProof.Verify()
@@ -258,7 +257,7 @@ func computeAR(x []int64) ([]int64, error) {
 		} else if x[i] == 1 {
 			result[i] = 0
 		} else {
-			return nil, errors.New("input contains non-binary element")
+			return nil, ErrNonBinaryElement
 		}
 	}
 	return result, nil
@@ -267,23 +266,24 @@ func computeAR(x []int64) ([]int64, error) {
 /*
 Commitvector computes a commitment to the bit of the secret.
 */
-func commitVector(aL, aR []int64, alpha *big.Int, H *P256, g, h []*P256, n int64) *P256 {
-	// Compute h^{\alpha} \cdot v \cdot g^{a_L} \cdot v \cdot h^{a_R}
-	R := zp256.ScalarMul(H, alpha)
+func commitVector(aL, aR []int64, alpha *big.Int, H *Point, gs, hs []*Point, n int64) *Point {
+	// Compute hs^{\alpha} \cdot gs^{a_L} \cdot hs^{a_R}
+	R := curve.ScalarMul(H, alpha)
 	for i := int64(0); i < n; i++ {
-		gaL := zp256.ScalarMul(g[i], big.NewInt(aL[i]))
-		haR := zp256.ScalarMul(h[i], big.NewInt(aR[i]))
-		R.Multiply(R, gaL)
-		R.Multiply(R, haR)
+		gaL := curve.ScalarMul(gs[i], big.NewInt(aL[i]))
+		haR := curve.ScalarMul(hs[i], big.NewInt(aR[i]))
+		R.Add(R, gaL)
+		R.Add(R, haR)
 	}
 	return R
 }
 
-func computeS(sL, sR []*big.Int, rho *big.Int, h *P256, gVec, hVec []*P256) *P256 {
-	S := zp256.ScalarMul(h, rho)
+// S = h^{\rho} gs^{s_L} hs^{s_R}
+func computeS(sL, sR []*big.Int, rho *big.Int, h *Point, gs, hs []*Point) *Point {
+	S := curve.ScalarMul(h, rho)
 	for i := int64(0); i < int64(len(sL)); i++ {
-		S.Multiply(S, zp256.ScalarMul(gVec[i], sL[i]))
-		S.Multiply(S, zp256.ScalarMul(hVec[i], sR[i]))
+		S.Add(S, curve.ScalarMul(gs[i], sL[i]))
+		S.Add(S, curve.ScalarMul(hs[i], sR[i]))
 	}
 	return S
 }

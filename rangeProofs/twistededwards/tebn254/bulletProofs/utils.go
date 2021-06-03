@@ -1,22 +1,22 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/ffmath"
-	"zecrey-crypto/util"
 	"bytes"
 	"crypto/sha256"
 	"math/big"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/ffmath"
+	"zecrey-crypto/util"
 )
 
 /*
 CommitG1 method corresponds to the Pedersen commitment scheme. Namely, given input
 message x, and randomness r, it outputs g^x.h^r.
 */
-func CommitG1(x, r *big.Int, g, h *P256) (*P256, error) {
-	C := zp256.ScalarMul(g, x)
-	Hr := zp256.ScalarMul(h, r)
-	C = zp256.Add(C, Hr)
+func CommitG1(x, r *big.Int, g, h *Point) (*Point, error) {
+	C := curve.ScalarMul(g, x)
+	Hr := curve.ScalarMul(h, r)
+	C.Add(C, Hr)
 	return C, nil
 }
 
@@ -30,7 +30,7 @@ func Decompose(x *big.Int, u int64, l int64) ([]int64, error) {
 		i      int64
 	)
 	result = make([]int64, l)
-	uInt := big.NewInt(u)
+	uInt := big.NewInt(int64(u))
 	i = 0
 	for i < l {
 		result[i] = ffmath.Mod(x, uInt).Int64()
@@ -43,12 +43,13 @@ func Decompose(x *big.Int, u int64, l int64) ([]int64, error) {
 /*
 Hash is responsible for the computing a Zp element given elements from GT and G1.
 */
-func HashBP(A, S *P256) (*big.Int, *big.Int, error) {
-
+func HashBP(A, S *Point) (*big.Int, *big.Int, error) {
+	ABytes := curve.ToBytes(A)
+	SBytes := curve.ToBytes(S)
 	var buffer bytes.Buffer
 	// H(A,S)
-	buffer.WriteString(A.String())
-	buffer.WriteString(S.String())
+	buffer.Write(ABytes)
+	buffer.Write(SBytes)
 	a, err := util.HashToInt(buffer, sha256.New)
 	if err != nil {
 		return nil, nil, err
@@ -56,9 +57,9 @@ func HashBP(A, S *P256) (*big.Int, *big.Int, error) {
 
 	// H(A,S,H(A,S))
 	buffer.Reset()
-	buffer.WriteString(A.String())
-	buffer.WriteString(S.String())
-	buffer.WriteString(a.String())
+	buffer.Write(ABytes)
+	buffer.Write(SBytes)
+	buffer.Write(a.Bytes())
 	b, _ := util.HashToInt(buffer, sha256.New)
 	if err != nil {
 		return nil, nil, err
@@ -70,12 +71,12 @@ func HashBP(A, S *P256) (*big.Int, *big.Int, error) {
 /*
 hashIP is responsible for the computing a Zp element given elements from GT and G1.
 */
-func hashIP(g, h []*P256, P *P256, c *big.Int, n int64) (result *big.Int, err error) {
+func hashIP(g, h []*Point, P *Point, c *big.Int, n int64) (result *big.Int, err error) {
 	var buffer bytes.Buffer
-	buffer.Write(P.Bytes())
+	buffer.Write(curve.ToBytes(P))
 	for i := int64(0); i < n; i++ {
-		buffer.Write(g[i].Bytes())
-		buffer.Write(h[i].Bytes())
+		buffer.Write(curve.ToBytes(g[i]))
+		buffer.Write(curve.ToBytes(h[i]))
 	}
 	buffer.Write(c.Bytes())
 	result, err = util.HashToInt(buffer, sha256.New)
@@ -117,20 +118,20 @@ vector of generators. This method is used both by prover and verifier. After thi
 update we have that A is a vector commitments to (aL, aR . y^n). Also S is a vector
 commitment to (sL, sR . y^n).
 */
-func updateGenerators(Hh []*P256, y *big.Int, N int64) []*P256 {
+func updateGenerators(Hh []*Point, y *big.Int, N int64) []*Point {
 	var (
 		i int64
 	)
 	// Compute h'
 	// h'_i = h_i^{y^{-i + 1}}
-	hprimes := make([]*P256, N)
+	hprimes := make([]*Point, N)
 	// Switch generators
 	yinv := ffmath.ModInverse(y, Order)
 	expy := yinv
 	hprimes[0] = Hh[0]
 	i = 1
 	for i < N {
-		hprimes[i] = zp256.ScalarMul(Hh[i], expy)
+		hprimes[i] = curve.ScalarMul(Hh[i], expy)
 		expy = ffmath.MultiplyMod(expy, yinv, Order)
 		i = i + 1
 	}
@@ -154,7 +155,7 @@ func delta(y, z *big.Int, N int64) *big.Int {
 	sp1y, _ := ScalarVecMul(v1, vy)
 
 	// < 1^n, 2^n >
-	p2n := powerOfVec(new(big.Int).SetInt64(2), N)
+	p2n := powerOfVec(big.NewInt(2), N)
 	sp12, _ := ScalarVecMul(v1, p2n)
 
 	result = ffmath.SubMod(z, z2, Order)

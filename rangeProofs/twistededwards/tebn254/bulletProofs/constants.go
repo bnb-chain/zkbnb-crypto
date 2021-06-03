@@ -1,10 +1,13 @@
 package bulletProofs
 
-import "zecrey-crypto/ecc/zp256"
+import (
+	"zecrey-crypto/ecc/ztwistededwards/tebn254"
+)
 
-var Order = zp256.Curve.N
+var Order = tebn254.Order
+
+type Point = tebn254.Point
 
 const (
-	SeedH = zp256.SeedH
-	SeedU = zp256.SeedU
+	SeedH = tebn254.SeedH
 )

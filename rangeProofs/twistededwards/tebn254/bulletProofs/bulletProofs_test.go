@@ -1,18 +1,19 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
 	"fmt"
 	"math/big"
 	"testing"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
 func TestProveVerify(t *testing.T) {
+	//for i := 0; i < 100; i++ {
 	_, pk := twistedElgamal.GenKeyPair()
-	b := big.NewInt(8)
-	r := zp256.RandomValue()
-	bEnc := twistedElgamal.Enc(b, r, pk)
+	b := big.NewInt(0)
+	r := curve.RandomValue()
+	bEnc, _ := twistedElgamal.Enc(b, r, pk)
 	params, err := Setup(32, 1)
 	if err != nil {
 		panic(err)
@@ -26,4 +27,5 @@ func TestProveVerify(t *testing.T) {
 		panic(err)
 	}
 	fmt.Println(res)
+	//}
 }
