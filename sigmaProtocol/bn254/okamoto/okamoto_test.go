@@ -1,11 +1,11 @@
 package okamoto
 
 import (
-	"zecrey-crypto/ecc/zbn254"
-	"zecrey-crypto/elgamal/bn254/twistedElgamal"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
+	"zecrey-crypto/ecc/zbn254"
+	"zecrey-crypto/elgamal/bn254/twistedElgamal"
 )
 
 func TestProveVerify(t *testing.T) {

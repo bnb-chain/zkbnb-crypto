@@ -13,6 +13,6 @@ func HashSchnorr(A *bn254.G1Affine, R *bn254.G1Affine) *big.Int {
 	ARBytes := util.ContactBytes(zbn254.ToBytes(A), zbn254.ToBytes(R))
 	var buffer bytes.Buffer
 	buffer.Write(ARBytes)
-	c, _ := util.HashToInt(buffer, sha256.New)
+	c, _ := util.HashToInt(buffer, zmimc.Hmimc)
 	return c
 }

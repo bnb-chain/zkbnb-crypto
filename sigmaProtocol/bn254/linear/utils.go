@@ -15,6 +15,6 @@ func HashLinear(UtArr, uArr []*bn254.G1Affine) *big.Int {
 	var buffer bytes.Buffer
 	buffer.Write(UtBytes)
 	buffer.Write(uBytes)
-	c, _ := util.HashToInt(buffer, sha256.New)
+	c, _ := util.HashToInt(buffer, zmimc.Hmimc)
 	return c
 }

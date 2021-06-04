@@ -11,6 +11,6 @@ func HashSchnorr(A *Point, R *Point) *big.Int {
 	ARBytes := util.ContactBytes(A.Marshal(), R.Marshal())
 	var buffer bytes.Buffer
 	buffer.Write(ARBytes)
-	c, _ := util.HashToInt(buffer, sha256.New)
+	c, _ := util.HashToInt(buffer, zmimc.Hmimc)
 	return c
 }

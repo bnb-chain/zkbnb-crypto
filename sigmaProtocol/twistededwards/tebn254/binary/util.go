@@ -2,9 +2,9 @@ package binary
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/util"
 )
 
@@ -13,6 +13,6 @@ func HashChallenge(ca, cb *Point) *big.Int {
 		curve.ToBytes(cb))
 	var buffer bytes.Buffer
 	buffer.Write(toBytes)
-	c, _ := util.HashToInt(buffer, sha256.New)
+	c, _ := util.HashToInt(buffer, zmimc.Hmimc)
 	return c
 }
