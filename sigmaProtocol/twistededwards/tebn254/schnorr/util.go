@@ -2,8 +2,8 @@ package schnorr
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"math/big"
+	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/util"
 )
 

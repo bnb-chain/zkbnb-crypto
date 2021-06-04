@@ -1,6 +1,8 @@
 package zmimc
 
-import "github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+import (
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+)
 
 const SEED = "ZecreyMIMCSeed"
 
