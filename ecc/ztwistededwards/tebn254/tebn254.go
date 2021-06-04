@@ -3,6 +3,7 @@ package tebn254
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 	"math/big"
@@ -113,6 +114,11 @@ func IsZero(p *Point) bool {
 
 func ZeroPoint() *Point {
 	return O
+}
+
+func VecToBytes(vp []*Point) ([]byte, error) {
+	vpBytes, err := json.Marshal(vp)
+	return vpBytes, err
 }
 
 func RandomValue() *big.Int {
