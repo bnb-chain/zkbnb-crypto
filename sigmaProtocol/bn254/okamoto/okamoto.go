@@ -1,10 +1,10 @@
 package okamoto
 
 import (
+	"github.com/consensys/gnark-crypto/ecc/bn254"
+	"math/big"
 	"zecrey-crypto/ecc/zbn254"
 	"zecrey-crypto/ffmath"
-	"github.com/consensys/gnark-crypto/bn254"
-	"math/big"
 )
 
 // prove \alpha,\beta st. U = g^{\alpha} h^{\beta}

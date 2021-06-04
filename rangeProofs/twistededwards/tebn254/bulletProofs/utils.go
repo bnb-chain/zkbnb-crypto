@@ -2,10 +2,10 @@ package bulletProofs
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/ffmath"
+	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/util"
 )
 
@@ -50,7 +50,7 @@ func HashBP(A, S *Point) (*big.Int, *big.Int, error) {
 	// H(A,S)
 	buffer.Write(ABytes)
 	buffer.Write(SBytes)
-	a, err := util.HashToInt(buffer, sha256.New)
+	a, err := util.HashToInt(buffer, zmimc.Hmimc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -60,7 +60,8 @@ func HashBP(A, S *Point) (*big.Int, *big.Int, error) {
 	buffer.Write(ABytes)
 	buffer.Write(SBytes)
 	buffer.Write(a.Bytes())
-	b, _ := util.HashToInt(buffer, sha256.New)
+
+	b, err := util.HashToInt(buffer, zmimc.Hmimc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -79,7 +80,7 @@ func hashIP(g, h []*Point, P *Point, c *big.Int, n int64) (result *big.Int, err 
 		buffer.Write(curve.ToBytes(h[i]))
 	}
 	buffer.Write(c.Bytes())
-	result, err = util.HashToInt(buffer, sha256.New)
+	result, err = util.HashToInt(buffer, zmimc.Hmimc)
 
 	return ffmath.Mod(result, Order), err
 }

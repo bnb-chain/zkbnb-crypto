@@ -2,12 +2,12 @@ package zp256
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"math/big"
 	"strconv"
 	"zecrey-crypto/ffmath"
+	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/util"
 )
 
@@ -68,7 +68,7 @@ func InfinityPoint() *P256 {
 	return res
 }
 
-func RandomValue() (*big.Int) {
+func RandomValue() *big.Int {
 	r, _ := ffmath.RandomValue(Curve.N)
 	return r
 }
@@ -93,7 +93,7 @@ func MapToGroup(m string) (*P256, error) {
 		buffer.Reset()
 		buffer.WriteString(strconv.Itoa(i))
 		buffer.WriteString(m)
-		x, _ := util.HashToInt(buffer, sha256.New)
+		x, _ := util.HashToInt(buffer, zmimc.Hmimc)
 		x = ffmath.Mod(x, Curve.P)
 		fx, _ := F(x)
 		fx = ffmath.Mod(fx, Curve.P)

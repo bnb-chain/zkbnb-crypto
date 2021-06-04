@@ -2,13 +2,13 @@ package tebn254
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 	"math/big"
 	"strconv"
 	"zecrey-crypto/ffmath"
+	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/util"
 )
 
@@ -75,7 +75,7 @@ func MapToGroup(seed string) (H *Point, err error) {
 		buffer.Reset()
 		buffer.WriteString(seed)
 		buffer.WriteString(strconv.Itoa(i))
-		y, err := util.HashToInt(buffer, sha256.New)
+		y, err := util.HashToInt(buffer, zmimc.Hmimc)
 		if err != nil {
 			return nil, err
 		}

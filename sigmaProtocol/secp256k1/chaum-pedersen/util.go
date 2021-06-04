@@ -14,6 +14,6 @@ func HashChaumPedersen(Vt, Wt, v, w *P256) *big.Int {
 		w.Bytes())
 	var buffer bytes.Buffer
 	buffer.Write(toBytes)
-	c, _ := util.HashToInt(buffer, sha256.New)
+	c, _ := util.HashToInt(buffer, zmimc.Hmimc)
 	return c
 }
