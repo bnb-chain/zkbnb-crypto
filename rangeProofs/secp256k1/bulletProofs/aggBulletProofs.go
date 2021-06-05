@@ -11,7 +11,7 @@ Prove computes the ZK rangeproof. The documentation and comments are based on
 eprint version of Bulletproofs papers:
 https://eprint.iacr.org/2017/1066.pdf
 */
-func ProveAggregation(secrets []*big.Int, gammas []*big.Int, Vs []*P256, params *BulletProofSetupParams) (proof *AggBulletProof, err error) {
+func ProveAggregation(secrets []*big.Int, gammas []*big.Int, Vs []*P256, params *BPSetupParams) (proof *AggBulletProof, err error) {
 	proof = new(AggBulletProof)
 	m := int64(len(secrets))
 	nm := m * params.N
