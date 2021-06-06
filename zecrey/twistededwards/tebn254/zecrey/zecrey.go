@@ -31,7 +31,9 @@ func commitValidEnc(pk, g, h *Point) (
 	return
 }
 
-func respondValidEnc(r, bDelta, alpha_r, alpha_bDelta, c *big.Int) (z_r, z_bDelta *big.Int) {
+func respondValidEnc(r, bDelta, alpha_r, alpha_bDelta, c *big.Int) (
+	z_r, z_bDelta *big.Int,
+) {
 	z_r = ffmath.Add(alpha_r, ffmath.Multiply(c, r))
 	z_bDelta = ffmath.Add(alpha_bDelta, ffmath.Multiply(c, bDelta))
 	return
@@ -57,9 +59,26 @@ func verifyValidEnc(
 	return l2.Equal(r2), nil
 }
 
-func provePt(sk *big.Int, Ht *Point, c *big.Int) (A_Pt *Point, z_tsk *big.Int) {
-	alpha_zsk := curve.RandomValue()
+func provePt(alpha_zsk, sk *big.Int, Ht *Point, c *big.Int) (
+	A_Pt *Point, z_tsk *big.Int,
+) {
+	if alpha_zsk == nil {
+		alpha_zsk = curve.RandomValue()
+	}
 	A_Pt = curve.ScalarMul(Ht, alpha_zsk)
 	z_tsk = ffmath.Add(alpha_zsk, ffmath.Multiply(c, sk))
 	return
+}
+
+func verifyPt(
+	Ht, Pt, A_Pt *Point,
+	c *big.Int,
+	z_tsk *big.Int,
+) (bool, error) {
+	if Ht == nil || Pt == nil || c == nil || z_tsk == nil {
+		return false, ErrInvalidParams
+	}
+	l := curve.ScalarMul(Ht, z_tsk)
+	r := curve.Add(A_Pt, curve.ScalarMul(Pt, c))
+	return l.Equal(r), nil
 }
