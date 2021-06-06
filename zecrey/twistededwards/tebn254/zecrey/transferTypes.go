@@ -35,7 +35,7 @@ type PTransferSubProof struct {
 	A_CLDelta, A_CRDelta, A_YDivCRDelta, A_YDivT, A_T, A_pk, A_TDivCPrime *Point
 	// respond values
 	z_r, z_bDelta, z_rstarSubr, z_rstarSubrbar, z_rbar, z_bprime, z_sk, z_skInv *big.Int
-	// common statements
+	// common inputs
 	// original balance enc
 	C *ElGamalEnc
 	// delta balance enc
@@ -66,7 +66,7 @@ func NewPTransferProofRelation(tokenId uint32) (*PTransferProofRelation, error) 
 	if tokenId == 0 {
 		return nil, ErrInvalidParams
 	}
-	Ht := curve.ScalarBaseMul(big.NewInt(int64(tokenId)))
+	Ht := curve.ScalarMul(H, big.NewInt(int64(tokenId)))
 	return &PTransferProofRelation{G: G, H: H, Order: Order, Ht: Ht, TokenId: tokenId}, nil
 }
 
