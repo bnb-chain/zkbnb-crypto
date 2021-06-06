@@ -70,7 +70,7 @@ Encryption method: C_L = pk^r, C_R = g^r h^b
 @pk: public key
 */
 func Enc(b *big.Int, r *big.Int, pk *Point) (*ElGamalEnc, error) {
-	if b == nil || r == nil || pk == nil || !pk.IsOnCurve() {
+	if b == nil || r == nil || pk == nil || !curve.IsInSubGroup(pk) {
 		return nil, ErrParams
 	}
 	// pk^r
