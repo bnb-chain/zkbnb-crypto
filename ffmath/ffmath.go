@@ -59,3 +59,7 @@ func RandomValue(Order *big.Int) (r *big.Int, err error) {
 func Xor(a, b *big.Int) *big.Int {
 	return new(big.Int).Xor(a, b)
 }
+
+func Equal(a, b *big.Int) bool {
+	return a.String() == b.String()
+}
