@@ -5,6 +5,7 @@ import "errors"
 var (
 	ErrInvalidParams         = errors.New("err: invalid params")
 	ErrStatements            = errors.New("err: invalid statements")
+	ErrNegativeBStar         = errors.New("err: bstar should be positive")
 	ErrInvalidChallenge      = errors.New("err: invalid challenge")
 	ErrInvalidBPParams       = errors.New("err: invalid bulletproof prove params")
 	ErrInconsistentPublicKey = errors.New("err: inconsistent public key")
