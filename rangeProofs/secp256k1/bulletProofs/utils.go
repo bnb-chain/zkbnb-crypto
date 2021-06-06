@@ -1,12 +1,12 @@
 package bulletProofs
 
 import (
+	"bytes"
+	"math/big"
 	"zecrey-crypto/ecc/zp256"
 	"zecrey-crypto/ffmath"
+	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/util"
-	"bytes"
-	"crypto/sha256"
-	"math/big"
 )
 
 /*

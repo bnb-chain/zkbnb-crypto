@@ -7,11 +7,11 @@ import (
 	"zecrey-crypto/ffmath"
 )
 
-func Setup(N int64, M int64) (params *BulletProofSetupParams, err error) {
+func Setup(N int64, M int64) (params *BPSetupParams, err error) {
 	if M != 1 && !IsPowerOfTwo(M) {
 		return nil, ErrNotPowerOfTwo
 	}
-	params = &BulletProofSetupParams{
+	params = &BPSetupParams{
 		G: curve.H,
 		H: curve.G,
 		N: N,
@@ -34,7 +34,7 @@ Prove computes the ZK rangeproof. The documentation and comments are based on
 eprint version of Bulletproofs papers:
 https://eprint.iacr.org/2017/1066.pdf
 */
-func Prove(secret *big.Int, gamma *big.Int, V *Point, params *BulletProofSetupParams) (proof *BulletProof, err error) {
+func Prove(secret *big.Int, gamma *big.Int, V *Point, params *BPSetupParams) (proof *BulletProof, err error) {
 
 	// aL, aR and commitment: (A, alpha)
 	// a_L = toBinary(secret)

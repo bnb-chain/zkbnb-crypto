@@ -8,11 +8,11 @@ import (
 	"zecrey-crypto/ffmath"
 )
 
-func Setup(N int64, M int64) (params *BulletProofSetupParams, err error) {
+func Setup(N int64, M int64) (params *BPSetupParams, err error) {
 	//if !IsPowerOfTwo(N) {
 	//	return nil, errors.New("range end is not a power of 2")
 	//}
-	params = new(BulletProofSetupParams)
+	params = new(BPSetupParams)
 	// TODO change base for twisted_elgamal
 	params.G = zp256.H
 	params.H = zp256.Base()
@@ -32,7 +32,7 @@ Prove computes the ZK rangeproof. The documentation and comments are based on
 eprint version of Bulletproofs papers:
 https://eprint.iacr.org/2017/1066.pdf
 */
-func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BulletProofSetupParams) (proof *BulletProof, err error) {
+func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BPSetupParams) (proof *BulletProof, err error) {
 	proof = new(BulletProof)
 
 	// aL, aR and commitment: (A, alpha)

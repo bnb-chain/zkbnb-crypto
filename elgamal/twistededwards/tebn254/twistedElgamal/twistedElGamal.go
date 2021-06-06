@@ -38,6 +38,20 @@ func EncAdd(C1 *ElGamalEnc, C2 *ElGamalEnc) (*ElGamalEnc, error) {
 }
 
 /**
+sub encryption entities
+@C1: Encryption entity 1
+@C2: Encryption entity 2
+*/
+func EncSub(C1 *ElGamalEnc, C2 *ElGamalEnc) (*ElGamalEnc, error) {
+	if C1 == nil || C2 == nil {
+		return nil, ErrParams
+	}
+	CL := curve.Add(C1.CL, curve.Neg(C2.CL))
+	CR := curve.Add(C1.CR, curve.Neg(C2.CR))
+	return &ElGamalEnc{CL: CL, CR: CR}, nil
+}
+
+/**
 Generate key pair, sk \gets_R mathbb{Z}_p, pk = g^{sk}
 */
 func GenKeyPair() (sk *big.Int, pk *Point) {
@@ -70,7 +84,7 @@ Encryption method: C_L = pk^r, C_R = g^r h^b
 @pk: public key
 */
 func Enc(b *big.Int, r *big.Int, pk *Point) (*ElGamalEnc, error) {
-	if b == nil || r == nil || pk == nil || !pk.IsOnCurve() {
+	if b == nil || r == nil || pk == nil || !curve.IsInSubGroup(pk) {
 		return nil, ErrParams
 	}
 	// pk^r

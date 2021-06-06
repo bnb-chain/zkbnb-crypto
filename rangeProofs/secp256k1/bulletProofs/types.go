@@ -1,17 +1,17 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/zp256"
 	"math/big"
+	"zecrey-crypto/ecc/zp256"
 )
 
 type P256 = zp256.P256
 
 /*
-BulletProofSetupParams is the structure that stores the parameters for
+BPSetupParams is the structure that stores the parameters for
 the Zero Knowledge Proof system.
 */
-type BulletProofSetupParams struct {
+type BPSetupParams struct {
 	// N is the bit-length of the range.
 	N int64
 	// G is the Elliptic Curve generator.
@@ -42,7 +42,7 @@ type BulletProof struct {
 	That              *big.Int
 	InnerProductProof *InnerProductProof
 	Commit            *P256
-	Params            *BulletProofSetupParams
+	Params            *BPSetupParams
 }
 
 /*
@@ -60,7 +60,7 @@ type AggBulletProof struct {
 	That              *big.Int
 	InnerProductProof *InnerProductProof
 	Commit            *P256
-	Params            *BulletProofSetupParams
+	Params            *BPSetupParams
 }
 
 /*
