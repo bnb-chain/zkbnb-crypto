@@ -293,9 +293,11 @@ func (proof *PTransferProof) Verify() (bool, error) {
 		YDivT := curve.Add(subProof.Y, curve.Neg(subProof.T))
 		// verify ownership
 		ownershipRes, err := verifyOwnership(
-			g, YDivT, subProof.A_YDivT, h, subProof.T, subProof.A_T, subProof.Pk, subProof.A_pk, subProof.CLprimeInv, subProof.TCRprimeInv, subProof.A_TDivCPrime,
+			g, YDivT, subProof.A_YDivT, h, subProof.T, subProof.A_T, subProof.Pk, subProof.A_pk,
+			subProof.CLprimeInv, subProof.TCRprimeInv, subProof.A_TDivCPrime,
 			proof.C2,
-			subProof.z_rstarSubrbar, subProof.z_rbar, subProof.z_bprime, subProof.z_sk, subProof.z_skInv,
+			subProof.z_rstarSubrbar, subProof.z_rbar,
+			subProof.z_bprime, subProof.z_sk, subProof.z_skInv,
 		)
 		if err != nil || !ownershipRes {
 			return false, err
@@ -320,7 +322,7 @@ func commitValidDelta(g *Point) (alpha_rstarSubr *big.Int, A_YDivCRDelta *Point)
 }
 
 func respondValidDelta(rstarSubr, alpha_rstarSubr, c *big.Int) (z_rstarSubr *big.Int) {
-	z_rstarSubr = ffmath.Add(alpha_rstarSubr, ffmath.Multiply(c, rstarSubr))
+	z_rstarSubr = ffmath.AddMod(alpha_rstarSubr, ffmath.Multiply(c, rstarSubr), Order)
 	return
 }
 
@@ -382,12 +384,12 @@ func respondOwnership(
 ) (
 	z_rstarSubrbar, z_rbar, z_bprime, z_sk, z_skInv *big.Int,
 ) {
-	z_rstarSubrbar = ffmath.Add(alpha_rstarSubrbar, ffmath.Multiply(c, rstarSubrbar))
-	z_rbar = ffmath.Add(alpha_rbar, ffmath.Multiply(c, rbar))
-	z_bprime = ffmath.Add(alpha_bprime, ffmath.Multiply(c, bprime))
+	z_rstarSubrbar = ffmath.AddMod(alpha_rstarSubrbar, ffmath.Multiply(c, rstarSubrbar), Order)
+	z_rbar = ffmath.AddMod(alpha_rbar, ffmath.Multiply(c, rbar), Order)
+	z_bprime = ffmath.AddMod(alpha_bprime, ffmath.Multiply(c, bprime), Order)
 	skInv := ffmath.ModInverse(sk, Order)
-	z_sk = ffmath.Add(alpha_sk, ffmath.Multiply(c, sk))
-	z_skInv = ffmath.Add(alpha_skInv, ffmath.Multiply(c, skInv))
+	z_sk = ffmath.AddMod(alpha_sk, ffmath.Multiply(c, sk), Order)
+	z_skInv = ffmath.AddMod(alpha_skInv, ffmath.Multiply(c, skInv), Order)
 	return
 }
 
