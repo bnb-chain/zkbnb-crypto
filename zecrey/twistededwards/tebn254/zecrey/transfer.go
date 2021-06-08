@@ -403,7 +403,8 @@ func verifyOwnership(
 		return false, nil
 	}
 	// verify T = g^{\bar{r}} h^{b'}
-	l2 := curve.Add(curve.ScalarMul(g, z_rbar), curve.ScalarMul(h, z_bprime))
+	gzrbar := curve.ScalarMul(g, z_rbar)
+	l2 := curve.Add(gzrbar, curve.ScalarMul(h, z_bprime))
 	r2 := curve.Add(A_T, curve.ScalarMul(T, c))
 	if !l2.Equal(r2) {
 		return false, nil
@@ -415,7 +416,7 @@ func verifyOwnership(
 		return false, nil
 	}
 	// verify T(C'_R)^{-1} = (C'_L)^{-sk^{-1}} g^{\bar{r}}
-	l4 := curve.Add(curve.ScalarMul(g, z_rbar), curve.ScalarMul(CLprimeInv, z_skInv))
+	l4 := curve.Add(gzrbar, curve.ScalarMul(CLprimeInv, z_skInv))
 	r4 := curve.Add(A_TCRprimeInv, curve.ScalarMul(TCRprimeInv, c))
 	return l4.Equal(r4), nil
 }

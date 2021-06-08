@@ -97,7 +97,7 @@ func TestIncorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b1Enc, pk1, b1, big.NewInt(-4), sk1)
+	err = relation.AddStatement(b1Enc, pk1, b1, big.NewInt(-2), sk1)
 	if err != nil {
 		t.Error(err)
 	}
