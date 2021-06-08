@@ -34,8 +34,8 @@ func commitValidEnc(pk, g, h *Point) (
 func respondValidEnc(r, bDelta, alpha_r, alpha_bDelta, c *big.Int) (
 	z_r, z_bDelta *big.Int,
 ) {
-	z_r = ffmath.Add(alpha_r, ffmath.Multiply(c, r))
-	z_bDelta = ffmath.Add(alpha_bDelta, ffmath.Multiply(c, bDelta))
+	z_r = ffmath.AddMod(alpha_r, ffmath.Multiply(c, r), Order)
+	z_bDelta = ffmath.AddMod(alpha_bDelta, ffmath.Multiply(c, bDelta), Order)
 	return
 }
 
