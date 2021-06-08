@@ -1,1 +1,34 @@
 package std
+
+import (
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend"
+	"github.com/consensys/gnark/backend/groth16"
+	"github.com/consensys/gnark/frontend"
+	"math/big"
+	"testing"
+)
+
+func TestSchnorrProof(t *testing.T) {
+	assert := groth16.NewAssert(t)
+
+	var circuit, witness SchnorrProofCircuit
+	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// generate witness data
+	witness.G.X.Assign("9671717474070082183213120605117400219616337014328744928644933853176787189663")
+	witness.G.Y.Assign("16950150798460657717958625567821834550301663161624707787222815936182638968203")
+	witness.A.X.Assign("1805826214268140062109789454888545380426720994127895546120718277293486808528")
+	witness.A.Y.Assign("1992424522915255363820795818666870149715470888958691910097484002003697548446")
+	witness.Pk.X.Assign("20062244510347148272446781100879286480638585431533684331180269070589632792928")
+	witness.Pk.Y.Assign("1270552922097600254906946530389401056931473037205902458907582592439177824778")
+	z, _ := new(big.Int).SetString("56457306562257122565246154685424300206626160564298072980723270873916373234", 10)
+	c, _ := new(big.Int).SetString("12570305820242045194614329830538401576680239494304591206526835130365207477516", 10)
+	witness.Z.Assign(z)
+	witness.C.Assign(c)
+
+	assert.SolvingSucceeded(r1cs, &witness)
+
+}
