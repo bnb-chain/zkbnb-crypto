@@ -66,7 +66,7 @@ func provePt(alpha_zsk, sk *big.Int, Ht *Point, c *big.Int) (
 		alpha_zsk = curve.RandomValue()
 	}
 	A_Pt = curve.ScalarMul(Ht, alpha_zsk)
-	z_tsk = ffmath.Add(alpha_zsk, ffmath.Multiply(c, sk))
+	z_tsk = ffmath.AddMod(alpha_zsk, ffmath.Multiply(c, sk), Order)
 	return
 }
 

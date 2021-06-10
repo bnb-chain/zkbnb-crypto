@@ -1,6 +1,7 @@
 package std
 
 import (
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
@@ -93,6 +94,7 @@ func TestOwnershipCircuit(t *testing.T) {
 	witness.Z_bprime.Assign(z_bprime)
 	witness.Z_sk.Assign(z_sk)
 	witness.Z_skInv.Assign(z_skInv)
+	fmt.Println("constraints:", r1cs.GetNbConstraints())
 
 	assert.SolvingSucceeded(r1cs, &witness)
 

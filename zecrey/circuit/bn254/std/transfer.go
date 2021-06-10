@@ -4,6 +4,8 @@ import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
+	"zecrey-crypto/ffmath"
+	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 type (
@@ -13,7 +15,7 @@ type (
 
 type PTransferProofCircuit struct {
 	// sub proofs
-	SubProofs []PTransferSubProofCircuit
+	SubProofs [3]PTransferSubProofCircuit
 	// TODO BP Proof
 	//BPProof *AggBulletProof
 	// commitment for \sum_{i=1}^n b_i^{\Delta}
@@ -34,7 +36,7 @@ type PTransferSubProofCircuit struct {
 	// sigma protocol commitment values
 	A_CLDelta, A_CRDelta, A_YDivCRDelta, A_YDivT, A_T, A_pk, A_TDivCPrime Point
 	// respond values
-	z_r, z_bDelta, z_rstarSubr, z_rstarSubrbar, z_rbar, z_bprime, z_sk, z_skInv Variable
+	Z_r, Z_bDelta, Z_rstarSubr, Z_rstarSubrbar, Z_rbar, Z_bprime, Z_sk, Z_skInv Variable
 	// common inputs
 	// original balance enc
 	C ElGamalEncCircuit
@@ -73,9 +75,10 @@ func (circuit *PTransferProofCircuit) Define(curveID ecc.ID, cs *frontend.Constr
 	cs.AssertIsEqual(l1.X, r1.X)
 	cs.AssertIsEqual(l1.Y, r1.Y)
 
-	var lSum Point
-	lSum.X = cs.Constant("0")
-	lSum.Y = cs.Constant("1")
+	lSum := Point{
+		X: cs.Constant("0"),
+		Y: cs.Constant("1"),
+	}
 
 	// verify sub proofs
 	for _, subProof := range circuit.SubProofs {
@@ -85,7 +88,7 @@ func (circuit *PTransferProofCircuit) Define(curveID ecc.ID, cs *frontend.Constr
 			circuit.G,
 			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, circuit.H, subProof.CDelta.CR, subProof.A_CRDelta,
 			circuit.C,
-			subProof.z_r, subProof.z_bDelta,
+			subProof.Z_r, subProof.Z_bDelta,
 			params,
 		)
 		//CRNeg := circuit.G.ScalarMulNonFixedBase(cs, &subProof.CDelta.CR, inv, params)
@@ -98,7 +101,7 @@ func (circuit *PTransferProofCircuit) Define(curveID ecc.ID, cs *frontend.Constr
 			circuit.G,
 			*YDivCRDelta, subProof.A_YDivCRDelta,
 			circuit.C1,
-			subProof.z_rstarSubr,
+			subProof.Z_rstarSubr,
 			params,
 		)
 
@@ -110,10 +113,10 @@ func (circuit *PTransferProofCircuit) Define(curveID ecc.ID, cs *frontend.Constr
 			circuit.G,
 			*YDivT, subProof.A_YDivT, circuit.H, subProof.T, subProof.A_T, subProof.Pk, subProof.A_pk, subProof.CLprimeInv, subProof.TCRprimeInv, subProof.A_TDivCPrime,
 			circuit.C2,
-			subProof.z_rstarSubrbar, subProof.z_rbar, subProof.z_bprime, subProof.z_sk, subProof.z_skInv,
+			subProof.Z_rstarSubrbar, subProof.Z_rbar, subProof.Z_bprime, subProof.Z_sk, subProof.Z_skInv,
 			params,
 		)
-		t := circuit.G.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.z_bDelta, params)
+		t := circuit.G.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.Z_bDelta, params)
 		lSum = *circuit.G.AddGeneric(cs, &lSum, t, params)
 	}
 	cs.AssertIsEqual(lSum.X, circuit.A_sum.X)
@@ -196,4 +199,164 @@ func verifyOwnership(
 	r4 := G.AddGeneric(cs, &A_TCRprimeInv, TCRprimeInv_c, params)
 	cs.AssertIsEqual(l4.X, r4.X)
 	cs.AssertIsEqual(l4.Y, r4.Y)
+}
+
+func setPointWitness(point *zecrey.Point) (witness Point, err error) {
+	if point == nil {
+		return witness, ErrInvalidSetParams
+	}
+	witness.X.Assign(point.X.String())
+	witness.Y.Assign(point.Y.String())
+	return witness, nil
+}
+
+func setElGamalEncWitness(encVal *zecrey.ElGamalEnc) (witness ElGamalEncCircuit, err error) {
+	if encVal == nil {
+		return witness, ErrInvalidSetParams
+	}
+	witness.CL, err = setPointWitness(encVal.CL)
+	if err != nil {
+		return witness, err
+	}
+	witness.CR, err = setPointWitness(encVal.CR)
+	if err != nil {
+		return witness, err
+	}
+	return witness, nil
+}
+
+func setTransferProofWitness(proof *zecrey.PTransferProof) (witness PTransferProofCircuit, err error) {
+	if proof == nil || len(proof.Pts) != 1 || len(proof.Z_tsks) != 1 || len(proof.A_Pts) != 1 {
+		return witness, ErrInvalidSetParams
+	}
+	// waste point
+	witness.G, err = setPointWitness(G)
+	if err != nil {
+		return witness, err
+	}
+	// A_sum
+	witness.A_sum, err = setPointWitness(proof.A_sum)
+	if err != nil {
+		return witness, err
+	}
+	// A_Pt
+	witness.A_Pt, err = setPointWitness(proof.A_Pts[0])
+	if err != nil {
+		return witness, err
+	}
+	// z_tsk
+	witness.Z_tsk.Assign(proof.Z_tsks[0])
+	// generator H
+	witness.H, err = setPointWitness(proof.H)
+	if err != nil {
+		return witness, err
+	}
+	// Ht = h^{tid}
+	witness.Ht, err = setPointWitness(proof.Ht)
+	if err != nil {
+		return witness, err
+	}
+	// Pt = Ht^{sk}
+	witness.Pt, err = setPointWitness(proof.Pts[0])
+	if err != nil {
+		return witness, err
+	}
+	// C = C1 \oplus C2
+	c := ffmath.Xor(proof.C1, proof.C2)
+	witness.C.Assign(c)
+	witness.C1.Assign(proof.C1)
+	witness.C2.Assign(proof.C1)
+	// set sub proofs
+	// TODO check subProofs length
+	for i, subProof := range proof.SubProofs {
+		// define var
+		var subProofWitness PTransferSubProofCircuit
+		// set values
+		// A_{C_L^{\Delta}}
+		subProofWitness.A_CLDelta, err = setPointWitness(subProof.A_CLDelta)
+		if err != nil {
+			return witness, err
+		}
+		// A_{C_R^{\Delta}}
+		subProofWitness.A_CRDelta, err = setPointWitness(subProof.A_CRDelta)
+		if err != nil {
+			return witness, err
+		}
+		// A_{Y/C_R^{\Delta}}
+		subProofWitness.A_YDivCRDelta, err = setPointWitness(subProof.A_YDivCRDelta)
+		if err != nil {
+			return witness, err
+		}
+		// A_{Y/T}
+		subProofWitness.A_YDivT, err = setPointWitness(subProof.A_YDivT)
+		if err != nil {
+			return witness, err
+		}
+		// A_T
+		subProofWitness.A_T, err = setPointWitness(subProof.A_T)
+		if err != nil {
+			return witness, err
+		}
+		// A_{pk}
+		subProofWitness.A_pk, err = setPointWitness(subProof.A_pk)
+		if err != nil {
+			return witness, err
+		}
+		// A_{T/C'}
+		subProofWitness.A_TDivCPrime, err = setPointWitness(subProof.A_TDivCPrime)
+		if err != nil {
+			return witness, err
+		}
+		// z_r
+		subProofWitness.Z_r.Assign(subProof.Z_r)
+		// z_{b^{\Delta}}
+		subProofWitness.Z_bDelta.Assign(subProof.Z_bDelta)
+		// z_{r^{\star} - r}
+		subProofWitness.Z_rstarSubr.Assign(subProof.Z_rstarSubr)
+		// z_{r^{\star} - \bar{r}}
+		subProofWitness.Z_rstarSubrbar.Assign(subProof.Z_rstarSubrbar)
+		// z_{\bar{r}}
+		subProofWitness.Z_rbar.Assign(subProof.Z_rbar)
+		// z_{b'}
+		subProofWitness.Z_bprime.Assign(subProof.Z_bprime)
+		// z_{sk}
+		subProofWitness.Z_sk.Assign(subProof.Z_sk)
+		// z_{sk^{-1}}
+		subProofWitness.Z_skInv.Assign(subProof.Z_skInv)
+		// C
+		subProofWitness.C, err = setElGamalEncWitness(subProof.C)
+		if err != nil {
+			return witness, err
+		}
+		// C^{\Delta}
+		subProofWitness.CDelta, err = setElGamalEncWitness(subProof.CDelta)
+		if err != nil {
+			return witness, err
+		}
+		// T
+		subProofWitness.T, err = setPointWitness(subProof.T)
+		if err != nil {
+			return witness, err
+		}
+		// Y
+		subProofWitness.Y, err = setPointWitness(subProof.Y)
+		if err != nil {
+			return witness, err
+		}
+		// Pk
+		subProofWitness.Pk, err = setPointWitness(subProof.Pk)
+		if err != nil {
+			return witness, err
+		}
+		// T C_R'^{-1}
+		subProofWitness.TCRprimeInv, err = setPointWitness(subProof.TCRprimeInv)
+		// C_L'^{-1}
+		subProofWitness.CLprimeInv, err = setPointWitness(subProof.CLprimeInv)
+		if err != nil {
+			return witness, err
+		}
+		// set into witness
+		witness.SubProofs[i] = subProofWitness
+	}
+	return witness, nil
 }

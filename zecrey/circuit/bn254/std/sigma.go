@@ -21,9 +21,15 @@ func (circuit *SchnorrProofCircuit) Define(curveID ecc.ID, cs *frontend.Constrai
 		return err
 	}
 
-	l := circuit.G.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, circuit.Z, params)
+	l := Point{
+		X: cs.Constant(circuit.G.X),
+		Y: cs.Constant(circuit.G.Y),
+	}
+
+	l.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, circuit.Z, params)
+
 	pkc := circuit.G.ScalarMulNonFixedBase(cs, &circuit.Pk, circuit.C, params)
-	r := circuit.G.AddGeneric(cs, &circuit.A, pkc, params)
+	r := circuit.A.AddGeneric(cs, &circuit.A, pkc, params)
 
 	cs.AssertIsEqual(l.X, r.X)
 	cs.AssertIsEqual(l.Y, r.Y)
