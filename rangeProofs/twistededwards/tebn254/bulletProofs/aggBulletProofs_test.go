@@ -15,12 +15,18 @@ func TestProveAggregationAndVerify(t *testing.T) {
 	r1 := curve.RandomValue()
 	b2 := big.NewInt(3)
 	r2 := curve.RandomValue()
+	b3 := big.NewInt(8)
+	r3 := curve.RandomValue()
+	b4 := big.NewInt(3)
+	r4 := curve.RandomValue()
 	b1Enc, _ := twistedElgamal.Enc(b1, r1, pk)
 	b2Enc, _ := twistedElgamal.Enc(b2, r2, pk)
-	secrets := []*big.Int{b1, b2}
-	gammas := []*big.Int{r1, r2}
-	Vs := []*Point{b1Enc.CR, b2Enc.CR}
-	params, err := Setup(32, 2)
+	b3Enc, _ := twistedElgamal.Enc(b3, r3, pk)
+	b4Enc, _ := twistedElgamal.Enc(b4, r4, pk)
+	secrets := []*big.Int{b1, b2, b3, b4}
+	gammas := []*big.Int{r1, r2, r3, r4}
+	Vs := []*Point{b1Enc.CR, b2Enc.CR, b3Enc.CR, b4Enc.CR}
+	params, err := Setup(32, 4)
 	if err != nil {
 		panic(err)
 	}
@@ -32,6 +38,7 @@ func TestProveAggregationAndVerify(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(len(proof.InnerProductProof.Ls))
 	fmt.Println(res)
 	//}
 }

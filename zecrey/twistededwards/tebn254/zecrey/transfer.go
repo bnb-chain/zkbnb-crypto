@@ -149,16 +149,16 @@ func ProvePTransfer(relation *PTransferProofRelation, params *ZSetupParams) (pro
 				c2,
 			)
 			// complete sub proofs
-			proof.SubProofs[i].z_rstarSubr = z_rstarSubr
+			proof.SubProofs[i].Z_rstarSubr = z_rstarSubr
 			proof.SubProofs[i].A_YDivT = A_YDivT
 			proof.SubProofs[i].A_T = A_T
 			proof.SubProofs[i].A_pk = A_pk
 			proof.SubProofs[i].A_TDivCPrime = A_TDivCPrime
-			proof.SubProofs[i].z_rstarSubrbar = z_rstarSubrbar
-			proof.SubProofs[i].z_rbar = z_rbar
-			proof.SubProofs[i].z_bprime = z_bprime
-			proof.SubProofs[i].z_sk = z_sk
-			proof.SubProofs[i].z_skInv = z_skInv
+			proof.SubProofs[i].Z_rstarSubrbar = z_rstarSubrbar
+			proof.SubProofs[i].Z_rbar = z_rbar
+			proof.SubProofs[i].Z_bprime = z_bprime
+			proof.SubProofs[i].Z_sk = z_sk
+			proof.SubProofs[i].Z_skInv = z_skInv
 		} else { // otherwise, run simValidDelta
 			A_YDivCRDelta, z_rstarSubr := simValidDelta(
 				statement.CDelta.CR, statement.Y, G,
@@ -172,20 +172,20 @@ func ProvePTransfer(relation *PTransferProofRelation, params *ZSetupParams) (pro
 			)
 			// complete sub proofs
 			proof.SubProofs[i].A_YDivCRDelta = A_YDivCRDelta
-			proof.SubProofs[i].z_rstarSubr = z_rstarSubr
-			proof.SubProofs[i].z_rstarSubrbar = z_rstarSubrbar
-			proof.SubProofs[i].z_rbar = z_rbar
-			proof.SubProofs[i].z_bprime = z_bprime
-			proof.SubProofs[i].z_sk = z_sk
-			proof.SubProofs[i].z_skInv = z_skInv
+			proof.SubProofs[i].Z_rstarSubr = z_rstarSubr
+			proof.SubProofs[i].Z_rstarSubrbar = z_rstarSubrbar
+			proof.SubProofs[i].Z_rbar = z_rbar
+			proof.SubProofs[i].Z_bprime = z_bprime
+			proof.SubProofs[i].Z_sk = z_sk
+			proof.SubProofs[i].Z_skInv = z_skInv
 			// commit to Pt = Ht^{sk}
 			A_Pt, z_tsk := provePt(nil, statement.Sk, relation.Ht, c)
 			proof.A_Pts = append(proof.A_Pts, A_Pt)
 			proof.Z_tsks = append(proof.Z_tsks, z_tsk)
 		}
 		// complete sub proofs
-		proof.SubProofs[i].z_r = z_r
-		proof.SubProofs[i].z_bDelta = z_bDelta
+		proof.SubProofs[i].Z_r = z_r
+		proof.SubProofs[i].Z_bDelta = z_bDelta
 	}
 	slen := len(secrets)
 	glen := len(gammas)
@@ -274,7 +274,7 @@ func (proof *PTransferProof) Verify() (bool, error) {
 		validEncRes, err := verifyValidEnc(
 			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, g, h, subProof.CDelta.CR, subProof.A_CRDelta,
 			c,
-			subProof.z_r, subProof.z_bDelta,
+			subProof.Z_r, subProof.Z_bDelta,
 		)
 		// verify valid enc
 		if err != nil || !validEncRes {
@@ -285,7 +285,7 @@ func (proof *PTransferProof) Verify() (bool, error) {
 		validDeltaRes, err := verifyValidDelta(
 			g, YDivCRDelta, subProof.A_YDivCRDelta,
 			proof.C1,
-			subProof.z_rstarSubr,
+			subProof.Z_rstarSubr,
 		)
 		if err != nil || !validDeltaRes {
 			return false, err
@@ -293,15 +293,17 @@ func (proof *PTransferProof) Verify() (bool, error) {
 		YDivT := curve.Add(subProof.Y, curve.Neg(subProof.T))
 		// verify ownership
 		ownershipRes, err := verifyOwnership(
-			g, YDivT, subProof.A_YDivT, h, subProof.T, subProof.A_T, subProof.Pk, subProof.A_pk, subProof.CLprimeInv, subProof.TCRprimeInv, subProof.A_TDivCPrime,
+			g, YDivT, subProof.A_YDivT, h, subProof.T, subProof.A_T, subProof.Pk, subProof.A_pk,
+			subProof.CLprimeInv, subProof.TCRprimeInv, subProof.A_TDivCPrime,
 			proof.C2,
-			subProof.z_rstarSubrbar, subProof.z_rbar, subProof.z_bprime, subProof.z_sk, subProof.z_skInv,
+			subProof.Z_rstarSubrbar, subProof.Z_rbar,
+			subProof.Z_bprime, subProof.Z_sk, subProof.Z_skInv,
 		)
 		if err != nil || !ownershipRes {
 			return false, err
 		}
 		// set z_bDeltas for sum proof
-		lSum = curve.Add(lSum, curve.ScalarMul(g, subProof.z_bDelta))
+		lSum = curve.Add(lSum, curve.ScalarMul(g, subProof.Z_bDelta))
 	}
 
 	// verify sum proof
@@ -320,7 +322,7 @@ func commitValidDelta(g *Point) (alpha_rstarSubr *big.Int, A_YDivCRDelta *Point)
 }
 
 func respondValidDelta(rstarSubr, alpha_rstarSubr, c *big.Int) (z_rstarSubr *big.Int) {
-	z_rstarSubr = ffmath.Add(alpha_rstarSubr, ffmath.Multiply(c, rstarSubr))
+	z_rstarSubr = ffmath.AddMod(alpha_rstarSubr, ffmath.Multiply(c, rstarSubr), Order)
 	return
 }
 
@@ -382,12 +384,12 @@ func respondOwnership(
 ) (
 	z_rstarSubrbar, z_rbar, z_bprime, z_sk, z_skInv *big.Int,
 ) {
-	z_rstarSubrbar = ffmath.Add(alpha_rstarSubrbar, ffmath.Multiply(c, rstarSubrbar))
-	z_rbar = ffmath.Add(alpha_rbar, ffmath.Multiply(c, rbar))
-	z_bprime = ffmath.Add(alpha_bprime, ffmath.Multiply(c, bprime))
+	z_rstarSubrbar = ffmath.AddMod(alpha_rstarSubrbar, ffmath.Multiply(c, rstarSubrbar), Order)
+	z_rbar = ffmath.AddMod(alpha_rbar, ffmath.Multiply(c, rbar), Order)
+	z_bprime = ffmath.AddMod(alpha_bprime, ffmath.Multiply(c, bprime), Order)
 	skInv := ffmath.ModInverse(sk, Order)
-	z_sk = ffmath.Add(alpha_sk, ffmath.Multiply(c, sk))
-	z_skInv = ffmath.Add(alpha_skInv, ffmath.Multiply(c, skInv))
+	z_sk = ffmath.AddMod(alpha_sk, ffmath.Multiply(c, sk), Order)
+	z_skInv = ffmath.AddMod(alpha_skInv, ffmath.Multiply(c, skInv), Order)
 	return
 }
 
@@ -403,7 +405,8 @@ func verifyOwnership(
 		return false, nil
 	}
 	// verify T = g^{\bar{r}} h^{b'}
-	l2 := curve.Add(curve.ScalarMul(g, z_rbar), curve.ScalarMul(h, z_bprime))
+	gzrbar := curve.ScalarMul(g, z_rbar)
+	l2 := curve.Add(gzrbar, curve.ScalarMul(h, z_bprime))
 	r2 := curve.Add(A_T, curve.ScalarMul(T, c))
 	if !l2.Equal(r2) {
 		return false, nil
@@ -415,7 +418,7 @@ func verifyOwnership(
 		return false, nil
 	}
 	// verify T(C'_R)^{-1} = (C'_L)^{-sk^{-1}} g^{\bar{r}}
-	l4 := curve.Add(curve.ScalarMul(g, z_rbar), curve.ScalarMul(CLprimeInv, z_skInv))
+	l4 := curve.Add(gzrbar, curve.ScalarMul(CLprimeInv, z_skInv))
 	r4 := curve.Add(A_TCRprimeInv, curve.ScalarMul(TCRprimeInv, c))
 	return l4.Equal(r4), nil
 }

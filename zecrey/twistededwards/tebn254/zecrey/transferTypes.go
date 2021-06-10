@@ -34,7 +34,7 @@ type PTransferSubProof struct {
 	// sigma protocol commitment values
 	A_CLDelta, A_CRDelta, A_YDivCRDelta, A_YDivT, A_T, A_pk, A_TDivCPrime *Point
 	// respond values
-	z_r, z_bDelta, z_rstarSubr, z_rstarSubrbar, z_rbar, z_bprime, z_sk, z_skInv *big.Int
+	Z_r, Z_bDelta, Z_rstarSubr, Z_rstarSubrbar, Z_rbar, Z_bprime, Z_sk, Z_skInv *big.Int
 	// common inputs
 	// original balance enc
 	C *ElGamalEnc

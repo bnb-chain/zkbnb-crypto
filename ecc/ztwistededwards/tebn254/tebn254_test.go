@@ -55,6 +55,8 @@ func TestAdd(t *testing.T) {
 	r2 := big.NewInt(9)
 	A1 := ScalarBaseMul(r1)
 	Neutral := ZeroPoint()
+	fmt.Println(Neutral.X.String())
+	fmt.Println(Neutral.Y.String())
 	A1Copy := Add(A1, Neutral)
 	fmt.Println(A1)
 	fmt.Println(A1Copy)
@@ -64,4 +66,9 @@ func TestAdd(t *testing.T) {
 	A2 = Add(A2, A1)
 	fmt.Println(A2)
 	fmt.Println(A1)
+}
+
+func TestAssign(t *testing.T) {
+	A := ScalarBaseMul(big.NewInt(230928302))
+	fmt.Println(A.X)
 }
