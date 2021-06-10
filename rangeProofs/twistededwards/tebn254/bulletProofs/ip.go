@@ -2,6 +2,7 @@ package bulletProofs
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 	"strconv"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -239,6 +240,7 @@ func (proof *InnerProductProof) Verify() (res bool, err error) {
 	Pprime := proof.Params.P
 	nprime := proof.N
 	for i := int64(0); i < int64(logn); i++ {
+		fmt.Println(nprime)
 		nprime = nprime / 2                          // (20)
 		x, _, err = HashBP(proof.Ls[i], proof.Rs[i]) // (26)
 		if err != nil {
