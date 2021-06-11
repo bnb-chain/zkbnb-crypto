@@ -14,6 +14,10 @@ type (
 	AggBulletProof = bulletProofs.AggBulletProof
 )
 
+const (
+	N = 32 // max bits
+)
+
 var (
 	G            = curve.G
 	H            = curve.H
