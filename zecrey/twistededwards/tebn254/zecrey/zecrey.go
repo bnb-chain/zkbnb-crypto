@@ -4,16 +4,7 @@ import (
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/ffmath"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/bulletProofs"
 )
-
-func Setup(N, M int64) (*ZSetupParams, error) {
-	bpSetupParams, err := bulletProofs.Setup(N, M)
-	if err != nil {
-		return nil, err
-	}
-	return &ZSetupParams{bpSetupParams}, nil
-}
 
 /**
 commit phase for R_{ValidEnc} = {C_L = pk^r \wedge C_R = g^r h^{b}}
