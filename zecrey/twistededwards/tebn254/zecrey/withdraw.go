@@ -6,12 +6,12 @@ import (
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/ffmath"
 	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/bulletProofs"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 	"zecrey-crypto/util"
 )
 
-func ProveWithdraw(relation *WithdrawProofRelation, params *ZSetupParams) (proof *WithdrawProof, err error) {
-	if relation == nil || params == nil {
+func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err error) {
+	if relation == nil {
 		return nil, ErrInvalidParams
 	}
 	alpha_r, A_CLStar := commitHalfEnc(relation.Pk)
@@ -50,10 +50,17 @@ func ProveWithdraw(relation *WithdrawProofRelation, params *ZSetupParams) (proof
 	secrets[1] = relation.BPrime
 	gammas[1] = relation.RBar
 	Vs[1] = relation.T
-	bpProof, err := bulletProofs.ProveAggregation(secrets, gammas, Vs, params.BPSetupParams)
+	// make range proofs
+	rangeProofs := make([]*commitRange.ComRangeProof, 2)
+	rangeProofs[0], err = commitRange.Prove(secrets[0], gammas[0], H, G, N)
 	if err != nil {
 		return nil, err
 	}
+	rangeProofs[1], err = commitRange.Prove(secrets[1], gammas[1], H, G, N)
+	if err != nil {
+		return nil, err
+	}
+
 	proof = &WithdrawProof{
 		// commitments
 		A_CLStar:      A_CLStar,
@@ -66,7 +73,7 @@ func ProveWithdraw(relation *WithdrawProofRelation, params *ZSetupParams) (proof
 		z_sk:    z_sk,
 		z_skInv: z_skInv,
 		// BP Proof
-		BPProof: bpProof,
+		CRangeProofs: rangeProofs,
 		// common inputs
 		G:           relation.G,
 		H:           relation.H,
@@ -85,9 +92,11 @@ func ProveWithdraw(relation *WithdrawProofRelation, params *ZSetupParams) (proof
 
 func (proof *WithdrawProof) Verify() (bool, error) {
 	// verify range proof first
-	rangeRes, err := proof.BPProof.Verify()
-	if err != nil || !rangeRes {
-		return false, err
+	for _, rangeProof := range proof.CRangeProofs {
+		rangeRes, err := rangeProof.Verify()
+		if err != nil || !rangeRes {
+			return false, err
+		}
 	}
 	// generate the challenge
 	var buf bytes.Buffer

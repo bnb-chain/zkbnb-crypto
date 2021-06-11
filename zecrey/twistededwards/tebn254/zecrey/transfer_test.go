@@ -10,10 +10,6 @@ import (
 )
 
 func TestCorrectInfoProve(t *testing.T) {
-	params, err := Setup(32, 4)
-	if err != nil {
-		t.Error(err)
-	}
 	sk1, pk1 := twistedElgamal.GenKeyPair()
 	b1 := big.NewInt(8)
 	r1 := curve.RandomValue()
@@ -54,26 +50,22 @@ func TestCorrectInfoProve(t *testing.T) {
 	//	panic(err)
 	//}
 	elapse := time.Now()
-	transferProof, err := ProvePTransfer(relation, params)
+	transferProof, err := ProvePTransfer(relation)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(time.Since(elapse))
+	fmt.Println("prove time:", time.Since(elapse))
 	elapse = time.Now()
 	res, err := transferProof.Verify()
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Println(res)
-	fmt.Println(time.Since(elapse))
+	fmt.Println("verify time:", time.Since(elapse))
 
 }
 
 func TestIncorrectInfoProve(t *testing.T) {
-	params, err := Setup(32, 4)
-	if err != nil {
-		t.Error(err)
-	}
 	sk1, pk1 := twistedElgamal.GenKeyPair()
 	b1 := big.NewInt(8)
 	r1 := curve.RandomValue()
@@ -113,7 +105,7 @@ func TestIncorrectInfoProve(t *testing.T) {
 	//if err != nil {
 	//	panic(err)
 	//}
-	transferProof, err := ProvePTransfer(relation, params)
+	transferProof, err := ProvePTransfer(relation)
 	if err != nil {
 		t.Error(err)
 	}

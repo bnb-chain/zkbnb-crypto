@@ -6,6 +6,7 @@ import (
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 )
 
 type WithdrawProof struct {
@@ -14,8 +15,8 @@ type WithdrawProof struct {
 	A_CLStar, A_CRStar, A_pk, A_TDivCRprime, A_Pt *Point
 	// response
 	z_r, z_bDelta, z_rbar, z_sk, z_skInv *big.Int
-	// BP Proof
-	BPProof *AggBulletProof
+	// Commitment Range Proofs
+	CRangeProofs []*commitRange.ComRangeProof
 	// common inputs
 	C, CStar                                 *ElGamalEnc
 	G, H, Ht, TDivCRprime, CLprimeInv, T, Pk *Point

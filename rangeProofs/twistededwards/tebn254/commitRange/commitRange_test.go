@@ -12,7 +12,7 @@ import (
 )
 
 func TestProveAndVerify(t *testing.T) {
-	b := big.NewInt(0)
+	b := big.NewInt(1000000)
 	r := curve.RandomValue()
 	g := curve.H
 	h := curve.G

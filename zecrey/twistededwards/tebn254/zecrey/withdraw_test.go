@@ -9,10 +9,6 @@ import (
 )
 
 func TestProveWithdraw(t *testing.T) {
-	params, err := Setup(32, 4)
-	if err != nil {
-		t.Error(err)
-	}
 	sk, pk := twistedElgamal.GenKeyPair()
 	b := big.NewInt(8)
 	r := curve.RandomValue()
@@ -26,7 +22,7 @@ func TestProveWithdraw(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	withdrawProof, err := ProveWithdraw(relation, params)
+	withdrawProof, err := ProveWithdraw(relation)
 	if err != nil {
 		t.Error(err)
 	}
