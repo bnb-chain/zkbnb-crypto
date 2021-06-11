@@ -28,7 +28,7 @@ func toBinary(x *big.Int, l int64) ([]*big.Int, error) {
 /*
 powerOf returns a vector composed by powers of x.
 */
-func powerOfVec(y *big.Int, n int64) []*big.Int {
+func PowerOfVec(y *big.Int, n int64) []*big.Int {
 	var (
 		i      int64
 		result []*big.Int

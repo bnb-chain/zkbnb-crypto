@@ -44,7 +44,7 @@ func Prove(b *big.Int, r *big.Int, g, h *Point, N uint) (proof *ComRangeProof, e
 	// convert the value into binary
 	bsInt, _ := toBinary(b, int64(N))
 	// get power of 2 vec
-	powerof2Vec := powerOfVec(big.NewInt(2), int64(N))
+	powerof2Vec := PowerOfVec(big.NewInt(2), int64(N))
 	// compute T' = \prod_{i=0}^{31}(A_i)^{2^i}
 	Tprime := curve.ZeroPoint()
 	// compute A_i = g^{b_i} h^{r_i}
@@ -135,7 +135,7 @@ func (proof *ComRangeProof) Verify() (bool, error) {
 	buf.Write(proof.T.Marshal())
 	// set buf and
 	// check if T' = (A_i)^{2^i}
-	powerof2Vec := powerOfVec(big.NewInt(2), int64(len(proof.As)))
+	powerof2Vec := PowerOfVec(big.NewInt(2), int64(len(proof.As)))
 	Tprime_check := curve.ZeroPoint()
 	for i, Ai := range proof.As {
 		buf.Write(Ai.Marshal())
@@ -228,7 +228,6 @@ func verifyBinary(A, Ca, Cb, g, h *Point, f, za, zb *big.Int, c *big.Int) (bool,
 	if err != nil {
 		return false, err
 	}
-	// challenge
 	l1 := curve.Add(curve.ScalarMul(A, c), Ca)
 	l1r1 := l1.Equal(r1)
 	if !l1r1 {
@@ -292,13 +291,14 @@ func verifyCommitmentSameValue(A_T, A_Tprime, T, Tprime, g, h *Point, zb, zr, zr
 		return false, errInvalidCommitmentParams
 	}
 	// g^{zb} h^{zr} == A_T T^c
-	l1 := curve.Add(curve.ScalarMul(g, zb), curve.ScalarMul(h, zr))
+	gzb := curve.ScalarMul(g, zb)
+	l1 := curve.Add(gzb, curve.ScalarMul(h, zr))
 	r1 := curve.Add(A_T, curve.ScalarMul(T, c))
 	if !l1.Equal(r1) {
 		return false, nil
 	}
 	// g^{zb} h^{zrprime} == A_T' T'^c
-	l2 := curve.Add(curve.ScalarMul(g, zb), curve.ScalarMul(h, zrprime))
+	l2 := curve.Add(gzb, curve.ScalarMul(h, zrprime))
 	r2 := curve.Add(A_Tprime, curve.ScalarMul(Tprime, c))
 	return l2.Equal(r2), nil
 }
