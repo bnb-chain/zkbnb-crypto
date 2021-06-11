@@ -16,8 +16,6 @@ type (
 type PTransferProofCircuit struct {
 	// sub proofs
 	SubProofs [3]PTransferSubProofCircuit
-	// TODO BP Proof
-	//BPProof *AggBulletProof
 	// commitment for \sum_{i=1}^n b_i^{\Delta}
 	A_sum Point
 	// A_Pt
@@ -37,6 +35,8 @@ type PTransferSubProofCircuit struct {
 	A_CLDelta, A_CRDelta, A_YDivCRDelta, A_YDivT, A_T, A_pk, A_TDivCPrime Point
 	// respond values
 	Z_r, Z_bDelta, Z_rstarSubr, Z_rstarSubrbar, Z_rbar, Z_bprime, Z_sk, Z_skInv Variable
+	// range proof
+	CRangeProof ComRangeProofCircuit
 	// common inputs
 	// original balance enc
 	C ElGamalEncCircuit
@@ -82,6 +82,8 @@ func (circuit *PTransferProofCircuit) Define(curveID ecc.ID, cs *frontend.Constr
 
 	// verify sub proofs
 	for _, subProof := range circuit.SubProofs {
+		// verify range proof
+		verifyComRangeProof(cs, subProof.CRangeProof, params)
 		// verify valid enc
 		verifyValidEnc(
 			cs,
@@ -321,6 +323,11 @@ func setTransferProofWitness(proof *zecrey.PTransferProof) (witness PTransferPro
 		subProofWitness.Z_bprime.Assign(subProof.Z_bprime)
 		// z_{sk}
 		subProofWitness.Z_sk.Assign(subProof.Z_sk)
+		// range proof
+		subProofWitness.CRangeProof, err = setComRangeProofWitness(subProof.CRangeProof)
+		if err != nil {
+			return witness, err
+		}
 		// z_{sk^{-1}}
 		subProofWitness.Z_skInv.Assign(subProof.Z_skInv)
 		// C
