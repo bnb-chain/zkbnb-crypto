@@ -6,12 +6,12 @@ import (
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/ffmath"
 	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/bulletProofs"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 	"zecrey-crypto/util"
 )
 
-func ProvePTransfer(relation *PTransferProofRelation, params *ZSetupParams) (proof *PTransferProof, err error) {
-	if relation == nil || params == nil || relation.Statements == nil {
+func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, err error) {
+	if relation == nil || relation.Statements == nil {
 		return nil, ErrInvalidParams
 	}
 	var (
@@ -183,6 +183,13 @@ func ProvePTransfer(relation *PTransferProofRelation, params *ZSetupParams) (pro
 			proof.A_Pts = append(proof.A_Pts, A_Pt)
 			proof.Z_tsks = append(proof.Z_tsks, z_tsk)
 		}
+		// compute the range proof
+		rangeProof, err := commitRange.Prove(statement.BStar, statement.RStar, H, G, N)
+		if err != nil {
+			return nil, err
+		}
+		// set the range proof into sub proofs
+		proof.SubProofs[i].CRangeProof = rangeProof
 		// complete sub proofs
 		proof.SubProofs[i].Z_r = z_r
 		proof.SubProofs[i].Z_bDelta = z_bDelta
@@ -193,39 +200,11 @@ func ProvePTransfer(relation *PTransferProofRelation, params *ZSetupParams) (pro
 	if slen != glen || slen != Vlen {
 		return nil, ErrInvalidBPParams
 	}
-	if !bulletProofs.IsPowerOfTwo(int64(slen)) {
-		var dif int
-		i := 2
-		// find delta
-		for {
-			max := 1 << i
-			if max > slen {
-				dif = max - slen
-				break
-			}
-			i++
-		}
-		for j := 0; j < dif; j++ {
-			secrets = append(secrets, PadSecret)
-			gammas = append(gammas, PadGammas)
-			Vs = append(Vs, PadV)
-		}
-	}
-	bpProof, err := bulletProofs.ProveAggregation(secrets, gammas, Vs, params.BPSetupParams)
-	if err != nil {
-		return nil, err
-	}
-	proof.BPProof = bpProof
 	// response phase
 	return proof, nil
 }
 
 func (proof *PTransferProof) Verify() (bool, error) {
-	// verify range proof first
-	rangeRes, err := proof.BPProof.Verify()
-	if err != nil || !rangeRes {
-		return false, err
-	}
 	// generate the challenge
 	var buf bytes.Buffer
 	buf.Write(proof.G.Marshal())
@@ -271,12 +250,17 @@ func (proof *PTransferProof) Verify() (bool, error) {
 	// verify sub proofs
 	lSum := curve.ZeroPoint()
 	for _, subProof := range proof.SubProofs {
+		// verify range proof
+		rangeRes, err := subProof.CRangeProof.Verify()
+		if err != nil || !rangeRes {
+			return false, err
+		}
+		// verify valid enc
 		validEncRes, err := verifyValidEnc(
 			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, g, h, subProof.CDelta.CR, subProof.A_CRDelta,
 			c,
 			subProof.Z_r, subProof.Z_bDelta,
 		)
-		// verify valid enc
 		if err != nil || !validEncRes {
 			return false, err
 		}
