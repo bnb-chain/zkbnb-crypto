@@ -1,4 +1,4 @@
-package bulletProofs
+package commitRange
 
 import (
 	"zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -7,7 +7,3 @@ import (
 var Order = tebn254.Order
 
 type Point = tebn254.Point
-
-const (
-	SeedH = tebn254.SeedH
-)
