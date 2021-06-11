@@ -22,11 +22,6 @@ func TestVerifyPTransferProofCircuit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	zParams, err := zecrey.Setup(32, 4)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	// generate transfer proof
 	sk1, pk1 := twistedElgamal.GenKeyPair()
 	b1 := big.NewInt(8)
@@ -67,7 +62,7 @@ func TestVerifyPTransferProofCircuit(t *testing.T) {
 	//if err != nil {
 	//	panic(err)
 	//}
-	transferProof, err := zecrey.ProvePTransfer(relation, zParams)
+	transferProof, err := zecrey.ProvePTransfer(relation)
 	if err != nil {
 		t.Fatal(err)
 	}
