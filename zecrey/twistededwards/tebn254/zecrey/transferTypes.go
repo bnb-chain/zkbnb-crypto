@@ -6,17 +6,12 @@ import (
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 )
-
-type ZSetupParams struct {
-	*BPSetupParams
-}
 
 type PTransferProof struct {
 	// sub proofs
 	SubProofs []*PTransferSubProof
-	// BP Proof
-	BPProof *AggBulletProof
 	// commitment for \sum_{i=1}^n b_i^{\Delta}
 	A_sum *Point
 	// A_Pt
@@ -35,6 +30,8 @@ type PTransferSubProof struct {
 	A_CLDelta, A_CRDelta, A_YDivCRDelta, A_YDivT, A_T, A_pk, A_TDivCPrime *Point
 	// respond values
 	Z_r, Z_bDelta, Z_rstarSubr, Z_rstarSubrbar, Z_rbar, Z_bprime, Z_sk, Z_skInv *big.Int
+	// range proof
+	CRangeProof *commitRange.ComRangeProof
 	// common inputs
 	// original balance enc
 	C *ElGamalEnc
