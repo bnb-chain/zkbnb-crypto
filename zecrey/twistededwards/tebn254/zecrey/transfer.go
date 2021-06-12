@@ -14,6 +14,15 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 	if relation == nil || relation.Statements == nil {
 		return nil, ErrInvalidParams
 	}
+	// verify \sum b_i^{\Delta} = 0
+	sum := big.NewInt(0)
+	for _, statement := range relation.Statements {
+		sum = ffmath.Add(sum, statement.BDelta)
+	}
+	// statements must be correct
+	if !ffmath.Equal(sum, big.NewInt(0)) {
+		return nil, ErrInvalidParams
+	}
 	var (
 		buf             bytes.Buffer
 		A_sum           *Point
@@ -22,7 +31,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 	)
 	// initialize proof
 	proof = new(PTransferProof)
-	// add Pts,G,H from relation
+	// add Pts,G,Waste from relation
 	proof.Pts = relation.Pts
 	proof.G = relation.G
 	proof.H = relation.H
