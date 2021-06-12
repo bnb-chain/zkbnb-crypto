@@ -119,6 +119,14 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRange
 	if proof == nil {
 		return witness, err
 	}
+	// proof must be correct
+	verifyRes, err := proof.Verify()
+	if err != nil {
+		return witness, err
+	}
+	if !verifyRes {
+		return witness, ErrInvalidProof
+	}
 	witness.G, err = setPointWitness(proof.G)
 	if err != nil {
 		return witness, err
