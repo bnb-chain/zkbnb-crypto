@@ -11,10 +11,10 @@ import (
 
 type WithdrawProof struct {
 	// commitments
-	Pt                                            *Point
-	A_CLStar, A_CRStar, A_pk, A_TDivCRprime, A_Pt *Point
+	Pt                                  *Point
+	A_CLStar, A_pk, A_TDivCRprime, A_Pt *Point
 	// response
-	z_r, z_bDelta, z_rbar, z_sk, z_skInv *big.Int
+	Z_r, Z_rbar, Z_sk, Z_skInv *big.Int
 	// Commitment Range Proofs
 	CRangeProofs []*commitRange.ComRangeProof
 	// common inputs
