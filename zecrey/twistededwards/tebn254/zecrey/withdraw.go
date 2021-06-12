@@ -68,10 +68,10 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 		A_TDivCRprime: A_TDivCRprime,
 		A_Pt:          A_Pt,
 		// response
-		z_r:     z_r,
-		z_rbar:  z_rbar,
-		z_sk:    z_sk,
-		z_skInv: z_skInv,
+		Z_r:     z_r,
+		Z_rbar:  z_rbar,
+		Z_sk:    z_sk,
+		Z_skInv: z_skInv,
 		// BP Proof
 		CRangeProofs: rangeProofs,
 		// common inputs
@@ -121,17 +121,17 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 		return false, ErrInvalidChallenge
 	}
 	// verify Ht
-	ptRes, err := verifyPt(proof.Ht, proof.Pt, proof.A_Pt, c, proof.z_sk)
+	ptRes, err := verifyPt(proof.Ht, proof.Pt, proof.A_Pt, c, proof.Z_sk)
 	if err != nil || !ptRes {
 		return false, err
 	}
 	// verify half enc
-	halfEncRes, err := verifyHalfEnc(proof.Pk, proof.CStar.CL, proof.A_CLStar, c, proof.z_r)
+	halfEncRes, err := verifyHalfEnc(proof.Pk, proof.CStar.CL, proof.A_CLStar, c, proof.Z_r)
 	if err != nil || !halfEncRes {
 		return false, err
 	}
 	// verify balance
-	balanceRes, err := verifyBalance(proof.G, proof.Pk, proof.A_pk, proof.CLprimeInv, proof.TDivCRprime, proof.A_TDivCRprime, c, proof.z_sk, proof.z_skInv, proof.z_rbar)
+	balanceRes, err := verifyBalance(proof.G, proof.Pk, proof.A_pk, proof.CLprimeInv, proof.TDivCRprime, proof.A_TDivCRprime, c, proof.Z_sk, proof.Z_skInv, proof.Z_rbar)
 	if err != nil {
 		return false, err
 	}
@@ -155,10 +155,10 @@ func respondBalance(
 ) (
 	z_rbar, z_sk, z_skInv *big.Int,
 ) {
-	z_rbar = ffmath.Add(alpha_rbar, ffmath.Multiply(c, rbar))
-	z_sk = ffmath.Add(alpha_sk, ffmath.Multiply(c, sk))
+	z_rbar = ffmath.AddMod(alpha_rbar, ffmath.Multiply(c, rbar), Order)
+	z_sk = ffmath.AddMod(alpha_sk, ffmath.Multiply(c, sk), Order)
 	skInv := ffmath.ModInverse(sk, Order)
-	z_skInv = ffmath.Add(alpha_skInv, ffmath.Multiply(c, skInv))
+	z_skInv = ffmath.AddMod(alpha_skInv, ffmath.Multiply(c, skInv), Order)
 	return
 }
 
@@ -190,7 +190,7 @@ func commitHalfEnc(pk *Point) (alpha_r *big.Int, A_CLStar *Point) {
 }
 
 func respondHalfEnc(r, alpha_r *big.Int, c *big.Int) (z_r *big.Int) {
-	z_r = ffmath.Add(alpha_r, ffmath.Multiply(c, r))
+	z_r = ffmath.AddMod(alpha_r, ffmath.Multiply(c, r), Order)
 	return
 }
 
