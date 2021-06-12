@@ -201,13 +201,13 @@ func respondBinary(b, r, a, s, t *big.Int, c *big.Int) (f, za, zb *big.Int, err 
 		return nil, nil, nil, errInvalidBinaryParams
 	}
 	// f = bc + a
-	f = ffmath.Add(ffmath.Multiply(c, b), a)
+	f = ffmath.AddMod(ffmath.Multiply(c, b), a, Order)
 	// za = rc + s
-	za = ffmath.Add(ffmath.Multiply(r, c), s)
+	za = ffmath.AddMod(ffmath.Multiply(r, c), s, Order)
 	// zb = r(c - f) + t
 	zb = ffmath.Sub(c, f)
 	zb = ffmath.Multiply(r, zb)
-	zb = ffmath.Add(zb, t)
+	zb = ffmath.AddMod(zb, t, Order)
 	return f, za, zb, nil
 }
 
@@ -234,10 +234,7 @@ func verifyBinary(A, Ca, Cb, g, h *Point, f, za, zb *big.Int, c *big.Int) (bool,
 		return false, nil
 	}
 	// A^{c-f} Cb == Com(0,zb)
-	r2, err := pedersen.Commit(big.NewInt(0), zb, g, h)
-	if err != nil {
-		return false, nil
-	}
+	r2 := curve.ScalarMul(h, zb)
 	l2 := curve.Add(curve.ScalarMul(A, ffmath.Sub(c, f)), Cb)
 	l2r2 := l2.Equal(r2)
 	return l2r2, nil
@@ -252,8 +249,9 @@ func commitCommitmentSameValue(g, h *Point) (A_T, A_Tprime *Point, alpha_b, alph
 	alpha_b = curve.RandomValue()
 	alpha_r = curve.RandomValue()
 	alpha_rprime = curve.RandomValue()
-	A_T = curve.Add(curve.ScalarMul(g, alpha_b), curve.ScalarMul(h, alpha_r))
-	A_Tprime = curve.Add(curve.ScalarMul(g, alpha_b), curve.ScalarMul(h, alpha_rprime))
+	g_alphab := curve.ScalarMul(g, alpha_b)
+	A_T = curve.Add(g_alphab, curve.ScalarMul(h, alpha_r))
+	A_Tprime = curve.Add(g_alphab, curve.ScalarMul(h, alpha_rprime))
 	return A_T, A_Tprime, alpha_b, alpha_r, alpha_rprime, nil
 }
 
@@ -298,7 +296,8 @@ func verifyCommitmentSameValue(A_T, A_Tprime, T, Tprime, g, h *Point, zb, zr, zr
 		return false, nil
 	}
 	// g^{zb} h^{zrprime} == A_T' T'^c
-	l2 := curve.Add(gzb, curve.ScalarMul(h, zrprime))
+	hzrprime := curve.ScalarMul(h, zrprime)
+	l2 := curve.Add(gzb, hzrprime)
 	r2 := curve.Add(A_Tprime, curve.ScalarMul(Tprime, c))
 	return l2.Equal(r2), nil
 }

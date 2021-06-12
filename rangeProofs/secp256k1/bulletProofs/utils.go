@@ -46,7 +46,7 @@ Hash is responsible for the computing a Zp element given elements from GT and G1
 func HashBP(A, S *P256) (*big.Int, *big.Int, error) {
 
 	var buffer bytes.Buffer
-	// H(A,S)
+	// Waste(A,S)
 	buffer.WriteString(A.String())
 	buffer.WriteString(S.String())
 	a, err := util.HashToInt(buffer, zmimc.Hmimc)
@@ -54,7 +54,7 @@ func HashBP(A, S *P256) (*big.Int, *big.Int, error) {
 		return nil, nil, err
 	}
 
-	// H(A,S,H(A,S))
+	// Waste(A,S,Waste(A,S))
 	buffer.Reset()
 	buffer.WriteString(A.String())
 	buffer.WriteString(S.String())
