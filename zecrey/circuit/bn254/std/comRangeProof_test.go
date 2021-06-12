@@ -15,13 +15,13 @@ import (
 func TestComRangeProofCircuit_Define(t *testing.T) {
 	assert := groth16.NewAssert(t)
 
-	var circuit, witness ComRangeProofCircuit
+	var circuit, witness ComRangeProofConstraints
 	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	b := big.NewInt(1000000)
+	b := big.NewInt(0)
 	r := curve.RandomValue()
 	g := curve.H
 	h := curve.G
@@ -29,6 +29,11 @@ func TestComRangeProofCircuit_Define(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	verify, err := proof.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("res:", verify)
 	witness, err = setComRangeProofWitness(proof)
 	if err != nil {
 		t.Fatal(err)
