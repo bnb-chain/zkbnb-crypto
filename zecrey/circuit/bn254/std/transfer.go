@@ -245,6 +245,14 @@ func setTransferProofWitness(proof *zecrey.PTransferProof) (witness PTransferPro
 	if proof == nil || len(proof.Pts) != 1 || len(proof.Z_tsks) != 1 || len(proof.A_Pts) != 1 {
 		return witness, ErrInvalidSetParams
 	}
+	// proof must be correct
+	verifyRes, err := proof.Verify()
+	if err != nil {
+		return witness, err
+	}
+	if !verifyRes {
+		return witness, ErrInvalidProof
+	}
 	// A_sum
 	witness.A_sum, err = setPointWitness(proof.A_sum)
 	if err != nil {
