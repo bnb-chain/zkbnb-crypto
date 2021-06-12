@@ -12,128 +12,114 @@ import (
 	"zecrey-crypto/util"
 )
 
-type ComRangeProofCircuit struct {
+type ComRangeProofConstraints struct {
 	// binary proof
 	Cas, Cbs     [32]Point
 	Fs, Zas, Zbs [32]Variable
 	// same commitment proof
-	Zb, Zr, Zrprime     Variable
-	A_T, A_Tprime, G, H Point
+	Zb, Zr, Zrprime  Variable
+	A_T, A_Tprime, G Point
 	// public statements
 	T, Tprime Point
 	As        [32]Point
 	C         Variable
 }
 
-func (circuit *ComRangeProofCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *ComRangeProofConstraints) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
 	if err != nil {
 		return err
 	}
 
-	W := Point{
-		X: cs.Constant("0"),
-		Y: cs.Constant("1"),
-	}
-	Tprime := W
-	current := cs.Constant("1")
-	two := cs.Constant("2")
-	for i, Ai := range circuit.As {
-		verifyBinary(cs, circuit.H, Ai, circuit.Cas[i], circuit.Cbs[i],
-			circuit.G, circuit.Fs[i], circuit.Zas[i], circuit.Zbs[i], circuit.C, params)
-		AiMul2i := W.ScalarMulNonFixedBase(cs, &Ai, current, params)
-		Tprime.AddGeneric(cs, &Tprime, AiMul2i, params)
-		current = cs.Mul(current, two)
-	}
-	verifyCommitmentSameValue(cs, circuit.H, circuit.A_T, circuit.A_Tprime, circuit.T,
-		Tprime, circuit.G, circuit.Zb, circuit.Zr, circuit.Zrprime, circuit.C, params)
-
+	verifyComRangeProof(cs, *circuit, params)
 	return nil
 }
 
 func verifyComRangeProof(
 	cs *frontend.ConstraintSystem,
-	proof ComRangeProofCircuit,
+	proof ComRangeProofConstraints,
 	params twistededwards.EdCurve,
 ) {
-	W := Point{
+	Tprime := Point{
 		X: cs.Constant("0"),
 		Y: cs.Constant("1"),
 	}
-	Tprime := W
 	current := cs.Constant("1")
 	two := cs.Constant("2")
+	var AiMul2i Point
 	for i, Ai := range proof.As {
-		verifyBinary(cs, proof.H, Ai, proof.Cas[i], proof.Cbs[i],
+		verifyBinary(cs, Ai, proof.Cas[i], proof.Cbs[i],
 			proof.G, proof.Fs[i], proof.Zas[i], proof.Zbs[i], proof.C, params)
-		AiMul2i := W.ScalarMulNonFixedBase(cs, &Ai, current, params)
-		Tprime.AddGeneric(cs, &Tprime, AiMul2i, params)
+		AiMul2i.ScalarMulNonFixedBase(cs, &Ai, current, params)
+		Tprime.AddGeneric(cs, &Tprime, &AiMul2i, params)
 		current = cs.Mul(current, two)
 	}
-	verifyCommitmentSameValue(cs, proof.H, proof.A_T, proof.A_Tprime, proof.T,
-		Tprime, proof.G, proof.Zb, proof.Zr, proof.Zrprime, proof.C, params)
+	cs.AssertIsEqual(proof.Tprime.X, Tprime.X)
+	cs.AssertIsEqual(proof.Tprime.Y, Tprime.Y)
+	verifyCommitmentSameValue(cs, proof.A_T, proof.A_Tprime, proof.T,
+		proof.Tprime, proof.G, proof.Zb, proof.Zr, proof.Zrprime, proof.C, params)
 }
 
 func verifyBinary(
 	cs *frontend.ConstraintSystem,
-	W Point,
 	A, Ca, Cb, g Point,
 	f, za, zb Variable,
 	c Variable,
 	params twistededwards.EdCurve,
 ) {
+	var l1, hza, r1 Point
 	// A^c Ca == Com(f,za)
-	Ac := W.ScalarMulNonFixedBase(cs, &A, c, params)
-	l1 := W.AddGeneric(cs, Ac, &Ca, params)
-	gf := W.ScalarMulNonFixedBase(cs, &g, f, params)
-	hza := W.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, za, params)
-	r1 := W.AddGeneric(cs, gf, hza, params)
+	l1.ScalarMulNonFixedBase(cs, &A, c, params)
+	l1.AddGeneric(cs, &l1, &Ca, params)
+	r1.ScalarMulNonFixedBase(cs, &g, f, params)
+	hza.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, za, params)
+	r1.AddGeneric(cs, &r1, &hza, params)
 	cs.AssertIsEqual(l1.X, r1.X)
 	cs.AssertIsEqual(l1.Y, r1.Y)
+
+	var Acf, l2, r2 Point
 	// A^{c-f} Cb == Com(0,zb)
 	cf := cs.Sub(c, f)
-	Acf := W.ScalarMulNonFixedBase(cs, &A, cf, params)
-	l2 := W.AddGeneric(cs, Acf, &Cb, params)
-	r2 := W.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zb, params)
+	Acf.ScalarMulNonFixedBase(cs, &A, cf, params)
+	l2.AddGeneric(cs, &Acf, &Cb, params)
+	r2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zb, params)
 	cs.AssertIsEqual(l2.X, r2.X)
 	cs.AssertIsEqual(l2.Y, r2.Y)
 }
 
 func verifyCommitmentSameValue(
 	cs *frontend.ConstraintSystem,
-	W Point,
 	A_T, A_Tprime, T, Tprime, g Point,
 	zb, zr, zrprime Variable,
 	c Variable,
 	params twistededwards.EdCurve,
 ) {
+	var gzb, hzr, l1, Tc, r1 Point
 	// g^{zb} h^{zr} == A_T T^c
-	gzb := W.ScalarMulNonFixedBase(cs, &g, zb, params)
-	hzr := W.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zr, params)
-	l1 := W.AddGeneric(cs, gzb, hzr, params)
-	Tc := W.ScalarMulNonFixedBase(cs, &T, c, params)
-	r1 := W.AddGeneric(cs, &A_T, Tc, params)
+	gzb.ScalarMulNonFixedBase(cs, &g, zb, params)
+	hzr.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zr, params)
+	l1.AddGeneric(cs, &gzb, &hzr, params)
+	Tc.ScalarMulNonFixedBase(cs, &T, c, params)
+	r1.AddGeneric(cs, &A_T, &Tc, params)
 	cs.AssertIsEqual(l1.X, r1.X)
 	cs.AssertIsEqual(l1.Y, r1.Y)
+
+	var l2, Tprimec, r2 Point
 	// g^{zb} h^{zrprime} == A_T' T'^c
-	hzrprime := W.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zrprime, params)
-	l2 := W.AddGeneric(cs, gzb, hzrprime, params)
-	Tprimec := W.ScalarMulNonFixedBase(cs, &Tprime, c, params)
-	r2 := W.AddGeneric(cs, &A_Tprime, Tprimec, params)
+	l2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zrprime, params)
+	l2.AddGeneric(cs, &gzb, &l2, params)
+	Tprimec.ScalarMulNonFixedBase(cs, &Tprime, c, params)
+	r2.AddGeneric(cs, &A_Tprime, &Tprimec, params)
 	cs.AssertIsEqual(l2.X, r2.X)
 	cs.AssertIsEqual(l2.Y, r2.Y)
 }
 
-func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRangeProofCircuit, err error) {
+func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRangeProofConstraints, err error) {
 	if proof == nil {
 		return witness, err
 	}
 	witness.G, err = setPointWitness(proof.G)
-	if err != nil {
-		return witness, err
-	}
-	witness.H, err = setPointWitness(proof.H)
 	if err != nil {
 		return witness, err
 	}
@@ -162,6 +148,7 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRange
 		witness.Fs[i].Assign(proof.Fs[i].String())
 		witness.Zas[i].Assign(proof.Zas[i].String())
 		witness.Zbs[i].Assign(proof.Zbs[i].String())
+		//witness.PowerOfTwoVec[i].Assign(powerof2Vec[i])
 
 		buf.Write(Ai.Marshal())
 		buf.Write(proof.Cas[i].Marshal())
