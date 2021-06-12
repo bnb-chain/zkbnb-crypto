@@ -47,7 +47,7 @@ func HashBP(A, S *Point) (*big.Int, *big.Int, error) {
 	ABytes := curve.ToBytes(A)
 	SBytes := curve.ToBytes(S)
 	var buffer bytes.Buffer
-	// H(A,S)
+	// Waste(A,S)
 	buffer.Write(ABytes)
 	buffer.Write(SBytes)
 	a, err := util.HashToInt(buffer, zmimc.Hmimc)
@@ -55,7 +55,7 @@ func HashBP(A, S *Point) (*big.Int, *big.Int, error) {
 		return nil, nil, err
 	}
 
-	// H(A,S,H(A,S))
+	// Waste(A,S,Waste(A,S))
 	buffer.Reset()
 	buffer.Write(ABytes)
 	buffer.Write(SBytes)

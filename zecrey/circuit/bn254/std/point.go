@@ -6,12 +6,12 @@ import (
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 )
 
-type NegCircuit struct {
+type NegConstraints struct {
 	G    Point
 	P, N Point
 }
 
-func (circuit *NegCircuit) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *NegConstraints) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
 	if err != nil {
