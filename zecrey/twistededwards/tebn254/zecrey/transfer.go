@@ -319,6 +319,14 @@ func respondValidDelta(rstarSubr, alpha_rstarSubr, c *big.Int) (z_rstarSubr *big
 	return
 }
 
+/*
+	verifyValidDelta verifys the delta proof
+	@g: the generator
+	@YDivCRDelta: public inputs
+	@A_YDivCRDelta: the random commitment
+	@c: the challenge
+	@z_rstarSubr: response values for valid delta proof
+*/
 func verifyValidDelta(
 	g, YDivCRDelta, A_YDivCRDelta *Point,
 	c *big.Int,
@@ -327,6 +335,7 @@ func verifyValidDelta(
 	if g == nil || YDivCRDelta == nil || A_YDivCRDelta == nil || c == nil || z_rstarSubr == nil {
 		return false, ErrInvalidParams
 	}
+	// g^{z_r^{\star}} == A_{Y/(C_R^{\Delta})} [Y/(C_R^{\Delta})]^c
 	l := curve.ScalarMul(g, z_rstarSubr)
 	r := curve.Add(A_YDivCRDelta, curve.ScalarMul(YDivCRDelta, c))
 	return l.Equal(r), nil
@@ -386,6 +395,14 @@ func respondOwnership(
 	return
 }
 
+/*
+	verifyOwnership verifys the ownership of the account
+	@YDivT,T,pk,CLprimeInv,TCRprimeInv: public inputs
+	@A_YDivT,A_T,A_pk,A_TCRprimeInv: random commitments
+	@g,h: generators
+	@c: the challenge
+	@z_rstarSubrbar, z_rbar, z_bprime, z_sk, z_skInv: response values for valid delta proof
+*/
 func verifyOwnership(
 	g, YDivT, A_YDivT, h, T, A_T, pk, A_pk, CLprimeInv, TCRprimeInv, A_TCRprimeInv *Point,
 	c *big.Int,

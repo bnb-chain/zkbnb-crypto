@@ -25,6 +25,7 @@ type ComRangeProofConstraints struct {
 	C         Variable
 }
 
+// define for range proof test
 func (circuit *ComRangeProofConstraints) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -36,31 +37,54 @@ func (circuit *ComRangeProofConstraints) Define(curveID ecc.ID, cs *frontend.Con
 	return nil
 }
 
+/*
+	verifyComRangeProof verify the range proof
+	@cs: the constraint system
+	@proof: the CommitmentRangeProof
+	@params: params for the curve tebn254
+*/
 func verifyComRangeProof(
 	cs *frontend.ConstraintSystem,
 	proof ComRangeProofConstraints,
 	params twistededwards.EdCurve,
 ) {
+	// T' = \prod_{i=0}^{31} (A_i)^{2^i}
 	Tprime := Point{
 		X: cs.Constant("0"),
 		Y: cs.Constant("1"),
 	}
+	// use current and two, in order to compute 2^i
 	current := cs.Constant("1")
 	two := cs.Constant("2")
 	var AiMul2i Point
 	for i, Ai := range proof.As {
+		// verify binary proof
 		verifyBinary(cs, Ai, proof.Cas[i], proof.Cbs[i],
 			proof.G, proof.Fs[i], proof.Zas[i], proof.Zbs[i], proof.C, params)
+		// compute AiMul2i = A_i^{2^i}
 		AiMul2i.ScalarMulNonFixedBase(cs, &Ai, current, params)
+		// add to T'
 		Tprime.AddGeneric(cs, &Tprime, &AiMul2i, params)
+		// current = 2 * current
 		current = cs.Mul(current, two)
 	}
+	// T' should be correct
 	cs.AssertIsEqual(proof.Tprime.X, Tprime.X)
 	cs.AssertIsEqual(proof.Tprime.Y, Tprime.Y)
+	// verify the proof: commitment for the same value
 	verifyCommitmentSameValue(cs, proof.A_T, proof.A_Tprime, proof.T,
 		proof.Tprime, proof.G, proof.Zb, proof.Zr, proof.Zrprime, proof.C, params)
 }
 
+/*
+	verifyBinary verify the binary proof
+	@cs: the constraint system
+	@A: commitment for the binary value
+	@Ca,Cb: random commitments
+	@g: the generator
+	@f,za,zb: response values for binary proof
+	@params: params for the curve tebn254
+*/
 func verifyBinary(
 	cs *frontend.ConstraintSystem,
 	A, Ca, Cb, g Point,
@@ -88,6 +112,15 @@ func verifyBinary(
 	cs.AssertIsEqual(l2.Y, r2.Y)
 }
 
+/*
+	verifyCommitmentSameValue verify the same value commitment proof
+	@cs: the constraint system
+	@A_T,A_T': random commitments
+	@T,T': two public commitments
+	@g: the generator
+	@zb, zr, zrprime: response values for same value commitment proof
+	@params: params for the curve tebn254
+*/
 func verifyCommitmentSameValue(
 	cs *frontend.ConstraintSystem,
 	A_T, A_Tprime, T, Tprime, g Point,
@@ -115,6 +148,10 @@ func verifyCommitmentSameValue(
 	cs.AssertIsEqual(l2.Y, r2.Y)
 }
 
+/*
+	setComRangeProofWitness set witness for the range proof
+	@proof: original range proofs
+*/
 func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRangeProofConstraints, err error) {
 	if proof == nil {
 		return witness, err

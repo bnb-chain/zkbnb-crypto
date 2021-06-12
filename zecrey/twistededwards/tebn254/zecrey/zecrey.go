@@ -30,6 +30,15 @@ func respondValidEnc(r, bDelta, alpha_r, alpha_bDelta, c *big.Int) (
 	return
 }
 
+/*
+	verifyValidEnc verifys the encryption
+	@pk: the public key for the encryption
+	@C_LDelta,C_RDelta: parts for the encryption
+	@A_C_LDelta,A_CRDelta: random commitments
+	@h: the generator
+	@c: the challenge
+	@z_r,z_bDelta: response values for valid enc proof
+*/
 func verifyValidEnc(
 	pk, C_LDelta, A_CLDelta, g, h, C_RDelta, A_CRDelta *Point,
 	c *big.Int,
@@ -40,11 +49,14 @@ func verifyValidEnc(
 		z_r == nil || z_bDelta == nil {
 		return false, ErrInvalidParams
 	}
+	// pk^{z_r} == A_{C_L^{\Delta}} (C_L^{\Delta})^c
 	l1 := curve.ScalarMul(pk, z_r)
 	r1 := curve.Add(A_CLDelta, curve.ScalarMul(C_LDelta, c))
 	if !l1.Equal(r1) {
 		return false, nil
 	}
+
+	// g^{z_r} h^{z_b^{\Delta}} == A_{C_R^{\Delta}} (C_R^{\Delta})^c
 	l2 := curve.Add(curve.ScalarMul(g, z_r), curve.ScalarMul(h, z_bDelta))
 	r2 := curve.Add(A_CRDelta, curve.ScalarMul(C_RDelta, c))
 	return l2.Equal(r2), nil

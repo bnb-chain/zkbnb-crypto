@@ -11,6 +11,7 @@ import (
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
+// WithdrawProof in circuit
 type WithdrawProofConstraints struct {
 	// commitments
 	Pt                                  Point
@@ -25,6 +26,7 @@ type WithdrawProofConstraints struct {
 	Challenge                          Variable
 }
 
+// define tests for verifying the withdraw proof
 func (circuit *WithdrawProofConstraints) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
@@ -38,6 +40,12 @@ func (circuit *WithdrawProofConstraints) Define(curveID ecc.ID, cs *frontend.Con
 	return nil
 }
 
+/*
+	verifyWithdrawProof verify the withdraw proof in circuit
+	@cs: the constraint system
+	@proof: withdraw proof circuit
+	@params: params for the curve tebn254
+ */
 func verifyWithdrawProof(
 	cs *frontend.ConstraintSystem,
 	proof WithdrawProofConstraints,
@@ -59,6 +67,14 @@ func verifyWithdrawProof(
 
 }
 
+/*
+	verifyPt verify the tokenId proof
+	@cs: the constraint system
+	@Ht,Pt: public inputs
+	@A_Pt: the random commitment
+	@z_tsk: the response value
+	@params: params for the curve tebn254
+*/
 func verifyPt(
 	cs *frontend.ConstraintSystem,
 	Ht, Pt, A_Pt Point,
@@ -74,6 +90,14 @@ func verifyPt(
 	cs.AssertIsEqual(l.Y, r.Y)
 }
 
+/*
+	verifyHalfEnc verify the C_L^{\star}
+	@cs: the constraint system
+	@pk,CLStar: public inputs
+	@A_CLStar: the random commitment
+	@z_r: the response value
+	@params: params for the curve tebn254
+*/
 func verifyHalfEnc(
 	cs *frontend.ConstraintSystem,
 	pk, CLStar, A_CLStar Point,
@@ -89,6 +113,14 @@ func verifyHalfEnc(
 	cs.AssertIsEqual(l.Y, r.Y)
 }
 
+/*
+	verifyBalance verify the remaining balance is positive
+	@cs: the constraint system
+	@pk,CLprimeInv,TDivCRprime: public inputs
+	@A_pk,A_TDivCRprime: the random commitment
+	@z_sk, z_skInv, z_rbar: the response value
+	@params: params for the curve tebn254
+*/
 func verifyBalance(
 	cs *frontend.ConstraintSystem,
 	pk, A_pk, CLprimeInv, TDivCRprime, A_TDivCRprime Point,
@@ -115,6 +147,7 @@ func verifyBalance(
 	cs.AssertIsEqual(l2.Y, r2.Y)
 }
 
+// set the witness for withdraw proof
 func setWithdrawProofWitness(proof *zecrey.WithdrawProof) (witness WithdrawProofConstraints, err error) {
 	if proof == nil {
 		return witness, err

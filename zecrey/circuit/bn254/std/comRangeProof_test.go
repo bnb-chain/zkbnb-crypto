@@ -12,7 +12,7 @@ import (
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 )
 
-func TestComRangeProofCircuit_Define(t *testing.T) {
+func TestComRangeProofCircuit_Success(t *testing.T) {
 	assert := groth16.NewAssert(t)
 
 	var circuit, witness ComRangeProofConstraints
@@ -21,7 +21,40 @@ func TestComRangeProofCircuit_Define(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	b := big.NewInt(0)
+	b := big.NewInt(3)
+	r := curve.RandomValue()
+	g := curve.H
+	h := curve.G
+	proof, err := commitRange.Prove(b, r, g, h, 32)
+	if err != nil {
+		t.Fatal(err)
+	}
+	verify, err := proof.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("res:", verify)
+	witness, err = setComRangeProofWitness(proof)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fmt.Println("constraints:", r1cs.GetNbConstraints())
+
+	assert.SolvingSucceeded(r1cs, &witness)
+
+}
+
+func TestComRangeProofCircuit_Failure(t *testing.T) {
+	assert := groth16.NewAssert(t)
+
+	var circuit, witness ComRangeProofConstraints
+	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b := big.NewInt(-5)
 	r := curve.RandomValue()
 	g := curve.H
 	h := curve.G
