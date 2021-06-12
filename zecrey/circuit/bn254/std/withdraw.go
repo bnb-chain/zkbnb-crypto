@@ -120,6 +120,15 @@ func setWithdrawProofWitness(proof *zecrey.WithdrawProof) (witness WithdrawProof
 		return witness, err
 	}
 
+	// proof must be correct
+	verifyRes, err := proof.Verify()
+	if err != nil {
+		return witness, err
+	}
+	if !verifyRes {
+		return witness, ErrInvalidProof
+	}
+
 	// generate the challenge
 	var buf bytes.Buffer
 	buf.Write(proof.G.Marshal())
