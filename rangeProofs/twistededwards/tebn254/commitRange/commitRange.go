@@ -241,7 +241,7 @@ func verifyBinary(A, Ca, Cb, g, h *Point, f, za, zb *big.Int, c *big.Int) (bool,
 }
 
 /*
-	commitBinary makes a random commitment to the same value pedersen commitment proof
+	commitCommitmentSameValue makes a random commitment to the same value pedersen commitment proof
 	@g,h: generators
 */
 func commitCommitmentSameValue(g, h *Point) (A_T, A_Tprime *Point, alpha_b, alpha_r, alpha_rprime *big.Int, err error) {
