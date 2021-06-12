@@ -1,7 +1,11 @@
 package std
 
-import "zecrey-crypto/ecc/ztwistededwards/tebn254"
+import (
+	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/algebra/twistededwards"
+)
 
-var (
-	G = tebn254.G
+type (
+	Point    = twistededwards.Point
+	Variable = frontend.Variable
 )

@@ -8,11 +8,6 @@ import (
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
-type (
-	Point    = twistededwards.Point
-	Variable = frontend.Variable
-)
-
 type PTransferProofConstraints struct {
 	// sub proofs
 	SubProofs [3]PTransferSubProofConstraints
