@@ -107,11 +107,11 @@ func TestIncorrectInfoProve(t *testing.T) {
 	//}
 	transferProof, err := ProvePTransfer(relation)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	res, err := transferProof.Verify()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	fmt.Println(res)
 
