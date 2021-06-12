@@ -12,7 +12,7 @@ import (
 func TestNeg(t *testing.T) {
 	assert := groth16.NewAssert(t)
 
-	var circuit, witness NegCircuit
+	var circuit, witness NegConstraints
 	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
 	if err != nil {
 		t.Fatal(err)
