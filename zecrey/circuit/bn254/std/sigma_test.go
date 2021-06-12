@@ -13,14 +13,12 @@ import (
 func TestSchnorrProof(t *testing.T) {
 	assert := groth16.NewAssert(t)
 
-	var circuit, witness SchnorrProofCircuit
+	var circuit, witness SchnorrProofConstraints
 	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
 	if err != nil {
 		t.Fatal(err)
 	}
 	// generate witness data
-	witness.G.X.Assign("9671717474070082183213120605117400219616337014328744928644933853176787189663")
-	witness.G.Y.Assign("16950150798460657717958625567821834550301663161624707787222815936182638968203")
 	witness.A.X.Assign("1805826214268140062109789454888545380426720994127895546120718277293486808528")
 	witness.A.Y.Assign("1992424522915255363820795818666870149715470888958691910097484002003697548446")
 	witness.Pk.X.Assign("20062244510347148272446781100879286480638585431533684331180269070589632792928")
@@ -30,6 +28,8 @@ func TestSchnorrProof(t *testing.T) {
 	witness.Z.Assign(z)
 	witness.C.Assign(c)
 
+	fmt.Println(r1cs.GetNbConstraints())
+
 	assert.SolvingSucceeded(r1cs, &witness)
 
 }
@@ -37,14 +37,14 @@ func TestSchnorrProof(t *testing.T) {
 func TestOwnershipCircuit(t *testing.T) {
 	assert := groth16.NewAssert(t)
 
-	var circuit, witness OwnershipCircuit
+	var circuit, witness OwnershipConstraints
 	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
 	if err != nil {
 		t.Fatal(err)
 	}
 	/**
 	G Point
-	YDivT, A_YDivT, H, T,
+	YDivT, A_YDivT, Waste, T,
 	A_T, Pk, A_pk, CLprimeInv,
 	TCRprimeInv, A_TCRprimeInv Point
 	C                                               Variable
@@ -58,7 +58,7 @@ func TestOwnershipCircuit(t *testing.T) {
 	// A_Y / T
 	witness.A_YDivT.X.Assign("12880651902657644835221622074138338028921981671918651840236840655341295836272")
 	witness.A_YDivT.Y.Assign("13123994615784597566607819591675199791858661480963579954987236259776042848792")
-	// H
+	// Waste
 	witness.H.X.Assign("19843132008705182383524593512377323181208938069977784352990768375941636129043")
 	witness.H.Y.Assign("1424962496956403694866513262744390851176749772810717397211030275710635902220")
 	// T
