@@ -108,12 +108,14 @@ func Dec(enc *ElGamalEnc, sk *big.Int, Max int64) (*big.Int, error) {
 	skInv := ffmath.ModInverse(sk, Order)
 	gExpr := curve.ScalarMul(enc.CL, skInv)
 	hExpb := curve.Add(enc.CR, curve.Neg(gExpr))
+
+	base := H
+	current := curve.ZeroPoint()
 	for i := int64(0); i < Max; i++ {
-		b := big.NewInt(i)
-		hi := curve.ScalarMul(H, b)
-		if hi.Equal(hExpb) {
-			return b, nil
+		if current.Equal(hExpb) {
+			return big.NewInt(i), nil
 		}
+		current.Add(current, base)
 	}
 	return nil, ErrDec
 }
@@ -134,12 +136,13 @@ func DecByStart(enc *ElGamalEnc, sk *big.Int, start int64, Max int64) (*big.Int,
 	skInv := ffmath.ModInverse(sk, Order)
 	gExpr := curve.ScalarMul(enc.CL, skInv)
 	hExpb := curve.Add(enc.CR, curve.Neg(gExpr))
-	for i := start; i < Max; i++ {
-		b := big.NewInt(i)
-		hi := curve.ScalarMul(H, b)
-		if hi.Equal(hExpb) {
-			return b, nil
+	base := H
+	current := curve.ZeroPoint()
+	for i := int64(start); i < Max; i++ {
+		if current.Equal(hExpb) {
+			return big.NewInt(i), nil
 		}
+		current.Add(current, base)
 	}
 	return nil, ErrDec
 }
