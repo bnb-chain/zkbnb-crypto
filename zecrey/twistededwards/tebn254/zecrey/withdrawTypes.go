@@ -4,21 +4,22 @@ import (
 	"math/big"
 	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 )
 
 type WithdrawProof struct {
 	// commitments
-	Pt                                  *Point
-	A_CLStar, A_pk, A_TDivCRprime, A_Pt *Point
+	Pt                        *Point
+	A_pk, A_TDivCRprime, A_Pt *Point
 	// response
-	Z_r, Z_rbar, Z_sk, Z_skInv *big.Int
+	Z_rbar, Z_sk, Z_skInv *big.Int
 	// Commitment Range Proofs
-	CRangeProofs []*commitRange.ComRangeProof
+	CRangeProof *commitRange.ComRangeProof
 	// common inputs
-	C, CStar                                 *ElGamalEnc
+	BStar                                    *big.Int
+	CRStar                                   *Point
+	C                                        *ElGamalEnc
 	G, H, Ht, TDivCRprime, CLprimeInv, T, Pk *Point
 	Challenge                                *big.Int
 }
@@ -28,7 +29,7 @@ type WithdrawProofRelation struct {
 	// original balance enc
 	C *ElGamalEnc
 	// delta balance enc
-	CStar *ElGamalEnc
+	CRStar *Point
 	// new pedersen commitment for new balance
 	T *Point
 	// public key
@@ -48,10 +49,9 @@ type WithdrawProofRelation struct {
 	// (C_L - C_L^{\Delta})^{-1}
 	CLprimeInv *Point
 	// b^{\star}
-	BStar *big.Int
+	Bstar *big.Int
 	// ----------- private ---------------------
 	Sk     *big.Int
-	R      *big.Int
 	BPrime *big.Int
 	RBar   *big.Int
 }
@@ -65,55 +65,47 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, b *big.Int, bStar *big.Int, s
 		return nil, ErrInconsistentPublicKey
 	}
 	var (
-		CStar  *ElGamalEnc
 		T      *Point
 		bPrime *big.Int
-		r      *big.Int
 		rBar   *big.Int
 	)
 	// check balance
 	if b.Cmp(Zero) <= 0 {
 		return nil, ErrInsufficientBalance
 	}
-	if bStar.Cmp(Zero) <= 0 {
+	if bStar.Cmp(Zero) >= 0 {
 		return nil, ErrNegativeBStar
 	}
-	// b' = b - b^{\star}
-	bPrime = ffmath.Sub(b, bStar)
+	// b' = b + b^{\star}
+	bPrime = ffmath.Add(b, bStar)
 	// bPrime should bigger than zero
 	if bPrime.Cmp(Zero) < 0 {
 		return nil, ErrInsufficientBalance
 	}
-	// r \gets_R Z_p
-	r = curve.RandomValue()
-	// C^{\Delta} = (pk^r,G^r h^{b^{\Delta}})
-	CStar, err := twistedElgamal.Enc(bStar, r, pk)
-	if err != nil {
-		return nil, err
-	}
-	// \bar{r} \gets_R Z_p
+	// C^{\Delta} = (pk^rStar,G^rStar h^{b^{\Delta}})
+	CRStar := curve.ScalarMul(H, bStar)
+	// \bar{rStar} \gets_R Z_p
 	rBar = curve.RandomValue()
-	// T = g^{\bar{r}} h^{b'}
-	T, err = pedersen.Commit(rBar, bPrime, G, H)
+	// T = g^{\bar{rStar}} h^{b'}
+	T, err := pedersen.Commit(rBar, bPrime, G, H)
 	if err != nil {
 		return nil, err
 	}
 	relation := &WithdrawProofRelation{
 		// ------------- public ---------------------
 		C:           C,
-		CStar:       CStar,
+		CRStar:      CRStar,
 		T:           T,
 		Pk:          pk,
 		G:           G,
 		H:           H,
 		Ht:          curve.ScalarMul(H, big.NewInt(int64(tokenId))),
 		TokenId:     tokenId,
-		TDivCRprime: curve.Add(T, curve.Neg(curve.Add(C.CR, curve.Neg(CStar.CR)))),
-		CLprimeInv:  curve.Neg(curve.Add(C.CL, curve.Neg(CStar.CL))),
-		BStar:       bStar,
+		TDivCRprime: curve.Add(T, curve.Neg(curve.Add(C.CR, CRStar))),
+		CLprimeInv:  curve.Neg(C.CL),
+		Bstar:       bStar,
 		// ----------- private ---------------------
 		Sk:     sk,
-		R:      r,
 		BPrime: bPrime,
 		RBar:   rBar,
 	}
