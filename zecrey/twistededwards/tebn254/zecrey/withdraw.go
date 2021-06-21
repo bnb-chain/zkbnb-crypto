@@ -14,7 +14,6 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 	if relation == nil {
 		return nil, ErrInvalidParams
 	}
-	alpha_r, A_CLStar := commitHalfEnc(relation.Pk)
 	alpha_rbar, alpha_sk, alpha_skInv,
 	A_pk, A_TDivCRprime := commitBalance(relation.G, relation.H, relation.CLprimeInv)
 	// write common inputs into buf
@@ -25,56 +24,39 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 	buf.Write(relation.Ht.Marshal())
 	buf.Write(relation.C.CL.Marshal())
 	buf.Write(relation.C.CR.Marshal())
-	buf.Write(relation.CStar.CL.Marshal())
-	buf.Write(relation.CStar.CR.Marshal())
+	buf.Write(relation.CRStar.Marshal())
 	buf.Write(relation.T.Marshal())
 	buf.Write(relation.Pk.Marshal())
-	buf.Write(A_CLStar.Marshal())
 	buf.Write(A_pk.Marshal())
 	buf.Write(A_TDivCRprime.Marshal())
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
 		return nil, err
 	}
-	z_r := respondHalfEnc(relation.R, alpha_r, c)
+	//z_r := respondHalfEnc(relation.Rstar, alpha_r, c)
 	z_rbar, z_sk, z_skInv := respondBalance(relation.RBar, relation.Sk, alpha_rbar, alpha_sk, alpha_skInv, c)
 	A_Pt, _ := provePt(alpha_sk, relation.Sk, relation.Ht, c)
 	// range proof
 	// set up prove params
-	secrets := make([]*big.Int, 2)
-	gammas := make([]*big.Int, 2)
-	Vs := make([]*Point, 2)
-	secrets[0] = relation.BStar
-	gammas[0] = relation.R
-	Vs[0] = relation.CStar.CR
-	secrets[1] = relation.BPrime
-	gammas[1] = relation.RBar
-	Vs[1] = relation.T
 	// make range proofs
-	rangeProofs := make([]*commitRange.ComRangeProof, 2)
-	rangeProofs[0], err = commitRange.Prove(secrets[0], gammas[0], H, G, N)
-	if err != nil {
-		return nil, err
-	}
-	rangeProofs[1], err = commitRange.Prove(secrets[1], gammas[1], H, G, N)
+	rangeProof, err := commitRange.Prove(relation.BPrime, relation.RBar, H, G, N)
 	if err != nil {
 		return nil, err
 	}
 
 	proof = &WithdrawProof{
 		// commitments
-		A_CLStar:      A_CLStar,
 		A_pk:          A_pk,
 		A_TDivCRprime: A_TDivCRprime,
 		A_Pt:          A_Pt,
 		// response
-		Z_r:     z_r,
 		Z_rbar:  z_rbar,
 		Z_sk:    z_sk,
 		Z_skInv: z_skInv,
 		// BP Proof
-		CRangeProofs: rangeProofs,
+		CRangeProof: rangeProof,
 		// common inputs
+		BStar:       relation.Bstar,
 		G:           relation.G,
 		H:           relation.H,
 		Ht:          relation.Ht,
@@ -82,7 +64,7 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 		TDivCRprime: relation.TDivCRprime,
 		CLprimeInv:  relation.CLprimeInv,
 		C:           relation.C,
-		CStar:       relation.CStar,
+		CRStar:      relation.CRStar,
 		T:           relation.T,
 		Pk:          relation.Pk,
 		Challenge:   c,
@@ -91,12 +73,13 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 }
 
 func (proof *WithdrawProof) Verify() (bool, error) {
+	if proof.BStar.Cmp(Zero) >= 0 {
+		return false, ErrInvalidBStar
+	}
 	// verify range proof first
-	for _, rangeProof := range proof.CRangeProofs {
-		rangeRes, err := rangeProof.Verify()
-		if err != nil || !rangeRes {
-			return false, err
-		}
+	rangeRes, err := proof.CRangeProof.Verify()
+	if err != nil || !rangeRes {
+		return false, err
 	}
 	// generate the challenge
 	var buf bytes.Buffer
@@ -105,11 +88,9 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	buf.Write(proof.Ht.Marshal())
 	buf.Write(proof.C.CL.Marshal())
 	buf.Write(proof.C.CR.Marshal())
-	buf.Write(proof.CStar.CL.Marshal())
-	buf.Write(proof.CStar.CR.Marshal())
+	buf.Write(proof.CRStar.Marshal())
 	buf.Write(proof.T.Marshal())
 	buf.Write(proof.Pk.Marshal())
-	buf.Write(proof.A_CLStar.Marshal())
 	buf.Write(proof.A_pk.Marshal())
 	buf.Write(proof.A_TDivCRprime.Marshal())
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
@@ -123,11 +104,6 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	// verify Ht
 	ptRes, err := verifyPt(proof.Ht, proof.Pt, proof.A_Pt, c, proof.Z_sk)
 	if err != nil || !ptRes {
-		return false, err
-	}
-	// verify half enc
-	halfEncRes, err := verifyHalfEnc(proof.Pk, proof.CStar.CL, proof.A_CLStar, c, proof.Z_r)
-	if err != nil || !halfEncRes {
 		return false, err
 	}
 	// verify balance
@@ -181,28 +157,4 @@ func verifyBalance(
 	l2 := curve.Add(curve.ScalarMul(g, z_rbar), curve.ScalarMul(CLprimeInv, z_skInv))
 	r2 := curve.Add(A_TDivCRprime, curve.ScalarMul(TDivCRprime, c))
 	return l2.Equal(r2), nil
-}
-
-func commitHalfEnc(pk *Point) (alpha_r *big.Int, A_CLStar *Point) {
-	alpha_r = curve.RandomValue()
-	A_CLStar = curve.ScalarMul(pk, alpha_r)
-	return
-}
-
-func respondHalfEnc(r, alpha_r *big.Int, c *big.Int) (z_r *big.Int) {
-	z_r = ffmath.AddMod(alpha_r, ffmath.Multiply(c, r), Order)
-	return
-}
-
-func verifyHalfEnc(
-	pk, CLStar, A_CLStar *Point,
-	c *big.Int,
-	z_r *big.Int,
-) (bool, error) {
-	if pk == nil || CLStar == nil || A_CLStar == nil || c == nil || z_r == nil {
-		return false, ErrInvalidParams
-	}
-	l := curve.ScalarMul(pk, z_r)
-	r := curve.Add(A_CLStar, curve.ScalarMul(CLStar, c))
-	return l.Equal(r), nil
 }

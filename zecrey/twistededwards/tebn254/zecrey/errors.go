@@ -11,4 +11,5 @@ var (
 	ErrInconsistentPublicKey = errors.New("err: inconsistent public key")
 	ErrInsufficientBalance   = errors.New("err: insufficient balance")
 	ErrInvalidDelta          = errors.New("err: you cannot transfer to yourself positive amount")
+	ErrInvalidBStar          = errors.New("err: bstar should smaller than zero")
 )

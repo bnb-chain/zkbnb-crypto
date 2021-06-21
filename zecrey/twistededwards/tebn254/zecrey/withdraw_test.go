@@ -17,7 +17,7 @@ func TestProveWithdraw(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	bStar := big.NewInt(5)
+	bStar := big.NewInt(-2)
 	relation, err := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1)
 	if err != nil {
 		t.Error(err)
@@ -31,11 +31,8 @@ func TestProveWithdraw(t *testing.T) {
 		t.Error(err)
 	}
 	if res {
-		newEnc, err := twistedElgamal.EncSub(bEnc, relation.CStar)
-		if err != nil {
-			t.Error(err)
-		}
-		decVal, err := twistedElgamal.Dec(newEnc, sk, 100)
+		bEnc.CR.Add(bEnc.CR, relation.CRStar)
+		decVal, err := twistedElgamal.Dec(bEnc, sk, 100)
 		if err != nil {
 			t.Error(err)
 		}
