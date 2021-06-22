@@ -14,5 +14,12 @@ const (
 	ErrInvalidTransferRelationParams = -1010
 	ErrProveTransfer                 = -1011
 
+	ErrL2SkParams = -1012
+
+	ErrInvalidEncParams = -1013
+	ErrElGamalEnc       = -1014
+	ErrInvalidDecParams = -1015
+	ErrElGamalDec       = -1016
+
 	Success = -1
 )
