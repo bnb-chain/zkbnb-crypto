@@ -30,6 +30,7 @@ func TestProveWithdraw(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	fmt.Println("verify res:", res)
 	if res {
 		bEnc.CR.Add(bEnc.CR, relation.CRStar)
 		decVal, err := twistedElgamal.Dec(bEnc, sk, 100)

@@ -365,10 +365,10 @@ func (proof *AggBulletProof) Verify() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		lP.Add(&lP, hz)
+		lP.Add(lP, hz)
 	}
-	lP.Add(&lP, ASx)
-	lP.Add(&lP, gpmz)
+	lP.Add(lP, ASx)
+	lP.Add(lP, gpmz)
 
 	// h'^(z.y^{nm})
 	hprimeexp, err := VectorExp(hprimes, zynm)
@@ -376,7 +376,7 @@ func (proof *AggBulletProof) Verify() (bool, error) {
 		return false, err
 	}
 
-	lP.Add(&lP, hprimeexp)
+	lP.Add(lP, hprimeexp)
 
 	// Compute P - rhs  #################### Condition (67) ######################
 

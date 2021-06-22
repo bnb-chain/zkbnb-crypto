@@ -68,7 +68,7 @@ func Prove(b *big.Int, r *big.Int, g, h *Point, N uint) (proof *ComRangeProof, e
 		buf.Write(Cai.Marshal())
 		buf.Write(Cbi.Marshal())
 		// update T'
-		Tprime.Add(&Tprime, curve.ScalarMul(Ai, powerof2Vec[i]))
+		Tprime = curve.Add(Tprime, curve.ScalarMul(Ai, powerof2Vec[i]))
 		// set proof
 		proof.As[i] = Ai
 		proof.Cas[i] = Cai
@@ -101,7 +101,7 @@ func Prove(b *big.Int, r *big.Int, g, h *Point, N uint) (proof *ComRangeProof, e
 		return nil, err
 	}
 	// set proof
-	proof.Tprime = &Tprime
+	proof.Tprime = Tprime
 	proof.A_T = A_T
 	proof.A_Tprime = A_Tprime
 	proof.Zb = zb
@@ -141,7 +141,7 @@ func (proof *ComRangeProof) Verify() (bool, error) {
 		buf.Write(Ai.Marshal())
 		buf.Write(proof.Cas[i].Marshal())
 		buf.Write(proof.Cbs[i].Marshal())
-		Tprime_check.Add(&Tprime_check, curve.ScalarMul(Ai, powerof2Vec[i]))
+		Tprime_check = curve.Add(Tprime_check, curve.ScalarMul(Ai, powerof2Vec[i]))
 	}
 	// check sum
 	if !Tprime_check.Equal(proof.Tprime) {

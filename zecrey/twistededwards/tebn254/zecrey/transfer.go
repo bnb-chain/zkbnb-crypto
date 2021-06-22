@@ -28,7 +28,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 	}
 	var (
 		buf             bytes.Buffer
-		A_sum           Point
+		A_sum           *Point
 		secrets, gammas []*big.Int
 		Vs              []*Point
 	)
@@ -81,7 +81,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 		// commit enc values
 		commitEntities[i].alpha_r, commitEntities[i].alpha_bDelta, commitEntities[i].A_CLDelta, commitEntities[i].A_CRDelta = commitValidEnc(pk, G, H)
 		// prove \sum_{i=1}^n b_i^{\Delta}
-		A_sum.Add(&A_sum, curve.ScalarMul(G, commitEntities[i].alpha_bDelta))
+		A_sum = curve.Add(A_sum, curve.ScalarMul(G, commitEntities[i].alpha_bDelta))
 		// write into buf
 		buf.Write(commitEntities[i].A_CLDelta.Marshal())
 		buf.Write(commitEntities[i].A_CRDelta.Marshal())
@@ -126,7 +126,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 		Vs = append(Vs, statement.Y)
 	}
 	// set A_sum
-	proof.A_sum = &A_sum
+	proof.A_sum = A_sum
 	// make sure the length of commitEntities and statements is equal
 	if len(commitEntities) != len(relation.Statements) {
 		return nil, ErrStatements
@@ -299,7 +299,7 @@ func (proof *PTransferProof) Verify() (bool, error) {
 			return false, err
 		}
 		// set z_bDeltas for sum proof
-		lSum.Add(&lSum, curve.ScalarMul(g, subProof.Z_bDelta))
+		lSum = curve.Add(lSum, curve.ScalarMul(g, subProof.Z_bDelta))
 	}
 
 	// verify sum proof

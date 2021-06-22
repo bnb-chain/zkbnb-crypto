@@ -193,10 +193,10 @@ func VectorExp(a []*Point, b []*big.Int) (result *Point, err error) {
 	i := int64(0)
 	res := curve.ZeroPoint()
 	for i < m {
-		res.Add(&res, curve.ScalarMul(a[i], b[i]))
+		res.Add(res, curve.ScalarMul(a[i], b[i]))
 		i = i + 1
 	}
-	return &res, nil
+	return res, nil
 }
 
 /*

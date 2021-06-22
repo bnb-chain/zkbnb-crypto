@@ -260,7 +260,7 @@ func verifyOwnership(
 
 /*
 	setPointWitness set witness for Point
- */
+*/
 func setPointWitness(point *zecrey.Point) (witness Point, err error) {
 	if point == nil {
 		return witness, ErrInvalidSetParams

@@ -141,7 +141,7 @@ func Dec(enc *ElGamalEnc, sk *big.Int, Max int64) (*big.Int, error) {
 		if current.Equal(hExpb) {
 			return big.NewInt(i), nil
 		}
-		current.Add(&current, base)
+		current.Add(current, base)
 	}
 	return nil, ErrDec
 }
@@ -168,7 +168,7 @@ func DecByStart(enc *ElGamalEnc, sk *big.Int, start int64, Max int64) (*big.Int,
 		if current.Equal(hExpb) {
 			return big.NewInt(i), nil
 		}
-		current.Add(&current, base)
+		current.Add(current, base)
 	}
 	return nil, ErrDec
 }

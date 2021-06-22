@@ -112,8 +112,8 @@ func IsZero(p *Point) bool {
 	return p.Equal(&O)
 }
 
-func ZeroPoint() Point {
-	return O
+func ZeroPoint() *Point {
+	return &Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
 }
 
 func VecToBytes(vp []*Point) ([]byte, error) {
