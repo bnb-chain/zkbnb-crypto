@@ -16,7 +16,7 @@ import (
 func ProveWithdraw() js.Func {
 	proveWithdrawFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// length of args should be 3
-		if len(args) != 3 {
+		if len(args) != 4 {
 			return ErrInvalidWithdrawParams
 		}
 		// read tokenId
@@ -26,10 +26,12 @@ func ProveWithdraw() js.Func {
 		}
 		// transfer tokenId to uint32
 		tId := uint32(tokenId)
-		// read accountId
-		accountId := args[1].Int()
+		// layer 2 address
+		l2addr := args[1].String()
+		// layer 1 address
+		l1addr := args[2].String()
 		// read segmentInfo JSON str
-		segmentInfo := args[2].String()
+		segmentInfo := args[3].String()
 		// parse segmentInfo
 		segment, errNum := FromWithdrawSegmentJSON(segmentInfo)
 		if errNum != Success {
@@ -47,7 +49,8 @@ func ProveWithdraw() js.Func {
 		}
 		withdrawTx := &WithdrawTransactionAo{
 			TokenId:   tId,
-			AccountId: accountId,
+			L2Address: l2addr,
+			L1Address: l1addr,
 			Proof:     withdrawProof,
 			CreateAt:  time.Now().Unix(),
 		}
@@ -77,14 +80,14 @@ func ProveTransfer() js.Func {
 			return ErrInvalidTransferParams
 		}
 		tId := uint32(tokenId)
-		// read accountIds Str
-		accountIdsStr := args[1].String()
+		// read addressesStr Str
+		addressesStr := args[1].String()
 		// read segmentInfo Str
 		segmentInfosStr := args[2].String()
 
 		// parse accountIds: []int
-		var accountIds []int
-		err := json.Unmarshal([]byte(accountIdsStr), &accountIds)
+		var addresses []string
+		err := json.Unmarshal([]byte(addressesStr), &addresses)
 		if err != nil {
 			return ErrInvalidTransferParams
 		}
@@ -111,7 +114,7 @@ func ProveTransfer() js.Func {
 			// token id
 			TokenId: tId,
 			// account indexes
-			AccountIds: accountIds,
+			Addresses: addresses,
 			// transfer proof
 			Proof: transferProof,
 			// create time
