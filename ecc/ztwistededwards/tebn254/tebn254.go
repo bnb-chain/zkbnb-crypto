@@ -2,6 +2,7 @@ package tebn254
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
@@ -46,6 +47,18 @@ func Neg(a *Point) *Point {
 
 func ToBytes(p *Point) []byte {
 	return p.Marshal()
+}
+
+func ToString(p *Point) string {
+	return hex.EncodeToString(p.Marshal())
+}
+
+func FromString(pStr string) (*Point, error) {
+	pBytes, err := hex.DecodeString(pStr)
+	if err != nil {
+		return nil, err
+	}
+	return FromBytes(pBytes)
 }
 
 func FromBytes(pBytes []byte) (*Point, error) {
