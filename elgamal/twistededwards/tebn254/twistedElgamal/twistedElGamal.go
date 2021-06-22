@@ -155,7 +155,7 @@ Decrypt Method: h^b = C_R / (C_L)^{sk^{-1}}, then compute b by brute-force, star
 */
 func DecByStart(enc *ElGamalEnc, sk *big.Int, start int64, Max int64) (*big.Int, error) {
 	if enc == nil || enc.CL == nil || enc.CR == nil ||
-		sk == nil || start < 0 || Max < 0 || start < Max {
+		sk == nil || start < 0 || Max < 0 || start > Max {
 		return nil, ErrParams
 	}
 	// (pk^r)^{sk^{-1}}
@@ -164,7 +164,7 @@ func DecByStart(enc *ElGamalEnc, sk *big.Int, start int64, Max int64) (*big.Int,
 	hExpb := curve.Add(enc.CR, curve.Neg(gExpr))
 	base := H
 	current := curve.ZeroPoint()
-	for i := int64(start); i <= Max; i++ {
+	for i := start; i <= Max; i++ {
 		if current.Equal(hExpb) {
 			return big.NewInt(i), nil
 		}
