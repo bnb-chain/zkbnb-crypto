@@ -487,9 +487,9 @@ func TryOnceTransfer() PTransferProof {
 	b3Enc, _ := twistedElgamal.Enc(b3, r3, pk3)
 	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
 	relation, _ := NewPTransferProofRelation(1)
-	relation.AddStatement(b1Enc, pk1, b1, big.NewInt(-4), sk1)
-	relation.AddStatement(b2Enc, pk2, nil, big.NewInt(1), nil)
-	relation.AddStatement(b3Enc, pk3, nil, big.NewInt(3), nil)
+	relation.AddStatement(b1Enc, pk1,  big.NewInt(-4), sk1)
+	relation.AddStatement(b2Enc, pk2,  big.NewInt(1), nil)
+	relation.AddStatement(b3Enc, pk3, big.NewInt(3), nil)
 	//err = relation.AddStatement(b4Enc, pk4, nil, big.NewInt(1), nil)
 	//if err != nil {
 	//	panic(err)
