@@ -35,7 +35,7 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, int) {
 		return nil, ErrUnmarshal
 	}
 	if withdrawSegmentFormat.EncVal == "" || withdrawSegmentFormat.Pk == "" ||
-		withdrawSegmentFormat.BStar <= 0 || withdrawSegmentFormat.Sk == "" {
+		withdrawSegmentFormat.BStar >= 0 || withdrawSegmentFormat.Sk == "" {
 		return nil, ErrInvalidWithdrawParams
 	}
 	encVal, err := twistedElgamal.FromString(withdrawSegmentFormat.EncVal)
