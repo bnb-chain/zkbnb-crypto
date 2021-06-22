@@ -167,7 +167,7 @@ func TryOnceWithdraw() WithdrawProof {
 	bEnc, _ := twistedElgamal.Enc(b, r, pk)
 	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
 	bStar := big.NewInt(-2)
-	relation, _ := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1)
+	relation, _ := NewWithdrawRelation(bEnc, pk, bStar, sk, 1)
 	withdrawProof, _ := ProveWithdraw(relation)
 	return *withdrawProof
 }
