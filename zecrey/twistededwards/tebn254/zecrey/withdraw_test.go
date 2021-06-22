@@ -19,6 +19,9 @@ func TestProveWithdraw(t *testing.T) {
 		t.Error(err)
 	}
 	bStar := big.NewInt(-2)
+	fmt.Println("sk:", sk.String())
+	fmt.Println("pk:", curve.ToString(pk))
+	fmt.Println("benc:", bEnc.String())
 	relation, err := NewWithdrawRelation(bEnc, pk, bStar, sk, 1)
 	if err != nil {
 		t.Error(err)
