@@ -15,7 +15,8 @@ type (
 )
 
 const (
-	N = 32 // max bits
+	N   = 32 // max bits
+	Max = 4294967296
 )
 
 var (
