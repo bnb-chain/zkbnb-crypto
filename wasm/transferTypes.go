@@ -85,8 +85,8 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, int) {
 type TransferTransactionAo struct {
 	// token id
 	TokenId uint32
-	// account indexes
-	AccountIds []int
+	// account addresses
+	Addresses []string
 	// transfer proof
 	Proof *zecrey.PTransferProof
 	// create time
