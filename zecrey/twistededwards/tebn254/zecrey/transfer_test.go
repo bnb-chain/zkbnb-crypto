@@ -1,6 +1,7 @@
 package zecrey
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"testing"
@@ -33,15 +34,15 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b1Enc, pk1, b1, big.NewInt(-4), sk1)
+	err = relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b2Enc, pk2, nil, big.NewInt(1), nil)
+	err = relation.AddStatement(b2Enc, pk2, big.NewInt(1), nil)
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b3Enc, pk3, nil, big.NewInt(3), nil)
+	err = relation.AddStatement(b3Enc, pk3, big.NewInt(3), nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -56,7 +57,16 @@ func TestCorrectInfoProve(t *testing.T) {
 	}
 	fmt.Println("prove time:", time.Since(elapse))
 	elapse = time.Now()
-	res, err := transferProof.Verify()
+	var proof *PTransferProof
+	proofBytes, err := json.Marshal(transferProof)
+	if err != nil {
+		t.Error(err)
+	}
+	err = json.Unmarshal(proofBytes, &proof)
+	if err != nil {
+		t.Error(err)
+	}
+	res, err := proof.Verify()
 	if err != nil {
 		t.Error(err)
 	}
@@ -89,15 +99,15 @@ func TestIncorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b1Enc, pk1, b1, big.NewInt(-2), sk1)
+	err = relation.AddStatement(b1Enc, pk1, big.NewInt(-2), sk1)
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b2Enc, pk2, nil, big.NewInt(1), nil)
+	err = relation.AddStatement(b2Enc, pk2, big.NewInt(1), nil)
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b3Enc, pk3, nil, big.NewInt(3), nil)
+	err = relation.AddStatement(b3Enc, pk3, big.NewInt(3), nil)
 	if err != nil {
 		t.Error(err)
 	}
