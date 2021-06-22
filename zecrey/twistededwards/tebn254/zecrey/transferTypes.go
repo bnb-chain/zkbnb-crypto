@@ -67,12 +67,13 @@ func NewPTransferProofRelation(tokenId uint32) (*PTransferProofRelation, error) 
 	return &PTransferProofRelation{G: G, H: H, Order: Order, Ht: Ht, TokenId: tokenId}, nil
 }
 
-func (relation *PTransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b *big.Int, bDelta *big.Int, sk *big.Int) (err error) {
+func (relation *PTransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, bDelta *big.Int, sk *big.Int) (err error) {
 	// check params
 	if C == nil || pk == nil {
 		return ErrInvalidParams
 	}
 	// if the user owns the account, should do more verifications
+	var b *big.Int
 	if sk != nil {
 		oriPk := curve.ScalarBaseMul(sk)
 		// 1. should be the same public key
@@ -80,6 +81,11 @@ func (relation *PTransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b
 		// 3. bDelta should larger than zero
 		if !oriPk.Equal(pk) {
 			return ErrInconsistentPublicKey
+		}
+		// compute b
+		b, err = twistedElgamal.Dec(C, sk, Max)
+		if err != nil {
+			return ErrElGamalDec
 		}
 		if b == nil || b.Cmp(Zero) < 0 {
 			return ErrInsufficientBalance

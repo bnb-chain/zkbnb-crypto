@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 )
@@ -56,8 +57,8 @@ type WithdrawProofRelation struct {
 	RBar   *big.Int
 }
 
-func NewWithdrawRelation(C *ElGamalEnc, pk *Point, b *big.Int, bStar *big.Int, sk *big.Int, tokenId uint32) (*WithdrawProofRelation, error) {
-	if C == nil || pk == nil || b == nil || bStar == nil || sk == nil || tokenId == 0 {
+func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, tokenId uint32) (*WithdrawProofRelation, error) {
+	if C == nil || pk == nil || bStar == nil || sk == nil || tokenId == 0 {
 		return nil, ErrInvalidParams
 	}
 	oriPk := curve.ScalarBaseMul(sk)
@@ -69,6 +70,11 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, b *big.Int, bStar *big.Int, s
 		bPrime *big.Int
 		rBar   *big.Int
 	)
+	// compute b first
+	b, err := twistedElgamal.Dec(C, sk, Max)
+	if err != nil {
+		return nil, ErrInvalidParams
+	}
 	// check balance
 	if b.Cmp(Zero) <= 0 {
 		return nil, ErrInsufficientBalance
@@ -87,7 +93,7 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, b *big.Int, bStar *big.Int, s
 	// \bar{rStar} \gets_R Z_p
 	rBar = curve.RandomValue()
 	// T = g^{\bar{rStar}} h^{b'}
-	T, err := pedersen.Commit(rBar, bPrime, G, H)
+	T, err = pedersen.Commit(rBar, bPrime, G, H)
 	if err != nil {
 		return nil, err
 	}

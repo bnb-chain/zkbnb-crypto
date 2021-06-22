@@ -1,6 +1,7 @@
 package zecrey
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"testing"
@@ -18,7 +19,10 @@ func TestProveWithdraw(t *testing.T) {
 		t.Error(err)
 	}
 	bStar := big.NewInt(-2)
-	relation, err := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1)
+	fmt.Println("sk:", sk.String())
+	fmt.Println("pk:", curve.ToString(pk))
+	fmt.Println("benc:", bEnc.String())
+	relation, err := NewWithdrawRelation(bEnc, pk, bStar, sk, 1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -26,10 +30,20 @@ func TestProveWithdraw(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	res, err := withdrawProof.Verify()
+	proofBytes, err := json.Marshal(withdrawProof)
 	if err != nil {
 		t.Error(err)
 	}
+	var proof *WithdrawProof
+	err = json.Unmarshal(proofBytes, &proof)
+	if err != nil {
+		t.Error(err)
+	}
+	res, err := proof.Verify()
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println("verify res:", res)
 	if res {
 		bEnc.CR.Add(bEnc.CR, relation.CRStar)
 		decVal, err := twistedElgamal.Dec(bEnc, sk, 100)

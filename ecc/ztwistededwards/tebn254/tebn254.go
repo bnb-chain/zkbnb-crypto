@@ -2,6 +2,7 @@ package tebn254
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
@@ -18,7 +19,7 @@ var (
 	G     = &curve.Base
 	H     *Point
 	U     *Point
-	O     = &Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
+	O     = Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
 )
 
 const (
@@ -48,13 +49,25 @@ func ToBytes(p *Point) []byte {
 	return p.Marshal()
 }
 
+func ToString(p *Point) string {
+	return hex.EncodeToString(p.Marshal())
+}
+
+func FromString(pStr string) (*Point, error) {
+	pBytes, err := hex.DecodeString(pStr)
+	if err != nil {
+		return nil, err
+	}
+	return FromBytes(pBytes)
+}
+
 func FromBytes(pBytes []byte) (*Point, error) {
-	var p *Point
+	var p Point
 	_, err := p.SetBytes(pBytes)
 	if err != nil {
 		return nil, err
 	}
-	return p, nil
+	return &p, nil
 }
 
 func IsInSubGroup(p *Point) bool {
@@ -109,11 +122,11 @@ func IsZero(p *Point) bool {
 	if p == nil {
 		return true
 	}
-	return p.Equal(O)
+	return p.Equal(&O)
 }
 
 func ZeroPoint() *Point {
-	return O
+	return &Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
 }
 
 func VecToBytes(vp []*Point) ([]byte, error) {

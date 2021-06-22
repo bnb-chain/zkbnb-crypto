@@ -2,8 +2,11 @@ package zecrey
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
+	"time"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
 	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
@@ -464,4 +467,35 @@ func simOwnership(
 		curve.ScalarMul(curve.Neg(TCRprimeInv), cSim),
 	)
 	return
+}
+
+func TryOnceTransfer() PTransferProof {
+	sk1, pk1 := twistedElgamal.GenKeyPair()
+	b1 := big.NewInt(8)
+	r1 := curve.RandomValue()
+	_, pk2 := twistedElgamal.GenKeyPair()
+	b2 := big.NewInt(2)
+	r2 := curve.RandomValue()
+	_, pk3 := twistedElgamal.GenKeyPair()
+	b3 := big.NewInt(3)
+	r3 := curve.RandomValue()
+	//_, pk4 := twistedElgamal.GenKeyPair()
+	//b4 := big.NewInt(4)
+	//r4 := curve.RandomValue()
+	b1Enc, _ := twistedElgamal.Enc(b1, r1, pk1)
+	b2Enc, _ := twistedElgamal.Enc(b2, r2, pk2)
+	b3Enc, _ := twistedElgamal.Enc(b3, r3, pk3)
+	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
+	relation, _ := NewPTransferProofRelation(1)
+	relation.AddStatement(b1Enc, pk1,  big.NewInt(-4), sk1)
+	relation.AddStatement(b2Enc, pk2,  big.NewInt(1), nil)
+	relation.AddStatement(b3Enc, pk3, big.NewInt(3), nil)
+	//err = relation.AddStatement(b4Enc, pk4, nil, big.NewInt(1), nil)
+	//if err != nil {
+	//	panic(err)
+	//}
+	elapse := time.Now()
+	transferProof, _ := ProvePTransfer(relation)
+	fmt.Println("prove time:", time.Since(elapse))
+	return *transferProof
 }

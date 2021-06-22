@@ -17,7 +17,7 @@ func TestNeg(t *testing.T) {
 	C := ScalarMul(A, c)
 	D := ScalarBaseMul(d)
 	E := Add(A, D)
-	fmt.Println(E.Equal(O))
+	fmt.Println(E.Equal(&O))
 	fmt.Println(C.Equal(G))
 	AB := Add(A, B)
 	fmt.Println(A)

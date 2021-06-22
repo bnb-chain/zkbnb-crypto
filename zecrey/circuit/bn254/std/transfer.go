@@ -1,10 +1,14 @@
 package std
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"zecrey-crypto/ffmath"
+	"zecrey-crypto/hash/bn254/zmimc"
+	"zecrey-crypto/util"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -229,7 +233,6 @@ func verifyOwnership(
 	r1.AddGeneric(cs, &A_YDivT, &r1, params)
 	cs.AssertIsEqual(l1.X, r1.X)
 	cs.AssertIsEqual(l1.Y, r1.Y)
-
 	var gzrbar, l2, r2 Point
 	// verify T = g^{\bar{r}} Waste^{b'}
 	gzrbar.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, z_rbar, params)
@@ -260,7 +263,7 @@ func verifyOwnership(
 
 /*
 	setPointWitness set witness for Point
- */
+*/
 func setPointWitness(point *zecrey.Point) (witness Point, err error) {
 	if point == nil {
 		return witness, ErrInvalidSetParams
@@ -295,6 +298,32 @@ func setPTransferProofWitness(proof *zecrey.PTransferProof) (witness PTransferPr
 	if proof == nil || len(proof.Pts) != 1 || len(proof.Z_tsks) != 1 || len(proof.A_Pts) != 1 {
 		return witness, ErrInvalidSetParams
 	}
+
+	// generate the challenge
+	var buf bytes.Buffer
+	buf.Write(proof.G.Marshal())
+	buf.Write(proof.H.Marshal())
+	buf.Write(proof.Ht.Marshal())
+	for _, subProof := range proof.SubProofs {
+		// write common inputs into buf
+		buf.Write(subProof.C.CL.Marshal())
+		buf.Write(subProof.C.CR.Marshal())
+		buf.Write(subProof.CDelta.CL.Marshal())
+		buf.Write(subProof.CDelta.CR.Marshal())
+		buf.Write(subProof.T.Marshal())
+		buf.Write(subProof.Y.Marshal())
+		buf.Write(subProof.Pk.Marshal())
+		buf.Write(subProof.TCRprimeInv.Marshal())
+		buf.Write(subProof.CLprimeInv.Marshal())
+		buf.Write(subProof.A_CLDelta.Marshal())
+		buf.Write(subProof.A_CRDelta.Marshal())
+	}
+	// c = hash()
+	c, err := util.HashToInt(buf, zmimc.Hmimc)
+	if err != nil {
+		return witness, err
+	}
+
 	// proof must be correct
 	verifyRes, err := proof.Verify()
 	if err != nil {
@@ -331,10 +360,16 @@ func setPTransferProofWitness(proof *zecrey.PTransferProof) (witness PTransferPr
 		return witness, err
 	}
 	// C = C1 \oplus C2
-	c := ffmath.Xor(proof.C1, proof.C2)
+	cCopy := ffmath.Xor(proof.C1, proof.C2)
+	if !ffmath.Equal(c, cCopy) {
+		return witness, ErrInvalidChallenge
+	}
 	witness.C.Assign(c)
 	witness.C1.Assign(proof.C1)
-	witness.C2.Assign(proof.C1)
+	witness.C2.Assign(proof.C2)
+	fmt.Println("c:", c.String())
+	fmt.Println("c1:", proof.C1.String())
+	fmt.Println("c2:", proof.C2.String())
 	// set sub proofs
 	// TODO check subProofs length
 	for i, subProof := range proof.SubProofs {

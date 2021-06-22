@@ -12,4 +12,5 @@ var (
 	ErrInsufficientBalance   = errors.New("err: insufficient balance")
 	ErrInvalidDelta          = errors.New("err: you cannot transfer to yourself positive amount")
 	ErrInvalidBStar          = errors.New("err: bstar should smaller than zero")
+	ErrElGamalDec            = errors.New("err: can not dec elgamal enc")
 )
