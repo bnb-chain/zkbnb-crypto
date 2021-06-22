@@ -15,7 +15,7 @@ func TestProveVerify(t *testing.T) {
 	g := G
 	xArr := []*big.Int{b1, b2}
 	gArr := []*Point{g, g}
-	uArr := []*Point{inf}
+	uArr := []*Point{&inf}
 	zArr, UtArr := Prove(xArr, gArr, uArr)
 	res := Verify(zArr, gArr, uArr, UtArr)
 	assert.True(t, res, "should be true")

@@ -1,6 +1,7 @@
 package twistedElgamal
 
 import (
+	"encoding/hex"
 	"math/big"
 	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -21,6 +22,31 @@ type Point = curve.Point
 type ElGamalEnc struct {
 	CL *Point // pk^r
 	CR *Point // g^r h^b
+}
+
+func (enc *ElGamalEnc) String() string {
+	buf := enc.CL.Marshal()
+	buf = append(buf, enc.CR.Marshal()...)
+	return hex.EncodeToString(buf)
+}
+
+func FromStr(encStr string) (enc *ElGamalEnc, err error) {
+	encBytes, err := hex.DecodeString(encStr)
+	if err != nil {
+		return nil, err
+	}
+	if len(encBytes) != 64 {
+		return nil, ErrInvalidEncValue
+	}
+	CL, err := curve.FromBytes(encBytes[:32])
+	if err != nil {
+		return nil, err
+	}
+	CR, err := curve.FromBytes(encBytes[32:])
+	if err != nil {
+		return nil, err
+	}
+	return &ElGamalEnc{CL: CL, CR: CR}, nil
 }
 
 /**
@@ -115,7 +141,7 @@ func Dec(enc *ElGamalEnc, sk *big.Int, Max int64) (*big.Int, error) {
 		if current.Equal(hExpb) {
 			return big.NewInt(i), nil
 		}
-		current.Add(current, base)
+		current.Add(&current, base)
 	}
 	return nil, ErrDec
 }
@@ -142,7 +168,7 @@ func DecByStart(enc *ElGamalEnc, sk *big.Int, start int64, Max int64) (*big.Int,
 		if current.Equal(hExpb) {
 			return big.NewInt(i), nil
 		}
-		current.Add(current, base)
+		current.Add(&current, base)
 	}
 	return nil, ErrDec
 }

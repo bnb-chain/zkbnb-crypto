@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
 	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
@@ -157,4 +158,16 @@ func verifyBalance(
 	l2 := curve.Add(curve.ScalarMul(g, z_rbar), curve.ScalarMul(CLprimeInv, z_skInv))
 	r2 := curve.Add(A_TDivCRprime, curve.ScalarMul(TDivCRprime, c))
 	return l2.Equal(r2), nil
+}
+
+func TryOnceWithdraw() WithdrawProof {
+	sk, pk := twistedElgamal.GenKeyPair()
+	b := big.NewInt(8)
+	r := curve.RandomValue()
+	bEnc, _ := twistedElgamal.Enc(b, r, pk)
+	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
+	bStar := big.NewInt(-2)
+	relation, _ := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1)
+	withdrawProof, _ := ProveWithdraw(relation)
+	return *withdrawProof
 }

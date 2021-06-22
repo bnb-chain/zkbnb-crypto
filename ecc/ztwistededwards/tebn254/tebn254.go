@@ -18,7 +18,7 @@ var (
 	G     = &curve.Base
 	H     *Point
 	U     *Point
-	O     = &Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
+	O     = Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
 )
 
 const (
@@ -49,12 +49,12 @@ func ToBytes(p *Point) []byte {
 }
 
 func FromBytes(pBytes []byte) (*Point, error) {
-	var p *Point
+	var p Point
 	_, err := p.SetBytes(pBytes)
 	if err != nil {
 		return nil, err
 	}
-	return p, nil
+	return &p, nil
 }
 
 func IsInSubGroup(p *Point) bool {
@@ -109,10 +109,10 @@ func IsZero(p *Point) bool {
 	if p == nil {
 		return true
 	}
-	return p.Equal(O)
+	return p.Equal(&O)
 }
 
-func ZeroPoint() *Point {
+func ZeroPoint() Point {
 	return O
 }
 

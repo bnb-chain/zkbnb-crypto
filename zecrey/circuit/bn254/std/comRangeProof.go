@@ -198,7 +198,7 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRange
 		buf.Write(Ai.Marshal())
 		buf.Write(proof.Cas[i].Marshal())
 		buf.Write(proof.Cbs[i].Marshal())
-		Tprime_check = curve.Add(Tprime_check, curve.ScalarMul(Ai, powerof2Vec[i]))
+		Tprime_check.Add(&Tprime_check, curve.ScalarMul(Ai, powerof2Vec[i]))
 	}
 	if !Tprime_check.Equal(proof.Tprime) {
 		return witness, ErrInvalidRangeParams

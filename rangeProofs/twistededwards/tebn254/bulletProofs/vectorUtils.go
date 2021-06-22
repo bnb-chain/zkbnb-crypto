@@ -191,12 +191,12 @@ func VectorExp(a []*Point, b []*big.Int) (result *Point, err error) {
 		return nil, errors.New("size of first argument is different from size of second argument")
 	}
 	i := int64(0)
-	result = curve.ZeroPoint()
+	res := curve.ZeroPoint()
 	for i < m {
-		result = curve.Add(result, curve.ScalarMul(a[i], b[i]))
+		res.Add(&res, curve.ScalarMul(a[i], b[i]))
 		i = i + 1
 	}
-	return result, nil
+	return &res, nil
 }
 
 /*
