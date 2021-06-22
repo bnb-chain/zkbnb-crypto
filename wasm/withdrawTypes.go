@@ -5,44 +5,27 @@ import (
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
+	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
-
-type PTransferSegment struct {
-	EncVal  *ElGamalEnc `json:"enc_val"`
-	Pk      *Point      `json:"pk"`
-	B       *big.Int    `json:"b"`
-	BDelta  *big.Int    `json:"b_delta"`
-	Sk      *big.Int    `json:"sk"`
-	TokenId uint64      `json:"token_id"`
-}
-
-//func FromPTransferSegmentJSON() js.Func {
-//	fromPTransferSegmentJSONFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-//
-//	})
-//	return fromPTransferSegmentJSONFunc
-//}
 
 /*
 	WithdrawSegment: which is used to construct withdraw proof
 */
 type WithdrawSegment struct {
-	EncVal  *ElGamalEnc `json:"enc_val"`
-	Pk      *Point      `json:"pk"`
-	BStar   *big.Int    `json:"b_star"`
-	Sk      *big.Int    `json:"sk"`
-	TokenId uint32      `json:"token_id"`
+	EncVal *ElGamalEnc `json:"enc_val"`
+	Pk     *Point      `json:"pk"`
+	BStar  *big.Int    `json:"b_star"`
+	Sk     *big.Int    `json:"sk"`
 }
 
 /*
 	WithdrawSegmentFormat: format version of WithdrawSegment
 */
 type WithdrawSegmentFormat struct {
-	EncVal  string `json:"enc_val"`
-	Pk      string `json:"pk"`
-	BStar   int    `json:"b_star"`
-	Sk      string `json:"sk"`
-	TokenId int    `json:"token_id"`
+	EncVal string `json:"enc_val"`
+	Pk     string `json:"pk"`
+	BStar  int    `json:"b_star"`
+	Sk     string `json:"sk"`
 }
 
 func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, int) {
@@ -52,7 +35,7 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, int) {
 		return nil, ErrUnmarshal
 	}
 	if withdrawSegmentFormat.EncVal == "" || withdrawSegmentFormat.Pk == "" ||
-		withdrawSegmentFormat.BStar <= 0 || withdrawSegmentFormat.Sk == "" || withdrawSegmentFormat.TokenId <= 0 {
+		withdrawSegmentFormat.BStar <= 0 || withdrawSegmentFormat.Sk == "" {
 		return nil, ErrInvalidWithdrawParams
 	}
 	encVal, err := twistedElgamal.FromString(withdrawSegmentFormat.EncVal)
@@ -68,13 +51,22 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, int) {
 	if !b {
 		return nil, ErrParseBigInt
 	}
-	tokenId := uint32(withdrawSegmentFormat.TokenId)
 	withdrawSegment := &WithdrawSegment{
-		EncVal:  encVal,
-		Pk:      pk,
-		BStar:   bStar,
-		Sk:      sk,
-		TokenId: tokenId,
+		EncVal: encVal,
+		Pk:     pk,
+		BStar:  bStar,
+		Sk:     sk,
 	}
 	return withdrawSegment, Success
+}
+
+type WithdrawTransactionAo struct {
+	// token id
+	TokenId uint32
+	// account index
+	AccountId int
+	// withdraw proof
+	Proof *zecrey.WithdrawProof
+	// create time
+	CreateAt int64
 }
