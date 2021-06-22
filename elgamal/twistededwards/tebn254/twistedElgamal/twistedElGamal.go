@@ -30,7 +30,7 @@ func (enc *ElGamalEnc) String() string {
 	return hex.EncodeToString(buf)
 }
 
-func FromStr(encStr string) (enc *ElGamalEnc, err error) {
+func FromString(encStr string) (enc *ElGamalEnc, err error) {
 	encBytes, err := hex.DecodeString(encStr)
 	if err != nil {
 		return nil, err
@@ -137,7 +137,7 @@ func Dec(enc *ElGamalEnc, sk *big.Int, Max int64) (*big.Int, error) {
 
 	base := H
 	current := curve.ZeroPoint()
-	for i := int64(0); i < Max; i++ {
+	for i := int64(0); i <= Max; i++ {
 		if current.Equal(hExpb) {
 			return big.NewInt(i), nil
 		}
@@ -164,7 +164,7 @@ func DecByStart(enc *ElGamalEnc, sk *big.Int, start int64, Max int64) (*big.Int,
 	hExpb := curve.Add(enc.CR, curve.Neg(gExpr))
 	base := H
 	current := curve.ZeroPoint()
-	for i := int64(start); i < Max; i++ {
+	for i := int64(start); i <= Max; i++ {
 		if current.Equal(hExpb) {
 			return big.NewInt(i), nil
 		}

@@ -27,7 +27,7 @@ func TestEncDec(t *testing.T) {
 	fmt.Println("sk:", sk.String())
 	encStr := enc.String()
 	fmt.Println("enc:", encStr)
-	Ccopy, _ := FromStr(enc.String())
+	Ccopy, _ := FromString(enc.String())
 	fmt.Println("enc unmarshal:", Ccopy)
 	encDelta, _ := Enc(delta, r, pk)
 	encAdd, _ := EncAdd(enc, encDelta)
