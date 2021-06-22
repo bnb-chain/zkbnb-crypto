@@ -15,7 +15,7 @@ import (
 func ElgamalEnc() js.Func {
 	elgamalEncFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if len(args) != 2 {
-			return 10002
+			return ErrInvalidEncParams
 		}
 		// read pk
 		pkStr := args[0].String()
@@ -24,14 +24,14 @@ func ElgamalEnc() js.Func {
 		// parse pk
 		pk, err := curve.FromString(pkStr)
 		if err != nil {
-			return 10003
+			return ErrParsePoint
 		}
 		// r \gets_R \mathbb{Z}_p
 		r := curve.RandomValue()
 		// call elgamal enc
 		C, err := twistedElgamal.Enc(big.NewInt(int64(b)), r, pk)
 		if err != nil {
-			return 10004
+			return ErrElGamalEnc
 		}
 		return C.String()
 	})
@@ -48,30 +48,30 @@ func ElgamalEnc() js.Func {
 func ElgamalDec() js.Func {
 	elgamalDecFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if len(args) != 4 {
-			return 10001
+			return ErrInvalidDecParams
 		}
 		// read values
 		CStr := args[0].String()
 		skStr := args[1].String()
 		start := args[2].Int()
 		end := args[3].Int()
-		if start < 0 || end < 0 || start < end {
-			return 10006
+		if start < 0 || end < 0 || start > end {
+			return ErrInvalidDecParams
 		}
 		// parse C
 		C, err := twistedElgamal.FromString(CStr)
 		if err != nil {
-			return 10002
+			return ErrParseEnc
 		}
 		// parse sk
 		sk, b := new(big.Int).SetString(skStr, 10)
 		if !b {
-			return 10003
+			return ErrParseBigInt
 		}
 		// call elgamal dec
 		decVal, err := twistedElgamal.DecByStart(C, sk, int64(start), int64(end))
 		if err != nil {
-			return 10004
+			return ErrElGamalDec
 		}
 		return decVal.Int64()
 	})

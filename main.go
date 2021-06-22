@@ -8,6 +8,7 @@ import (
 
 func main() {
 	fmt.Println("Zecrey Assembly")
+	js.Global().Set("getL2PublicKey", wasm.GetL2PublicKey())
 	js.Global().Set("elgamalEnc", wasm.ElgamalEnc())
 	js.Global().Set("elgamalDec", wasm.ElgamalDec())
 	js.Global().Set("proveWithdraw", wasm.ProveWithdraw())

@@ -63,8 +63,12 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, int) {
 type WithdrawTransactionAo struct {
 	// token id
 	TokenId uint32
-	// account index
-	AccountId int
+	// L2 address
+	L2Address string
+	// L1 address
+	L1Address string
+	// withdraw amount
+	Amount uint32
 	// withdraw proof
 	Proof *zecrey.WithdrawProof
 	// create time
