@@ -1,18 +1,18 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/ffmath"
 	"errors"
 	"math/big"
 	"strconv"
+	"zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/ffmath"
 )
 
-func Setup(N int64, M int64) (params *BulletProofSetupParams, err error) {
+func Setup(N int64, M int64) (params *BPSetupParams, err error) {
 	//if !IsPowerOfTwo(N) {
 	//	return nil, errors.New("range end is not a power of 2")
 	//}
-	params = new(BulletProofSetupParams)
+	params = new(BPSetupParams)
 	// TODO change base for twisted_elgamal
 	params.G = zp256.H
 	params.H = zp256.Base()
@@ -32,7 +32,7 @@ Prove computes the ZK rangeproof. The documentation and comments are based on
 eprint version of Bulletproofs papers:
 https://eprint.iacr.org/2017/1066.pdf
 */
-func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BulletProofSetupParams) (proof *BulletProof, err error) {
+func Prove(secret *big.Int, gamma *big.Int, V *P256, params *BPSetupParams) (proof *BulletProof, err error) {
 	proof = new(BulletProof)
 
 	// aL, aR and commitment: (A, alpha)
@@ -268,7 +268,7 @@ func computeAR(x []int64) ([]int64, error) {
 Commitvector computes a commitment to the bit of the secret.
 */
 func commitVector(aL, aR []int64, alpha *big.Int, H *P256, g, h []*P256, n int64) *P256 {
-	// Compute h^{\alpha} \cdot v \cdot g^{a_L} \cdot v \cdot h^{a_R}
+	// Compute h^{\alpha} \cdot gs^{a_L} \cdot hs^{a_R}
 	R := zp256.ScalarMul(H, alpha)
 	for i := int64(0); i < n; i++ {
 		gaL := zp256.ScalarMul(g[i], big.NewInt(aL[i]))

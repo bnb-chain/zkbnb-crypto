@@ -2,12 +2,14 @@ package tebn254
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"github.com/consensys/gurvy/bn256/fr"
-	"github.com/consensys/gurvy/bn256/twistededwards"
+	"encoding/hex"
+	"encoding/json"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 	"math/big"
 	"strconv"
 	"zecrey-crypto/ffmath"
+	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/util"
 )
 
@@ -17,6 +19,7 @@ var (
 	G     = &curve.Base
 	H     *Point
 	U     *Point
+	O     = Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
 )
 
 const (
@@ -39,20 +42,40 @@ func ScalarMul(p *Point, a *big.Int) *Point {
 }
 
 func Neg(a *Point) *Point {
-	return new(Point).Set(a).Neg(a)
+	return new(Point).Neg(a)
 }
 
 func ToBytes(p *Point) []byte {
 	return p.Marshal()
 }
 
+func ToString(p *Point) string {
+	return hex.EncodeToString(p.Marshal())
+}
+
+func FromString(pStr string) (*Point, error) {
+	pBytes, err := hex.DecodeString(pStr)
+	if err != nil {
+		return nil, err
+	}
+	return FromBytes(pBytes)
+}
+
 func FromBytes(pBytes []byte) (*Point, error) {
-	var p *Point
+	var p Point
 	_, err := p.SetBytes(pBytes)
 	if err != nil {
 		return nil, err
 	}
-	return p, nil
+	return &p, nil
+}
+
+func IsInSubGroup(p *Point) bool {
+	if !p.IsOnCurve() {
+		return false
+	}
+	res := new(Point).ScalarMul(p, Order)
+	return IsZero(res)
 }
 
 func MapToGroup(seed string) (H *Point, err error) {
@@ -65,7 +88,7 @@ func MapToGroup(seed string) (H *Point, err error) {
 		buffer.Reset()
 		buffer.WriteString(seed)
 		buffer.WriteString(strconv.Itoa(i))
-		y, err := util.HashToInt(buffer, sha256.New)
+		y, err := util.HashToInt(buffer, zmimc.Hmimc)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +96,7 @@ func MapToGroup(seed string) (H *Point, err error) {
 		yElement := new(fr.Element).SetBigInt(y)
 		x := computeX(y)
 		H = &Point{X: x, Y: *yElement}
-		if H.IsOnCurve() && !IsZero(H) {
+		if IsInSubGroup(H) && !IsZero(H) {
 			return H, nil
 		}
 		i++
@@ -99,11 +122,16 @@ func IsZero(p *Point) bool {
 	if p == nil {
 		return true
 	}
-	return p.X.IsZero() || p.Y.IsZero()
+	return p.Equal(&O)
 }
 
-func InfinityPoint() *Point {
-	return &Point{X: *(new(fr.Element).SetZero()), Y: *(new(fr.Element).SetZero())}
+func ZeroPoint() *Point {
+	return &Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
+}
+
+func VecToBytes(vp []*Point) ([]byte, error) {
+	vpBytes, err := json.Marshal(vp)
+	return vpBytes, err
 }
 
 func RandomValue() *big.Int {

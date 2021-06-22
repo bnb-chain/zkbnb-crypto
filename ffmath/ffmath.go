@@ -55,3 +55,11 @@ func ModInverse(base *big.Int, modulo *big.Int) *big.Int {
 func RandomValue(Order *big.Int) (r *big.Int, err error) {
 	return rand.Int(rand.Reader, Order)
 }
+
+func Xor(a, b *big.Int) *big.Int {
+	return new(big.Int).Xor(a, b)
+}
+
+func Equal(a, b *big.Int) bool {
+	return a.String() == b.String()
+}

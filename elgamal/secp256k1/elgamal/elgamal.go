@@ -1,66 +1,70 @@
 package elgamal
 
 import (
-	"zecrey-crypto/ecc/zp256"
 	"math/big"
+	curve "zecrey-crypto/ecc/zp256"
 )
 
-type P256 = zp256.P256
+var ORDER = curve.Curve.N
+
+type Point = curve.P256
 
 type ElGamalEnc struct {
-	CL *P256
-	CR *P256
+	CL *Point
+	CR *Point
 }
 
-func GenKeyPair() (sk *big.Int, pk *P256) {
-	sk = zp256.RandomValue()
-	pk = zp256.ScalarBaseMul(sk)
+func GenKeyPair() (sk *big.Int, pk *Point) {
+	sk = curve.RandomValue()
+	pk = curve.ScalarBaseMul(sk)
 	return sk, pk
 }
 
 func EncAdd(C1 *ElGamalEnc, C2 *ElGamalEnc) *ElGamalEnc {
-	CL := zp256.Add(C1.CL, C2.CL)
-	CR := zp256.Add(C1.CR, C2.CR)
+	CL := curve.Add(C1.CL, C2.CL)
+	CR := curve.Add(C1.CR, C2.CR)
 	return &ElGamalEnc{CL: CL, CR: CR}
 }
 
 func (value *ElGamalEnc) Set(enc *ElGamalEnc) {
-	value.CL = zp256.Set(enc.CL)
-	value.CR = zp256.Set(enc.CR)
+	value.CL = curve.Set(enc.CL)
+	value.CR = curve.Set(enc.CR)
 }
 
-func Enc(b *big.Int, r *big.Int, pk *P256) (*ElGamalEnc) {
+func Enc(b *big.Int, r *big.Int, pk *Point) (*ElGamalEnc) {
 	// g^r
-	CL := zp256.ScalarBaseMul(r)
+	CL := curve.ScalarBaseMul(r)
 	// g^b pk^r
-	CR := zp256.ScalarBaseMul(b)
-	CR = zp256.Add(CR, zp256.ScalarMul(pk, r))
+	CR := curve.ScalarBaseMul(b)
+	CR = curve.Add(CR, curve.ScalarMul(pk, r))
 	return &ElGamalEnc{CL: CL, CR: CR}
 }
 
-func Dec(enc *ElGamalEnc, sk *big.Int) (*big.Int) {
+func Dec(enc *ElGamalEnc, sk *big.Int, Max int64) (*big.Int) {
 	//  pk^r
-	pkExpr := zp256.ScalarMul(enc.CL, sk)
+	pkExpr := curve.ScalarMul(enc.CL, sk)
 	// g^b
-	gExpb := zp256.Add(enc.CR, zp256.Neg(pkExpr))
-	for i := int64(0); i < MAX_VALUE; i++ {
-		hi := zp256.ScalarBaseMul(big.NewInt(i))
-		if zp256.Equal(hi, gExpb) {
-			return big.NewInt(i)
+	gExpb := curve.Add(enc.CR, curve.Neg(pkExpr))
+	for i := int64(0); i < Max; i++ {
+		b := big.NewInt(i)
+		hi := curve.ScalarBaseMul(b)
+		if curve.Equal(hi, gExpb) {
+			return b
 		}
 	}
 	return nil
 }
 
-func DecByStart(enc *ElGamalEnc, sk *big.Int, start int) (*big.Int) {
+func DecByStart(enc *ElGamalEnc, sk *big.Int, start int, Max int64) (*big.Int) {
 	//  pk^r
-	pkExpr := zp256.ScalarMul(enc.CL, sk)
+	pkExpr := curve.ScalarMul(enc.CL, sk)
 	// g^b
-	gExpb := zp256.Add(enc.CR, zp256.Neg(pkExpr))
-	for i := int64(start); i < MAX_VALUE; i++ {
-		hi := zp256.ScalarBaseMul(big.NewInt(i))
-		if zp256.Equal(hi, gExpb) {
-			return big.NewInt(i)
+	gExpb := curve.Add(enc.CR, curve.Neg(pkExpr))
+	for i := int64(start); i < Max; i++ {
+		b := big.NewInt(i)
+		hi := curve.ScalarBaseMul(b)
+		if curve.Equal(hi, gExpb) {
+			return b
 		}
 	}
 	return nil

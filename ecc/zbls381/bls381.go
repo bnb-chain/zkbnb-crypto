@@ -1,9 +1,9 @@
 package zbls381
 
 import (
-	"zecrey-crypto/ffmath"
-	"github.com/consensys/gurvy/bls377"
+	"github.com/consensys/gnark-crypto/ecc/bls12-381"
 	"math/big"
+	"zecrey-crypto/ffmath"
 )
 
 var (
@@ -11,10 +11,10 @@ var (
 	SEEDH    = "ZecreyBLS377SetupH"
 )
 
-type G1Affine = bls377.G1Affine
+type G1Affine = bls12381.G1Affine
 
 func G1Base() *G1Affine {
-	_, _, g1Aff, _ := bls377.Generators()
+	_, _, g1Aff, _ := bls12381.Generators()
 	return &g1Aff
 }
 
@@ -27,7 +27,7 @@ func G1ScalarBaseMul(a *big.Int) *G1Affine {
 }
 
 func G1Add(a, b *G1Affine) *G1Affine {
-	aJac := new(bls377.G1Jac).FromAffine(a)
+	aJac := new(bls12381.G1Jac).FromAffine(a)
 	p := new(G1Affine).FromJacobian(aJac.AddMixed(b))
 	return p
 }
@@ -44,7 +44,7 @@ func G1InfinityPoint() *G1Affine {
 }
 
 func HashToG1(m string) (*G1Affine, error) {
-	p, err := bls377.HashToCurveG1Svdw([]byte(m), []byte(m))
+	p, err := bls12381.HashToCurveG1Svdw([]byte(m), []byte(m))
 	return &p, err
 }
 
@@ -54,7 +54,7 @@ func G1ScalarHBaseMul(a *big.Int) *G1Affine {
 }
 
 func GetG1TwoBaseAffine() (g *G1Affine, h *G1Affine) {
-	_, _, G1Affine, _ := bls377.Generators()
+	_, _, G1Affine, _ := bls12381.Generators()
 	HAffine, _ := HashToG1(SEEDH)
 	return &G1Affine, HAffine
 }

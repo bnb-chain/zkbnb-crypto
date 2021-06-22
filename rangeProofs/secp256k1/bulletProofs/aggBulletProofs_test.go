@@ -1,11 +1,11 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
 	"fmt"
 	"math/big"
 	"testing"
+	"zecrey-crypto/ecc/zp256"
+	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
 )
 
 func TestProveAggregationAndVerify(t *testing.T) {

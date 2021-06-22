@@ -1,12 +1,12 @@
 package bulletProofs
 
 import (
+	"bytes"
+	"math/big"
 	"zecrey-crypto/ecc/zp256"
 	"zecrey-crypto/ffmath"
+	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/util"
-	"bytes"
-	"crypto/sha256"
-	"math/big"
 )
 
 /*
@@ -46,20 +46,20 @@ Hash is responsible for the computing a Zp element given elements from GT and G1
 func HashBP(A, S *P256) (*big.Int, *big.Int, error) {
 
 	var buffer bytes.Buffer
-	// H(A,S)
+	// Waste(A,S)
 	buffer.WriteString(A.String())
 	buffer.WriteString(S.String())
-	a, err := util.HashToInt(buffer, sha256.New)
+	a, err := util.HashToInt(buffer, zmimc.Hmimc)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// H(A,S,H(A,S))
+	// Waste(A,S,Waste(A,S))
 	buffer.Reset()
 	buffer.WriteString(A.String())
 	buffer.WriteString(S.String())
 	buffer.WriteString(a.String())
-	b, _ := util.HashToInt(buffer, sha256.New)
+	b, _ := util.HashToInt(buffer, zmimc.Hmimc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -78,7 +78,7 @@ func hashIP(g, h []*P256, P *P256, c *big.Int, n int64) (result *big.Int, err er
 		buffer.Write(h[i].Bytes())
 	}
 	buffer.Write(c.Bytes())
-	result, err = util.HashToInt(buffer, sha256.New)
+	result, err = util.HashToInt(buffer, zmimc.Hmimc)
 
 	return ffmath.Mod(result, Order), err
 }
