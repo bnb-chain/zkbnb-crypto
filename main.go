@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Go Web Assembly")
+	fmt.Println("Zecrey Assembly")
 	js.Global().Set("elgamalEnc", wasm.ElgamalEnc())
 	js.Global().Set("elgamalDec", wasm.ElgamalDec())
 	js.Global().Set("proveWithdraw", wasm.ProveWithdraw())
