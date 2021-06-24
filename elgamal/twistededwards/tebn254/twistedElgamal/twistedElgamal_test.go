@@ -1,3 +1,20 @@
+/*
+ * Copyright © 2021 Zecrey Protocol
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package twistedElgamal
 
 import (
@@ -43,10 +60,12 @@ func TestEncDec(t *testing.T) {
 
 func TestDecByStartRoutine(t *testing.T) {
 	sk, pk := GenKeyPair()
-	b := big.NewInt(-125933)
+	b := big.NewInt(-24029)
 	r := curve.RandomValue()
-	max := int64(200000)
+	max := int64(100000)
 	enc, _ := Enc(b, r, pk)
+	fmt.Println(sk.String())
+	fmt.Println(enc.String())
 	elapse := time.Now()
 	res, err := DecByStart(enc, sk, 0, max)
 	if err != nil {
