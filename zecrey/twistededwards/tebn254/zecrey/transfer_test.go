@@ -30,17 +30,18 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	elapse := time.Now()
 	relation, err := NewPTransferProofRelation(1)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println("sk1:", sk1.String())
-	fmt.Println("pk1:", curve.ToString(pk1))
-	fmt.Println("b1Enc:", b1Enc.String())
-	fmt.Println("pk2:", curve.ToString(pk2))
-	fmt.Println("b2Enc:", b2Enc.String())
-	fmt.Println("pk3:", curve.ToString(pk3))
-	fmt.Println("b3Enc:", b3Enc.String())
+	//fmt.Println("sk1:", sk1.String())
+	//fmt.Println("pk1:", curve.ToString(pk1))
+	//fmt.Println("b1Enc:", b1Enc.String())
+	//fmt.Println("pk2:", curve.ToString(pk2))
+	//fmt.Println("b2Enc:", b2Enc.String())
+	//fmt.Println("pk3:", curve.ToString(pk3))
+	//fmt.Println("b3Enc:", b3Enc.String())
 	err = relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
 	if err != nil {
 		t.Error(err)
@@ -57,7 +58,7 @@ func TestCorrectInfoProve(t *testing.T) {
 	//if err != nil {
 	//	panic(err)
 	//}
-	elapse := time.Now()
+
 	transferProof, err := ProvePTransfer(relation)
 	if err != nil {
 		t.Error(err)

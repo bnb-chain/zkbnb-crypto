@@ -168,6 +168,9 @@ func DecByStart(enc *ElGamalEnc, sk *big.Int, start int64, Max int64) (*big.Int,
 		if current.Equal(hExpb) {
 			return big.NewInt(i), nil
 		}
+		if curve.Neg(current).Equal(hExpb) {
+			return big.NewInt(-i), nil
+		}
 		current.Add(current, base)
 	}
 	return nil, ErrDec

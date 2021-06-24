@@ -1,25 +1,25 @@
 package wasm
 
 const (
-	ErrUnmarshal                     = -1001
-	ErrInvalidWithdrawParams         = -1002
-	ErrParseEnc                      = -1003
-	ErrParsePoint                    = -1004
-	ErrParseBigInt                   = -1005
-	ErrInvalidWithdrawRelationParams = -1006
-	ErrProveWithdraw                 = -1007
-	ErrMarshalTx                     = -1008
+	ErrUnmarshal                     = "ErrUnmarshal"
+	ErrInvalidWithdrawParams         = "ErrInvalidWithdrawParams"
+	ErrParseEnc                      = "ErrParseEnc"
+	ErrParsePoint                    = "ErrParsePoint"
+	ErrParseBigInt                   = "ErrParseBigInt"
+	ErrInvalidWithdrawRelationParams = "ErrInvalidWithdrawRelationParams"
+	ErrProveWithdraw                 = "ErrProveWithdraw"
+	ErrMarshalTx                     = "ErrMarshalTx"
 
-	ErrInvalidTransferParams         = -1009
-	ErrInvalidTransferRelationParams = -1010
-	ErrProveTransfer                 = -1011
+	ErrInvalidTransferParams         = "ErrInvalidTransferParams"
+	ErrInvalidTransferRelationParams = "ErrInvalidTransferRelationParams"
+	ErrProveTransfer                 = "ErrProveTransfer"
 
-	ErrL2SkParams = -1012
+	ErrL2SkParams = "ErrL2SkParams"
 
-	ErrInvalidEncParams = -1013
-	ErrElGamalEnc       = -1014
-	ErrInvalidDecParams = -1015
-	ErrElGamalDec       = -1016
+	ErrInvalidEncParams = "ErrInvalidEncParams"
+	ErrElGamalEnc       = "ErrElGamalEnc"
+	ErrInvalidDecParams = "ErrInvalidDecParams"
+	ErrElGamalDec       = "ErrElGamalDec"
 
-	Success = -1
+	Success = "success"
 )

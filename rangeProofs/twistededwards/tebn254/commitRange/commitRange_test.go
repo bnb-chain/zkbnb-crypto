@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
+	"time"
 	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/hash/bn254/zmimc"
@@ -12,14 +13,17 @@ import (
 )
 
 func TestProveAndVerify(t *testing.T) {
-	b := big.NewInt(-4)
+	b := big.NewInt(4)
 	r := curve.RandomValue()
 	g := curve.H
 	h := curve.G
-	proof, err := Prove(b, r, g, h, 32)
+	T, _ := pedersen.Commit(b, r, g, h)
+	elapse := time.Now()
+	proof, err := Prove(b, r, T, g, h, 32)
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println(time.Since(elapse))
 	res, err := proof.Verify()
 	if err != nil {
 		t.Fatal(err)

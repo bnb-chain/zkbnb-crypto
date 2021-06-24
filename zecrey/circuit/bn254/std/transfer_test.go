@@ -46,15 +46,15 @@ func TestVerifyPTransferProofCircuit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = relation.AddStatement(b1Enc, pk1, b1, big.NewInt(-4), sk1)
+	err = relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = relation.AddStatement(b2Enc, pk2, nil, big.NewInt(1), nil)
+	err = relation.AddStatement(b2Enc, pk2, big.NewInt(1), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = relation.AddStatement(b3Enc, pk3, nil, big.NewInt(3), nil)
+	err = relation.AddStatement(b3Enc, pk3, big.NewInt(3), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
