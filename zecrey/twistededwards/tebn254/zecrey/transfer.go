@@ -13,6 +13,8 @@ import (
 	"zecrey-crypto/util"
 )
 
+var ownershipChan = make(chan int, 1)
+
 func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, err error) {
 	if relation == nil || relation.Statements == nil {
 		return nil, ErrInvalidParams
@@ -90,10 +92,11 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			commitEntities[i].alpha_rstarSubr, commitEntities[i].A_YDivCRDelta = commitValidDelta(G)
 		} else { // Otherwise, commit ownership
 			// commit to ownership
-			commitEntities[i].alpha_rstarSubrbar, commitEntities[i].alpha_rbar, commitEntities[i].alpha_bprime,
-				commitEntities[i].alpha_sk, commitEntities[i].alpha_skInv,
-				commitEntities[i].A_YDivT, commitEntities[i].A_T,
-				commitEntities[i].A_pk, commitEntities[i].A_TDivCPrime = commitOwnership(G, H, curve.Neg(curve.Add(C.CL, CDelta.CL))) // commit to tokenId
+			//commitEntities[i].alpha_rstarSubrbar, commitEntities[i].alpha_rbar, commitEntities[i].alpha_bprime,
+			//	commitEntities[i].alpha_sk, commitEntities[i].alpha_skInv,
+			//	commitEntities[i].A_YDivT, commitEntities[i].A_T,
+			//	commitEntities[i].A_pk, commitEntities[i].A_TDivCPrime = commitOwnership(G, H, curve.Neg(curve.Add(C.CL, CDelta.CL))) // commit to tokenId
+			go commitOwnershipRoutine(G, H, curve.Neg(curve.Add(C.CL, CDelta.CL)), commitEntities, i)
 		}
 		// generate sub proofs
 		commitValues := commitEntities[i]
@@ -101,10 +104,10 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			A_CLDelta:     commitValues.A_CLDelta,
 			A_CRDelta:     commitValues.A_CRDelta,
 			A_YDivCRDelta: commitValues.A_YDivCRDelta,
-			A_YDivT:       commitValues.A_YDivT,
-			A_T:           commitValues.A_T,
-			A_pk:          commitValues.A_pk,
-			A_TDivCPrime:  commitValues.A_TDivCPrime,
+			//A_YDivT:       commitValues.A_YDivT,
+			//A_T:           commitValues.A_T,
+			//A_pk:          commitValues.A_pk,
+			//A_TDivCPrime:  commitValues.A_TDivCPrime,
 			// original balance enc
 			C: statement.C,
 			// delta balance enc
@@ -172,6 +175,10 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			proof.SubProofs[i].Z_sk = z_sk
 			proof.SubProofs[i].Z_skInv = z_skInv
 		} else { // otherwise, run simValidDelta
+			j := <-ownershipChan
+			if j != i {
+				return nil, ErrInvalidParams
+			}
 			A_YDivCRDelta, z_rstarSubr := simValidDelta(
 				statement.CDelta.CR, statement.Y, G,
 				c1,
@@ -183,6 +190,12 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 				commitValues.alpha_bprime, commitValues.alpha_sk, commitValues.alpha_skInv, c2,
 			)
 			// complete sub proofs
+			proof.SubProofs[i].A_YDivT = commitValues.A_YDivT
+			proof.SubProofs[i].A_T = commitValues.A_T
+			proof.SubProofs[i].A_pk = commitValues.A_pk
+			proof.SubProofs[i].A_TDivCPrime = commitValues.A_TDivCPrime
+			proof.SubProofs[i].A_YDivCRDelta = A_YDivCRDelta
+
 			proof.SubProofs[i].A_YDivCRDelta = A_YDivCRDelta
 			proof.SubProofs[i].Z_rstarSubr = z_rstarSubr
 			proof.SubProofs[i].Z_rstarSubrbar = z_rstarSubrbar
@@ -196,7 +209,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			proof.Z_tsks = append(proof.Z_tsks, z_tsk)
 		}
 		// compute the range proof
-		rangeProof, err := commitRange.Prove(statement.BStar, statement.RStar, H, G, N)
+		rangeProof, err := commitRange.Prove(statement.BStar, statement.RStar, statement.Y, H, G, N)
 		if err != nil {
 			return nil, err
 		}
@@ -383,6 +396,19 @@ func commitOwnership(g, h, hDec *Point) (
 	return
 }
 
+func commitOwnershipRoutine(g, h, hDec *Point, commitEntities []*transferCommitValues, i int) {
+	commitEntities[i].alpha_rstarSubrbar = curve.RandomValue()
+	commitEntities[i].alpha_rbar = curve.RandomValue()
+	commitEntities[i].alpha_bprime = curve.RandomValue()
+	commitEntities[i].alpha_sk = curve.RandomValue()
+	commitEntities[i].alpha_skInv = ffmath.ModInverse(commitEntities[i].alpha_sk, Order)
+	commitEntities[i].A_YDivT = curve.ScalarMul(g, commitEntities[i].alpha_rstarSubrbar)
+	commitEntities[i].A_T = curve.Add(curve.ScalarMul(g, commitEntities[i].alpha_rbar), curve.ScalarMul(h, commitEntities[i].alpha_bprime))
+	commitEntities[i].A_pk = curve.ScalarMul(g, commitEntities[i].alpha_sk)
+	commitEntities[i].A_TDivCPrime = curve.Add(curve.ScalarMul(hDec, commitEntities[i].alpha_skInv), curve.ScalarMul(g, commitEntities[i].alpha_rbar))
+	ownershipChan <- i
+}
+
 func respondOwnership(
 	rstarSubrbar, rbar, bprime, sk,
 	alpha_rstarSubrbar, alpha_rbar, alpha_bprime, alpha_sk, alpha_skInv, c *big.Int,
@@ -487,8 +513,8 @@ func TryOnceTransfer() PTransferProof {
 	b3Enc, _ := twistedElgamal.Enc(b3, r3, pk3)
 	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
 	relation, _ := NewPTransferProofRelation(1)
-	relation.AddStatement(b1Enc, pk1,  big.NewInt(-4), sk1)
-	relation.AddStatement(b2Enc, pk2,  big.NewInt(1), nil)
+	relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
+	relation.AddStatement(b2Enc, pk2, big.NewInt(1), nil)
 	relation.AddStatement(b3Enc, pk3, big.NewInt(3), nil)
 	//err = relation.AddStatement(b4Enc, pk4, nil, big.NewInt(1), nil)
 	//if err != nil {
