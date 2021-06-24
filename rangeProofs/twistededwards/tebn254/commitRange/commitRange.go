@@ -11,13 +11,16 @@ import (
 	"zecrey-crypto/util"
 )
 
+var binaryChan = make(chan int, 32)
+var respondBinaryChan = make(chan int, 32)
+
 /*
 	prove the value in the range
 	@b: the secret value
 	@r: the random value
 	@g,h: two generators
 */
-func Prove(b *big.Int, r *big.Int, g, h *Point, N uint) (proof *ComRangeProof, err error) {
+func Prove(b *big.Int, r *big.Int, T, g, h *Point, N uint) (proof *ComRangeProof, err error) {
 	// check params
 	if b == nil || r == nil || g == nil || h == nil || math.Pow(2, float64(N)) < float64(b.Int64()) {
 		return nil, ErrInvalidRangeParams
@@ -33,11 +36,6 @@ func Prove(b *big.Int, r *big.Int, g, h *Point, N uint) (proof *ComRangeProof, e
 	var buf bytes.Buffer
 	buf.Write(g.Marshal())
 	buf.Write(h.Marshal())
-	// commitment to the value
-	T, err := pedersen.Commit(b, r, g, h)
-	if err != nil {
-		return nil, err
-	}
 	// set proof
 	proof.T = T
 	buf.Write(T.Marshal())
@@ -58,26 +56,27 @@ func Prove(b *big.Int, r *big.Int, g, h *Point, N uint) (proof *ComRangeProof, e
 		// r_i \gets_R \mathbb{Z}_p
 		ri := curve.RandomValue()
 		// compute A_i
-		Ai := curve.Add(curve.ScalarMul(g, bi), curve.ScalarMul(h, ri))
+		Ai, _ := pedersen.Commit(bi, ri, g, h)
 		buf.Write(Ai.Marshal())
 		// commitBinary to A_i
-		Cai, Cbi, ai, si, ti, err := commitBinary(bi, g, h)
-		if err != nil {
-			return nil, err
-		}
-		buf.Write(Cai.Marshal())
-		buf.Write(Cbi.Marshal())
+		go commitBinaryRoutine(bi, g, h, proof, as, ss, ts, i)
+		//Cai, Cbi, ai, si, ti, err := commitBinary(bi, g, h)
+		//if err != nil {
+		//	return nil, err
+		//}
+		//buf.Write(Cai.Marshal())
+		//buf.Write(Cbi.Marshal())
 		// update T'
 		Tprime = curve.Add(Tprime, curve.ScalarMul(Ai, powerof2Vec[i]))
 		// set proof
 		proof.As[i] = Ai
-		proof.Cas[i] = Cai
-		proof.Cbs[i] = Cbi
+		//proof.Cas[i] = Cai
+		//proof.Cbs[i] = Cbi
 		// set values
 		rs[i] = ri
-		as[i] = ai
-		ss[i] = si
-		ts[i] = ti
+		//as[i] = ai
+		//ss[i] = si
+		//ts[i] = ti
 
 		rprime = ffmath.Add(rprime, ffmath.Multiply(ri, powerof2Vec[i]))
 	}
@@ -108,14 +107,19 @@ func Prove(b *big.Int, r *big.Int, g, h *Point, N uint) (proof *ComRangeProof, e
 	proof.Zr = zr
 	proof.Zrprime = zrprime
 	// prove binary
-	for i, bi := range bsInt {
-		fi, zai, zbi, err := respondBinary(bi, rs[i], as[i], ss[i], ts[i], c)
-		if err != nil {
-			return nil, err
+	//for i, bi := range bsInt {
+	for i := 0; i < 32; i++ {
+		j := <-binaryChan
+		if j == -1 {
+			return nil, ErrInvalidRangeParams
 		}
-		proof.Fs[i] = fi
-		proof.Zas[i] = zai
-		proof.Zbs[i] = zbi
+		go respondBinaryRoutine(bsInt[j], rs[j], as[j], ss[j], ts[j], c, proof, j)
+	}
+	for i := 0; i < 32; i++ {
+		j := <-binaryChan
+		if j == -1 {
+			return nil, ErrInvalidRangeParams
+		}
 	}
 	return proof, nil
 }
@@ -139,8 +143,8 @@ func (proof *ComRangeProof) Verify() (bool, error) {
 	Tprime_check := curve.ZeroPoint()
 	for i, Ai := range proof.As {
 		buf.Write(Ai.Marshal())
-		buf.Write(proof.Cas[i].Marshal())
-		buf.Write(proof.Cbs[i].Marshal())
+		//buf.Write(proof.Cas[i].Marshal())
+		//buf.Write(proof.Cbs[i].Marshal())
 		Tprime_check = curve.Add(Tprime_check, curve.ScalarMul(Ai, powerof2Vec[i]))
 	}
 	// check sum
@@ -189,6 +193,28 @@ func commitBinary(b *big.Int, g, h *Point) (Ca, Cb *Point, a, s, t *big.Int, err
 	return Ca, Cb, a, s, t, nil
 }
 
+func commitBinaryRoutine(b *big.Int, g, h *Point, proof *ComRangeProof, as []*big.Int, ss []*big.Int, ts []*big.Int, i int) {
+	if b == nil || g == nil || h == nil || proof == nil || as == nil || ss == nil || ts == nil || i < 0 {
+		binaryChan <- -1
+		return
+	}
+	a, s, t := curve.RandomValue(), curve.RandomValue(), curve.RandomValue()
+	Ca, err := pedersen.Commit(a, s, g, h)
+	if err != nil {
+		binaryChan <- -1
+	}
+	Cb, err := pedersen.Commit(ffmath.Multiply(a, b), t, g, h)
+	if err != nil {
+		binaryChan <- -1
+	}
+	proof.Cas[i] = Ca
+	proof.Cbs[i] = Cb
+	as[i] = a
+	ss[i] = s
+	ts[i] = t
+	binaryChan <- i
+}
+
 /*
 	respondBinary makes a response to binary proof
 	@b: binary value
@@ -209,6 +235,22 @@ func respondBinary(b, r, a, s, t *big.Int, c *big.Int) (f, za, zb *big.Int, err 
 	zb = ffmath.Multiply(r, zb)
 	zb = ffmath.AddMod(zb, t, Order)
 	return f, za, zb, nil
+}
+
+func respondBinaryRoutine(b, r, a, s, t *big.Int, c *big.Int, proof *ComRangeProof, i int) {
+	if b == nil || r == nil || a == nil || s == nil || t == nil || c == nil {
+		binaryChan <- -1
+		return
+	}
+	// f = bc + a
+	proof.Fs[i] = ffmath.AddMod(ffmath.Multiply(c, b), a, Order)
+	// za = rc + s
+	proof.Zas[i] = ffmath.AddMod(ffmath.Multiply(r, c), s, Order)
+	// zb = r(c - f) + t
+	proof.Zbs[i] = ffmath.Sub(c, proof.Fs[i])
+	proof.Zbs[i] = ffmath.Multiply(r, proof.Zbs[i])
+	proof.Zbs[i] = ffmath.AddMod(proof.Zbs[i], t, Order)
+	binaryChan <- i
 }
 
 /*
