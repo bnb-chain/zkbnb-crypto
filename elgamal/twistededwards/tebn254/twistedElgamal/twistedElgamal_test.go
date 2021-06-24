@@ -72,5 +72,5 @@ func TestDecByStartRoutine(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Println(time.Since(elapse))
-	fmt.Println(res)
+	assert.Equal(t, res, b, "decryption works correctly")
 }

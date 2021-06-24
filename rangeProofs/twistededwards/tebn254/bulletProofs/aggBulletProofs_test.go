@@ -18,7 +18,7 @@
 package bulletProofs
 
 import (
-	"fmt"
+	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -26,7 +26,6 @@ import (
 )
 
 func TestProveAggregationAndVerify(t *testing.T) {
-	//for i := 0; i < 100; i++ {
 	_, pk := twistedElgamal.GenKeyPair()
 	b1 := big.NewInt(8)
 	r1 := curve.RandomValue()
@@ -55,7 +54,5 @@ func TestProveAggregationAndVerify(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(len(proof.InnerProductProof.Ls))
-	fmt.Println(res)
-	//}
+	assert.Equal(t, res, true, "BulletProofs works correctly")
 }
