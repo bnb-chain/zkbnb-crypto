@@ -196,8 +196,8 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRange
 		//witness.PowerOfTwoVec[i].Assign(powerof2Vec[i])
 
 		buf.Write(Ai.Marshal())
-		buf.Write(proof.Cas[i].Marshal())
-		buf.Write(proof.Cbs[i].Marshal())
+		//buf.Write(proof.Cas[i].Marshal())
+		//buf.Write(proof.Cbs[i].Marshal())
 		Tprime_check.Add(Tprime_check, curve.ScalarMul(Ai, powerof2Vec[i]))
 	}
 	if !Tprime_check.Equal(proof.Tprime) {

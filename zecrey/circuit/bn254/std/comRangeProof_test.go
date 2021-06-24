@@ -8,6 +8,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"math/big"
 	"testing"
+	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 )
@@ -25,7 +26,8 @@ func TestComRangeProofCircuit_Success(t *testing.T) {
 	r := curve.RandomValue()
 	g := curve.H
 	h := curve.G
-	proof, err := commitRange.Prove(b, r, g, h, 32)
+	T, _ := pedersen.Commit(b, r, g, h)
+	proof, err := commitRange.Prove(b, r, T, g, h, 32)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -58,7 +60,8 @@ func TestComRangeProofCircuit_Failure(t *testing.T) {
 	r := curve.RandomValue()
 	g := curve.H
 	h := curve.G
-	proof, err := commitRange.Prove(b, r, g, h, 32)
+	T, _ := pedersen.Commit(b, r, g, h)
+	proof, err := commitRange.Prove(b, r, g, h, T, 32)
 	if err != nil {
 		t.Fatal(err)
 	}
