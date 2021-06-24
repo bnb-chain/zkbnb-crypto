@@ -31,7 +31,7 @@ type PTransferSegmentFormat struct {
 	Sk string `json:"sk"`
 }
 
-func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, int) {
+func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 	var transferSegmentFormats []*PTransferSegmentFormat
 	err := json.Unmarshal([]byte(segmentStr), &transferSegmentFormats)
 	if err != nil {

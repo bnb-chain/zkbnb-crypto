@@ -33,9 +33,9 @@ func ProveWithdraw() js.Func {
 		// read segmentInfo JSON str
 		segmentInfo := args[3].String()
 		// parse segmentInfo
-		segment, errNum := FromWithdrawSegmentJSON(segmentInfo)
-		if errNum != Success {
-			return errNum
+		segment, errStr := FromWithdrawSegmentJSON(segmentInfo)
+		if errStr != Success {
+			return errStr
 		}
 		// create withdraw relation
 		relation, err := zecrey.NewWithdrawRelation(segment.EncVal, segment.Pk, segment.BStar, segment.Sk, tId)
@@ -92,9 +92,9 @@ func ProveTransfer() js.Func {
 			return ErrInvalidTransferParams
 		}
 		// parse segmentInfo: []PTransferSegment
-		segments, errNum := FromPTransferSegmentJSON(segmentInfosStr)
-		if errNum != Success {
-			return errNum
+		segments, errStr := FromPTransferSegmentJSON(segmentInfosStr)
+		if errStr != Success {
+			return errStr
 		}
 		relation, err := zecrey.NewPTransferProofRelation(tId)
 		if err != nil {

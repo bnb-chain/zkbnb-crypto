@@ -28,7 +28,7 @@ type WithdrawSegmentFormat struct {
 	Sk     string `json:"sk"`
 }
 
-func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, int) {
+func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, string) {
 	var withdrawSegmentFormat *WithdrawSegmentFormat
 	err := json.Unmarshal([]byte(segmentStr), &withdrawSegmentFormat)
 	if err != nil {
