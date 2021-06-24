@@ -20,6 +20,7 @@ package zecrey
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -60,13 +61,14 @@ func TestProveWithdraw(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println("verify res:", res)
+	assert.Equal(t, res, true, "withdraw proof works correctly")
 	if res {
 		bEnc.CR.Add(bEnc.CR, relation.CRStar)
 		decVal, err := twistedElgamal.Dec(bEnc, sk, 100)
 		if err != nil {
 			t.Error(err)
 		}
+		assert.Equal(t, decVal.String(), "6", "withdraw works correctly")
 		fmt.Println(decVal)
 	}
 }

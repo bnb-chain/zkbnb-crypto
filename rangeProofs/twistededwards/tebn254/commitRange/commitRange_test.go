@@ -20,6 +20,7 @@ package commitRange
 import (
 	"bytes"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
 	"time"
@@ -45,7 +46,7 @@ func TestProveAndVerify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(res)
+	assert.Equal(t, res, true, "ComRangeProof works correctly")
 }
 
 func TestProveCommitmentSameValue(t *testing.T) {

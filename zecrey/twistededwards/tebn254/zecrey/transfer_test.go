@@ -20,6 +20,7 @@ package zecrey
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
 	"time"
@@ -37,13 +38,9 @@ func TestCorrectInfoProve(t *testing.T) {
 	_, pk3 := twistedElgamal.GenKeyPair()
 	b3 := big.NewInt(3)
 	r3 := curve.RandomValue()
-	//_, pk4 := twistedElgamal.GenKeyPair()
-	//b4 := big.NewInt(4)
-	//r4 := curve.RandomValue()
 	b1Enc, err := twistedElgamal.Enc(b1, r1, pk1)
 	b2Enc, err := twistedElgamal.Enc(b2, r2, pk2)
 	b3Enc, err := twistedElgamal.Enc(b3, r3, pk3)
-	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
 	if err != nil {
 		t.Error(err)
 	}
@@ -52,13 +49,6 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	//fmt.Println("sk1:", sk1.String())
-	//fmt.Println("pk1:", curve.ToString(pk1))
-	//fmt.Println("b1Enc:", b1Enc.String())
-	//fmt.Println("pk2:", curve.ToString(pk2))
-	//fmt.Println("b2Enc:", b2Enc.String())
-	//fmt.Println("pk3:", curve.ToString(pk3))
-	//fmt.Println("b3Enc:", b3Enc.String())
 	err = relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
 	if err != nil {
 		t.Error(err)
@@ -71,11 +61,6 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	//err = relation.AddStatement(b4Enc, pk4, nil, big.NewInt(1), nil)
-	//if err != nil {
-	//	panic(err)
-	//}
-
 	transferProof, err := ProvePTransfer(relation)
 	if err != nil {
 		t.Error(err)
@@ -95,9 +80,8 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(res)
 	fmt.Println("verify time:", time.Since(elapse))
-
+	assert.Equal(t, res, true, "privacy proof works correctly")
 }
 
 func TestIncorrectInfoProve(t *testing.T) {
