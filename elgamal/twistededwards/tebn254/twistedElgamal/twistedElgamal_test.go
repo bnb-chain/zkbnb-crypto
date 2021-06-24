@@ -40,3 +40,18 @@ func TestEncDec(t *testing.T) {
 	//assert.Equal(t, b, dec)
 	assert.Equal(t, bRes, bDelta)
 }
+
+func TestDecByStartRoutine(t *testing.T) {
+	sk, pk := GenKeyPair()
+	b := big.NewInt(-125933)
+	r := curve.RandomValue()
+	max := int64(200000)
+	enc, _ := Enc(b, r, pk)
+	elapse := time.Now()
+	res, err := DecByStart(enc, sk, 0, max)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println(time.Since(elapse))
+	fmt.Println(res)
+}
