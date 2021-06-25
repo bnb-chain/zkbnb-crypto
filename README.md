@@ -275,5 +275,7 @@ func TestProveWithdraw(t *testing.T) {
 
 ## Contributions
 
+This project is licensed under the Apache 2 License - see the [LICENSE](https://github.com/zecrey-labs/zecrey-crypto/LICENSE) file for details
+
 Welcome to make contributions to `zecrey-crypto`. Thanks!
 
