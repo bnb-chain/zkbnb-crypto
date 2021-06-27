@@ -24,6 +24,7 @@ import (
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/ffmath"
 	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 	"zecrey-crypto/util"
@@ -33,6 +34,7 @@ type ComRangeProofConstraints struct {
 	// binary proof
 	Cas, Cbs     [32]Point
 	Fs, Zas, Zbs [32]Variable
+	Cfs          [32]Variable
 	// same commitment proof
 	Zb, Zr, Zrprime  Variable
 	A_T, A_Tprime, G Point
@@ -77,7 +79,7 @@ func verifyComRangeProof(
 	for i, Ai := range proof.As {
 		// verify binary proof
 		verifyBinary(cs, Ai, proof.Cas[i], proof.Cbs[i],
-			proof.G, proof.Fs[i], proof.Zas[i], proof.Zbs[i], proof.C, params)
+			proof.G, proof.Fs[i], proof.Zas[i], proof.Zbs[i], proof.Cfs[i], proof.C, params)
 		// compute AiMul2i = A_i^{2^i}
 		AiMul2i.ScalarMulNonFixedBase(cs, &Ai, current, params)
 		// add to T'
@@ -88,6 +90,7 @@ func verifyComRangeProof(
 	// T' should be correct
 	cs.AssertIsEqual(proof.Tprime.X, Tprime.X)
 	cs.AssertIsEqual(proof.Tprime.Y, Tprime.Y)
+
 	// verify the proof: commitment for the same value
 	verifyCommitmentSameValue(cs, proof.A_T, proof.A_Tprime, proof.T,
 		proof.Tprime, proof.G, proof.Zb, proof.Zr, proof.Zrprime, proof.C, params)
@@ -105,7 +108,7 @@ func verifyComRangeProof(
 func verifyBinary(
 	cs *frontend.ConstraintSystem,
 	A, Ca, Cb, g Point,
-	f, za, zb Variable,
+	f, za, zb, cf Variable,
 	c Variable,
 	params twistededwards.EdCurve,
 ) {
@@ -121,7 +124,6 @@ func verifyBinary(
 
 	var Acf, l2, r2 Point
 	// A^{c-f} Cb == Com(0,zb)
-	cf := cs.Sub(c, f)
 	Acf.ScalarMulNonFixedBase(cs, &A, cf, params)
 	l2.AddGeneric(cs, &Acf, &Cb, params)
 	r2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zb, params)
@@ -210,11 +212,8 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRange
 		witness.Fs[i].Assign(proof.Fs[i].String())
 		witness.Zas[i].Assign(proof.Zas[i].String())
 		witness.Zbs[i].Assign(proof.Zbs[i].String())
-		//witness.PowerOfTwoVec[i].Assign(powerof2Vec[i])
 
 		buf.Write(Ai.Marshal())
-		//buf.Write(proof.Cas[i].Marshal())
-		//buf.Write(proof.Cbs[i].Marshal())
 		Tprime_check.Add(Tprime_check, curve.ScalarMul(Ai, powerof2Vec[i]))
 	}
 	if !Tprime_check.Equal(proof.Tprime) {
@@ -247,5 +246,8 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRange
 		return witness, err
 	}
 	witness.C.Assign(c.String())
+	for i := 0; i < 32; i++ {
+		witness.Cfs[i].Assign(ffmath.SubMod(c, proof.Fs[i], curve.Order))
+	}
 	return witness, nil
 }

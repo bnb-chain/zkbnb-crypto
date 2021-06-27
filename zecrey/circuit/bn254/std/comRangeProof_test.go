@@ -38,30 +38,30 @@ func TestComRangeProofCircuit_Success(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	for i := 0; i < 100; i++ {
+		b := big.NewInt(3)
+		r := curve.RandomValue()
+		g := curve.H
+		h := curve.G
+		T, _ := pedersen.Commit(b, r, g, h)
+		proof, err := commitRange.Prove(b, r, T, g, h, 32)
+		if err != nil {
+			t.Fatal(err)
+		}
+		verify, err := proof.Verify()
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Println("res:", verify)
+		witness, err = setComRangeProofWitness(proof)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	b := big.NewInt(3)
-	r := curve.RandomValue()
-	g := curve.H
-	h := curve.G
-	T, _ := pedersen.Commit(b, r, g, h)
-	proof, err := commitRange.Prove(b, r, T, g, h, 32)
-	if err != nil {
-		t.Fatal(err)
+		fmt.Println("constraints:", r1cs.GetNbConstraints())
+
+		assert.SolvingSucceeded(r1cs, &witness)
 	}
-	verify, err := proof.Verify()
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("res:", verify)
-	witness, err = setComRangeProofWitness(proof)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fmt.Println("constraints:", r1cs.GetNbConstraints())
-
-	assert.SolvingSucceeded(r1cs, &witness)
-
 }
 
 func TestComRangeProofCircuit_Failure(t *testing.T) {

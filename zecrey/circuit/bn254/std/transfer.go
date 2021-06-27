@@ -19,7 +19,6 @@ package std
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
@@ -384,9 +383,6 @@ func setPTransferProofWitness(proof *zecrey.PTransferProof) (witness PTransferPr
 	witness.C.Assign(c)
 	witness.C1.Assign(proof.C1)
 	witness.C2.Assign(proof.C2)
-	fmt.Println("c:", c.String())
-	fmt.Println("c1:", proof.C1.String())
-	fmt.Println("c2:", proof.C2.String())
 	// set sub proofs
 	// TODO check subProofs length
 	for i, subProof := range proof.SubProofs {

@@ -38,33 +38,33 @@ func TestWithdrawProofCircuit_Define(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	for i := 0; i < 100; i++ {
+		// generate withdraw proof
+		sk, pk := twistedElgamal.GenKeyPair()
+		b := big.NewInt(8)
+		r := curve.RandomValue()
+		bEnc, err := twistedElgamal.Enc(b, r, pk)
+		//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
+		if err != nil {
+			t.Fatal(err)
+		}
+		bStar := big.NewInt(-3)
+		addr := "0x99AC8881834797ebC32f185ee27c2e96842e1a47"
+		relation, err := zecrey.NewWithdrawRelation(bEnc, pk, bStar, sk, 1, addr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		withdrawProof, err := zecrey.ProveWithdraw(relation)
+		if err != nil {
+			t.Fatal(err)
+		}
+		witness, err = setWithdrawProofWitness(withdrawProof)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	// generate withdraw proof
-	sk, pk := twistedElgamal.GenKeyPair()
-	b := big.NewInt(8)
-	r := curve.RandomValue()
-	bEnc, err := twistedElgamal.Enc(b, r, pk)
-	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
-	if err != nil {
-		t.Fatal(err)
-	}
-	bStar := big.NewInt(-3)
-	addr := "0x99AC8881834797ebC32f185ee27c2e96842e1a47"
-	relation, err := zecrey.NewWithdrawRelation(bEnc, pk, bStar, sk, 1, addr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	withdrawProof, err := zecrey.ProveWithdraw(relation)
-	if err != nil {
-		t.Fatal(err)
-	}
-	witness, err = setWithdrawProofWitness(withdrawProof)
-	if err != nil {
-		t.Fatal(err)
-	}
+		fmt.Println("constraints:", r1cs.GetNbConstraints())
 
-	fmt.Println("constraints:", r1cs.GetNbConstraints())
-
-	assert.SolvingSucceeded(r1cs, &witness)
-
+		assert.SolvingSucceeded(r1cs, &witness)
+	}
 }
