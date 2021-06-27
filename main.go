@@ -30,5 +30,6 @@ func main() {
 	js.Global().Set("elgamalDec", wasm.ElgamalDec())
 	js.Global().Set("proveWithdraw", wasm.ProveWithdraw())
 	js.Global().Set("proveTransfer", wasm.ProveTransfer())
+	js.Global().Set("proveSwap", wasm.ProveSwap())
 	<-make(chan bool)
 }
