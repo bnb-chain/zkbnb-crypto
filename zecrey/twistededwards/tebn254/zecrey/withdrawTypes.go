@@ -18,28 +18,31 @@
 package zecrey
 
 import (
+	"bytes"
 	"math/big"
 	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
+	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
+	"zecrey-crypto/util"
 )
 
 type WithdrawProof struct {
 	// commitments
-	Pt                        *Point
-	A_pk, A_TDivCRprime, A_Pt *Point
+	Pt, Pa                          *Point
+	A_pk, A_TDivCRprime, A_Pt, A_Pa *Point
 	// response
 	Z_rbar, Z_sk, Z_skInv *big.Int
 	// Commitment Range Proofs
 	CRangeProof *commitRange.ComRangeProof
 	// common inputs
-	BStar                                    *big.Int
-	CRStar                                   *Point
-	C                                        *ElGamalEnc
-	G, H, Ht, TDivCRprime, CLprimeInv, T, Pk *Point
-	Challenge                                *big.Int
+	BStar                                        *big.Int
+	CRStar                                       *Point
+	C                                            *ElGamalEnc
+	G, H, Ht, Ha, TDivCRprime, CLprimeInv, T, Pk *Point
+	Challenge                                    *big.Int
 }
 
 type WithdrawProofRelation struct {
@@ -56,6 +59,10 @@ type WithdrawProofRelation struct {
 	Ht *Point
 	// Pt = Ht^{sk}
 	Pt *Point
+	// Ha = h^{addr}
+	Ha *Point
+	// Pa = Ha^{sk}
+	Pa *Point
 	// generator 1
 	G *Point
 	// generator 2
@@ -74,7 +81,7 @@ type WithdrawProofRelation struct {
 	RBar   *big.Int
 }
 
-func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, tokenId uint32) (*WithdrawProofRelation, error) {
+func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, tokenId uint32, receiveAddr string) (*WithdrawProofRelation, error) {
 	if C == nil || pk == nil || bStar == nil || sk == nil || tokenId == 0 {
 		return nil, ErrInvalidParams
 	}
@@ -114,6 +121,14 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, 
 	if err != nil {
 		return nil, err
 	}
+	// compute Ha
+	var addrBuf bytes.Buffer
+	addrBuf.Write([]byte(receiveAddr))
+	addrInt, err := util.HashToInt(addrBuf, zmimc.Hmimc)
+	if err != nil {
+		return nil, err
+	}
+	Ha := curve.ScalarMul(H, addrInt)
 	relation := &WithdrawProofRelation{
 		// ------------- public ---------------------
 		C:           C,
@@ -123,6 +138,7 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, 
 		G:           G,
 		H:           H,
 		Ht:          curve.ScalarMul(H, big.NewInt(int64(tokenId))),
+		Ha:          Ha,
 		TokenId:     tokenId,
 		TDivCRprime: curve.Add(T, curve.Neg(curve.Add(C.CR, CRStar))),
 		CLprimeInv:  curve.Neg(C.CL),
@@ -133,5 +149,6 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, 
 		RBar:   rBar,
 	}
 	relation.Pt = curve.ScalarMul(relation.Ht, sk)
+	relation.Pa = curve.ScalarMul(relation.Ha, sk)
 	return relation, nil
 }
