@@ -32,18 +32,18 @@ import (
 // WithdrawProof in circuit
 type WithdrawProofConstraints struct {
 	// commitments
-	Pt                        Point
-	A_pk, A_TDivCRprime, A_Pt Point
+	Pt, Pa                          Point
+	A_pk, A_TDivCRprime, A_Pt, A_Pa Point
 	// response
 	Z_rbar, Z_sk, Z_skInv Variable
 	// Commitment Range Proofs
 	CRangeProof ComRangeProofConstraints
 	// common inputs
-	CRStar                             Point
-	C                                  ElGamalEncConstraints
-	BStar                              Variable
-	H, Ht, TDivCRprime, CLprimeInv, Pk Point
-	Challenge                          Variable
+	CRStar                                 Point
+	C                                      ElGamalEncConstraints
+	BStar                                  Variable
+	H, Ht, Ha, TDivCRprime, CLprimeInv, Pk Point
+	Challenge                              Variable
 }
 
 // define tests for verifying the withdraw proof
@@ -76,6 +76,8 @@ func verifyWithdrawProof(
 
 	// verify Ht
 	verifyPt(cs, proof.Ht, proof.Pt, proof.A_Pt, proof.Challenge, proof.Z_sk, params)
+	// verify Ha
+	verifyPt(cs, proof.Ha, proof.Pa, proof.A_Pa, proof.Challenge, proof.Z_sk, params)
 	// verify half enc
 	verifyHalfEnc(cs, proof.H, proof.CRStar, proof.BStar, params)
 	// verify balance
@@ -188,6 +190,9 @@ func setWithdrawProofWitness(proof *zecrey.WithdrawProof) (witness WithdrawProof
 	buf.Write(proof.G.Marshal())
 	buf.Write(proof.H.Marshal())
 	buf.Write(proof.Ht.Marshal())
+	buf.Write(proof.Pt.Marshal())
+	buf.Write(proof.Ha.Marshal())
+	buf.Write(proof.Pa.Marshal())
 	buf.Write(proof.C.CL.Marshal())
 	buf.Write(proof.C.CR.Marshal())
 	buf.Write(proof.CRStar.Marshal())
@@ -213,6 +218,10 @@ func setWithdrawProofWitness(proof *zecrey.WithdrawProof) (witness WithdrawProof
 	if err != nil {
 		return witness, err
 	}
+	witness.Pa, err = setPointWitness(proof.Pa)
+	if err != nil {
+		return witness, err
+	}
 	witness.A_pk, err = setPointWitness(proof.A_pk)
 	if err != nil {
 		return witness, err
@@ -222,6 +231,10 @@ func setWithdrawProofWitness(proof *zecrey.WithdrawProof) (witness WithdrawProof
 		return witness, err
 	}
 	witness.A_Pt, err = setPointWitness(proof.A_Pt)
+	if err != nil {
+		return witness, err
+	}
+	witness.A_Pa, err = setPointWitness(proof.A_Pa)
 	if err != nil {
 		return witness, err
 	}
@@ -248,6 +261,10 @@ func setWithdrawProofWitness(proof *zecrey.WithdrawProof) (witness WithdrawProof
 		return witness, err
 	}
 	witness.Ht, err = setPointWitness(proof.Ht)
+	if err != nil {
+		return witness, err
+	}
+	witness.Ha, err = setPointWitness(proof.Ha)
 	if err != nil {
 		return witness, err
 	}

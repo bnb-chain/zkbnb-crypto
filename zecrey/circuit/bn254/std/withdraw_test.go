@@ -49,7 +49,8 @@ func TestWithdrawProofCircuit_Define(t *testing.T) {
 		t.Fatal(err)
 	}
 	bStar := big.NewInt(-3)
-	relation, err := zecrey.NewWithdrawRelation(bEnc, pk, bStar, sk, 1)
+	addr := "0x99AC8881834797ebC32f185ee27c2e96842e1a47"
+	relation, err := zecrey.NewWithdrawRelation(bEnc, pk, bStar, sk, 1, addr)
 	if err != nil {
 		t.Fatal(err)
 	}

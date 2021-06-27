@@ -133,7 +133,7 @@ func verifyPTransferProof(
 			subProof.Z_r, subProof.Z_bDelta,
 			params,
 		)
-		//CRNeg := proof.G.ScalarMulNonFixedBase(cs, &subProof.CDelta.CR, inv, params)
+		//CRNeg := proof.G.ScalarMulNonFixedBase(cs, &subProof.CStar.CR, inv, params)
 		CRNeg := Neg(cs, subProof.CDelta.CR, params)
 		YDivCRDelta.AddGeneric(cs, &subProof.Y, CRNeg, params)
 
