@@ -31,22 +31,24 @@ import (
 )
 
 func TestProveAndVerify(t *testing.T) {
-	b := big.NewInt(4)
-	r := curve.RandomValue()
-	g := curve.H
-	h := curve.G
-	T, _ := pedersen.Commit(b, r, g, h)
-	elapse := time.Now()
-	proof, err := Prove(b, r, T, g, h, 32)
-	if err != nil {
-		t.Fatal(err)
+	for i := 0; i < 1000; i++ {
+		b := big.NewInt(3)
+		r := curve.RandomValue()
+		g := curve.H
+		h := curve.G
+		T, _ := pedersen.Commit(b, r, g, h)
+		elapse := time.Now()
+		proof, err := Prove(b, r, T, g, h, 32)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Println(time.Since(elapse))
+		res, err := proof.Verify()
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, res, true, "ComRangeProof works correctly")
 	}
-	fmt.Println(time.Since(elapse))
-	res, err := proof.Verify()
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.Equal(t, res, true, "ComRangeProof works correctly")
 }
 
 func TestProveCommitmentSameValue(t *testing.T) {

@@ -90,13 +90,13 @@ var ch = make(chan int, 1)
 func TestAssign(t *testing.T) {
 	//A := ScalarBaseMul(big.NewInt(230928302))
 	//fmt.Println(A.X)
-	a := []*big.Int{big.NewInt(1), big.NewInt(2)}
-	go modifyArr(a)
-	<-ch
-	fmt.Println(a[0].String())
-}
-
-func modifyArr(a []*big.Int) {
-	a[0] = big.NewInt(3)
-	ch <- 1
+	//a := []*big.Int{big.NewInt(1), big.NewInt(2)}
+	//go modifyArr(a)
+	//<-ch
+	//fmt.Println(a[0].String())
+	c, _ := new(big.Int).SetString("93463536338893563634822814996516255366892148291073373647887419357020093105", 10)
+	f, _ := new(big.Int).SetString("948923757445786868355614565369709383448415945349584628238451190804452668895", 10)
+	p, _ := new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
+	cf := ffmath.SubMod(c, f, p)
+	fmt.Println(cf.String())
 }

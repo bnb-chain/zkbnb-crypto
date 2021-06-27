@@ -19,6 +19,7 @@ package commitRange
 
 import (
 	"bytes"
+	"fmt"
 	"math"
 	"math/big"
 	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
@@ -29,6 +30,7 @@ import (
 )
 
 var binaryChan = make(chan int, 32)
+var respondBinaryChan = make(chan int, 32)
 
 /*
 	prove the value in the range
@@ -132,7 +134,7 @@ func Prove(b *big.Int, r *big.Int, T, g, h *Point, N uint) (proof *ComRangeProof
 		go respondBinaryRoutine(bsInt[j], rs[j], as[j], ss[j], ts[j], c, proof, j)
 	}
 	for i := 0; i < 32; i++ {
-		j := <-binaryChan
+		j := <-respondBinaryChan
 		if j == -1 {
 			return nil, ErrInvalidRangeParams
 		}
@@ -159,8 +161,6 @@ func (proof *ComRangeProof) Verify() (bool, error) {
 	Tprime_check := curve.ZeroPoint()
 	for i, Ai := range proof.As {
 		buf.Write(Ai.Marshal())
-		//buf.Write(proof.Cas[i].Marshal())
-		//buf.Write(proof.Cbs[i].Marshal())
 		Tprime_check = curve.Add(Tprime_check, curve.ScalarMul(Ai, powerof2Vec[i]))
 	}
 	// check sum
@@ -218,10 +218,12 @@ func commitBinaryRoutine(b *big.Int, g, h *Point, proof *ComRangeProof, as []*bi
 	Ca, err := pedersen.Commit(a, s, g, h)
 	if err != nil {
 		binaryChan <- -1
+		return
 	}
 	Cb, err := pedersen.Commit(ffmath.Multiply(a, b), t, g, h)
 	if err != nil {
 		binaryChan <- -1
+		return
 	}
 	proof.Cas[i] = Ca
 	proof.Cbs[i] = Cb
@@ -255,7 +257,7 @@ func respondBinary(b, r, a, s, t *big.Int, c *big.Int) (f, za, zb *big.Int, err 
 
 func respondBinaryRoutine(b, r, a, s, t *big.Int, c *big.Int, proof *ComRangeProof, i int) {
 	if b == nil || r == nil || a == nil || s == nil || t == nil || c == nil {
-		binaryChan <- -1
+		respondBinaryChan <- -1
 		return
 	}
 	// f = bc + a
@@ -266,7 +268,7 @@ func respondBinaryRoutine(b, r, a, s, t *big.Int, c *big.Int, proof *ComRangePro
 	proof.Zbs[i] = ffmath.Sub(c, proof.Fs[i])
 	proof.Zbs[i] = ffmath.Multiply(r, proof.Zbs[i])
 	proof.Zbs[i] = ffmath.AddMod(proof.Zbs[i], t, Order)
-	binaryChan <- i
+	respondBinaryChan <- i
 }
 
 /*
@@ -279,6 +281,10 @@ func respondBinaryRoutine(b, r, a, s, t *big.Int, c *big.Int, proof *ComRangePro
 */
 func verifyBinary(A, Ca, Cb, g, h *Point, f, za, zb *big.Int, c *big.Int) (bool, error) {
 	if A == nil || Ca == nil || Cb == nil || f == nil || za == nil || zb == nil || c == nil {
+		fmt.Println("f:", f.String())
+		fmt.Println("za:", za.String())
+		fmt.Println("zb:", zb.String())
+		panic(errInvalidBinaryParams)
 		return false, errInvalidBinaryParams
 	}
 	// A^c Ca == Com(f,za)
@@ -289,11 +295,13 @@ func verifyBinary(A, Ca, Cb, g, h *Point, f, za, zb *big.Int, c *big.Int) (bool,
 	l1 := curve.Add(curve.ScalarMul(A, c), Ca)
 	l1r1 := l1.Equal(r1)
 	if !l1r1 {
+		fmt.Println("l1r1")
 		return false, nil
 	}
 	// A^{c-f} Cb == Com(0,zb)
 	r2 := curve.ScalarMul(h, zb)
-	l2 := curve.Add(curve.ScalarMul(A, ffmath.Sub(c, f)), Cb)
+	cf := ffmath.SubMod(c, f, Order)
+	l2 := curve.Add(curve.ScalarMul(A, cf), Cb)
 	l2r2 := l2.Equal(r2)
 	return l2r2, nil
 }
@@ -353,6 +361,7 @@ func verifyCommitmentSameValue(A_T, A_Tprime, T, Tprime, g, h *Point, zb, zr, zr
 	if !l1.Equal(r1) {
 		return false, nil
 	}
+
 	// g^{zb} h^{zrprime} == A_T' T'^c
 	hzrprime := curve.ScalarMul(h, zrprime)
 	l2 := curve.Add(gzb, hzrprime)
