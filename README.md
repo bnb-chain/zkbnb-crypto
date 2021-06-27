@@ -273,6 +273,77 @@ func TestProveWithdraw(t *testing.T) {
 
 ```
 
+### Privacy Swap Proof
+
+You can try the Zecrey Privacy Swap Proof in `zecrey/twistededwards/tebn254/zecrey/swap.go`.
+
+```go
+func TestProveSwap(t *testing.T) {
+    // create the keypair for the user1
+	sk1, pk1 := twistedElgamal.GenKeyPair()
+    // user1's balance
+	b1 := big.NewInt(8)
+    // random value
+	r1 := curve.RandomValue()
+    // encryption of the balance
+	bEnc, err := twistedElgamal.Enc(b1, r1, pk1)
+	if err != nil {
+		t.Error(err)
+	}
+    // swap from amount
+	bStarFrom := big.NewInt(1)
+    // swap to amount
+	bStarTo := big.NewInt(8)
+    // swap from tokenId
+	fromTokenId := uint32(1)
+    // swap to tokenId
+	toTokenId := uint32(2)
+	fmt.Println("sk1:", sk1.String())
+	fmt.Println("pk1:", curve.ToString(pk1))
+	fmt.Println("benc:", bEnc.String())
+    // create the proof for the user1
+	relationPart1, err := NewSwapRelationPart1(bEnc, pk1, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId)
+	if err != nil {
+		t.Error(err)
+	}
+	swapProofPart1, err := ProveSwapPart1(relationPart1, true)
+	if err != nil {
+		t.Error(err)
+	}
+	part1Res, err := swapProofPart1.Verify()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, part1Res, true, "prove swap part works correctly")
+    // create the keypair for the user2
+	sk2, pk2 := twistedElgamal.GenKeyPair()
+    // user2's balance
+	b2 := big.NewInt(8)
+	r2 := curve.RandomValue()
+	bEnc2, err := twistedElgamal.Enc(b2, r2, pk2)
+	if err != nil {
+		t.Error(err)
+	}
+    // create proof for the user2 based on the user1's proof
+	relationPart2, err := NewSwapRelationPart2(bEnc2, pk2, sk2, fromTokenId, toTokenId, swapProofPart1)
+	if err != nil {
+		t.Error(err)
+	}
+    // create the whole swap proof
+	swapProof, err := ProveSwapPart2(relationPart2, swapProofPart1)
+	if err != nil {
+		t.Error(err)
+	}
+    // verify the swap proof
+	swapProofRes, err := swapProof.Verify()
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, swapProofRes, true, "swap proof works correctly")
+}
+```
+
+
 ## Contributions
 
 This project is licensed under the Apache 2 License - see the [LICENSE](https://github.com/zecrey-labs/zecrey-crypto/LICENSE) file for details
