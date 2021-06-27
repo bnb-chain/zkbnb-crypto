@@ -80,7 +80,7 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println("verify time:", time.Since(elapse))
+	fmt.Println("Verify time:", time.Since(elapse))
 	assert.Equal(t, res, true, "privacy proof works correctly")
 }
 
