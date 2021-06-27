@@ -27,7 +27,8 @@ import (
 /*
 	ProveWithdraw: helper function for the frontend for building withdraw tx
 	@tokenId: token id
-	@accountId: account index
+	@zecreyAddr: zecrey address
+	@l1Addr: layer 1 address
 	@segmentInfo: segmentInfo JSON string
 */
 func ProveWithdraw() js.Func {
@@ -55,7 +56,7 @@ func ProveWithdraw() js.Func {
 			return errStr
 		}
 		// create withdraw relation
-		relation, err := zecrey.NewWithdrawRelation(segment.EncVal, segment.Pk, segment.BStar, segment.Sk, tId)
+		relation, err := zecrey.NewWithdrawRelation(segment.EncVal, segment.Pk, segment.BStar, segment.Sk, tId, l1addr)
 		if err != nil {
 			return ErrInvalidWithdrawRelationParams
 		}
@@ -83,7 +84,7 @@ func ProveWithdraw() js.Func {
 /*
 	ProveTransfer: prove privacy transfer
 	@tokenId: token id
-	@accountIdsStr: string of int array represents account indexes
+	@zecreyAddrsStr: string of int array represents account indexes
 	@segmentInfosStr: string of segmentInfo array, which are used to generate the transfer proof
 */
 func ProveTransfer() js.Func {
@@ -144,4 +145,68 @@ func ProveTransfer() js.Func {
 		return string(txBytes)
 	})
 	return proveTransferFunc
+}
+
+/*
+	ProveSwap: helper function for the frontend for building swap tx
+	@fromTokenId: from token id
+	@toTokenId: to token id
+	@zecreyAddr: zecrey address
+	@segmentInfo: segmentInfo JSON string
+*/
+func ProveSwap() js.Func {
+	proveSwapFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		// length of args should be 3
+		if len(args) != 4 {
+			return ErrInvalidSwapParams
+		}
+		// read fromTokenId
+		fromTokenId := args[0].Int()
+		if fromTokenId <= 0 {
+			return ErrInvalidSwapParams
+		}
+		// transfer fromTokenId to uint32
+		tIdFrom := uint32(fromTokenId)
+		// read toTokenId
+		toTokenId := args[1].Int()
+		if toTokenId <= 0 {
+			return ErrInvalidSwapParams
+		}
+		// transfer fromTokenId to uint32
+		tIdTo := uint32(toTokenId)
+		// layer 2 address
+		l2addr := args[2].String()
+		// read segmentInfo JSON str
+		segmentInfo := args[3].String()
+		// parse segmentInfo
+		segment, errStr := FromSwapSegmentJSON(segmentInfo)
+		if errStr != Success {
+			return errStr
+		}
+		// create withdraw relation
+		relation, err := zecrey.NewSwapRelationPart1(segment.EncVal, segment.Pk, segment.BStarFrom, segment.BStarTo, segment.Sk, tIdFrom, tIdTo)
+		if err != nil {
+			return ErrInvalidSwapRelationParams
+		}
+		// create withdraw proof
+		swapProofPart1, err := zecrey.ProveSwapPart1(relation, true)
+		if err != nil {
+			return ErrProveWithdraw
+		}
+		swapTx := &SwapTransactionAo{
+			TokenIdFrom: tIdFrom,
+			TokenIdTo:   tIdTo,
+			L2Address:   l2addr,
+			BStarFrom:   segment.BStarFrom,
+			BStarTo:     segment.BStarTo,
+			Proof:       swapProofPart1,
+			CreateAt:    time.Now().Unix(),
+		}
+		txBytes, err := json.Marshal(swapTx)
+		if err != nil {
+			return ErrMarshalTx
+		}
+		return string(txBytes)
+	})
+	return proveSwapFunc
 }

@@ -38,5 +38,8 @@ const (
 	ErrInvalidDecParams = "ErrInvalidDecParams"
 	ErrElGamalDec       = "ErrElGamalDec"
 
+	ErrInvalidSwapParams = "ErrInvalidSwapParams"
+	ErrInvalidSwapRelationParams = "ErrInvalidSwapRelationParams"
+
 	Success = "success"
 )
