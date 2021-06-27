@@ -36,7 +36,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 	if relation == nil || relation.Statements == nil {
 		return nil, ErrInvalidParams
 	}
-	// verify \sum b_i^{\Delta} = 0
+	// Verify \sum b_i^{\Delta} = 0
 	sum := big.NewInt(0)
 	for _, statement := range relation.Statements {
 		sum = ffmath.Add(sum, statement.BDelta)
@@ -112,7 +112,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			//commitEntities[i].alpha_rstarSubrbar, commitEntities[i].alpha_rbar, commitEntities[i].alpha_bprime,
 			//	commitEntities[i].alpha_sk, commitEntities[i].alpha_skInv,
 			//	commitEntities[i].A_YDivT, commitEntities[i].A_T,
-			//	commitEntities[i].A_pk, commitEntities[i].A_TDivCPrime = commitOwnership(G, H, curve.Neg(curve.Add(C.CL, CDelta.CL))) // commit to tokenId
+			//	commitEntities[i].A_pk, commitEntities[i].A_TDivCPrime = commitOwnership(G, H, curve.Neg(curve.Add(C.CL, CStar.CL))) // commit to tokenId
 			go commitOwnershipRoutine(G, H, curve.Neg(curve.Add(C.CL, CDelta.CL)), commitEntities, i)
 		}
 		// generate sub proofs
@@ -271,12 +271,12 @@ func (proof *PTransferProof) Verify() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	// verify c
+	// Verify c
 	cCheck := ffmath.Xor(proof.C1, proof.C2)
 	if !ffmath.Equal(c, cCheck) {
 		return false, ErrInvalidChallenge
 	}
-	// verify Pt proof
+	// Verify Pt proof
 	if len(proof.Pts) != len(proof.A_Pts) || len(proof.Pts) != len(proof.Z_tsks) {
 		return false, ErrInvalidParams
 	}
@@ -289,15 +289,15 @@ func (proof *PTransferProof) Verify() (bool, error) {
 	}
 	g := proof.G
 	h := proof.H
-	// verify sub proofs
+	// Verify sub proofs
 	lSum := curve.ZeroPoint()
 	for _, subProof := range proof.SubProofs {
-		// verify range proof
+		// Verify range proof
 		rangeRes, err := subProof.CRangeProof.Verify()
 		if err != nil || !rangeRes {
 			return false, err
 		}
-		// verify valid enc
+		// Verify valid enc
 		validEncRes, err := verifyValidEnc(
 			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, g, h, subProof.CDelta.CR, subProof.A_CRDelta,
 			c,
@@ -307,7 +307,7 @@ func (proof *PTransferProof) Verify() (bool, error) {
 			return false, err
 		}
 		YDivCRDelta := curve.Add(subProof.Y, curve.Neg(subProof.CDelta.CR))
-		// verify valid Delta
+		// Verify valid Delta
 		validDeltaRes, err := verifyValidDelta(
 			g, YDivCRDelta, subProof.A_YDivCRDelta,
 			proof.C1,
@@ -317,7 +317,7 @@ func (proof *PTransferProof) Verify() (bool, error) {
 			return false, err
 		}
 		YDivT := curve.Add(subProof.Y, curve.Neg(subProof.T))
-		// verify ownership
+		// Verify ownership
 		ownershipRes, err := verifyOwnership(
 			g, YDivT, subProof.A_YDivT, h, subProof.T, subProof.A_T, subProof.Pk, subProof.A_pk,
 			subProof.CLprimeInv, subProof.TCRprimeInv, subProof.A_TDivCPrime,
@@ -332,7 +332,7 @@ func (proof *PTransferProof) Verify() (bool, error) {
 		lSum = curve.Add(lSum, curve.ScalarMul(g, subProof.Z_bDelta))
 	}
 
-	// verify sum proof
+	// Verify sum proof
 	rSum := proof.A_sum
 	return lSum.Equal(rSum), nil
 }
@@ -454,26 +454,26 @@ func verifyOwnership(
 	c *big.Int,
 	z_rstarSubrbar, z_rbar, z_bprime, z_sk, z_skInv *big.Int,
 ) (bool, error) {
-	// verify Y/T = g^{r^{\star} - \bar{r}}
+	// Verify Y/T = g^{r^{\star} - \bar{r}}
 	l1 := curve.ScalarMul(g, z_rstarSubrbar)
 	r1 := curve.Add(A_YDivT, curve.ScalarMul(YDivT, c))
 	if !l1.Equal(r1) {
 		return false, nil
 	}
-	// verify T = g^{\bar{r}} h^{b'}
+	// Verify T = g^{\bar{r}} h^{b'}
 	gzrbar := curve.ScalarMul(g, z_rbar)
 	l2 := curve.Add(gzrbar, curve.ScalarMul(h, z_bprime))
 	r2 := curve.Add(A_T, curve.ScalarMul(T, c))
 	if !l2.Equal(r2) {
 		return false, nil
 	}
-	// verify pk = g^{sk}
+	// Verify pk = g^{sk}
 	l3 := curve.ScalarMul(g, z_sk)
 	r3 := curve.Add(A_pk, curve.ScalarMul(pk, c))
 	if !l3.Equal(r3) {
 		return false, nil
 	}
-	// verify T(C'_R)^{-1} = (C'_L)^{-sk^{-1}} g^{\bar{r}}
+	// Verify T(C'_R)^{-1} = (C'_L)^{-sk^{-1}} g^{\bar{r}}
 	l4 := curve.Add(gzrbar, curve.ScalarMul(CLprimeInv, z_skInv))
 	r4 := curve.Add(A_TCRprimeInv, curve.ScalarMul(TCRprimeInv, c))
 	return l4.Equal(r4), nil

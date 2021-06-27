@@ -30,68 +30,65 @@ import (
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
-func TestVerifyPTransferProofCircuit(t *testing.T) {
+func TestSwapProofCircuit_Define(t *testing.T) {
 	assert := groth16.NewAssert(t)
 
-	var circuit, witness PTransferProofConstraints
+	var circuit, witness SwapProofConstraints
 	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for i := 0; i < 100; i++ {
-		// generate transfer proof
+		// generate swap proof
 		sk1, pk1 := twistedElgamal.GenKeyPair()
 		b1 := big.NewInt(8)
 		r1 := curve.RandomValue()
-		_, pk2 := twistedElgamal.GenKeyPair()
-		b2 := big.NewInt(2)
+		bEnc, err := twistedElgamal.Enc(b1, r1, pk1)
+		if err != nil {
+			t.Error(err)
+		}
+		bStarFrom := big.NewInt(1)
+		bStarTo := big.NewInt(8)
+		fromTokenId := uint32(1)
+		toTokenId := uint32(2)
+		relationPart1, err := zecrey.NewSwapRelationPart1(bEnc, pk1, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId)
+		if err != nil {
+			t.Error(err)
+		}
+		swapProofPart1, err := zecrey.ProveSwapPart1(relationPart1, true)
+		if err != nil {
+			t.Error(err)
+		}
+		part1Res, err := swapProofPart1.Verify()
+		if err != nil {
+			t.Error(err)
+		}
+		if !part1Res {
+			t.Error(err)
+		}
+		sk2, pk2 := twistedElgamal.GenKeyPair()
+		b2 := big.NewInt(8)
 		r2 := curve.RandomValue()
-		_, pk3 := twistedElgamal.GenKeyPair()
-		b3 := big.NewInt(3)
-		r3 := curve.RandomValue()
-		//_, pk4 := twistedElgamal.GenKeyPair()
-		//b4 := big.NewInt(4)
-		//r4 := curve.RandomValue()
-		b1Enc, err := twistedElgamal.Enc(b1, r1, pk1)
-		b2Enc, err := twistedElgamal.Enc(b2, r2, pk2)
-		b3Enc, err := twistedElgamal.Enc(b3, r3, pk3)
-		//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
+		bEnc2, err := twistedElgamal.Enc(b2, r2, pk2)
+		if err != nil {
+			t.Error(err)
+		}
+		relationPart2, err := zecrey.NewSwapRelationPart2(bEnc2, pk2, sk2, fromTokenId, toTokenId, swapProofPart1)
+		if err != nil {
+			t.Error(err)
+		}
+		swapProof, err := zecrey.ProveSwapPart2(relationPart2, swapProofPart1)
+		if err != nil {
+			t.Error(err)
+		}
+		witness, err = setSwapProofWitness(swapProof)
 		if err != nil {
 			t.Fatal(err)
 		}
-		relation, err := zecrey.NewPTransferProofRelation(1)
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = relation.AddStatement(b2Enc, pk2, big.NewInt(1), nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = relation.AddStatement(b3Enc, pk3, big.NewInt(3), nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		//err = relation.AddStatement(b4Enc, pk4, nil, big.NewInt(1), nil)
-		//if err != nil {
-		//	panic(err)
-		//}
-		transferProof, err := zecrey.ProvePTransfer(relation)
-		if err != nil {
-			t.Fatal(err)
-		}
-		witness, err = setPTransferProofWitness(transferProof)
-		if err != nil {
-			t.Fatal(err)
-		}
-		fmt.Println("constraints:", r1cs.GetNbConstraints())
 
-		//assert.ProverSucceeded(r1cs, &witness)
+		fmt.Println("constraints:", r1cs.GetNbConstraints())
 
 		assert.SolvingSucceeded(r1cs, &witness)
 	}
-
 }

@@ -33,13 +33,16 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 		return nil, ErrInvalidParams
 	}
 	alpha_rbar, alpha_sk, alpha_skInv,
-	A_pk, A_TDivCRprime := commitBalance(relation.G, relation.H, relation.CLprimeInv)
+	A_pk, A_TDivCRprime := commitBalance(relation.G, relation.CLprimeInv)
 	// write common inputs into buf
 	// then generate the challenge c
 	var buf bytes.Buffer
 	buf.Write(relation.G.Marshal())
 	buf.Write(relation.H.Marshal())
 	buf.Write(relation.Ht.Marshal())
+	buf.Write(relation.Pt.Marshal())
+	buf.Write(relation.Ha.Marshal())
+	buf.Write(relation.Pa.Marshal())
 	buf.Write(relation.C.CL.Marshal())
 	buf.Write(relation.C.CR.Marshal())
 	buf.Write(relation.CRStar.Marshal())
@@ -51,11 +54,11 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 	if err != nil {
 		return nil, err
 	}
-	//z_r := respondHalfEnc(relation.Rstar, alpha_r, c)
+	//z_r := respondHalfEnc(relation.RStar, alpha_r, c)
 	z_rbar, z_sk, z_skInv := respondBalance(relation.RBar, relation.Sk, alpha_rbar, alpha_sk, alpha_skInv, c)
 	A_Pt, _ := provePt(alpha_sk, relation.Sk, relation.Ht, c)
+	A_Pa, _ := provePt(alpha_sk, relation.Sk, relation.Ha, c)
 	// range proof
-	// set up prove params
 	// make range proofs
 	rangeProof, err := commitRange.Prove(relation.BPrime, relation.RBar, relation.T, H, G, N)
 	if err != nil {
@@ -67,6 +70,7 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 		A_pk:          A_pk,
 		A_TDivCRprime: A_TDivCRprime,
 		A_Pt:          A_Pt,
+		A_Pa:          A_Pa,
 		// response
 		Z_rbar:  z_rbar,
 		Z_sk:    z_sk,
@@ -79,6 +83,8 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 		H:           relation.H,
 		Ht:          relation.Ht,
 		Pt:          relation.Pt,
+		Ha:          relation.Ha,
+		Pa:          relation.Pa,
 		TDivCRprime: relation.TDivCRprime,
 		CLprimeInv:  relation.CLprimeInv,
 		C:           relation.C,
@@ -94,7 +100,7 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	if proof.BStar.Cmp(Zero) >= 0 {
 		return false, ErrInvalidBStar
 	}
-	// verify range proof first
+	// Verify range proof first
 	rangeRes, err := proof.CRangeProof.Verify()
 	if err != nil || !rangeRes {
 		return false, err
@@ -104,6 +110,9 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	buf.Write(proof.G.Marshal())
 	buf.Write(proof.H.Marshal())
 	buf.Write(proof.Ht.Marshal())
+	buf.Write(proof.Pt.Marshal())
+	buf.Write(proof.Ha.Marshal())
+	buf.Write(proof.Pa.Marshal())
 	buf.Write(proof.C.CL.Marshal())
 	buf.Write(proof.C.CR.Marshal())
 	buf.Write(proof.CRStar.Marshal())
@@ -115,16 +124,20 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	// verify challenge
+	// Verify challenge
 	if !ffmath.Equal(c, proof.Challenge) {
 		return false, ErrInvalidChallenge
 	}
-	// verify Ht
+	// Verify Ht
 	ptRes, err := verifyPt(proof.Ht, proof.Pt, proof.A_Pt, c, proof.Z_sk)
 	if err != nil || !ptRes {
 		return false, err
 	}
-	// verify balance
+	paRes, err := verifyPt(proof.Ha, proof.Pa, proof.A_Pa, c, proof.Z_sk)
+	if err != nil || !paRes {
+		return false, err
+	}
+	// Verify balance
 	balanceRes, err := verifyBalance(proof.G, proof.Pk, proof.A_pk, proof.CLprimeInv, proof.TDivCRprime, proof.A_TDivCRprime, c, proof.Z_sk, proof.Z_skInv, proof.Z_rbar)
 	if err != nil {
 		return false, err
@@ -132,7 +145,7 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	return balanceRes, nil
 }
 
-func commitBalance(g, h, CLprimeInv *Point) (
+func commitBalance(g, CLprimeInv *Point) (
 	alpha_rbar, alpha_sk, alpha_skInv *big.Int,
 	A_pk, A_TDivCRprime *Point,
 ) {
@@ -165,13 +178,13 @@ func verifyBalance(
 		z_sk == nil || z_skInv == nil || z_rbar == nil {
 		return false, ErrInvalidParams
 	}
-	// verify pk = g^{sk}
+	// Verify pk = g^{sk}
 	l1 := curve.ScalarMul(g, z_sk)
 	r1 := curve.Add(A_pk, curve.ScalarMul(pk, c))
 	if !l1.Equal(r1) {
 		return false, nil
 	}
-	// verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
+	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
 	l2 := curve.Add(curve.ScalarMul(g, z_rbar), curve.ScalarMul(CLprimeInv, z_skInv))
 	r2 := curve.Add(A_TDivCRprime, curve.ScalarMul(TDivCRprime, c))
 	return l2.Equal(r2), nil
@@ -184,7 +197,7 @@ func TryOnceWithdraw() WithdrawProof {
 	bEnc, _ := twistedElgamal.Enc(b, r, pk)
 	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
 	bStar := big.NewInt(-2)
-	relation, _ := NewWithdrawRelation(bEnc, pk, bStar, sk, 1)
+	relation, _ := NewWithdrawRelation(bEnc, pk, bStar, sk, 1, "0x99AC8881834797ebC32f185ee27c2e96842e1a47")
 	withdrawProof, _ := ProveWithdraw(relation)
 	return *withdrawProof
 }

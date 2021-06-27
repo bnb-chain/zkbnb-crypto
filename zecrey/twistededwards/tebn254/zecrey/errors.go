@@ -21,8 +21,11 @@ import "errors"
 
 var (
 	ErrInvalidParams         = errors.New("err: invalid params")
+	ErrInvalidSwapProof      = errors.New("err: invalid swap proof")
+	ErrInvalidEncryption     = errors.New("err: invalid encryption")
 	ErrStatements            = errors.New("err: invalid statements")
-	ErrNegativeBStar         = errors.New("err: bstar should be positive")
+	ErrPostiveBStar          = errors.New("err: bstar should be positive")
+	ErrNegativeBStar         = errors.New("err: bstar should be negative")
 	ErrInvalidChallenge      = errors.New("err: invalid challenge")
 	ErrInvalidBPParams       = errors.New("err: invalid bulletproof prove params")
 	ErrInconsistentPublicKey = errors.New("err: inconsistent public key")
