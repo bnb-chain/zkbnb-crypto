@@ -20,7 +20,6 @@ package std
 import (
 	"bytes"
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -42,10 +41,11 @@ type ComRangeProofConstraints struct {
 	T, Tprime Point
 	As        [32]Point
 	C         Variable
+	IsEnabled Variable
 }
 
 // define for range proof test
-func (circuit *ComRangeProofConstraints) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *ComRangeProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
 	if err != nil {
@@ -63,7 +63,7 @@ func (circuit *ComRangeProofConstraints) Define(curveID ecc.ID, cs *frontend.Con
 	@params: params for the curve tebn254
 */
 func verifyComRangeProof(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	proof ComRangeProofConstraints,
 	params twistededwards.EdCurve,
 ) {
@@ -79,7 +79,7 @@ func verifyComRangeProof(
 	for i, Ai := range proof.As {
 		// verify binary proof
 		verifyBinary(cs, Ai, proof.Cas[i], proof.Cbs[i],
-			proof.G, proof.Fs[i], proof.Zas[i], proof.Zbs[i], proof.Cfs[i], proof.C, params)
+			proof.G, proof.Fs[i], proof.Zas[i], proof.Zbs[i], proof.Cfs[i], proof.C, proof.IsEnabled, params)
 		// compute AiMul2i = A_i^{2^i}
 		AiMul2i.ScalarMulNonFixedBase(cs, &Ai, current, params)
 		// add to T'
@@ -88,12 +88,11 @@ func verifyComRangeProof(
 		current = cs.Mul(current, two)
 	}
 	// T' should be correct
-	cs.AssertIsEqual(proof.Tprime.X, Tprime.X)
-	cs.AssertIsEqual(proof.Tprime.Y, Tprime.Y)
+	IsPointEqual(cs, proof.IsEnabled, proof.Tprime, Tprime)
 
 	// verify the proof: commitment for the same value
 	verifyCommitmentSameValue(cs, proof.A_T, proof.A_Tprime, proof.T,
-		proof.Tprime, proof.G, proof.Zb, proof.Zr, proof.Zrprime, proof.C, params)
+		proof.Tprime, proof.G, proof.Zb, proof.Zr, proof.Zrprime, proof.C, proof.IsEnabled, params)
 }
 
 /*
@@ -106,10 +105,11 @@ func verifyComRangeProof(
 	@params: params for the curve tebn254
 */
 func verifyBinary(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	A, Ca, Cb, g Point,
 	f, za, zb, cf Variable,
 	c Variable,
+	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
 	var l1, hza, r1 Point
@@ -119,16 +119,14 @@ func verifyBinary(
 	r1.ScalarMulNonFixedBase(cs, &g, f, params)
 	hza.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, za, params)
 	r1.AddGeneric(cs, &r1, &hza, params)
-	cs.AssertIsEqual(l1.X, r1.X)
-	cs.AssertIsEqual(l1.Y, r1.Y)
+	IsPointEqual(cs, isEnabled, l1, r1)
 
 	var Acf, l2, r2 Point
 	// A^{c-f} Cb == Com(0,zb)
 	Acf.ScalarMulNonFixedBase(cs, &A, cf, params)
 	l2.AddGeneric(cs, &Acf, &Cb, params)
 	r2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zb, params)
-	cs.AssertIsEqual(l2.X, r2.X)
-	cs.AssertIsEqual(l2.Y, r2.Y)
+	IsPointEqual(cs, isEnabled, l2, r2)
 }
 
 /*
@@ -141,10 +139,11 @@ func verifyBinary(
 	@params: params for the curve tebn254
 */
 func verifyCommitmentSameValue(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	A_T, A_Tprime, T, Tprime, g Point,
 	zb, zr, zrprime Variable,
 	c Variable,
+	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
 	var gzb, hzr, l1, Tc, r1 Point
@@ -154,8 +153,7 @@ func verifyCommitmentSameValue(
 	l1.AddGeneric(cs, &gzb, &hzr, params)
 	Tc.ScalarMulNonFixedBase(cs, &T, c, params)
 	r1.AddGeneric(cs, &A_T, &Tc, params)
-	cs.AssertIsEqual(l1.X, r1.X)
-	cs.AssertIsEqual(l1.Y, r1.Y)
+	IsPointEqual(cs, isEnabled, l1, r1)
 
 	var l2, Tprimec, r2 Point
 	// g^{zb} h^{zrprime} == A_T' T'^c
@@ -163,15 +161,14 @@ func verifyCommitmentSameValue(
 	l2.AddGeneric(cs, &gzb, &l2, params)
 	Tprimec.ScalarMulNonFixedBase(cs, &Tprime, c, params)
 	r2.AddGeneric(cs, &A_Tprime, &Tprimec, params)
-	cs.AssertIsEqual(l2.X, r2.X)
-	cs.AssertIsEqual(l2.Y, r2.Y)
+	IsPointEqual(cs, isEnabled, l2, r2)
 }
 
 /*
 	setComRangeProofWitness set witness for the range proof
 	@proof: original range proofs
 */
-func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRangeProofConstraints, err error) {
+func setComRangeProofWitness(proof *commitRange.ComRangeProof, isEnabled bool) (witness ComRangeProofConstraints, err error) {
 	if proof == nil {
 		return witness, err
 	}
@@ -248,6 +245,11 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof) (witness ComRange
 	witness.C.Assign(c.String())
 	for i := 0; i < 32; i++ {
 		witness.Cfs[i].Assign(ffmath.SubMod(c, proof.Fs[i], curve.Order))
+	}
+	if isEnabled {
+		witness.IsEnabled.Assign(1)
+	} else {
+		witness.IsEnabled.Assign(0)
 	}
 	return witness, nil
 }

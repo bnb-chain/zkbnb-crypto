@@ -18,6 +18,7 @@
 package std
 
 import (
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
@@ -34,6 +35,7 @@ func TestNeg(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println(r1cs.GetNbConstraints())
 	r := curve.RandomValue()
 	P := curve.ScalarBaseMul(r)
 	PNeg := curve.Neg(P)

@@ -20,7 +20,6 @@ package std
 import (
 	"bytes"
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"zecrey-crypto/ffmath"
 	"zecrey-crypto/hash/bn254/zmimc"
@@ -40,9 +39,10 @@ type PTransferProofConstraints struct {
 	// Pt = (Ht)^{sk_i}
 	Pt Point
 	// challenges
-	C      Variable
-	C1, C2 Variable
-	H, Ht  Point
+	C         Variable
+	C1, C2    Variable
+	H, Ht     Point
+	IsEnabled Variable
 }
 
 /*
@@ -81,7 +81,7 @@ type ElGamalEncConstraints struct {
 }
 
 // define for testing transfer proof
-func (circuit *PTransferProofConstraints) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *PTransferProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -101,7 +101,7 @@ func (circuit *PTransferProofConstraints) Define(curveID ecc.ID, cs *frontend.Co
 	@params: params for the curve tebn254
 */
 func verifyPTransferProof(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	proof PTransferProofConstraints,
 	params twistededwards.EdCurve,
 ) {
@@ -111,8 +111,7 @@ func verifyPTransferProof(
 	r1.ScalarMulNonFixedBase(cs, &proof.Pt, proof.C, params)
 	r1.AddGeneric(cs, &proof.A_Pt, &r1, params)
 
-	cs.AssertIsEqual(l1.X, r1.X)
-	cs.AssertIsEqual(l1.Y, r1.Y)
+	IsPointEqual(cs, proof.IsEnabled, l1, r1)
 
 	lSum := Point{
 		X: cs.Constant("0"),
@@ -130,6 +129,7 @@ func verifyPTransferProof(
 			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, proof.H, subProof.CDelta.CR, subProof.A_CRDelta,
 			proof.C,
 			subProof.Z_r, subProof.Z_bDelta,
+			proof.IsEnabled,
 			params,
 		)
 		//CRNeg := proof.G.ScalarMulNonFixedBase(cs, &subProof.CStar.CR, inv, params)
@@ -142,6 +142,7 @@ func verifyPTransferProof(
 			YDivCRDelta, subProof.A_YDivCRDelta,
 			proof.C1,
 			subProof.Z_rstarSubr,
+			proof.IsEnabled,
 			params,
 		)
 
@@ -153,13 +154,13 @@ func verifyPTransferProof(
 			YDivT, subProof.A_YDivT, proof.H, subProof.T, subProof.A_T, subProof.Pk, subProof.A_pk, subProof.CLprimeInv, subProof.TCRprimeInv, subProof.A_TDivCPrime,
 			proof.C2,
 			subProof.Z_rstarSubrbar, subProof.Z_rbar, subProof.Z_bprime, subProof.Z_sk, subProof.Z_skInv,
+			proof.IsEnabled,
 			params,
 		)
 		t.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.Z_bDelta, params)
 		lSum.AddGeneric(cs, &lSum, &t, params)
 	}
-	cs.AssertIsEqual(lSum.X, proof.A_sum.X)
-	cs.AssertIsEqual(lSum.Y, proof.A_sum.Y)
+	IsPointEqual(cs, proof.IsEnabled, lSum, proof.A_sum)
 }
 
 /*
@@ -174,10 +175,11 @@ func verifyPTransferProof(
 	@params: params for the curve tebn254
 */
 func verifyValidEnc(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	pk, C_LDelta, A_CLDelta, h, C_RDelta, A_CRDelta Point,
 	c Variable,
 	z_r, z_bDelta Variable,
+	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
 	// pk^{z_r} == A_{C_L^{\Delta}} (C_L^{\Delta})^c
@@ -185,8 +187,7 @@ func verifyValidEnc(
 	l1.ScalarMulNonFixedBase(cs, &pk, z_r, params)
 	r1.ScalarMulNonFixedBase(cs, &C_LDelta, c, params)
 	r1.AddGeneric(cs, &A_CLDelta, &r1, params)
-	cs.AssertIsEqual(l1.X, r1.X)
-	cs.AssertIsEqual(l1.Y, r1.Y)
+	IsPointEqual(cs, isEnabled, l1, r1)
 
 	// g^{z_r} h^{z_b^{\Delta}} == A_{C_R^{\Delta}} (C_R^{\Delta})^c
 	var gzr, l2, r2 Point
@@ -195,8 +196,7 @@ func verifyValidEnc(
 	l2.AddGeneric(cs, &gzr, &l2, params)
 	r2.ScalarMulNonFixedBase(cs, &C_RDelta, c, params)
 	r2.AddGeneric(cs, &A_CRDelta, &r2, params)
-	cs.AssertIsEqual(l2.X, r2.X)
-	cs.AssertIsEqual(l2.Y, r2.Y)
+	IsPointEqual(cs, isEnabled, l2, r2)
 }
 
 /*
@@ -209,10 +209,11 @@ func verifyValidEnc(
 	@params: params for the curve tebn254
 */
 func verifyValidDelta(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	YDivCRDelta, A_YDivCRDelta Point,
 	c Variable,
 	z_rstarSubr Variable,
+	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
 	// g^{z_r^{\star}} == A_{Y/(C_R^{\Delta})} [Y/(C_R^{\Delta})]^c
@@ -220,9 +221,7 @@ func verifyValidDelta(
 	l.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, z_rstarSubr, params)
 	r.ScalarMulNonFixedBase(cs, &YDivCRDelta, c, params)
 	r.AddGeneric(cs, &A_YDivCRDelta, &r, params)
-
-	cs.AssertIsEqual(l.X, r.X)
-	cs.AssertIsEqual(l.Y, r.Y)
+	IsPointEqual(cs, isEnabled, l, r)
 }
 
 /*
@@ -236,10 +235,11 @@ func verifyValidDelta(
 	@params: params for the curve tebn254
 */
 func verifyOwnership(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	YDivT, A_YDivT, h, T, A_T, pk, A_pk, CLprimeInv, TCRprimeInv, A_TCRprimeInv Point,
 	c Variable,
 	z_rstarSubrbar, z_rbar, z_bprime, z_sk, z_skInv Variable,
+	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
 	var l1, r1 Point
@@ -247,8 +247,7 @@ func verifyOwnership(
 	l1.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, z_rstarSubrbar, params)
 	r1.ScalarMulNonFixedBase(cs, &YDivT, c, params)
 	r1.AddGeneric(cs, &A_YDivT, &r1, params)
-	cs.AssertIsEqual(l1.X, r1.X)
-	cs.AssertIsEqual(l1.Y, r1.Y)
+	IsPointEqual(cs, isEnabled, l1, r1)
 	var gzrbar, l2, r2 Point
 	// verify T = g^{\bar{r}} Waste^{b'}
 	gzrbar.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, z_rbar, params)
@@ -256,16 +255,14 @@ func verifyOwnership(
 	l2.AddGeneric(cs, &gzrbar, &l2, params)
 	r2.ScalarMulNonFixedBase(cs, &T, c, params)
 	r2.AddGeneric(cs, &A_T, &r2, params)
-	cs.AssertIsEqual(l2.X, r2.X)
-	cs.AssertIsEqual(l2.Y, r2.Y)
+	IsPointEqual(cs, isEnabled, l2, r2)
 
 	var l3, r3 Point
 	// verify Pk = g^{sk}
 	l3.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, z_sk, params)
 	r3.ScalarMulNonFixedBase(cs, &pk, c, params)
 	r3.AddGeneric(cs, &A_pk, &r3, params)
-	cs.AssertIsEqual(l3.X, r3.X)
-	cs.AssertIsEqual(l3.Y, r3.Y)
+	IsPointEqual(cs, isEnabled, l3, r3)
 
 	var l4, r4 Point
 	// verify T(C'_R)^{-1} = (C'_L)^{-sk^{-1}} g^{\bar{r}}
@@ -273,8 +270,7 @@ func verifyOwnership(
 	l4.AddGeneric(cs, &gzrbar, &l4, params)
 	r4.ScalarMulNonFixedBase(cs, &TCRprimeInv, c, params)
 	r4.AddGeneric(cs, &A_TCRprimeInv, &r4, params)
-	cs.AssertIsEqual(l4.X, r4.X)
-	cs.AssertIsEqual(l4.Y, r4.Y)
+	IsPointEqual(cs, isEnabled, l4, r4)
 }
 
 /*
@@ -310,7 +306,7 @@ func setElGamalEncWitness(encVal *zecrey.ElGamalEnc) (witness ElGamalEncConstrai
 /*
 	setPointWitness set witness for the privacy transfer proof
 */
-func setPTransferProofWitness(proof *zecrey.PTransferProof) (witness PTransferProofConstraints, err error) {
+func setPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (witness PTransferProofConstraints, err error) {
 	if proof == nil || len(proof.Pts) != 1 || len(proof.Z_tsks) != 1 || len(proof.A_Pts) != 1 {
 		return witness, ErrInvalidSetParams
 	}
@@ -439,7 +435,7 @@ func setPTransferProofWitness(proof *zecrey.PTransferProof) (witness PTransferPr
 		// z_{sk}
 		subProofWitness.Z_sk.Assign(subProof.Z_sk)
 		// range proof
-		subProofWitness.CRangeProof, err = setComRangeProofWitness(subProof.CRangeProof)
+		subProofWitness.CRangeProof, err = setComRangeProofWitness(subProof.CRangeProof, true)
 		if err != nil {
 			return witness, err
 		}
@@ -479,6 +475,11 @@ func setPTransferProofWitness(proof *zecrey.PTransferProof) (witness PTransferPr
 		}
 		// set into witness
 		witness.SubProofs[i] = subProofWitness
+	}
+	if isEnabled {
+		witness.IsEnabled.Assign(1)
+	} else {
+		witness.IsEnabled.Assign(0)
 	}
 	return witness, nil
 }

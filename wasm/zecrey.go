@@ -27,7 +27,7 @@ import (
 /*
 	ProveWithdraw: helper function for the frontend for building withdraw tx
 	@tokenId: token id
-	@zecreyAddr: zecrey address
+	@zecreyAddr: transactions address
 	@l1Addr: layer 1 address
 	@segmentInfo: segmentInfo JSON string
 */
@@ -151,7 +151,7 @@ func ProveTransfer() js.Func {
 	ProveSwap: helper function for the frontend for building swap tx
 	@fromTokenId: from token id
 	@toTokenId: to token id
-	@zecreyAddr: zecrey address
+	@zecreyAddr: transactions address
 	@segmentInfo: segmentInfo JSON string
 */
 func ProveSwap() js.Func {

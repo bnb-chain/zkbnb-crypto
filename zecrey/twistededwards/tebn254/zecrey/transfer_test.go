@@ -49,15 +49,15 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	err = relation.AddStatement(b2Enc, pk2, big.NewInt(2), nil)
+	if err != nil {
+		t.Error(err)
+	}
 	err = relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b2Enc, pk2, big.NewInt(1), nil)
-	if err != nil {
-		t.Error(err)
-	}
-	err = relation.AddStatement(b3Enc, pk3, big.NewInt(3), nil)
+	err = relation.AddStatement(b3Enc, pk3, big.NewInt(2), nil)
 	if err != nil {
 		t.Error(err)
 	}

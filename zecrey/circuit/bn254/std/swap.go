@@ -20,7 +20,6 @@ package std
 import (
 	"bytes"
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"math/big"
 	"zecrey-crypto/ffmath"
@@ -52,10 +51,11 @@ type SwapProofPartConstraints struct {
 	C                                        ElGamalEncConstraints
 	H, Ht1, Ht2, TDivCRprime, CLprimeInv, Pk Point
 	Challenge                                Variable
+	IsEnabled                                Variable
 }
 
 // define tests for verifying the swap proof
-func (circuit *SwapProofConstraints) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *SwapProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -75,7 +75,7 @@ func (circuit *SwapProofConstraints) Define(curveID ecc.ID, cs *frontend.Constra
 	@params: params for the curve tebn254
 */
 func verifySwapProof(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	proof SwapProofConstraints,
 	params twistededwards.EdCurve,
 ) {
@@ -87,7 +87,7 @@ func verifySwapProof(
 }
 
 func verifySwapProofPart1(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	proof SwapProofPartConstraints,
 	params twistededwards.EdCurve,
 ) {
@@ -95,18 +95,18 @@ func verifySwapProofPart1(
 	verifyComRangeProof(cs, proof.RangeProof, params)
 
 	// verify Ht
-	verifyPt(cs, proof.Ht1, proof.Pt1, proof.A_Pt1, proof.Challenge, proof.Z_sk, params)
-	verifyPt(cs, proof.Ht2, proof.Pt2, proof.A_Pt2, proof.Challenge, proof.Z_sk, params)
+	verifyPt(cs, proof.Ht1, proof.Pt1, proof.A_Pt1, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
+	verifyPt(cs, proof.Ht2, proof.Pt2, proof.A_Pt2, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	// verify correct enc
 	verifyCorrectEnc(cs, proof.H, proof.Pk, proof.CStar, proof.BStar1, proof.RStar, params)
 	// verify balance
 	verifyBalance(cs, proof.Pk, proof.A_pk, proof.CLprimeInv,
 		proof.TDivCRprime, proof.A_TDivCRprime, proof.Challenge,
-		proof.Z_sk, proof.Z_skInv, proof.Z_rbar, params)
+		proof.Z_sk, proof.Z_skInv, proof.Z_rbar, proof.IsEnabled, params)
 }
 
 func verifySwapProofPart2(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	proof SwapProofPartConstraints,
 	params twistededwards.EdCurve,
 ) {
@@ -114,14 +114,14 @@ func verifySwapProofPart2(
 	verifyComRangeProof(cs, proof.RangeProof, params)
 
 	// verify Ht
-	verifyPt(cs, proof.Ht1, proof.Pt1, proof.A_Pt1, proof.Challenge, proof.Z_sk, params)
-	verifyPt(cs, proof.Ht2, proof.Pt2, proof.A_Pt2, proof.Challenge, proof.Z_sk, params)
+	verifyPt(cs, proof.Ht1, proof.Pt1, proof.A_Pt1, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
+	verifyPt(cs, proof.Ht2, proof.Pt2, proof.A_Pt2, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	// verify half enc
 	verifyCorrectEnc(cs, proof.H, proof.Pk, proof.CStar, proof.BStar2, proof.RStar, params)
 	// verify balance
 	verifyBalance(cs, proof.Pk, proof.A_pk, proof.CLprimeInv,
 		proof.TDivCRprime, proof.A_TDivCRprime, proof.Challenge,
-		proof.Z_sk, proof.Z_skInv, proof.Z_rbar, params)
+		proof.Z_sk, proof.Z_skInv, proof.Z_rbar, proof.IsEnabled, params)
 }
 
 /*
@@ -133,7 +133,7 @@ func verifySwapProofPart2(
 	@params: params for the curve tebn254
 */
 func verifyCorrectEnc(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	h, pk Point,
 	CStar ElGamalEncConstraints,
 	bStar Variable,
@@ -154,12 +154,12 @@ func verifyCorrectEnc(
 	cs.AssertIsEqual(CR.Y, CStar.CR.Y)
 }
 
-func setSwapProofWitness(proof *zecrey.SwapProof) (witness SwapProofConstraints, err error) {
-	part1, err := setSwapProofPartWitness(proof.ProofPart1)
+func setSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapProofConstraints, err error) {
+	part1, err := setSwapProofPartWitness(proof.ProofPart1, isEnabled)
 	if err != nil {
 		return witness, err
 	}
-	part2, err := setSwapProofPartWitness(proof.ProofPart2)
+	part2, err := setSwapProofPartWitness(proof.ProofPart2, isEnabled)
 	if err != nil {
 		return witness, err
 	}
@@ -169,7 +169,7 @@ func setSwapProofWitness(proof *zecrey.SwapProof) (witness SwapProofConstraints,
 }
 
 // set the witness for withdraw proof
-func setSwapProofPartWitness(proof *zecrey.SwapProofPart) (witness SwapProofPartConstraints, err error) {
+func setSwapProofPartWitness(proof *zecrey.SwapProofPart, isEnabled bool) (witness SwapProofPartConstraints, err error) {
 	if proof == nil {
 		return witness, err
 	}
@@ -247,7 +247,7 @@ func setSwapProofPartWitness(proof *zecrey.SwapProofPart) (witness SwapProofPart
 	witness.Z_sk.Assign(proof.Z_sk.String())
 	witness.Z_skInv.Assign(proof.Z_skInv.String())
 	// Commitment Range Proofs
-	witness.RangeProof, err = setComRangeProofWitness(proof.RangeProof)
+	witness.RangeProof, err = setComRangeProofWitness(proof.RangeProof, true)
 	if err != nil {
 		return witness, err
 	}
@@ -287,6 +287,10 @@ func setSwapProofPartWitness(proof *zecrey.SwapProofPart) (witness SwapProofPart
 	witness.BStar1.Assign(proof.BStar1)
 	witness.BStar2.Assign(proof.BStar2)
 	witness.RStar.Assign(proof.RStar)
-
+	if isEnabled {
+		witness.IsEnabled.Assign(1)
+	} else {
+		witness.IsEnabled.Assign(0)
+	}
 	return witness, nil
 }
