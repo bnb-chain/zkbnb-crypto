@@ -180,7 +180,7 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof, isEnabled bool) (
 	if !verifyRes {
 		return witness, ErrInvalidProof
 	}
-	witness.G, err = setPointWitness(proof.G)
+	witness.G, err = SetPointWitness(proof.G)
 	if err != nil {
 		return witness, err
 	}
@@ -194,15 +194,15 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof, isEnabled bool) (
 	powerof2Vec := commitRange.PowerOfVec(big.NewInt(2), int64(len(proof.As)))
 	Tprime_check := curve.ZeroPoint()
 	for i, Ai := range proof.As {
-		witness.As[i], err = setPointWitness(Ai)
+		witness.As[i], err = SetPointWitness(Ai)
 		if err != nil {
 			return witness, err
 		}
-		witness.Cas[i], err = setPointWitness(proof.Cas[i])
+		witness.Cas[i], err = SetPointWitness(proof.Cas[i])
 		if err != nil {
 			return witness, err
 		}
-		witness.Cbs[i], err = setPointWitness(proof.Cbs[i])
+		witness.Cbs[i], err = SetPointWitness(proof.Cbs[i])
 		if err != nil {
 			return witness, err
 		}
@@ -226,19 +226,19 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof, isEnabled bool) (
 	witness.Zb.Assign(proof.Zb.String())
 	witness.Zr.Assign(proof.Zr.String())
 	witness.Zrprime.Assign(proof.Zrprime.String())
-	witness.A_T, err = setPointWitness(proof.A_T)
+	witness.A_T, err = SetPointWitness(proof.A_T)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_Tprime, err = setPointWitness(proof.A_Tprime)
+	witness.A_Tprime, err = SetPointWitness(proof.A_Tprime)
 	if err != nil {
 		return witness, err
 	}
-	witness.T, err = setPointWitness(proof.T)
+	witness.T, err = SetPointWitness(proof.T)
 	if err != nil {
 		return witness, err
 	}
-	witness.Tprime, err = setPointWitness(proof.Tprime)
+	witness.Tprime, err = SetPointWitness(proof.Tprime)
 	if err != nil {
 		return witness, err
 	}

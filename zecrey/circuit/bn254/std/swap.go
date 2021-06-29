@@ -218,27 +218,27 @@ func setSwapProofPartWitness(proof *zecrey.SwapProofPart, isEnabled bool) (witne
 	witness.Challenge.Assign(c.String())
 
 	// commitments
-	witness.Pt1, err = setPointWitness(proof.Pt1)
+	witness.Pt1, err = SetPointWitness(proof.Pt1)
 	if err != nil {
 		return witness, err
 	}
-	witness.Pt2, err = setPointWitness(proof.Pt2)
+	witness.Pt2, err = SetPointWitness(proof.Pt2)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_pk, err = setPointWitness(proof.A_pk)
+	witness.A_pk, err = SetPointWitness(proof.A_pk)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_TDivCRprime, err = setPointWitness(proof.A_TDivCRprime)
+	witness.A_TDivCRprime, err = SetPointWitness(proof.A_TDivCRprime)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_Pt1, err = setPointWitness(proof.A_Pt1)
+	witness.A_Pt1, err = SetPointWitness(proof.A_Pt1)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_Pt2, err = setPointWitness(proof.A_Pt2)
+	witness.A_Pt2, err = SetPointWitness(proof.A_Pt2)
 	if err != nil {
 		return witness, err
 	}
@@ -252,35 +252,35 @@ func setSwapProofPartWitness(proof *zecrey.SwapProofPart, isEnabled bool) (witne
 		return witness, err
 	}
 	// common inputs
-	witness.C, err = setElGamalEncWitness(proof.C)
+	witness.C, err = SetElGamalEncWitness(proof.C)
 	if err != nil {
 		return witness, err
 	}
-	witness.CStar, err = setElGamalEncWitness(proof.CStar)
+	witness.CStar, err = SetElGamalEncWitness(proof.CStar)
 	if err != nil {
 		return witness, err
 	}
-	witness.H, err = setPointWitness(proof.H)
+	witness.H, err = SetPointWitness(proof.H)
 	if err != nil {
 		return witness, err
 	}
-	witness.Ht1, err = setPointWitness(proof.Ht1)
+	witness.Ht1, err = SetPointWitness(proof.Ht1)
 	if err != nil {
 		return witness, err
 	}
-	witness.Ht2, err = setPointWitness(proof.Ht2)
+	witness.Ht2, err = SetPointWitness(proof.Ht2)
 	if err != nil {
 		return witness, err
 	}
-	witness.TDivCRprime, err = setPointWitness(proof.TDivCRprime)
+	witness.TDivCRprime, err = SetPointWitness(proof.TDivCRprime)
 	if err != nil {
 		return witness, err
 	}
-	witness.CLprimeInv, err = setPointWitness(proof.CLprimeInv)
+	witness.CLprimeInv, err = SetPointWitness(proof.CLprimeInv)
 	if err != nil {
 		return witness, err
 	}
-	witness.Pk, err = setPointWitness(proof.Pk)
+	witness.Pk, err = SetPointWitness(proof.Pk)
 	if err != nil {
 		return witness, err
 	}

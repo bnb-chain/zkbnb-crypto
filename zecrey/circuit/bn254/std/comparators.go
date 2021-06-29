@@ -39,3 +39,11 @@ func IsPointEqual(cs *ConstraintSystem, isEnabled Variable, p1, p2 Point) {
 	cs.AssertIsEqual(p1.X, p2.X)
 	cs.AssertIsEqual(p1.Y, p2.Y)
 }
+
+/*
+	IsElGamalEncEqual: check if two ElGamalEnc are equal, will force equal if isEnabled = false
+*/
+func IsElGamalEncEqual(cs *ConstraintSystem, isEnabled Variable, C1, C2 ElGamalEncConstraints) {
+	IsPointEqual(cs, isEnabled, C1.CL, C2.CL)
+	IsPointEqual(cs, isEnabled, C1.CR, C2.CR)
+}

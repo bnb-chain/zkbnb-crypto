@@ -274,37 +274,7 @@ func verifyOwnership(
 }
 
 /*
-	setPointWitness set witness for Point
-*/
-func setPointWitness(point *zecrey.Point) (witness Point, err error) {
-	if point == nil {
-		return witness, ErrInvalidSetParams
-	}
-	witness.X.Assign(point.X.String())
-	witness.Y.Assign(point.Y.String())
-	return witness, nil
-}
-
-/*
-	setPointWitness set witness for ElGamal Enc
-*/
-func setElGamalEncWitness(encVal *zecrey.ElGamalEnc) (witness ElGamalEncConstraints, err error) {
-	if encVal == nil {
-		return witness, ErrInvalidSetParams
-	}
-	witness.CL, err = setPointWitness(encVal.CL)
-	if err != nil {
-		return witness, err
-	}
-	witness.CR, err = setPointWitness(encVal.CR)
-	if err != nil {
-		return witness, err
-	}
-	return witness, nil
-}
-
-/*
-	setPointWitness set witness for the privacy transfer proof
+	setPTransferProofWitness set witness for the privacy transfer proof
 */
 func setPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (witness PTransferProofConstraints, err error) {
 	if proof == nil || len(proof.Pts) != 1 || len(proof.Z_tsks) != 1 || len(proof.A_Pts) != 1 {
@@ -345,29 +315,29 @@ func setPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 		return witness, ErrInvalidProof
 	}
 	// A_sum
-	witness.A_sum, err = setPointWitness(proof.A_sum)
+	witness.A_sum, err = SetPointWitness(proof.A_sum)
 	if err != nil {
 		return witness, err
 	}
 	// A_Pt
-	witness.A_Pt, err = setPointWitness(proof.A_Pts[0])
+	witness.A_Pt, err = SetPointWitness(proof.A_Pts[0])
 	if err != nil {
 		return witness, err
 	}
 	// z_tsk
 	witness.Z_tsk.Assign(proof.Z_tsks[0])
 	// generator Waste
-	witness.H, err = setPointWitness(proof.H)
+	witness.H, err = SetPointWitness(proof.H)
 	if err != nil {
 		return witness, err
 	}
 	// Ht = h^{tid}
-	witness.Ht, err = setPointWitness(proof.Ht)
+	witness.Ht, err = SetPointWitness(proof.Ht)
 	if err != nil {
 		return witness, err
 	}
 	// Pt = Ht^{sk}
-	witness.Pt, err = setPointWitness(proof.Pts[0])
+	witness.Pt, err = SetPointWitness(proof.Pts[0])
 	if err != nil {
 		return witness, err
 	}
@@ -386,37 +356,37 @@ func setPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 		var subProofWitness PTransferSubProofConstraints
 		// set values
 		// A_{C_L^{\Delta}}
-		subProofWitness.A_CLDelta, err = setPointWitness(subProof.A_CLDelta)
+		subProofWitness.A_CLDelta, err = SetPointWitness(subProof.A_CLDelta)
 		if err != nil {
 			return witness, err
 		}
 		// A_{C_R^{\Delta}}
-		subProofWitness.A_CRDelta, err = setPointWitness(subProof.A_CRDelta)
+		subProofWitness.A_CRDelta, err = SetPointWitness(subProof.A_CRDelta)
 		if err != nil {
 			return witness, err
 		}
 		// A_{Y/C_R^{\Delta}}
-		subProofWitness.A_YDivCRDelta, err = setPointWitness(subProof.A_YDivCRDelta)
+		subProofWitness.A_YDivCRDelta, err = SetPointWitness(subProof.A_YDivCRDelta)
 		if err != nil {
 			return witness, err
 		}
 		// A_{Y/T}
-		subProofWitness.A_YDivT, err = setPointWitness(subProof.A_YDivT)
+		subProofWitness.A_YDivT, err = SetPointWitness(subProof.A_YDivT)
 		if err != nil {
 			return witness, err
 		}
 		// A_T
-		subProofWitness.A_T, err = setPointWitness(subProof.A_T)
+		subProofWitness.A_T, err = SetPointWitness(subProof.A_T)
 		if err != nil {
 			return witness, err
 		}
 		// A_{pk}
-		subProofWitness.A_pk, err = setPointWitness(subProof.A_pk)
+		subProofWitness.A_pk, err = SetPointWitness(subProof.A_pk)
 		if err != nil {
 			return witness, err
 		}
 		// A_{T/C'}
-		subProofWitness.A_TDivCPrime, err = setPointWitness(subProof.A_TDivCPrime)
+		subProofWitness.A_TDivCPrime, err = SetPointWitness(subProof.A_TDivCPrime)
 		if err != nil {
 			return witness, err
 		}
@@ -442,34 +412,34 @@ func setPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 		// z_{sk^{-1}}
 		subProofWitness.Z_skInv.Assign(subProof.Z_skInv)
 		// C
-		subProofWitness.C, err = setElGamalEncWitness(subProof.C)
+		subProofWitness.C, err = SetElGamalEncWitness(subProof.C)
 		if err != nil {
 			return witness, err
 		}
 		// C^{\Delta}
-		subProofWitness.CDelta, err = setElGamalEncWitness(subProof.CDelta)
+		subProofWitness.CDelta, err = SetElGamalEncWitness(subProof.CDelta)
 		if err != nil {
 			return witness, err
 		}
 		// T
-		subProofWitness.T, err = setPointWitness(subProof.T)
+		subProofWitness.T, err = SetPointWitness(subProof.T)
 		if err != nil {
 			return witness, err
 		}
 		// Y
-		subProofWitness.Y, err = setPointWitness(subProof.Y)
+		subProofWitness.Y, err = SetPointWitness(subProof.Y)
 		if err != nil {
 			return witness, err
 		}
 		// Pk
-		subProofWitness.Pk, err = setPointWitness(subProof.Pk)
+		subProofWitness.Pk, err = SetPointWitness(subProof.Pk)
 		if err != nil {
 			return witness, err
 		}
 		// T C_R'^{-1}
-		subProofWitness.TCRprimeInv, err = setPointWitness(subProof.TCRprimeInv)
+		subProofWitness.TCRprimeInv, err = SetPointWitness(subProof.TCRprimeInv)
 		// C_L'^{-1}
-		subProofWitness.CLprimeInv, err = setPointWitness(subProof.CLprimeInv)
+		subProofWitness.CLprimeInv, err = SetPointWitness(subProof.CLprimeInv)
 		if err != nil {
 			return witness, err
 		}

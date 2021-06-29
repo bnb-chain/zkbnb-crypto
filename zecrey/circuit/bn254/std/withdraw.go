@@ -213,27 +213,27 @@ func setWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	witness.Challenge.Assign(c.String())
 
 	// commitments
-	witness.Pt, err = setPointWitness(proof.Pt)
+	witness.Pt, err = SetPointWitness(proof.Pt)
 	if err != nil {
 		return witness, err
 	}
-	witness.Pa, err = setPointWitness(proof.Pa)
+	witness.Pa, err = SetPointWitness(proof.Pa)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_pk, err = setPointWitness(proof.A_pk)
+	witness.A_pk, err = SetPointWitness(proof.A_pk)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_TDivCRprime, err = setPointWitness(proof.A_TDivCRprime)
+	witness.A_TDivCRprime, err = SetPointWitness(proof.A_TDivCRprime)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_Pt, err = setPointWitness(proof.A_Pt)
+	witness.A_Pt, err = SetPointWitness(proof.A_Pt)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_Pa, err = setPointWitness(proof.A_Pa)
+	witness.A_Pa, err = SetPointWitness(proof.A_Pa)
 	if err != nil {
 		return witness, err
 	}
@@ -247,35 +247,35 @@ func setWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, err
 	}
 	// common inputs
-	witness.C, err = setElGamalEncWitness(proof.C)
+	witness.C, err = SetElGamalEncWitness(proof.C)
 	if err != nil {
 		return witness, err
 	}
-	witness.CRStar, err = setPointWitness(proof.CRStar)
+	witness.CRStar, err = SetPointWitness(proof.CRStar)
 	if err != nil {
 		return witness, err
 	}
-	witness.H, err = setPointWitness(proof.H)
+	witness.H, err = SetPointWitness(proof.H)
 	if err != nil {
 		return witness, err
 	}
-	witness.Ht, err = setPointWitness(proof.Ht)
+	witness.Ht, err = SetPointWitness(proof.Ht)
 	if err != nil {
 		return witness, err
 	}
-	witness.Ha, err = setPointWitness(proof.Ha)
+	witness.Ha, err = SetPointWitness(proof.Ha)
 	if err != nil {
 		return witness, err
 	}
-	witness.TDivCRprime, err = setPointWitness(proof.TDivCRprime)
+	witness.TDivCRprime, err = SetPointWitness(proof.TDivCRprime)
 	if err != nil {
 		return witness, err
 	}
-	witness.CLprimeInv, err = setPointWitness(proof.CLprimeInv)
+	witness.CLprimeInv, err = SetPointWitness(proof.CLprimeInv)
 	if err != nil {
 		return witness, err
 	}
-	witness.Pk, err = setPointWitness(proof.Pk)
+	witness.Pk, err = SetPointWitness(proof.Pk)
 	if err != nil {
 		return witness, err
 	}
