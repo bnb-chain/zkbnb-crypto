@@ -16,3 +16,114 @@
  */
 
 package transactions
+
+import (
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/std/algebra/twistededwards"
+	"math/big"
+	"zecrey-crypto/zecrey/circuit/bn254/std"
+	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
+)
+
+/*
+	DepositTxConstraints: deposit transaction
+*/
+type DepositTxConstraints struct {
+	// enable deposit or not
+	IsEnabled Variable
+	// token id
+	TokenId Variable
+	// Public key
+	PublicKey Point
+	// deposit amount
+	Amount Variable
+	// old Account Info
+	AccountBeforeDeposit AccountConstraints
+	// new Account Info
+	AccountAfterDeposit AccountConstraints
+	// generator
+	H Point
+}
+
+func (circuit *DepositTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+	// get edwards curve params
+	params, err := twistededwards.NewEdCurve(curveID)
+	if err != nil {
+		return err
+	}
+
+	VerifyDepositTransaction(cs, *circuit, params)
+
+	return nil
+}
+
+/*
+	VerifyDepositTransaction: verify deposit transaction
+	1. check token id
+	2. check public key
+	3. check index
+	4. update balance
+	5. check new balance
+*/
+func VerifyDepositTransaction(cs *ConstraintSystem, tx DepositTxConstraints, params twistededwards.EdCurve) {
+	// universal check
+	// check token id
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.TokenId, tx.AccountBeforeDeposit.TokenId)
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.TokenId, tx.AccountAfterDeposit.TokenId)
+	// check public key
+	std.IsPointEqual(cs, tx.IsEnabled, tx.PublicKey, tx.AccountBeforeDeposit.PubKey)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.PublicKey, tx.AccountAfterDeposit.PubKey)
+	// check index
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBeforeDeposit.Index, tx.AccountAfterDeposit.Index)
+	// get CRDelta
+	var newCR Point
+	newCR.ScalarMulNonFixedBase(cs, &tx.H, tx.Amount, params)
+	// update balance
+	newCR.AddGeneric(cs, &tx.AccountBeforeDeposit.Balance.CR, &newCR, params)
+	tx.AccountBeforeDeposit.Balance.CR = newCR
+	// check new balance
+	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBeforeDeposit.Balance, tx.AccountAfterDeposit.Balance)
+}
+
+/*
+	DepositTxConstraints: deposit transaction
+	TODO only for test
+*/
+type DepositTx struct {
+	IsEnabled bool
+	// token id
+	TokenId uint32
+	// Public key
+	PublicKey *zecrey.Point
+	// deposit amount
+	Amount *big.Int
+	// old Account Info
+	AccountBeforeDeposit *Account
+	// new Account Info
+	AccountAfterDeposit *Account
+	// generator
+	H *zecrey.Point
+}
+
+func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints, err error) {
+	witness.TokenId.Assign(int(tx.TokenId))
+	witness.PublicKey, err = std.SetPointWitness(tx.PublicKey)
+	if err != nil {
+		return witness, err
+	}
+	witness.Amount.Assign(tx.Amount)
+	witness.AccountBeforeDeposit, err = SetAccountWitness(tx.AccountBeforeDeposit)
+	if err != nil {
+		return witness, err
+	}
+	witness.AccountAfterDeposit, err = SetAccountWitness(tx.AccountAfterDeposit)
+	if err != nil {
+		return witness, err
+	}
+	witness.H, err = std.SetPointWitness(tx.H)
+	if err != nil {
+		return witness, err
+	}
+	witness.IsEnabled = std.SetBoolWitness(tx.IsEnabled)
+	return witness, nil
+}
