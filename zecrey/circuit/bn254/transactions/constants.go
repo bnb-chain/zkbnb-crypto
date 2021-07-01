@@ -20,6 +20,7 @@ package transactions
 import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
+	"github.com/consensys/gnark/std/hash/mimc"
 	"zecrey-crypto/zecrey/circuit/bn254/std"
 )
 
@@ -28,4 +29,11 @@ type (
 	Variable              = frontend.Variable
 	ConstraintSystem      = frontend.ConstraintSystem
 	ElGamalEncConstraints = std.ElGamalEncConstraints
+	MiMC                  = mimc.MiMC
+)
+
+const (
+	NTxs = 50
+	AccountMerkleLevels = std.AccountMerkleLevels
+	BalanceMerkleLevels = 16
 )

@@ -52,20 +52,20 @@ func (circuit *DepositTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 		return err
 	}
 
-	VerifyDepositTransaction(cs, *circuit, params)
+	VerifyDepositTx(cs, *circuit, params)
 
 	return nil
 }
 
 /*
-	VerifyDepositTransaction: verify deposit transaction
+	VerifyDepositTx: verify deposit transaction
 	1. check token id
 	2. check public key
 	3. check index
 	4. update balance
 	5. check new balance
 */
-func VerifyDepositTransaction(cs *ConstraintSystem, tx DepositTxConstraints, params twistededwards.EdCurve) {
+func VerifyDepositTx(cs *ConstraintSystem, tx DepositTxConstraints, params twistededwards.EdCurve) {
 	// universal check
 	// check token id
 	std.IsVariableEqual(cs, tx.IsEnabled, tx.TokenId, tx.AccountBeforeDeposit.TokenId)
