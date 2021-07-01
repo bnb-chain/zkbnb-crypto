@@ -46,8 +46,8 @@ func mockAccountTree(nbAccounts int) ([]*Account, []*big.Int, []byte) {
 	)
 	size := zmimc.Hmimc.Size()
 	tokenId := uint32(1)
-	accounts = make([]*Account, 4)
-	sks = make([]*big.Int, 4)
+	accounts = make([]*Account, nbAccounts)
+	sks = make([]*big.Int, nbAccounts)
 	hashState = make([]byte, nbAccounts*size)
 	for i := 0; i < nbAccounts; i++ {
 		sk, pk := twistedElgamal.GenKeyPair()

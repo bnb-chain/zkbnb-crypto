@@ -54,8 +54,8 @@ func TestVerifyWithdrawTx(t *testing.T) {
 func prepareWithdrawTx() *WithdrawTx {
 	accounts, sks, hashState := mockAccountTree(4)
 	pos := 2
-	accountBeforeWithdraw := accounts[2]
-	sk := sks[2]
+	accountBeforeWithdraw := accounts[pos]
+	sk := sks[pos]
 	// withdraw amount
 	receiveAddr := "0xb1c297bBb2DC33F3c68920F02e88d2746b2F456d"
 	amount := big.NewInt(int64(6))
@@ -79,22 +79,6 @@ func prepareWithdrawTx() *WithdrawTx {
 	// create deposit tx
 	tx := mockWithdrawTx(true, proof, accounts, hashState, accountBeforeWithdraw, &accountAfterWithdraw, uint64(pos))
 	return tx
-}
-
-func setFixedMerkleProofs(proof [][]byte) [AccountMerkleLevels][]byte {
-	var res [AccountMerkleLevels][]byte
-	for i := 0; i < AccountMerkleLevels; i++ {
-		res[i] = proof[i]
-	}
-	return res
-}
-
-func setFixedMerkleProofsHelper(proof []int) [AccountMerkleLevels - 1]int {
-	var res [AccountMerkleLevels - 1]int
-	for i := 0; i < AccountMerkleLevels-1; i++ {
-		res[i] = proof[i]
-	}
-	return res
 }
 
 func mockWithdrawTx(isEnabled bool, proof *zecrey.WithdrawProof, accounts []*Account, hashState []byte, acc1, acc2 *Account, pos uint64) *WithdrawTx {

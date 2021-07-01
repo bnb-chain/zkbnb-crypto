@@ -33,7 +33,8 @@ type (
 )
 
 const (
-	NTxs = 50
+	NTxs                = 50
 	AccountMerkleLevels = std.AccountMerkleLevels
+	NbTransferCount     = std.NbTransferCount
 	BalanceMerkleLevels = 16
 )
