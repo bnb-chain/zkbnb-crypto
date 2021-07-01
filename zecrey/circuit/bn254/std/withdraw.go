@@ -20,7 +20,6 @@ package std
 import (
 	"bytes"
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"math/big"
 	"zecrey-crypto/ffmath"
@@ -44,10 +43,11 @@ type WithdrawProofConstraints struct {
 	BStar                                  Variable
 	H, Ht, Ha, TDivCRprime, CLprimeInv, Pk Point
 	Challenge                              Variable
+	IsEnabled                              Variable
 }
 
 // define tests for verifying the withdraw proof
-func (circuit *WithdrawProofConstraints) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *WithdrawProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -55,19 +55,19 @@ func (circuit *WithdrawProofConstraints) Define(curveID ecc.ID, cs *frontend.Con
 		return err
 	}
 
-	verifyWithdrawProof(cs, *circuit, params)
+	VerifyWithdrawProof(cs, *circuit, params)
 
 	return nil
 }
 
 /*
-	verifyWithdrawProof verify the withdraw proof in circuit
+	VerifyWithdrawProof verify the withdraw proof in circuit
 	@cs: the constraint system
 	@proof: withdraw proof circuit
 	@params: params for the curve tebn254
 */
-func verifyWithdrawProof(
-	cs *frontend.ConstraintSystem,
+func VerifyWithdrawProof(
+	cs *ConstraintSystem,
 	proof WithdrawProofConstraints,
 	params twistededwards.EdCurve,
 ) {
@@ -75,15 +75,15 @@ func verifyWithdrawProof(
 	verifyComRangeProof(cs, proof.CRangeProof, params)
 
 	// verify Ht
-	verifyPt(cs, proof.Ht, proof.Pt, proof.A_Pt, proof.Challenge, proof.Z_sk, params)
+	verifyPt(cs, proof.Ht, proof.Pt, proof.A_Pt, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	// verify Ha
-	verifyPt(cs, proof.Ha, proof.Pa, proof.A_Pa, proof.Challenge, proof.Z_sk, params)
+	verifyPt(cs, proof.Ha, proof.Pa, proof.A_Pa, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	// verify half enc
-	verifyHalfEnc(cs, proof.H, proof.CRStar, proof.BStar, params)
+	verifyHalfEnc(cs, proof.H, proof.CRStar, proof.BStar, proof.IsEnabled, params)
 	// verify balance
 	verifyBalance(cs, proof.Pk, proof.A_pk, proof.CLprimeInv,
 		proof.TDivCRprime, proof.A_TDivCRprime, proof.Challenge,
-		proof.Z_sk, proof.Z_skInv, proof.Z_rbar, params)
+		proof.Z_sk, proof.Z_skInv, proof.Z_rbar, proof.IsEnabled, params)
 
 }
 
@@ -96,18 +96,18 @@ func verifyWithdrawProof(
 	@params: params for the curve tebn254
 */
 func verifyPt(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	Ht, Pt, A_Pt Point,
 	c Variable,
 	z_tsk Variable,
+	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
 	var l, r Point
 	l.ScalarMulNonFixedBase(cs, &Ht, z_tsk, params)
 	r.ScalarMulNonFixedBase(cs, &Pt, c, params)
 	r.AddGeneric(cs, &A_Pt, &r, params)
-	cs.AssertIsEqual(l.X, r.X)
-	cs.AssertIsEqual(l.Y, r.Y)
+	IsPointEqual(cs, isEnabled, l, r)
 }
 
 /*
@@ -119,17 +119,17 @@ func verifyPt(
 	@params: params for the curve tebn254
 */
 func verifyHalfEnc(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	h Point,
 	CRStar Point,
 	bStar Variable,
+	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
 	var l Point
 	hNeg := Neg(cs, h, params)
 	l.ScalarMulNonFixedBase(cs, hNeg, bStar, params)
-	cs.AssertIsEqual(l.X, CRStar.X)
-	cs.AssertIsEqual(l.Y, CRStar.Y)
+	IsPointEqual(cs, isEnabled, l, CRStar)
 }
 
 /*
@@ -141,10 +141,11 @@ func verifyHalfEnc(
 	@params: params for the curve tebn254
 */
 func verifyBalance(
-	cs *frontend.ConstraintSystem,
+	cs *ConstraintSystem,
 	pk, A_pk, CLprimeInv, TDivCRprime, A_TDivCRprime Point,
 	c Variable,
 	z_sk, z_skInv, z_rbar Variable,
+	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
 	var l1, r1 Point
@@ -152,8 +153,7 @@ func verifyBalance(
 	l1.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, z_sk, params)
 	r1.ScalarMulNonFixedBase(cs, &pk, c, params)
 	r1.AddGeneric(cs, &A_pk, &r1, params)
-	cs.AssertIsEqual(l1.X, r1.X)
-	cs.AssertIsEqual(l1.Y, r1.Y)
+	IsPointEqual(cs, isEnabled, l1, r1)
 
 	var g_zrbar, l2, r2 Point
 	// verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
@@ -162,12 +162,11 @@ func verifyBalance(
 	l2.AddGeneric(cs, &g_zrbar, &l2, params)
 	r2.ScalarMulNonFixedBase(cs, &TDivCRprime, c, params)
 	r2.AddGeneric(cs, &A_TDivCRprime, &r2, params)
-	cs.AssertIsEqual(l2.X, r2.X)
-	cs.AssertIsEqual(l2.Y, r2.Y)
+	IsPointEqual(cs, isEnabled, l2, r2)
 }
 
 // set the witness for withdraw proof
-func setWithdrawProofWitness(proof *zecrey.WithdrawProof) (witness WithdrawProofConstraints, err error) {
+func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witness WithdrawProofConstraints, err error) {
 	if proof == nil {
 		return witness, err
 	}
@@ -214,27 +213,27 @@ func setWithdrawProofWitness(proof *zecrey.WithdrawProof) (witness WithdrawProof
 	witness.Challenge.Assign(c.String())
 
 	// commitments
-	witness.Pt, err = setPointWitness(proof.Pt)
+	witness.Pt, err = SetPointWitness(proof.Pt)
 	if err != nil {
 		return witness, err
 	}
-	witness.Pa, err = setPointWitness(proof.Pa)
+	witness.Pa, err = SetPointWitness(proof.Pa)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_pk, err = setPointWitness(proof.A_pk)
+	witness.A_pk, err = SetPointWitness(proof.A_pk)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_TDivCRprime, err = setPointWitness(proof.A_TDivCRprime)
+	witness.A_TDivCRprime, err = SetPointWitness(proof.A_TDivCRprime)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_Pt, err = setPointWitness(proof.A_Pt)
+	witness.A_Pt, err = SetPointWitness(proof.A_Pt)
 	if err != nil {
 		return witness, err
 	}
-	witness.A_Pa, err = setPointWitness(proof.A_Pa)
+	witness.A_Pa, err = SetPointWitness(proof.A_Pa)
 	if err != nil {
 		return witness, err
 	}
@@ -243,44 +242,49 @@ func setWithdrawProofWitness(proof *zecrey.WithdrawProof) (witness WithdrawProof
 	witness.Z_sk.Assign(proof.Z_sk.String())
 	witness.Z_skInv.Assign(proof.Z_skInv.String())
 	// Commitment Range Proofs
-	witness.CRangeProof, err = setComRangeProofWitness(proof.CRangeProof)
+	witness.CRangeProof, err = setComRangeProofWitness(proof.CRangeProof, true)
 	if err != nil {
 		return witness, err
 	}
 	// common inputs
-	witness.C, err = setElGamalEncWitness(proof.C)
+	witness.C, err = SetElGamalEncWitness(proof.C)
 	if err != nil {
 		return witness, err
 	}
-	witness.CRStar, err = setPointWitness(proof.CRStar)
+	witness.CRStar, err = SetPointWitness(proof.CRStar)
 	if err != nil {
 		return witness, err
 	}
-	witness.H, err = setPointWitness(proof.H)
+	witness.H, err = SetPointWitness(proof.H)
 	if err != nil {
 		return witness, err
 	}
-	witness.Ht, err = setPointWitness(proof.Ht)
+	witness.Ht, err = SetPointWitness(proof.Ht)
 	if err != nil {
 		return witness, err
 	}
-	witness.Ha, err = setPointWitness(proof.Ha)
+	witness.Ha, err = SetPointWitness(proof.Ha)
 	if err != nil {
 		return witness, err
 	}
-	witness.TDivCRprime, err = setPointWitness(proof.TDivCRprime)
+	witness.TDivCRprime, err = SetPointWitness(proof.TDivCRprime)
 	if err != nil {
 		return witness, err
 	}
-	witness.CLprimeInv, err = setPointWitness(proof.CLprimeInv)
+	witness.CLprimeInv, err = SetPointWitness(proof.CLprimeInv)
 	if err != nil {
 		return witness, err
 	}
-	witness.Pk, err = setPointWitness(proof.Pk)
+	witness.Pk, err = SetPointWitness(proof.Pk)
 	if err != nil {
 		return witness, err
 	}
 	bStarNeg := new(big.Int).Neg(proof.BStar)
 	witness.BStar.Assign(bStarNeg)
+	if isEnabled {
+		witness.IsEnabled.Assign(1)
+	} else {
+		witness.IsEnabled.Assign(0)
+	}
 	return witness, nil
 }

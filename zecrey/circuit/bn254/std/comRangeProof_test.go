@@ -38,7 +38,7 @@ func TestComRangeProofCircuit_Success(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1; i++ {
 		b := big.NewInt(3)
 		r := curve.RandomValue()
 		g := curve.H
@@ -53,7 +53,7 @@ func TestComRangeProofCircuit_Success(t *testing.T) {
 			t.Fatal(err)
 		}
 		fmt.Println("res:", verify)
-		witness, err = setComRangeProofWitness(proof)
+		witness, err = setComRangeProofWitness(proof, true)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -87,7 +87,7 @@ func TestComRangeProofCircuit_Failure(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("res:", verify)
-	witness, err = setComRangeProofWitness(proof)
+	witness, err = setComRangeProofWitness(proof, true)
 	if err != nil {
 		t.Fatal(err)
 	}

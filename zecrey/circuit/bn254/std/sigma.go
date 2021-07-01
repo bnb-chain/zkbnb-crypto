@@ -19,7 +19,6 @@ package std
 
 import (
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 )
 
@@ -30,7 +29,7 @@ type SchnorrProofConstraints struct {
 	C  Variable
 }
 
-func (circuit *SchnorrProofConstraints) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *SchnorrProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
 	if err != nil {
@@ -59,7 +58,7 @@ type OwnershipConstraints struct {
 	Z_rstarSubrbar, Z_rbar, Z_bprime, Z_sk, Z_skInv Variable
 }
 
-func (circuit *OwnershipConstraints) Define(curveID ecc.ID, cs *frontend.ConstraintSystem) error {
+func (circuit *OwnershipConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
 	if err != nil {

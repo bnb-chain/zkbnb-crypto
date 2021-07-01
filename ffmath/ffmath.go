@@ -80,3 +80,7 @@ func Xor(a, b *big.Int) *big.Int {
 func Equal(a, b *big.Int) bool {
 	return a.String() == b.String()
 }
+
+func Neg(a *big.Int) *big.Int {
+	return new(big.Int).Neg(a)
+}

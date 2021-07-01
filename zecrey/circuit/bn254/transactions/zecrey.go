@@ -15,23 +15,4 @@
  *
  */
 
-package std
-
-import (
-	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/algebra/twistededwards"
-	"github.com/consensys/gnark/std/hash/mimc"
-)
-
-type (
-	Point            = twistededwards.Point
-	Variable         = frontend.Variable
-	ConstraintSystem = frontend.ConstraintSystem
-	MiMC             = mimc.MiMC
-)
-
-const (
-	// TODO only for test
-	AccountMerkleLevels = 4
-	NbTransferCount     = 3
-)
+package transactions

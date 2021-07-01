@@ -38,7 +38,7 @@ func TestWithdrawProofCircuit_Define(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1; i++ {
 		// generate withdraw proof
 		sk, pk := twistedElgamal.GenKeyPair()
 		b := big.NewInt(8)
@@ -58,7 +58,7 @@ func TestWithdrawProofCircuit_Define(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		witness, err = setWithdrawProofWitness(withdrawProof)
+		witness, err = SetWithdrawProofWitness(withdrawProof, true)
 		if err != nil {
 			t.Fatal(err)
 		}

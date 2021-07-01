@@ -15,23 +15,20 @@
  *
  */
 
-package std
+package transactions
 
-import (
-	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/algebra/twistededwards"
-	"github.com/consensys/gnark/std/hash/mimc"
-)
+func setFixedMerkleProofs(proof [][]byte) [AccountMerkleLevels][]byte {
+	var res [AccountMerkleLevels][]byte
+	for i := 0; i < AccountMerkleLevels; i++ {
+		res[i] = proof[i]
+	}
+	return res
+}
 
-type (
-	Point            = twistededwards.Point
-	Variable         = frontend.Variable
-	ConstraintSystem = frontend.ConstraintSystem
-	MiMC             = mimc.MiMC
-)
-
-const (
-	// TODO only for test
-	AccountMerkleLevels = 4
-	NbTransferCount     = 3
-)
+func setFixedMerkleProofsHelper(proof []int) [AccountMerkleLevels - 1]int {
+	var res [AccountMerkleLevels - 1]int
+	for i := 0; i < AccountMerkleLevels-1; i++ {
+		res[i] = proof[i]
+	}
+	return res
+}

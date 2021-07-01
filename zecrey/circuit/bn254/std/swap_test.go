@@ -39,7 +39,7 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1; i++ {
 		// generate swap proof
 		sk1, pk1 := twistedElgamal.GenKeyPair()
 		b1 := big.NewInt(8)
@@ -82,7 +82,7 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		witness, err = setSwapProofWitness(swapProof)
+		witness, err = setSwapProofWitness(swapProof, true)
 		if err != nil {
 			t.Fatal(err)
 		}

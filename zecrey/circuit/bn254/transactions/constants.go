@@ -15,23 +15,26 @@
  *
  */
 
-package std
+package transactions
 
 import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"zecrey-crypto/zecrey/circuit/bn254/std"
 )
 
 type (
-	Point            = twistededwards.Point
-	Variable         = frontend.Variable
-	ConstraintSystem = frontend.ConstraintSystem
-	MiMC             = mimc.MiMC
+	Point                 = twistededwards.Point
+	Variable              = frontend.Variable
+	ConstraintSystem      = frontend.ConstraintSystem
+	ElGamalEncConstraints = std.ElGamalEncConstraints
+	MiMC                  = mimc.MiMC
 )
 
 const (
-	// TODO only for test
-	AccountMerkleLevels = 4
-	NbTransferCount     = 3
+	NTxs                = 50
+	AccountMerkleLevels = std.AccountMerkleLevels
+	NbTransferCount     = std.NbTransferCount
+	BalanceMerkleLevels = 16
 )
