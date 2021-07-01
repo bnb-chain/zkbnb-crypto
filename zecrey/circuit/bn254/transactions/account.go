@@ -18,6 +18,9 @@
 package transactions
 
 import (
+	"encoding/binary"
+	"hash"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/zecrey/circuit/bn254/std"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
@@ -49,4 +52,38 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 		return witness, err
 	}
 	return witness, nil
+}
+
+func serializeAccount(account *Account) [160]byte {
+	var res [160]byte
+	binary.BigEndian.PutUint32(res[:32], account.Index)
+	binary.BigEndian.PutUint32(res[32:64], account.TokenId)
+	copy(res[64:96], account.Balance.CL.Marshal())
+	copy(res[96:128], account.Balance.CR.Marshal())
+	copy(res[128:160], account.PubKey.Marshal())
+	return res
+}
+
+func deserializeAccount(accBytes [160]byte) *Account {
+	index := binary.BigEndian.Uint32(accBytes[:32])
+	tokenId := binary.BigEndian.Uint32(accBytes[32:64])
+	CL, _ := curve.FromBytes(accBytes[64:96])
+	CR, _ := curve.FromBytes(accBytes[96:128])
+	PubKey, _ := curve.FromBytes(accBytes[128:160])
+	return &Account{
+		Index:   index,
+		TokenId: tokenId,
+		Balance: &zecrey.ElGamalEnc{
+			CL: CL,
+			CR: CR,
+		},
+		PubKey: PubKey,
+	}
+}
+
+func mockAccountHash(account *Account, h hash.Hash) []byte {
+	h.Reset()
+	res := serializeAccount(account)
+	h.Write(res[:])
+	return h.Sum([]byte{})
 }
