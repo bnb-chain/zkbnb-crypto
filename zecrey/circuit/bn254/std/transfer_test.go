@@ -74,7 +74,7 @@ func TestVerifyPTransferProofCircuit(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		witness, err = setPTransferProofWitness(transferProof, true)
+		witness, err = SetPTransferProofWitness(transferProof, true)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -17,21 +17,10 @@
 
 package std
 
-import (
-	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/algebra/twistededwards"
-	"github.com/consensys/gnark/std/hash/mimc"
-)
+import "github.com/consensys/gnark/std/algebra/twistededwards"
 
-type (
-	Point            = twistededwards.Point
-	Variable         = frontend.Variable
-	ConstraintSystem = frontend.ConstraintSystem
-	MiMC             = mimc.MiMC
-)
-
-const (
-	// TODO only for test
-	AccountMerkleLevels = 4
-	NbTransferCount     = 3
-)
+func EncAdd(cs *ConstraintSystem, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
+	C.CL.AddGeneric(cs, &C.CL, &CDelta.CL, params)
+	C.CR.AddGeneric(cs, &C.CR, &CDelta.CR, params)
+	return C
+}

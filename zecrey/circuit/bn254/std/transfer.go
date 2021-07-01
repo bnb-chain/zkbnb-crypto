@@ -29,7 +29,7 @@ import (
 
 type PTransferProofConstraints struct {
 	// sub proofs
-	SubProofs [3]PTransferSubProofConstraints
+	SubProofs [NbTransferCount]PTransferSubProofConstraints
 	// commitment for \sum_{i=1}^n b_i^{\Delta}
 	A_sum Point
 	// A_Pt
@@ -274,9 +274,9 @@ func verifyOwnership(
 }
 
 /*
-	setPTransferProofWitness set witness for the privacy transfer proof
+	SetPTransferProofWitness set witness for the privacy transfer proof
 */
-func setPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (witness PTransferProofConstraints, err error) {
+func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (witness PTransferProofConstraints, err error) {
 	if proof == nil || len(proof.Pts) != 1 || len(proof.Z_tsks) != 1 || len(proof.A_Pts) != 1 {
 		return witness, ErrInvalidSetParams
 	}

@@ -51,7 +51,6 @@ func VerifyMerkleProof(cs *ConstraintSystem, isEnabled Variable, h MiMC, merkleR
 		d2 := cs.Select(helper[i-1], proofSet[i], sum)
 		sum = nodeSum(cs, h, d1, d2)
 	}
-
 	// Compare our calculated Merkle root to the desired Merkle root.
 	IsVariableEqual(cs, isEnabled, sum, merkleRoot)
 
