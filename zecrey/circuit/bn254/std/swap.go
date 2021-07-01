@@ -63,18 +63,18 @@ func (circuit *SwapProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 		return err
 	}
 
-	verifySwapProof(cs, *circuit, params)
+	VerifySwapProof(cs, *circuit, params)
 
 	return nil
 }
 
 /*
-	verifyWithdrawProof verify the withdraw proof in circuit
+	VerifyWithdrawProof verify the withdraw proof in circuit
 	@cs: the constraint system
 	@proof: withdraw proof circuit
 	@params: params for the curve tebn254
 */
-func verifySwapProof(
+func VerifySwapProof(
 	cs *ConstraintSystem,
 	proof SwapProofConstraints,
 	params twistededwards.EdCurve,

@@ -55,18 +55,18 @@ func (circuit *WithdrawProofConstraints) Define(curveID ecc.ID, cs *ConstraintSy
 		return err
 	}
 
-	verifyWithdrawProof(cs, *circuit, params)
+	VerifyWithdrawProof(cs, *circuit, params)
 
 	return nil
 }
 
 /*
-	verifyWithdrawProof verify the withdraw proof in circuit
+	VerifyWithdrawProof verify the withdraw proof in circuit
 	@cs: the constraint system
 	@proof: withdraw proof circuit
 	@params: params for the curve tebn254
 */
-func verifyWithdrawProof(
+func VerifyWithdrawProof(
 	cs *ConstraintSystem,
 	proof WithdrawProofConstraints,
 	params twistededwards.EdCurve,
@@ -166,7 +166,7 @@ func verifyBalance(
 }
 
 // set the witness for withdraw proof
-func setWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witness WithdrawProofConstraints, err error) {
+func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witness WithdrawProofConstraints, err error) {
 	if proof == nil {
 		return witness, err
 	}

@@ -58,7 +58,7 @@ func TestWithdrawProofCircuit_Define(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		witness, err = setWithdrawProofWitness(withdrawProof, true)
+		witness, err = SetWithdrawProofWitness(withdrawProof, true)
 		if err != nil {
 			t.Fatal(err)
 		}

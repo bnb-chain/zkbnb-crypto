@@ -89,18 +89,18 @@ func (circuit *PTransferProofConstraints) Define(curveID ecc.ID, cs *ConstraintS
 		return err
 	}
 
-	verifyPTransferProof(cs, *circuit, params)
+	VerifyPTransferProof(cs, *circuit, params)
 
 	return nil
 }
 
 /*
-	verifyPTransferProof verifys the privacy transfer proof
+	VerifyPTransferProof verifys the privacy transfer proof
 	@cs: the constraint system
 	@proof: the transfer proof
 	@params: params for the curve tebn254
 */
-func verifyPTransferProof(
+func VerifyPTransferProof(
 	cs *ConstraintSystem,
 	proof PTransferProofConstraints,
 	params twistededwards.EdCurve,
