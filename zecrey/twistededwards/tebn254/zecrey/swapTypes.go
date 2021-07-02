@@ -46,6 +46,9 @@ type SwapProofPart struct {
 	RStar                                          *big.Int
 	CStar                                          *ElGamalEnc
 	C                                              *ElGamalEnc
+	ReceiverCStar                                  *ElGamalEnc
+	ReceiverC                                      *ElGamalEnc
+	ReceiverPk                                     *Point
 	G, H, Ht1, Ht2, TDivCRprime, CLprimeInv, T, Pk *Point
 	Challenge                                      *big.Int
 }
@@ -56,6 +59,12 @@ type SwapProofRelationPart struct {
 	C *ElGamalEnc
 	// from delta balance enc
 	CStar *ElGamalEnc
+	// to original balance enc
+	ReceiverC *ElGamalEnc
+	// to delta balance enc
+	ReceiverCStar *ElGamalEnc
+	// to public key
+	ReceiverPk *Point
 	// from: new pedersen commitment for new balance
 	T *Point
 	// from: public key
@@ -91,8 +100,8 @@ type SwapProofRelationPart struct {
 	RBar   *big.Int
 }
 
-func NewSwapRelationPart1(C *ElGamalEnc, pk *Point, bStarFrom, bStarTo *big.Int, sk *big.Int, fromTokenId, toTokenId uint32) (*SwapProofRelationPart, error) {
-	if C == nil || pk == nil || bStarFrom == nil || bStarTo == nil || sk == nil || fromTokenId == 0 || toTokenId == 0 || fromTokenId == toTokenId {
+func NewSwapRelationPart1(C, receiverC *ElGamalEnc, pk, receiverPk *Point, bStarFrom, bStarTo *big.Int, sk *big.Int, fromTokenId, toTokenId uint32) (*SwapProofRelationPart, error) {
+	if C == nil || receiverC == nil || pk == nil || receiverPk == nil || bStarFrom == nil || bStarTo == nil || sk == nil || fromTokenId == 0 || toTokenId == 0 || fromTokenId == toTokenId {
 		return nil, ErrInvalidParams
 	}
 	oriPk := curve.ScalarBaseMul(sk)
@@ -130,6 +139,10 @@ func NewSwapRelationPart1(C *ElGamalEnc, pk *Point, bStarFrom, bStarTo *big.Int,
 	if err != nil {
 		return nil, err
 	}
+	receiverCStar, err := twistedElgamal.Enc(bStarFrom, rStar, receiverPk)
+	if err != nil {
+		return nil, err
+	}
 	// \bar{rStar} \gets_R Z_p
 	rBar = curve.RandomValue()
 	// T = g^{\bar{rStar}} h^{b'}
@@ -139,21 +152,24 @@ func NewSwapRelationPart1(C *ElGamalEnc, pk *Point, bStarFrom, bStarTo *big.Int,
 	}
 	relation := &SwapProofRelationPart{
 		// ------------- public ---------------------
-		C:           C,
-		CStar:       CStar,
-		T:           T,
-		Pk:          pk,
-		G:           G,
-		H:           H,
-		Ht1:         curve.ScalarMul(H, big.NewInt(int64(fromTokenId))),
-		Ht2:         curve.ScalarMul(H, big.NewInt(int64(toTokenId))),
-		FromTokenId: fromTokenId,
-		ToTokenId:   toTokenId,
-		TDivCRprime: curve.Add(T, curve.Neg(curve.Add(C.CR, CStar.CR))),
-		CLprimeInv:  curve.Neg(curve.Add(C.CL, CStar.CL)),
-		BStarFrom:   bStarFrom,
-		BStarTo:     bStarTo,
-		RStar:       rStar,
+		C:             C,
+		CStar:         CStar,
+		ReceiverC:     receiverC,
+		ReceiverCStar: receiverCStar,
+		ReceiverPk:    receiverPk,
+		T:             T,
+		Pk:            pk,
+		G:             G,
+		H:             H,
+		Ht1:           curve.ScalarMul(H, big.NewInt(int64(fromTokenId))),
+		Ht2:           curve.ScalarMul(H, big.NewInt(int64(toTokenId))),
+		FromTokenId:   fromTokenId,
+		ToTokenId:     toTokenId,
+		TDivCRprime:   curve.Add(T, curve.Neg(curve.Add(C.CR, CStar.CR))),
+		CLprimeInv:    curve.Neg(curve.Add(C.CL, CStar.CL)),
+		BStarFrom:     bStarFrom,
+		BStarTo:       bStarTo,
+		RStar:         rStar,
 		// ----------- private ---------------------
 		Sk:     sk,
 		BPrime: bPrime,
@@ -165,8 +181,8 @@ func NewSwapRelationPart1(C *ElGamalEnc, pk *Point, bStarFrom, bStarTo *big.Int,
 	return relation, nil
 }
 
-func NewSwapRelationPart2(C *ElGamalEnc, pk *Point, sk *big.Int, fromTokenId, toTokenId uint32, proof *SwapProofPart) (*SwapProofRelationPart, error) {
-	if C == nil || pk == nil || sk == nil || proof == nil || fromTokenId == 0 ||
+func NewSwapRelationPart2(C, receiverC *ElGamalEnc, pk, receiverPk *Point, sk *big.Int, fromTokenId, toTokenId uint32, proof *SwapProofPart) (*SwapProofRelationPart, error) {
+	if C == nil || receiverC == nil || pk == nil || receiverPk == nil || sk == nil || proof == nil || fromTokenId == 0 ||
 		toTokenId == 0 || fromTokenId == toTokenId || proof.Ht1 == nil ||
 		proof.Ht2 == nil || proof.BStar1.Cmp(big.NewInt(0)) <= 0 || proof.BStar2.Cmp(big.NewInt(0)) <= 0 {
 		return nil, ErrInvalidParams
@@ -211,6 +227,10 @@ func NewSwapRelationPart2(C *ElGamalEnc, pk *Point, sk *big.Int, fromTokenId, to
 	if err != nil {
 		return nil, err
 	}
+	receiverCStar, err := twistedElgamal.Enc(proof.BStar2, rStar, receiverPk)
+	if err != nil {
+		return nil, err
+	}
 	// \bar{rStar} \gets_R Z_p
 	rBar = curve.RandomValue()
 	// T = g^{\bar{rStar}} h^{b'}
@@ -220,21 +240,24 @@ func NewSwapRelationPart2(C *ElGamalEnc, pk *Point, sk *big.Int, fromTokenId, to
 	}
 	relation := &SwapProofRelationPart{
 		// ------------- public ---------------------
-		C:           C,
-		CStar:       CStar,
-		T:           T,
-		Pk:          pk,
-		G:           G,
-		H:           H,
-		Ht1:         Ht1,
-		Ht2:         Ht2,
-		FromTokenId: fromTokenId,
-		ToTokenId:   toTokenId,
-		TDivCRprime: curve.Add(T, curve.Neg(curve.Add(C.CR, CStar.CR))),
-		CLprimeInv:  curve.Neg(curve.Add(C.CL, CStar.CL)),
-		BStarFrom:   proof.BStar1,
-		BStarTo:     proof.BStar2,
-		RStar:       rStar,
+		C:             C,
+		CStar:         CStar,
+		ReceiverC:     receiverC,
+		ReceiverCStar: receiverCStar,
+		ReceiverPk:    receiverPk,
+		T:             T,
+		Pk:            pk,
+		G:             G,
+		H:             H,
+		Ht1:           Ht1,
+		Ht2:           Ht2,
+		FromTokenId:   fromTokenId,
+		ToTokenId:     toTokenId,
+		TDivCRprime:   curve.Add(T, curve.Neg(curve.Add(C.CR, CStar.CR))),
+		CLprimeInv:    curve.Neg(curve.Add(C.CL, CStar.CL)),
+		BStarFrom:     proof.BStar1,
+		BStarTo:       proof.BStar2,
+		RStar:         rStar,
 		// ----------- private ---------------------
 		Sk:     sk,
 		BPrime: bPrime,

@@ -97,20 +97,23 @@ func ProveSwapPart1(relation *SwapProofRelationPart, isFrom bool) (proof *SwapPr
 		// Commitment Range Proofs
 		RangeProof: rangeProof,
 		// common inputs
-		BStar1:      relation.BStarFrom,
-		BStar2:      relation.BStarTo,
-		RStar:       relation.RStar,
-		CStar:       relation.CStar,
-		C:           relation.C,
-		G:           relation.G,
-		H:           relation.H,
-		Ht1:         relation.Ht1,
-		Ht2:         relation.Ht2,
-		TDivCRprime: relation.TDivCRprime,
-		CLprimeInv:  relation.CLprimeInv,
-		T:           relation.T,
-		Pk:          relation.Pk,
-		Challenge:   c,
+		BStar1:        relation.BStarFrom,
+		BStar2:        relation.BStarTo,
+		RStar:         relation.RStar,
+		CStar:         relation.CStar,
+		C:             relation.C,
+		ReceiverCStar: relation.ReceiverCStar,
+		ReceiverPk:    relation.ReceiverPk,
+		ReceiverC:     relation.ReceiverC,
+		G:             relation.G,
+		H:             relation.H,
+		Ht1:           relation.Ht1,
+		Ht2:           relation.Ht2,
+		TDivCRprime:   relation.TDivCRprime,
+		CLprimeInv:    relation.CLprimeInv,
+		T:             relation.T,
+		Pk:            relation.Pk,
+		Challenge:     c,
 	}
 	return proof, nil
 }
@@ -128,6 +131,7 @@ func ProveSwapPart2(relation *SwapProofRelationPart, proofPart1 *SwapProofPart) 
 	if err != nil {
 		return nil, err
 	}
+	// add receiver for each part
 	proof = &SwapProof{
 		ProofPart1: proofPart1,
 		ProofPart2: proofPart2,
