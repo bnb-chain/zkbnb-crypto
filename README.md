@@ -279,30 +279,32 @@ You can try the Zecrey Privacy Swap Proof in `zecrey/twistededwards/tebn254/zecr
 
 ```go
 func TestProveSwap(t *testing.T) {
-    // create the keypair for the user1
+    // create key pair for user1
 	sk1, pk1 := twistedElgamal.GenKeyPair()
-    // user1's balance
 	b1 := big.NewInt(8)
-    // random value
 	r1 := curve.RandomValue()
-    // encryption of the balance
-	bEnc, err := twistedElgamal.Enc(b1, r1, pk1)
+    // Chain 1 user 1 balance
+	bEnc1, err := twistedElgamal.Enc(b1, r1, pk1)
 	if err != nil {
 		t.Error(err)
 	}
-    // swap from amount
+    // create keypair for user2
+	sk2, pk2 := twistedElgamal.GenKeyPair()
+	b2 := big.NewInt(3)
+	r2 := curve.RandomValue()
+    // chhain 1 user 2 balance
+	bEnc2, err := twistedElgamal.Enc(b2, r2, pk2)
+	if err != nil {
+		t.Error(err)
+	}
+    // swap amounts
 	bStarFrom := big.NewInt(1)
-    // swap to amount
 	bStarTo := big.NewInt(8)
-    // swap from tokenId
+    // swap token ids
 	fromTokenId := uint32(1)
-    // swap to tokenId
 	toTokenId := uint32(2)
-	fmt.Println("sk1:", sk1.String())
-	fmt.Println("pk1:", curve.ToString(pk1))
-	fmt.Println("benc:", bEnc.String())
-    // create the proof for the user1
-	relationPart1, err := NewSwapRelationPart1(bEnc, pk1, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId)
+    // create the first proof for user1
+	relationPart1, err := NewSwapRelationPart1(bEnc1, bEnc2, pk1, pk2, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId)
 	if err != nil {
 		t.Error(err)
 	}
@@ -315,32 +317,37 @@ func TestProveSwap(t *testing.T) {
 		t.Error(err)
 	}
 	assert.Equal(t, part1Res, true, "prove swap part works correctly")
-    // create the keypair for the user2
-	sk2, pk2 := twistedElgamal.GenKeyPair()
-    // user2's balance
-	b2 := big.NewInt(8)
-	r2 := curve.RandomValue()
-	bEnc2, err := twistedElgamal.Enc(b2, r2, pk2)
+    // chain 2 user 2 balance
+	b3 := big.NewInt(8)
+	r3 := curve.RandomValue()
+	bEnc3, err := twistedElgamal.Enc(b3, r3, pk2)
 	if err != nil {
 		t.Error(err)
 	}
-    // create proof for the user2 based on the user1's proof
-	relationPart2, err := NewSwapRelationPart2(bEnc2, pk2, sk2, fromTokenId, toTokenId, swapProofPart1)
+    // chain 2 user 1 balance
+	b4 := big.NewInt(8)
+	r4 := curve.RandomValue()
+	bEnc4, err := twistedElgamal.Enc(b4, r4, pk1)
 	if err != nil {
 		t.Error(err)
 	}
-    // create the whole swap proof
+    // create relation for user2
+	relationPart2, err := NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, sk2, fromTokenId, toTokenId, swapProofPart1)
+	if err != nil {
+		t.Error(err)
+	}
+    // prove swap
 	swapProof, err := ProveSwapPart2(relationPart2, swapProofPart1)
 	if err != nil {
 		t.Error(err)
 	}
-    // verify the swap proof
 	swapProofRes, err := swapProof.Verify()
 	if err != nil {
 		t.Error(err)
 	}
 	assert.Equal(t, swapProofRes, true, "swap proof works correctly")
 }
+
 ```
 
 
