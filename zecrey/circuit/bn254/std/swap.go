@@ -49,6 +49,9 @@ type SwapProofPartConstraints struct {
 	RStar                                    Variable
 	CStar                                    ElGamalEncConstraints
 	C                                        ElGamalEncConstraints
+	ReceiverCStar                            ElGamalEncConstraints
+	ReceiverC                                ElGamalEncConstraints
+	ReceiverPk                               Point
 	H, Ht1, Ht2, TDivCRprime, CLprimeInv, Pk Point
 	Challenge                                Variable
 	IsEnabled                                Variable
@@ -82,11 +85,11 @@ func VerifySwapProof(
 	cs.AssertIsEqual(proof.ProofPart1.BStar1, proof.ProofPart2.BStar1)
 	cs.AssertIsEqual(proof.ProofPart1.BStar2, proof.ProofPart2.BStar2)
 	// verify swap proof part
-	verifySwapProofPart1(cs, proof.ProofPart1, params)
-	verifySwapProofPart2(cs, proof.ProofPart2, params)
+	VerifySwapProofPart1(cs, proof.ProofPart1, params)
+	VerifySwapProofPart2(cs, proof.ProofPart2, params)
 }
 
-func verifySwapProofPart1(
+func VerifySwapProofPart1(
 	cs *ConstraintSystem,
 	proof SwapProofPartConstraints,
 	params twistededwards.EdCurve,
@@ -98,14 +101,14 @@ func verifySwapProofPart1(
 	verifyPt(cs, proof.Ht1, proof.Pt1, proof.A_Pt1, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	verifyPt(cs, proof.Ht2, proof.Pt2, proof.A_Pt2, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	// verify correct enc
-	verifyCorrectEnc(cs, proof.H, proof.Pk, proof.CStar, proof.BStar1, proof.RStar, params)
+	verifyCorrectEnc(cs, proof.H, proof.Pk, proof.ReceiverPk, proof.CStar, proof.ReceiverCStar, proof.BStar1, proof.RStar, proof.IsEnabled, params)
 	// verify balance
 	verifyBalance(cs, proof.Pk, proof.A_pk, proof.CLprimeInv,
 		proof.TDivCRprime, proof.A_TDivCRprime, proof.Challenge,
 		proof.Z_sk, proof.Z_skInv, proof.Z_rbar, proof.IsEnabled, params)
 }
 
-func verifySwapProofPart2(
+func VerifySwapProofPart2(
 	cs *ConstraintSystem,
 	proof SwapProofPartConstraints,
 	params twistededwards.EdCurve,
@@ -116,8 +119,8 @@ func verifySwapProofPart2(
 	// verify Ht
 	verifyPt(cs, proof.Ht1, proof.Pt1, proof.A_Pt1, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	verifyPt(cs, proof.Ht2, proof.Pt2, proof.A_Pt2, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
-	// verify half enc
-	verifyCorrectEnc(cs, proof.H, proof.Pk, proof.CStar, proof.BStar2, proof.RStar, params)
+	// verify correct enc
+	verifyCorrectEnc(cs, proof.H, proof.Pk, proof.ReceiverPk, proof.CStar, proof.ReceiverCStar, proof.BStar2, proof.RStar, proof.IsEnabled, params)
 	// verify balance
 	verifyBalance(cs, proof.Pk, proof.A_pk, proof.CLprimeInv,
 		proof.TDivCRprime, proof.A_TDivCRprime, proof.Challenge,
@@ -135,26 +138,34 @@ func verifySwapProofPart2(
 func verifyCorrectEnc(
 	cs *ConstraintSystem,
 	h, pk Point,
+	receiverPk Point,
 	CStar ElGamalEncConstraints,
+	receiverCStar ElGamalEncConstraints,
 	bStar Variable,
 	rStar Variable,
+	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
+	// check sender
 	var CL, CR, gr Point
 	// C_L = pk^r
 	CL.ScalarMulNonFixedBase(cs, &pk, rStar, params)
-	cs.AssertIsEqual(CL.X, CStar.CL.X)
-	cs.AssertIsEqual(CL.Y, CStar.CL.Y)
 	// C_R = g^r h^b
 	gr.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, rStar, params)
 	hNeg := Neg(cs, h, params)
 	CR.ScalarMulNonFixedBase(cs, hNeg, bStar, params)
 	CR.AddGeneric(cs, &gr, &CR, params)
-	cs.AssertIsEqual(CR.X, CStar.CR.X)
-	cs.AssertIsEqual(CR.Y, CStar.CR.Y)
+
+	IsElGamalEncEqual(cs, isEnabled, ElGamalEncConstraints{CL: CL, CR: CR}, CStar)
+
+	// check receiver
+	CL.ScalarMulNonFixedBase(cs, &receiverPk, rStar, params)
+	CR.ScalarMulNonFixedBase(cs, &h, bStar, params)
+	CR.AddGeneric(cs, &gr, &CR, params)
+	IsElGamalEncEqual(cs, isEnabled, ElGamalEncConstraints{CL: CL, CR: CR}, receiverCStar)
 }
 
-func setSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapProofConstraints, err error) {
+func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapProofConstraints, err error) {
 	part1, err := setSwapProofPartWitness(proof.ProofPart1, isEnabled)
 	if err != nil {
 		return witness, err
@@ -257,6 +268,18 @@ func setSwapProofPartWitness(proof *zecrey.SwapProofPart, isEnabled bool) (witne
 		return witness, err
 	}
 	witness.CStar, err = SetElGamalEncWitness(proof.CStar)
+	if err != nil {
+		return witness, err
+	}
+	witness.ReceiverC, err = SetElGamalEncWitness(proof.ReceiverC)
+	if err != nil {
+		return witness, err
+	}
+	witness.ReceiverCStar, err = SetElGamalEncWitness(proof.ReceiverCStar)
+	if err != nil {
+		return witness, err
+	}
+	witness.ReceiverPk, err = SetPointWitness(proof.ReceiverPk)
 	if err != nil {
 		return witness, err
 	}
