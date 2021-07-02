@@ -184,7 +184,7 @@ func ProveSwap() js.Func {
 			return errStr
 		}
 		// create withdraw relation
-		relation, err := zecrey.NewSwapRelationPart1(segment.EncVal, segment.Pk, segment.BStarFrom, segment.BStarTo, segment.Sk, tIdFrom, tIdTo)
+		relation, err := zecrey.NewSwapRelationPart1(segment.EncVal, segment.ReceiverEncVal, segment.Pk, segment.ReceiverPk, segment.BStarFrom, segment.BStarTo, segment.Sk, tIdFrom, tIdTo)
 		if err != nil {
 			return ErrInvalidSwapRelationParams
 		}
