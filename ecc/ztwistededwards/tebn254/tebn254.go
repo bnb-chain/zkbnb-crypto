@@ -40,8 +40,9 @@ var (
 )
 
 const (
-	SeedH = "ZecreyTwistedEdwardsBn254HSeed"
-	SeedU = "ZecreyTwistedEdwardsBn254USeed"
+	SeedH     = "ZecreyTwistedEdwardsBn254HSeed"
+	SeedU     = "ZecreyTwistedEdwardsBn254USeed"
+	PointSize = 32
 )
 
 type Point = twistededwards.PointAffine

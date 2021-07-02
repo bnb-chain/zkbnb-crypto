@@ -45,6 +45,18 @@ type WithdrawProof struct {
 	Challenge                                    *big.Int
 }
 
+func FakeWithdrawProof() *WithdrawProof {
+	sk, pk := twistedElgamal.GenKeyPair()
+	b := big.NewInt(8)
+	r := curve.RandomValue()
+	bEnc, _ := twistedElgamal.Enc(b, r, pk)
+	bStar := big.NewInt(-2)
+	addr := "0x99AC8881834797ebC32f185ee27c2e96842e1a47"
+	relation, _ := NewWithdrawRelation(bEnc, pk, bStar, sk, 1, addr)
+	withdrawProof, _ := ProveWithdraw(relation)
+	return withdrawProof
+}
+
 type WithdrawProofRelation struct {
 	// ------------- public ---------------------
 	// original balance enc

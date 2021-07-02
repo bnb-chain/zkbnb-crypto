@@ -37,11 +37,11 @@ const (
 )
 
 var (
-	G            = curve.G
-	H            = curve.H
-	Order        = curve.Order
-	Zero         = big.NewInt(0)
-	PadSecret    = big.NewInt(0)
-	PadGammas, _ = new(big.Int).SetString("2029490050459469381010394860546295858668907545094365921480173886327233296650", 10)
-	PadV         = curve.ScalarMul(G, PadGammas)
+	G          = curve.G
+	H          = curve.H
+	Order      = curve.Order
+	Zero       = big.NewInt(0)
+	PadSecret  = big.NewInt(0)
+	fakePoint  = curve.ZeroPoint()
+	fakeBigInt = big.NewInt(0)
 )

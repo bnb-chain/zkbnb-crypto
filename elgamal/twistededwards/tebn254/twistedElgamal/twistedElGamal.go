@@ -41,6 +41,22 @@ type ElGamalEnc struct {
 	CR *Point // g^r h^b
 }
 
+func FakeElGamalEnc() *ElGamalEnc {
+	return &ElGamalEnc{
+		CL: curve.ZeroPoint(),
+		CR: curve.ZeroPoint(),
+	}
+}
+
+const EncSize = 64
+
+func (enc *ElGamalEnc) Serialize() [EncSize]byte {
+	var res [EncSize]byte
+	copy(res[:curve.PointSize], enc.CL.Marshal())
+	copy(res[curve.PointSize:], enc.CR.Marshal())
+	return res
+}
+
 func (enc *ElGamalEnc) String() string {
 	buf := enc.CL.Marshal()
 	buf = append(buf, enc.CR.Marshal()...)

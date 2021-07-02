@@ -18,11 +18,18 @@
 package commitRange
 
 import (
+	"math/big"
 	"zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
+const (
+	RangeMaxBits = 32
+)
+
 var (
-	Order = tebn254.Order
+	Order     = tebn254.Order
+	fakePoint = tebn254.ZeroPoint()
+	fakeBigInt   = big.NewInt(0)
 )
 
 type Point = tebn254.Point

@@ -268,3 +268,29 @@ func NewSwapRelationPart2(C, receiverC *ElGamalEnc, pk, receiverPk *Point, sk *b
 
 	return relation, nil
 }
+
+func FakeSwapProof() *SwapProof {
+	sk1, pk1 := twistedElgamal.GenKeyPair()
+	b1 := big.NewInt(8)
+	r1 := curve.RandomValue()
+	bEnc1, _ := twistedElgamal.Enc(b1, r1, pk1)
+	sk2, pk2 := twistedElgamal.GenKeyPair()
+	b2 := big.NewInt(3)
+	r2 := curve.RandomValue()
+	bEnc2, _ := twistedElgamal.Enc(b2, r2, pk2)
+	bStarFrom := big.NewInt(1)
+	bStarTo := big.NewInt(8)
+	fromTokenId := uint32(1)
+	toTokenId := uint32(2)
+	relationPart1, _ := NewSwapRelationPart1(bEnc1, bEnc2, pk1, pk2, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId)
+	swapProofPart1, _ := ProveSwapPart1(relationPart1, true)
+	b3 := big.NewInt(8)
+	r3 := curve.RandomValue()
+	bEnc3, _ := twistedElgamal.Enc(b3, r3, pk2)
+	b4 := big.NewInt(8)
+	r4 := curve.RandomValue()
+	bEnc4, _ := twistedElgamal.Enc(b4, r4, pk1)
+	relationPart2, _ := NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, sk2, fromTokenId, toTokenId, swapProofPart1)
+	swapProof, _ := ProveSwapPart2(relationPart2, swapProofPart1)
+	return swapProof
+}
