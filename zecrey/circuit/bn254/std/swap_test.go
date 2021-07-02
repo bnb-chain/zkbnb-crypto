@@ -41,6 +41,7 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 
 	for i := 0; i < 1; i++ {
 		// generate swap proof
+		// sender
 		sk1, pk1 := twistedElgamal.GenKeyPair()
 		b1 := big.NewInt(8)
 		r1 := curve.RandomValue()
@@ -48,11 +49,19 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+		// receiver
+		sk2, pk2 := twistedElgamal.GenKeyPair()
+		b2 := big.NewInt(8)
+		r2 := curve.RandomValue()
+		b2Enc, err := twistedElgamal.Enc(b2, r2, pk2)
+		if err != nil {
+			t.Error(err)
+		}
 		bStarFrom := big.NewInt(1)
 		bStarTo := big.NewInt(8)
 		fromTokenId := uint32(1)
 		toTokenId := uint32(2)
-		relationPart1, err := zecrey.NewSwapRelationPart1(bEnc, pk1, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId)
+		relationPart1, err := zecrey.NewSwapRelationPart1(bEnc, b2Enc, pk1, pk2, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId)
 		if err != nil {
 			t.Error(err)
 		}
@@ -67,14 +76,19 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 		if !part1Res {
 			t.Error(err)
 		}
-		sk2, pk2 := twistedElgamal.GenKeyPair()
-		b2 := big.NewInt(8)
-		r2 := curve.RandomValue()
-		bEnc2, err := twistedElgamal.Enc(b2, r2, pk2)
+		b3 := big.NewInt(8)
+		r3 := curve.RandomValue()
+		bEnc3, err := twistedElgamal.Enc(b3, r3, pk2)
 		if err != nil {
 			t.Error(err)
 		}
-		relationPart2, err := zecrey.NewSwapRelationPart2(bEnc2, pk2, sk2, fromTokenId, toTokenId, swapProofPart1)
+		b4 := big.NewInt(3)
+		r4 := curve.RandomValue()
+		bEnc4, err := twistedElgamal.Enc(b4, r4, pk1)
+		if err != nil {
+			t.Error(err)
+		}
+		relationPart2, err := zecrey.NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, sk2, fromTokenId, toTokenId, swapProofPart1)
 		if err != nil {
 			t.Error(err)
 		}
@@ -82,7 +96,7 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		witness, err = setSwapProofWitness(swapProof, true)
+		witness, err = SetSwapProofWitness(swapProof, true)
 		if err != nil {
 			t.Fatal(err)
 		}

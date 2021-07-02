@@ -31,7 +31,7 @@ import (
 )
 
 func TestProveAndVerify(t *testing.T) {
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 1; i++ {
 		b := big.NewInt(3)
 		r := curve.RandomValue()
 		g := curve.H
