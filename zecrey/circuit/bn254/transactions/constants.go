@@ -36,5 +36,6 @@ const (
 	NTxs                = 50
 	AccountMerkleLevels = std.AccountMerkleLevels
 	NbTransferCount     = std.NbTransferCount
+	NbSwapCount         = 2
 	BalanceMerkleLevels = 16
 )
