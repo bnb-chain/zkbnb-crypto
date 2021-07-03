@@ -115,9 +115,9 @@ type WithdrawTx struct {
 	AccountHelperMerkleProofsAfter [AccountMerkleLevels - 1]int
 
 	// old Account Info
-	AccountBeforeWithdraw *Account
+	AccountBefore *Account
 	// new Account Info
-	AccountAfterWithdraw *Account
+	AccountAfter *Account
 
 	// old account root
 	OldAccountRoot []byte
@@ -136,8 +136,8 @@ func SetWithdrawTxWitness(tx *WithdrawTx) (witness WithdrawTxConstraints, err er
 	witness.AccountHelperMerkleProofsAfter = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsAfter)
 
 	// set account witness
-	witness.AccountBeforeWithdraw, err = SetAccountWitness(tx.AccountBeforeWithdraw)
-	witness.AccountAfterWithdraw, err = SetAccountWitness(tx.AccountAfterWithdraw)
+	witness.AccountBeforeWithdraw, err = SetAccountWitness(tx.AccountBefore)
+	witness.AccountAfterWithdraw, err = SetAccountWitness(tx.AccountAfter)
 
 	// set account root witness
 	witness.OldAccountRoot.Assign(tx.OldAccountRoot)
@@ -146,10 +146,6 @@ func SetWithdrawTxWitness(tx *WithdrawTx) (witness WithdrawTxConstraints, err er
 	// set proof
 	witness.Proof, err = std.SetWithdrawProofWitness(tx.Proof, tx.IsEnabled)
 
-	if tx.IsEnabled {
-		witness.IsEnabled.Assign(1)
-	} else {
-		witness.IsEnabled.Assign(0)
-	}
+	witness.IsEnabled = std.SetBoolWitness(tx.IsEnabled)
 	return witness, nil
 }

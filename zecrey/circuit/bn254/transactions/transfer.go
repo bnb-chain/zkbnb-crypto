@@ -113,9 +113,9 @@ type TransferTx struct {
 	AccountHelperMerkleProofsAfter [NbTransferCount][AccountMerkleLevels - 1]int
 
 	// old Account Info
-	AccountBeforeTransfer [NbTransferCount]*Account
+	AccountBefore [NbTransferCount]*Account
 	// new Account Info
-	AccountAfterTransfer [NbTransferCount]*Account
+	AccountAfter [NbTransferCount]*Account
 
 	// old account root
 	OldAccountRoot []byte
@@ -138,8 +138,8 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints, err er
 		witness.AccountHelperMerkleProofsAfter[i] = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsAfter[i])
 
 		// set account witness
-		witness.AccountBeforeTransfer[i], err = SetAccountWitness(tx.AccountBeforeTransfer[i])
-		witness.AccountAfterTransfer[i], err = SetAccountWitness(tx.AccountAfterTransfer[i])
+		witness.AccountBeforeTransfer[i], err = SetAccountWitness(tx.AccountBefore[i])
+		witness.AccountAfterTransfer[i], err = SetAccountWitness(tx.AccountAfter[i])
 
 	}
 	// set account root witness
@@ -149,10 +149,6 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints, err er
 	// set proof
 	witness.Proof, err = std.SetPTransferProofWitness(tx.Proof, tx.IsEnabled)
 
-	if tx.IsEnabled {
-		witness.IsEnabled.Assign(1)
-	} else {
-		witness.IsEnabled.Assign(0)
-	}
+	witness.IsEnabled = std.SetBoolWitness(tx.IsEnabled)
 	return witness, nil
 }

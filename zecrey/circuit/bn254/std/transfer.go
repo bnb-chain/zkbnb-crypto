@@ -446,10 +446,6 @@ func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 		// set into witness
 		witness.SubProofs[i] = subProofWitness
 	}
-	if isEnabled {
-		witness.IsEnabled.Assign(1)
-	} else {
-		witness.IsEnabled.Assign(0)
-	}
+	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

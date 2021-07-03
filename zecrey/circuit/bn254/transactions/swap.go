@@ -90,9 +90,11 @@ func VerifySwapTx(cs *ConstraintSystem, tx SwapTxConstraints, params twistededwa
 	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountAfterSwap[1].PubKey, receiverPk)
 	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountAfterSwap[1].PubKey, receiverPk)
 	// check balance match
-	std.IsElGamalEncEqual(cs, tx.IsFirstProof, tx.AccountBeforeSwap[0].Balance, tx.Proof.ProofPart1.C)
-	std.IsElGamalEncEqual(cs, tx.IsFirstProof, tx.AccountBeforeSwap[1].Balance, tx.Proof.ProofPart1.ReceiverC)
+	isFirstProof := cs.And(tx.IsEnabled, tx.IsFirstProof)
+	std.IsElGamalEncEqual(cs, isFirstProof, tx.AccountBeforeSwap[0].Balance, tx.Proof.ProofPart1.C)
+	std.IsElGamalEncEqual(cs, isFirstProof, tx.AccountBeforeSwap[1].Balance, tx.Proof.ProofPart1.ReceiverC)
 	isSecondProof := cs.Sub(cs.Constant(1), tx.IsFirstProof)
+	isSecondProof = cs.And(tx.IsEnabled, isSecondProof)
 	std.IsElGamalEncEqual(cs, isSecondProof, tx.AccountBeforeSwap[0].Balance, tx.Proof.ProofPart2.C)
 	std.IsElGamalEncEqual(cs, isSecondProof, tx.AccountBeforeSwap[1].Balance, tx.Proof.ProofPart2.ReceiverC)
 	// universal check
@@ -139,9 +141,9 @@ type SwapTx struct {
 	AccountHelperMerkleProofsAfter [NbSwapCount][AccountMerkleLevels - 1]int
 
 	// old Account Info
-	AccountBeforeSwap [NbSwapCount]*Account
+	AccountBefore [NbSwapCount]*Account
 	// new Account Info
-	AccountAfterSwap [NbSwapCount]*Account
+	AccountAfter [NbSwapCount]*Account
 
 	// old account root
 	OldAccountRoot []byte
@@ -152,7 +154,7 @@ type SwapTx struct {
 /*
 	SetSwapTxWitness: set witness for swap transaction
 */
-func SetSwapTxWitness(tx *SwapTx, isFirstProof bool) (witness SwapTxConstraints, err error) {
+func SetSwapTxWitness(tx *SwapTx) (witness SwapTxConstraints, err error) {
 	if tx == nil {
 		return witness, std.ErrInvalidSetParams
 	}
@@ -164,8 +166,8 @@ func SetSwapTxWitness(tx *SwapTx, isFirstProof bool) (witness SwapTxConstraints,
 		witness.AccountHelperMerkleProofsAfter[i] = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsAfter[i])
 
 		// set account witness
-		witness.AccountBeforeSwap[i], err = SetAccountWitness(tx.AccountBeforeSwap[i])
-		witness.AccountAfterSwap[i], err = SetAccountWitness(tx.AccountAfterSwap[i])
+		witness.AccountBeforeSwap[i], err = SetAccountWitness(tx.AccountBefore[i])
+		witness.AccountAfterSwap[i], err = SetAccountWitness(tx.AccountAfter[i])
 	}
 	// set account root witness
 	witness.OldAccountRoot.Assign(tx.OldAccountRoot)
@@ -174,15 +176,7 @@ func SetSwapTxWitness(tx *SwapTx, isFirstProof bool) (witness SwapTxConstraints,
 	// set proof
 	witness.Proof, err = std.SetSwapProofWitness(tx.Proof, tx.IsEnabled)
 
-	if tx.IsEnabled {
-		witness.IsEnabled.Assign(1)
-	} else {
-		witness.IsEnabled.Assign(0)
-	}
-	if isFirstProof {
-		witness.IsFirstProof.Assign(1)
-	} else {
-		witness.IsFirstProof.Assign(0)
-	}
+	witness.IsEnabled = std.SetBoolWitness(tx.IsEnabled)
+	witness.IsFirstProof = std.SetBoolWitness(tx.IsFirstProof)
 	return witness, nil
 }

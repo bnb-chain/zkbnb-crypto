@@ -54,22 +54,22 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 	return witness, nil
 }
 
-func serializeAccount(account *Account) [160]byte {
-	var res [160]byte
-	binary.BigEndian.PutUint32(res[:32], account.Index)
-	binary.BigEndian.PutUint32(res[32:64], account.TokenId)
-	copy(res[64:96], account.Balance.CL.Marshal())
-	copy(res[96:128], account.Balance.CR.Marshal())
-	copy(res[128:160], account.PubKey.Marshal())
+func SerializeAccount(account *Account) [AccountSize]byte {
+	var res [AccountSize]byte
+	binary.BigEndian.PutUint32(res[:PointSize], account.Index)
+	binary.BigEndian.PutUint32(res[PointSize:2*PointSize], account.TokenId)
+	copy(res[2*PointSize:3*PointSize], account.Balance.CL.Marshal())
+	copy(res[3*PointSize:4*PointSize], account.Balance.CR.Marshal())
+	copy(res[4*PointSize:5*PointSize], account.PubKey.Marshal())
 	return res
 }
 
-func deserializeAccount(accBytes [160]byte) *Account {
-	index := binary.BigEndian.Uint32(accBytes[:32])
-	tokenId := binary.BigEndian.Uint32(accBytes[32:64])
-	CL, _ := curve.FromBytes(accBytes[64:96])
-	CR, _ := curve.FromBytes(accBytes[96:128])
-	PubKey, _ := curve.FromBytes(accBytes[128:160])
+func DeserializeAccount(accBytes [AccountSize]byte) *Account {
+	index := binary.BigEndian.Uint32(accBytes[:PointSize])
+	tokenId := binary.BigEndian.Uint32(accBytes[PointSize : 2*PointSize])
+	CL, _ := curve.FromBytes(accBytes[2*PointSize : 3*PointSize])
+	CR, _ := curve.FromBytes(accBytes[3*PointSize : 4*PointSize])
+	PubKey, _ := curve.FromBytes(accBytes[4*PointSize : 5*PointSize])
 	return &Account{
 		Index:   index,
 		TokenId: tokenId,
@@ -83,7 +83,7 @@ func deserializeAccount(accBytes [160]byte) *Account {
 
 func mockAccountHash(account *Account, h hash.Hash) []byte {
 	h.Reset()
-	res := serializeAccount(account)
+	res := SerializeAccount(account)
 	h.Write(res[:])
 	return h.Sum([]byte{})
 }
