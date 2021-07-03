@@ -91,6 +91,7 @@ type WithdrawProofRelation struct {
 	Sk     *big.Int
 	BPrime *big.Int
 	RBar   *big.Int
+	Rs     [RangeMaxBits]*big.Int
 }
 
 func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, tokenId uint32, receiveAddr string) (*WithdrawProofRelation, error) {
@@ -105,6 +106,7 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, 
 		T      *Point
 		bPrime *big.Int
 		rBar   *big.Int
+		rs     [RangeMaxBits]*big.Int
 	)
 	// compute b first
 	b, err := twistedElgamal.Dec(C, sk, Max)
@@ -126,8 +128,13 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, 
 	}
 	// C^{\Delta} = (pk^rStar,G^rStar h^{b^{\Delta}})
 	CRStar := curve.ScalarMul(H, bStar)
-	// \bar{rStar} \gets_R Z_p
-	rBar = curve.RandomValue()
+	// compute \bar{r} = \sum_{i=1}^32 r_i
+	rBar = big.NewInt(0)
+	for i := 0; i < RangeMaxBits; i++ {
+		rs[i] = curve.RandomValue()
+		rBar.Add(rBar, rs[i])
+	}
+	rBar.Mod(rBar, Order)
 	// T = g^{\bar{rStar}} h^{b'}
 	T, err = pedersen.Commit(rBar, bPrime, G, H)
 	if err != nil {
@@ -159,6 +166,7 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, 
 		Sk:     sk,
 		BPrime: bPrime,
 		RBar:   rBar,
+		Rs:     rs,
 	}
 	relation.Pt = curve.ScalarMul(relation.Ht, sk)
 	relation.Pa = curve.ScalarMul(relation.Ha, sk)

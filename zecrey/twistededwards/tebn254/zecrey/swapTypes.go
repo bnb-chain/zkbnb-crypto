@@ -98,6 +98,7 @@ type SwapProofRelationPart struct {
 	Sk     *big.Int
 	BPrime *big.Int
 	RBar   *big.Int
+	Rs     [RangeMaxBits]*big.Int
 }
 
 func NewSwapRelationPart1(C, receiverC *ElGamalEnc, pk, receiverPk *Point, bStarFrom, bStarTo *big.Int, sk *big.Int, fromTokenId, toTokenId uint32) (*SwapProofRelationPart, error) {
@@ -114,6 +115,7 @@ func NewSwapRelationPart1(C, receiverC *ElGamalEnc, pk, receiverPk *Point, bStar
 		rStar  *big.Int
 		rBar   *big.Int
 		CStar  *ElGamalEnc
+		rs     [RangeMaxBits]*big.Int
 	)
 	// compute b first
 	b, err := twistedElgamal.Dec(C, sk, Max)
@@ -144,7 +146,12 @@ func NewSwapRelationPart1(C, receiverC *ElGamalEnc, pk, receiverPk *Point, bStar
 		return nil, err
 	}
 	// \bar{rStar} \gets_R Z_p
-	rBar = curve.RandomValue()
+	rBar = big.NewInt(0)
+	for i := 0; i < RangeMaxBits; i++ {
+		rs[i] = curve.RandomValue()
+		rBar.Add(rBar, rs[i])
+	}
+	rBar.Mod(rBar, Order)
 	// T = g^{\bar{rStar}} h^{b'}
 	T, err = pedersen.Commit(rBar, bPrime, G, H)
 	if err != nil {
@@ -174,6 +181,7 @@ func NewSwapRelationPart1(C, receiverC *ElGamalEnc, pk, receiverPk *Point, bStar
 		Sk:     sk,
 		BPrime: bPrime,
 		RBar:   rBar,
+		Rs:     rs,
 	}
 	relation.Pt1 = curve.ScalarMul(relation.Ht1, sk)
 	relation.Pt2 = curve.ScalarMul(relation.Ht2, sk)
@@ -202,6 +210,7 @@ func NewSwapRelationPart2(C, receiverC *ElGamalEnc, pk, receiverPk *Point, sk *b
 		rStar  *big.Int
 		rBar   *big.Int
 		CStar  *ElGamalEnc
+		rs     [RangeMaxBits]*big.Int
 	)
 	// compute b first
 	b, err := twistedElgamal.Dec(C, sk, Max)
@@ -232,7 +241,12 @@ func NewSwapRelationPart2(C, receiverC *ElGamalEnc, pk, receiverPk *Point, sk *b
 		return nil, err
 	}
 	// \bar{rStar} \gets_R Z_p
-	rBar = curve.RandomValue()
+	rBar = big.NewInt(0)
+	for i := 0; i < RangeMaxBits; i++ {
+		rs[i] = curve.RandomValue()
+		rBar.Add(rBar, rs[i])
+	}
+	rBar.Mod(rBar, Order)
 	// T = g^{\bar{rStar}} h^{b'}
 	T, err = pedersen.Commit(rBar, bPrime, G, H)
 	if err != nil {
@@ -262,6 +276,7 @@ func NewSwapRelationPart2(C, receiverC *ElGamalEnc, pk, receiverPk *Point, sk *b
 		Sk:     sk,
 		BPrime: bPrime,
 		RBar:   rBar,
+		Rs:     rs,
 	}
 	relation.Pt1 = curve.ScalarMul(relation.Ht1, sk)
 	relation.Pt2 = curve.ScalarMul(relation.Ht2, sk)

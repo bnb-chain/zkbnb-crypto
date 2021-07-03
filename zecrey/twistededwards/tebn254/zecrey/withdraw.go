@@ -60,7 +60,7 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 	A_Pa, _ := provePt(alpha_sk, relation.Sk, relation.Ha, c)
 	// range proof
 	// make range proofs
-	rangeProof, err := commitRange.Prove(relation.BPrime, relation.RBar, relation.T, H, G, N)
+	rangeProof, err := commitRange.Prove(relation.BPrime, relation.RBar, relation.T, relation.Rs, H, G)
 	if err != nil {
 		return nil, err
 	}

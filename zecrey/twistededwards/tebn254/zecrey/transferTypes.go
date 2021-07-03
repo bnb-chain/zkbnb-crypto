@@ -107,6 +107,7 @@ func (relation *PTransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b
 		r      *big.Int
 		rBar   *big.Int
 		rStar  *big.Int
+		rs     [RangeMaxBits]*big.Int
 	)
 	// if user knows b which means that he owns the account
 	if b != nil {
@@ -129,7 +130,12 @@ func (relation *PTransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b
 		return err
 	}
 	// r^{\star} \gets_R \mathbb{Z}_p
-	rStar = curve.RandomValue()
+	rStar = big.NewInt(0)
+	for i := 0; i < RangeMaxBits; i++ {
+		rs[i] = curve.RandomValue()
+		rStar.Add(rStar, rs[i])
+	}
+	rStar.Mod(rStar, Order)
 	// \bar{r} \gets_R \mathbb{Z}_p
 	rBar = curve.RandomValue()
 	// T = g^{\bar{r}} h^{b'}
@@ -159,6 +165,7 @@ func (relation *PTransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b
 		R:      r,
 		RBar:   rBar,
 		RStar:  rStar,
+		Rs:     rs,
 	}
 	relation.Statements = append(relation.Statements, statement)
 	return nil
@@ -195,6 +202,8 @@ type PTransferProofStatement struct {
 	RBar *big.Int
 	// random value for Y
 	RStar *big.Int
+	// rs
+	Rs [RangeMaxBits]*big.Int
 	// token id
 	TokenId uint32
 }
