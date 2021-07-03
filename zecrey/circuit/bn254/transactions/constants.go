@@ -21,6 +21,8 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/zecrey/circuit/bn254/std"
 )
 
@@ -33,9 +35,19 @@ type (
 )
 
 const (
-	NTxs                = 50
+	NbTxs               = 2
 	AccountMerkleLevels = std.AccountMerkleLevels
 	NbTransferCount     = std.NbTransferCount
 	NbSwapCount         = 2
 	BalanceMerkleLevels = 16
+
+	// size
+	PointSize   = curve.PointSize
+	EncSize     = twistedElgamal.EncSize
+	AccountSize = 160
+
+	DepositTxType  = 1
+	TransferTxType = 2
+	SwapTxType     = 3
+	WithdrawTxType = 4
 )

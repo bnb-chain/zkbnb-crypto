@@ -208,3 +208,24 @@ type transferCommitValues struct {
 	A_CLDelta, A_CRDelta, A_YDivCRDelta, A_YDivT,
 	A_T, A_pk, A_TDivCPrime *Point
 }
+
+func FakeTransferProof() *PTransferProof {
+	sk1, pk1 := twistedElgamal.GenKeyPair()
+	b1 := big.NewInt(8)
+	r1 := curve.RandomValue()
+	_, pk2 := twistedElgamal.GenKeyPair()
+	b2 := big.NewInt(2)
+	r2 := curve.RandomValue()
+	_, pk3 := twistedElgamal.GenKeyPair()
+	b3 := big.NewInt(3)
+	r3 := curve.RandomValue()
+	b1Enc, _ := twistedElgamal.Enc(b1, r1, pk1)
+	b2Enc, _ := twistedElgamal.Enc(b2, r2, pk2)
+	b3Enc, _ := twistedElgamal.Enc(b3, r3, pk3)
+	relation, _ := NewPTransferProofRelation(1)
+	relation.AddStatement(b2Enc, pk2, big.NewInt(2), nil)
+	relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
+	relation.AddStatement(b3Enc, pk3, big.NewInt(2), nil)
+	transferProof, _ := ProvePTransfer(relation)
+	return transferProof
+}

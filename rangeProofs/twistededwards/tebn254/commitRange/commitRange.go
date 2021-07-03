@@ -47,9 +47,9 @@ func Prove(b *big.Int, r *big.Int, T, g, h *Point, N uint) (proof *ComRangeProof
 	proof = new(ComRangeProof)
 	proof.G = g
 	proof.H = h
-	proof.As = make([]*Point, N)
-	proof.Cas, proof.Cbs = make([]*Point, N), make([]*Point, N)
-	proof.Fs, proof.Zas, proof.Zbs = make([]*big.Int, N), make([]*big.Int, N), make([]*big.Int, N)
+	proof.As = [RangeMaxBits]*Point{}
+	proof.Cas, proof.Cbs = [RangeMaxBits]*Point{}, [RangeMaxBits]*Point{}
+	proof.Fs, proof.Zas, proof.Zbs = [RangeMaxBits]*big.Int{}, [RangeMaxBits]*big.Int{}, [RangeMaxBits]*big.Int{}
 	// buf to compute the challenge
 	var buf bytes.Buffer
 	buf.Write(g.Marshal())
@@ -146,8 +146,7 @@ func Prove(b *big.Int, r *big.Int, T, g, h *Point, N uint) (proof *ComRangeProof
 	Verify a CommitmentRangeProof
 */
 func (proof *ComRangeProof) Verify() (bool, error) {
-	if proof.As == nil || len(proof.As) != len(proof.Cas) || len(proof.As) != len(proof.Cbs) ||
-		len(proof.As) != len(proof.Fs) || len(proof.As) != len(proof.Zas) || len(proof.As) != len(proof.Zbs) {
+	if proof.As[0] == nil {
 		return false, ErrInvalidRangeParams
 	}
 	// reconstruct buf

@@ -52,7 +52,7 @@ func TestVerifyWithdrawTx(t *testing.T) {
 }
 
 func prepareWithdrawTx() *WithdrawTx {
-	accounts, sks, hashState := mockAccountTree(4)
+	accounts, sks, hashState := mockAccountTree(8)
 	pos := 2
 	accountBeforeWithdraw := accounts[pos]
 	sk := sks[pos]
@@ -77,11 +77,11 @@ func prepareWithdrawTx() *WithdrawTx {
 	accountAfterWithdraw = *accountBeforeWithdraw
 	accountAfterWithdraw.Balance = newBalance
 	// create deposit tx
-	tx := mockWithdrawTx(true, proof, accounts, hashState, accountBeforeWithdraw, &accountAfterWithdraw, uint64(pos))
+	tx, _, _ := mockWithdrawTx(true, proof, accounts, hashState, accountBeforeWithdraw, &accountAfterWithdraw, uint64(pos))
 	return tx
 }
 
-func mockWithdrawTx(isEnabled bool, proof *zecrey.WithdrawProof, accounts []*Account, hashState []byte, acc1, acc2 *Account, pos uint64) *WithdrawTx {
+func mockWithdrawTx(isEnabled bool, proof *zecrey.WithdrawProof, accounts []*Account, hashState []byte, acc1, acc2 *Account, pos uint64) (*WithdrawTx, []*Account, []byte) {
 	// old merkle proofs
 	var buf bytes.Buffer
 	buf.Write(hashState)
@@ -116,14 +116,14 @@ func mockWithdrawTx(isEnabled bool, proof *zecrey.WithdrawProof, accounts []*Acc
 		AccountHelperMerkleProofsAfter: setFixedMerkleProofsHelper(merkleProofHelperWithdrawAfter),
 
 		// old Account Info
-		AccountBeforeWithdraw: acc1,
+		AccountBefore: acc1,
 		// new Account Info
-		AccountAfterWithdraw: acc2,
+		AccountAfter: acc2,
 
 		// old account root
 		OldAccountRoot: merkleRootBefore,
 		// new account root
 		NewAccountRoot: merkleRootAfter,
 	}
-	return tx
+	return tx, accounts, hashState
 }

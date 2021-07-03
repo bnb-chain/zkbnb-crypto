@@ -31,15 +31,15 @@ import (
 
 type ComRangeProofConstraints struct {
 	// binary proof
-	Cas, Cbs     [32]Point
-	Fs, Zas, Zbs [32]Variable
-	Cfs          [32]Variable
+	Cas, Cbs     [RangeMaxBits]Point
+	Fs, Zas, Zbs [RangeMaxBits]Variable
+	Cfs          [RangeMaxBits]Variable
 	// same commitment proof
 	Zb, Zr, Zrprime  Variable
 	A_T, A_Tprime, G Point
 	// public statements
 	T, Tprime Point
-	As        [32]Point
+	As        [RangeMaxBits]Point
 	C         Variable
 	IsEnabled Variable
 }

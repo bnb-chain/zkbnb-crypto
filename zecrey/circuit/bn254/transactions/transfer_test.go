@@ -92,11 +92,11 @@ func prepareTransferTx() *TransferTx {
 	}
 
 	// create deposit tx
-	tx := mockTransferTx(true, proof, accounts, hashState, acc1, acc2, poses)
+	tx, _, _ := mockTransferTx(true, proof, accounts, hashState, acc1, acc2, poses)
 	return tx
 }
 
-func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Account, hashState []byte, acc1, acc2 [NbTransferCount]*Account, poses [NbTransferCount]uint64) *TransferTx {
+func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Account, hashState []byte, acc1, acc2 [NbTransferCount]*Account, poses [NbTransferCount]uint64) (*TransferTx, []*Account, []byte) {
 	tx := &TransferTx{
 		IsEnabled: isEnabled,
 		Proof:     proof,
@@ -117,8 +117,8 @@ func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Ac
 		tx.AccountMerkleProofsBefore[i] = setFixedMerkleProofs(proofInclusionTransferBefore)
 		tx.AccountHelperMerkleProofsBefore[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
 		tx.OldAccountRoot = merkleRootBefore
-		tx.AccountBeforeTransfer[i] = acc1[i]
-		tx.AccountAfterTransfer[i] = acc2[i]
+		tx.AccountBefore[i] = acc1[i]
+		tx.AccountAfter[i] = acc2[i]
 	}
 	for i := 0; i < NbTransferCount; i++ {
 		accounts, hashState = mockUpdateAccount(accounts, hashState, int(poses[i]), acc2[i])
@@ -138,5 +138,5 @@ func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Ac
 		tx.NewAccountRoot = merkleRootAfter
 	}
 
-	return tx
+	return tx, accounts, hashState
 }

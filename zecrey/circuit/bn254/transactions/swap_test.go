@@ -44,14 +44,14 @@ func TestVerifySwapTx(t *testing.T) {
 	fmt.Println("constraints:", r1cs.GetNbConstraints())
 	txT1, txT2 := prepareSwapTx()
 	// chain one
-	witness, err = SetSwapTxWitness(txT1, true)
+	witness, err = SetSwapTxWitness(txT1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.SolvingSucceeded(r1cs, &witness)
 	// chain two
 	fmt.Println("start t2")
-	witness, err = SetSwapTxWitness(txT2, false)
+	witness, err = SetSwapTxWitness(txT2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,15 +128,16 @@ func prepareSwapTx() (*SwapTx, *SwapTx) {
 
 	inversePoses := [NbSwapCount]uint64{poses[1], poses[0]}
 	// create deposit tx
-	txT1 := mockSwapTx(true, swapProof, accountsT1, hashStateT1, accBeforeT1, accAfterT1, poses)
-	txT2 := mockSwapTx(true, swapProof, accountsT2, hashStateT2, accBeforeT2, accAfterT2, inversePoses)
+	txT1, _, _ := mockSwapTx(true, true, swapProof, accountsT1, hashStateT1, accBeforeT1, accAfterT1, poses)
+	txT2, _, _ := mockSwapTx(true, false, swapProof, accountsT2, hashStateT2, accBeforeT2, accAfterT2, inversePoses)
 	return txT1, txT2
 }
 
-func mockSwapTx(isEnabled bool, proof *zecrey.SwapProof, accounts []*Account, hashState []byte, acc1, acc2 [NbSwapCount]*Account, poses [NbSwapCount]uint64) *SwapTx {
+func mockSwapTx(isEnabled, isFirstProof bool, proof *zecrey.SwapProof, accounts []*Account, hashState []byte, acc1, acc2 [NbSwapCount]*Account, poses [NbSwapCount]uint64) (*SwapTx, []*Account, []byte) {
 	tx := &SwapTx{
-		IsEnabled: isEnabled,
-		Proof:     proof,
+		IsEnabled:    isEnabled,
+		IsFirstProof: isFirstProof,
+		Proof:        proof,
 	}
 	// old merkle proofs
 	var buf bytes.Buffer
@@ -154,8 +155,8 @@ func mockSwapTx(isEnabled bool, proof *zecrey.SwapProof, accounts []*Account, ha
 		tx.AccountMerkleProofsBefore[i] = setFixedMerkleProofs(proofInclusionTransferBefore)
 		tx.AccountHelperMerkleProofsBefore[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
 		tx.OldAccountRoot = merkleRootBefore
-		tx.AccountBeforeSwap[i] = acc1[i]
-		tx.AccountAfterSwap[i] = acc2[i]
+		tx.AccountBefore[i] = acc1[i]
+		tx.AccountAfter[i] = acc2[i]
 	}
 	for i := 0; i < NbSwapCount; i++ {
 		accounts, hashState = mockUpdateAccount(accounts, hashState, int(poses[i]), acc2[i])
@@ -175,5 +176,5 @@ func mockSwapTx(isEnabled bool, proof *zecrey.SwapProof, accounts []*Account, ha
 		tx.NewAccountRoot = merkleRootAfter
 	}
 
-	return tx
+	return tx, accounts, hashState
 }

@@ -20,6 +20,7 @@ package transactions
 import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
+	"github.com/consensys/gnark/std/hash/mimc"
 	"math/big"
 	"zecrey-crypto/zecrey/circuit/bn254/std"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
@@ -43,6 +44,19 @@ type DepositTxConstraints struct {
 	AccountAfterDeposit AccountConstraints
 	// generator
 	H Point
+
+	// before deposit merkle proof
+	AccountMerkleProofsBefore       [AccountMerkleLevels]Variable
+	AccountHelperMerkleProofsBefore [AccountMerkleLevels - 1]Variable
+
+	// after deposit merkle proof
+	AccountMerkleProofsAfter       [AccountMerkleLevels]Variable
+	AccountHelperMerkleProofsAfter [AccountMerkleLevels - 1]Variable
+
+	// old account root
+	OldAccountRoot Variable
+	// new account root
+	NewAccountRoot Variable
 }
 
 func (circuit *DepositTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
@@ -52,7 +66,9 @@ func (circuit *DepositTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 		return err
 	}
 
-	VerifyDepositTx(cs, *circuit, params)
+	// mimc
+	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID)
+	VerifyDepositTx(cs, *circuit, params, hFunc)
 
 	return nil
 }
@@ -65,7 +81,7 @@ func (circuit *DepositTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 	4. update balance
 	5. check new balance
 */
-func VerifyDepositTx(cs *ConstraintSystem, tx DepositTxConstraints, params twistededwards.EdCurve) {
+func VerifyDepositTx(cs *ConstraintSystem, tx DepositTxConstraints, params twistededwards.EdCurve, hFunc MiMC) {
 	// universal check
 	// check token id
 	std.IsVariableEqual(cs, tx.IsEnabled, tx.TokenId, tx.AccountBeforeDeposit.TokenId)
@@ -75,6 +91,10 @@ func VerifyDepositTx(cs *ConstraintSystem, tx DepositTxConstraints, params twist
 	std.IsPointEqual(cs, tx.IsEnabled, tx.PublicKey, tx.AccountAfterDeposit.PubKey)
 	// check index
 	std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBeforeDeposit.Index, tx.AccountAfterDeposit.Index)
+	// check merkle proof
+	std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.OldAccountRoot, tx.AccountMerkleProofsBefore[:], tx.AccountHelperMerkleProofsBefore[:])
+	std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.NewAccountRoot, tx.AccountMerkleProofsAfter[:], tx.AccountHelperMerkleProofsAfter[:])
+
 	// get CRDelta
 	var newCR Point
 	newCR.ScalarMulNonFixedBase(cs, &tx.H, tx.Amount, params)
@@ -98,11 +118,24 @@ type DepositTx struct {
 	// deposit amount
 	Amount *big.Int
 	// old Account Info
-	AccountBeforeDeposit *Account
+	AccountBefore *Account
 	// new Account Info
-	AccountAfterDeposit *Account
+	AccountAfter *Account
 	// generator
 	H *zecrey.Point
+
+	// before deposit merkle proof
+	AccountMerkleProofsBefore       [AccountMerkleLevels][]byte
+	AccountHelperMerkleProofsBefore [AccountMerkleLevels - 1]int
+
+	// after deposit merkle proof
+	AccountMerkleProofsAfter       [AccountMerkleLevels][]byte
+	AccountHelperMerkleProofsAfter [AccountMerkleLevels - 1]int
+
+	// old account root
+	OldAccountRoot []byte
+	// new account root
+	NewAccountRoot []byte
 }
 
 func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints, err error) {
@@ -112,11 +145,11 @@ func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints, err error
 		return witness, err
 	}
 	witness.Amount.Assign(tx.Amount)
-	witness.AccountBeforeDeposit, err = SetAccountWitness(tx.AccountBeforeDeposit)
+	witness.AccountBeforeDeposit, err = SetAccountWitness(tx.AccountBefore)
 	if err != nil {
 		return witness, err
 	}
-	witness.AccountAfterDeposit, err = SetAccountWitness(tx.AccountAfterDeposit)
+	witness.AccountAfterDeposit, err = SetAccountWitness(tx.AccountAfter)
 	if err != nil {
 		return witness, err
 	}
@@ -124,6 +157,17 @@ func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints, err error
 	if err != nil {
 		return witness, err
 	}
+
+	// set merkle proofs witness
+	witness.AccountMerkleProofsBefore = std.SetMerkleProofsWitness(tx.AccountMerkleProofsBefore)
+	witness.AccountHelperMerkleProofsBefore = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsBefore)
+	witness.AccountMerkleProofsAfter = std.SetMerkleProofsWitness(tx.AccountMerkleProofsAfter)
+	witness.AccountHelperMerkleProofsAfter = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsAfter)
+
+	// set account root witness
+	witness.OldAccountRoot.Assign(tx.OldAccountRoot)
+	witness.NewAccountRoot.Assign(tx.NewAccountRoot)
+
 	witness.IsEnabled = std.SetBoolWitness(tx.IsEnabled)
 	return witness, nil
 }

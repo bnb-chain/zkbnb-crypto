@@ -126,8 +126,8 @@ func TestSerialize(t *testing.T) {
 		Balance: balance,
 		PubKey:  pk,
 	}
-	res := serializeAccount(acc)
-	accCopy := deserializeAccount(res)
+	res := SerializeAccount(acc)
+	accCopy := DeserializeAccount(res)
 	fmt.Println(accCopy.Balance.String())
 }
 
