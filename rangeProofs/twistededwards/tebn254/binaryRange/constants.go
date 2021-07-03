@@ -17,15 +17,19 @@
 
 package commitRange
 
-import "math/big"
+import (
+	"math/big"
+	"zecrey-crypto/ecc/ztwistededwards/tebn254"
+)
 
-type ComRangeProof struct {
-	// 0 or 2^i commitment proof
-	Cas, Cbs [RangeMaxBits]*Point
-	Zas, Zbs [RangeMaxBits]*big.Int
-	// public statements
-	T, G, H *Point
-	// commitment to each bit
-	As     [RangeMaxBits]*Point
-	C1, C2 *big.Int
-}
+const (
+	RangeMaxBits = 32
+)
+
+var (
+	Order     = tebn254.Order
+	fakePoint = tebn254.ZeroPoint()
+	fakeBigInt   = big.NewInt(0)
+)
+
+type Point = tebn254.Point

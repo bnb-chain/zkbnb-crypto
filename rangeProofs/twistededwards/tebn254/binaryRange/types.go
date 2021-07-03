@@ -20,12 +20,13 @@ package commitRange
 import "math/big"
 
 type ComRangeProof struct {
-	// 0 or 2^i commitment proof
-	Cas, Cbs [RangeMaxBits]*Point
-	Zas, Zbs [RangeMaxBits]*big.Int
+	// binary proof
+	Cas, Cbs     [RangeMaxBits]*Point
+	Fs, Zas, Zbs [RangeMaxBits]*big.Int
+	// same commitment proof
+	Zb, Zr, Zrprime *big.Int
+	A_T, A_Tprime   *Point
 	// public statements
-	T, G, H *Point
-	// commitment to each bit
-	As     [RangeMaxBits]*Point
-	C1, C2 *big.Int
+	T, Tprime, G, H *Point
+	As              [RangeMaxBits]*Point
 }

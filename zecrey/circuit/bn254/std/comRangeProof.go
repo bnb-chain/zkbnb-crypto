@@ -18,29 +18,20 @@
 package std
 
 import (
-	"bytes"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
-	"math/big"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/ffmath"
-	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
-	"zecrey-crypto/util"
 )
 
 type ComRangeProofConstraints struct {
-	// binary proof
-	Cas, Cbs     [RangeMaxBits]Point
-	Fs, Zas, Zbs [RangeMaxBits]Variable
-	Cfs          [RangeMaxBits]Variable
-	// same commitment proof
-	Zb, Zr, Zrprime  Variable
-	A_T, A_Tprime, G Point
+	// bit proof
+	Cas, Cbs [RangeMaxBits]Point
+	Zas, Zbs [RangeMaxBits]Variable
 	// public statements
-	T, Tprime Point
+	T         Point
+	G         Point
 	As        [RangeMaxBits]Point
-	C         Variable
+	C1, C2    Variable
 	IsEnabled Variable
 }
 
@@ -67,100 +58,44 @@ func verifyComRangeProof(
 	proof ComRangeProofConstraints,
 	params twistededwards.EdCurve,
 ) {
-	// T' = \prod_{i=0}^{31} (A_i)^{2^i}
-	Tprime := Point{
-		X: cs.Constant("0"),
-		Y: cs.Constant("1"),
+	TCheck := Point{
+		X: cs.Constant(0),
+		Y: cs.Constant(1),
 	}
-	// use current and two, in order to compute 2^i
-	current := cs.Constant("1")
-	two := cs.Constant("2")
-	var AiMul2i Point
-	for i, Ai := range proof.As {
-		// verify binary proof
-		verifyBinary(cs, Ai, proof.Cas[i], proof.Cbs[i],
-			proof.G, proof.Fs[i], proof.Zas[i], proof.Zbs[i], proof.Cfs[i], proof.C, proof.IsEnabled, params)
-		// compute AiMul2i = A_i^{2^i}
-		AiMul2i.ScalarMulNonFixedBase(cs, &Ai, current, params)
-		// add to T'
-		Tprime.AddGeneric(cs, &Tprime, &AiMul2i, params)
-		// current = 2 * current
-		current = cs.Mul(current, two)
+	for _, Ai := range proof.As {
+		TCheck.AddGeneric(cs, &TCheck, &Ai, params)
 	}
-	// T' should be correct
-	IsPointEqual(cs, proof.IsEnabled, proof.Tprime, Tprime)
-
-	// verify the proof: commitment for the same value
-	verifyCommitmentSameValue(cs, proof.A_T, proof.A_Tprime, proof.T,
-		proof.Tprime, proof.G, proof.Zb, proof.Zr, proof.Zrprime, proof.C, proof.IsEnabled, params)
+	// check commitment first
+	IsPointEqual(cs, proof.IsEnabled, TCheck, proof.T)
+	base := Neg(cs, proof.G, params)
+	var A2 Point
+	for i, A1 := range proof.As {
+		A2.AddGeneric(cs, &A1, base, params)
+		verifyBitProof(cs, proof.Zas[i], proof.Zbs[i], proof.Cas[i], proof.Cbs[i], A1, A2, proof.C1, proof.C2, proof.IsEnabled, params)
+		base.AddGeneric(cs, base, base, params)
+	}
 }
 
-/*
-	verifyBinary verify the binary proof
-	@cs: the constraint system
-	@A: commitment for the binary value
-	@Ca,Cb: random commitments
-	@g: the generator
-	@f,za,zb: response values for binary proof
-	@params: params for the curve tebn254
-*/
-func verifyBinary(
+func verifyBitProof(
 	cs *ConstraintSystem,
-	A, Ca, Cb, g Point,
-	f, za, zb, cf Variable,
-	c Variable,
+	za, zb Variable,
+	Ca, Cb Point,
+	A1, A2 Point,
+	c1, c2 Variable,
 	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
-	var l1, hza, r1 Point
-	// A^c Ca == Com(f,za)
-	l1.ScalarMulNonFixedBase(cs, &A, c, params)
-	l1.AddGeneric(cs, &l1, &Ca, params)
-	r1.ScalarMulNonFixedBase(cs, &g, f, params)
-	hza.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, za, params)
-	r1.AddGeneric(cs, &r1, &hza, params)
+	var l1, r1 Point
+	// check h^{za} == Ca A1^c1
+	l1.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, za, params)
+	r1.ScalarMulNonFixedBase(cs, &A1, c1, params)
+	r1.AddGeneric(cs, &Ca, &r1, params)
 	IsPointEqual(cs, isEnabled, l1, r1)
-
-	var Acf, l2, r2 Point
-	// A^{c-f} Cb == Com(0,zb)
-	Acf.ScalarMulNonFixedBase(cs, &A, cf, params)
-	l2.AddGeneric(cs, &Acf, &Cb, params)
-	r2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zb, params)
-	IsPointEqual(cs, isEnabled, l2, r2)
-}
-
-/*
-	verifyCommitmentSameValue verify the same value commitment proof
-	@cs: the constraint system
-	@A_T,A_T': random commitments
-	@T,T': two public commitments
-	@g: the generator
-	@zb, zr, zrprime: response values for same value commitment proof
-	@params: params for the curve tebn254
-*/
-func verifyCommitmentSameValue(
-	cs *ConstraintSystem,
-	A_T, A_Tprime, T, Tprime, g Point,
-	zb, zr, zrprime Variable,
-	c Variable,
-	isEnabled Variable,
-	params twistededwards.EdCurve,
-) {
-	var gzb, hzr, l1, Tc, r1 Point
-	// g^{zb} h^{zr} == A_T T^c
-	gzb.ScalarMulNonFixedBase(cs, &g, zb, params)
-	hzr.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zr, params)
-	l1.AddGeneric(cs, &gzb, &hzr, params)
-	Tc.ScalarMulNonFixedBase(cs, &T, c, params)
-	r1.AddGeneric(cs, &A_T, &Tc, params)
-	IsPointEqual(cs, isEnabled, l1, r1)
-
-	var l2, Tprimec, r2 Point
-	// g^{zb} h^{zrprime} == A_T' T'^c
-	l2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zrprime, params)
-	l2.AddGeneric(cs, &gzb, &l2, params)
-	Tprimec.ScalarMulNonFixedBase(cs, &Tprime, c, params)
-	r2.AddGeneric(cs, &A_Tprime, &Tprimec, params)
+	var l2, r2 Point
+	// check h^{zb} == Cb A2^c2
+	l2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, zb, params)
+	r2.ScalarMulNonFixedBase(cs, &A2, c2, params)
+	r2.AddGeneric(cs, &Cb, &r2, params)
 	IsPointEqual(cs, isEnabled, l2, r2)
 }
 
@@ -184,15 +119,9 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof, isEnabled bool) (
 	if err != nil {
 		return witness, err
 	}
-	var buf bytes.Buffer
-	buf.Write(proof.G.Marshal())
-	buf.Write(proof.H.Marshal())
-	buf.Write(proof.T.Marshal())
+	witness.T, err = SetPointWitness(proof.T)
 	// compute c
 	// set buf and
-	// check if T' = (A_i)^{2^i}
-	powerof2Vec := commitRange.PowerOfVec(big.NewInt(2), int64(len(proof.As)))
-	Tprime_check := curve.ZeroPoint()
 	for i, Ai := range proof.As {
 		witness.As[i], err = SetPointWitness(Ai)
 		if err != nil {
@@ -206,50 +135,11 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof, isEnabled bool) (
 		if err != nil {
 			return witness, err
 		}
-		witness.Fs[i].Assign(proof.Fs[i].String())
 		witness.Zas[i].Assign(proof.Zas[i].String())
 		witness.Zbs[i].Assign(proof.Zbs[i].String())
-
-		buf.Write(Ai.Marshal())
-		Tprime_check.Add(Tprime_check, curve.ScalarMul(Ai, powerof2Vec[i]))
 	}
-	if !Tprime_check.Equal(proof.Tprime) {
-		return witness, ErrInvalidRangeParams
-	}
-	buf.Write(proof.A_T.Marshal())
-	buf.Write(proof.A_Tprime.Marshal())
-	// compute the challenge
-	c, err := util.HashToInt(buf, zmimc.Hmimc)
-	if err != nil {
-		return witness, err
-	}
-	witness.Zb.Assign(proof.Zb.String())
-	witness.Zr.Assign(proof.Zr.String())
-	witness.Zrprime.Assign(proof.Zrprime.String())
-	witness.A_T, err = SetPointWitness(proof.A_T)
-	if err != nil {
-		return witness, err
-	}
-	witness.A_Tprime, err = SetPointWitness(proof.A_Tprime)
-	if err != nil {
-		return witness, err
-	}
-	witness.T, err = SetPointWitness(proof.T)
-	if err != nil {
-		return witness, err
-	}
-	witness.Tprime, err = SetPointWitness(proof.Tprime)
-	if err != nil {
-		return witness, err
-	}
-	witness.C.Assign(c.String())
-	for i := 0; i < 32; i++ {
-		witness.Cfs[i].Assign(ffmath.SubMod(c, proof.Fs[i], curve.Order))
-	}
-	if isEnabled {
-		witness.IsEnabled.Assign(1)
-	} else {
-		witness.IsEnabled.Assign(0)
-	}
+	witness.C1.Assign(proof.C1)
+	witness.C2.Assign(proof.C2)
+	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

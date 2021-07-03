@@ -22,6 +22,7 @@ import (
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/bulletProofs"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 )
 
 type (
@@ -32,16 +33,14 @@ type (
 )
 
 const (
-	N   = 32 // max bits
-	Max = 4294967296
+	RangeMaxBits = commitRange.RangeMaxBits // max bits
+	Max          = 4294967296
 )
 
 var (
-	G          = curve.G
-	H          = curve.H
-	Order      = curve.Order
-	Zero       = big.NewInt(0)
-	PadSecret  = big.NewInt(0)
-	fakePoint  = curve.ZeroPoint()
-	fakeBigInt = big.NewInt(0)
+	G         = curve.G
+	H         = curve.H
+	Order     = curve.Order
+	Zero      = big.NewInt(0)
+	PadSecret = big.NewInt(0)
 )

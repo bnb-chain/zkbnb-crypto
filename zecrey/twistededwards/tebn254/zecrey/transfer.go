@@ -226,7 +226,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			proof.Z_tsks = append(proof.Z_tsks, z_tsk)
 		}
 		// compute the range proof
-		rangeProof, err := commitRange.Prove(statement.BStar, statement.RStar, statement.Y, H, G, N)
+		rangeProof, err := commitRange.Prove(statement.BStar, statement.RStar, statement.Y, statement.Rs, H, G)
 		if err != nil {
 			return nil, err
 		}

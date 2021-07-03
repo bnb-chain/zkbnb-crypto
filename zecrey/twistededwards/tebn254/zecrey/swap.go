@@ -78,7 +78,7 @@ func ProveSwapPart1(relation *SwapProofRelationPart, isFrom bool) (proof *SwapPr
 	z_rbar, z_sk, z_skInv := respondBalance(relation.RBar, relation.Sk, alpha_rbar, alpha_sk, alpha_skInv, c)
 	// range proof
 	// make range proofs
-	rangeProof, err := commitRange.Prove(relation.BPrime, relation.RBar, relation.T, H, G, N)
+	rangeProof, err := commitRange.Prove(relation.BPrime, relation.RBar, relation.T, relation.Rs, H, G)
 	if err != nil {
 		return nil, err
 	}

@@ -17,15 +17,10 @@
 
 package commitRange
 
-import "math/big"
+import "errors"
 
-type ComRangeProof struct {
-	// 0 or 2^i commitment proof
-	Cas, Cbs [RangeMaxBits]*Point
-	Zas, Zbs [RangeMaxBits]*big.Int
-	// public statements
-	T, G, H *Point
-	// commitment to each bit
-	As     [RangeMaxBits]*Point
-	C1, C2 *big.Int
-}
+var (
+	ErrInvalidRangeParams      = errors.New("err: invalid params for range proof")
+	errInvalidBinaryParams     = errors.New("err: invalid binary params")
+	errInvalidCommitmentParams = errors.New("err: invalid commitment params")
+)

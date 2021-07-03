@@ -27,9 +27,8 @@ const (
 )
 
 var (
-	Order     = tebn254.Order
-	fakePoint = tebn254.ZeroPoint()
-	fakeBigInt   = big.NewInt(0)
+	Order = tebn254.Order
+	Zero  = big.NewInt(0)
 )
 
 type Point = tebn254.Point

@@ -26,18 +26,37 @@ import (
 	toBinary receives as input a bigint x and outputs an array of integers such that
 	x = sum(xi.2^i), i.e. it returns the decomposition of x into base 2.
 */
-func toBinary(x *big.Int, l int64) ([]int64, error) {
+func toBinary(x *big.Int, l int64) ([]*big.Int, error) {
 	var (
-		resultBigInt []int64
+		resultBigInt []*big.Int
 		i            int64
 	)
-	resultBigInt = make([]int64, l)
+	resultBigInt = make([]*big.Int, l)
 	uInt := big.NewInt(int64(2))
 	i = 0
 	for i < l {
-		resultBigInt[i] = ffmath.Mod(x, uInt).Int64()
+		resultBigInt[i] = big.NewInt(ffmath.Mod(x, uInt).Int64())
 		x = ffmath.Div(x, uInt)
 		i = i + 1
 	}
 	return resultBigInt, nil
+}
+
+/*
+powerOf returns a vector composed by powers of x.
+*/
+func PowerOfVec(y *big.Int, n int64) []*big.Int {
+	var (
+		i      int64
+		result []*big.Int
+	)
+	result = make([]*big.Int, n)
+	current := big.NewInt(1)
+	i = 0
+	for i < n {
+		result[i] = current
+		current = ffmath.MultiplyMod(y, current, Order)
+		i++
+	}
+	return result
 }
