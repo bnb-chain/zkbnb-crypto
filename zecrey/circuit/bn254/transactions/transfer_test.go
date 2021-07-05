@@ -18,18 +18,14 @@
 package transactions
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/consensys/gnark-crypto/accumulator/merkletree"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/accumulator/merkle"
 	"math/big"
 	"testing"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -94,49 +90,4 @@ func prepareTransferTx() *TransferTx {
 	// create deposit tx
 	tx, _, _ := mockTransferTx(true, proof, accounts, hashState, acc1, acc2, poses)
 	return tx
-}
-
-func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Account, hashState []byte, acc1, acc2 [NbTransferCount]*Account, poses [NbTransferCount]uint64) (*TransferTx, []*Account, []byte) {
-	tx := &TransferTx{
-		IsEnabled: isEnabled,
-		Proof:     proof,
-	}
-	// old merkle proofs
-	var buf bytes.Buffer
-	h := zmimc.Hmimc
-	// old merkle proof
-	for i := 0; i < NbTransferCount; i++ {
-		buf.Reset()
-		buf.Write(hashState)
-		h.Reset()
-		merkleRootBefore, proofInclusionTransferBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), poses[i])
-		if err != nil {
-			panic(err)
-		}
-		merkleProofHelperTransferBefore := merkle.GenerateProofHelper(proofInclusionTransferBefore, poses[i], numLeaves)
-		tx.AccountMerkleProofsBefore[i] = setFixedMerkleProofs(proofInclusionTransferBefore)
-		tx.AccountHelperMerkleProofsBefore[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
-		tx.OldAccountRoot = merkleRootBefore
-		tx.AccountBefore[i] = acc1[i]
-		tx.AccountAfter[i] = acc2[i]
-	}
-	for i := 0; i < NbTransferCount; i++ {
-		accounts, hashState = mockUpdateAccount(accounts, hashState, int(poses[i]), acc2[i])
-	}
-	for i := 0; i < NbTransferCount; i++ {
-		// new merkle proofs
-		buf.Reset()
-		buf.Write(hashState)
-		h.Reset()
-		merkleRootAfter, proofInclusionTransferAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), poses[i])
-		if err != nil {
-			panic(err)
-		}
-		merkleProofHelperTransferAfter := merkle.GenerateProofHelper(proofInclusionTransferAfter, poses[i], numLeaves)
-		tx.AccountMerkleProofsAfter[i] = setFixedMerkleProofs(proofInclusionTransferAfter)
-		tx.AccountHelperMerkleProofsAfter[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
-		tx.NewAccountRoot = merkleRootAfter
-	}
-
-	return tx, accounts, hashState
 }

@@ -18,18 +18,14 @@
 package transactions
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/consensys/gnark-crypto/accumulator/merkletree"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/accumulator/merkle"
 	"math/big"
 	"testing"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -69,56 +65,4 @@ func prepareDepositTx() *DepositTx {
 	// create deposit tx
 	tx, _, _ := mockDepositTx(true, accountBeforeDeposit.TokenId, accounts, hashState, accountBeforeDeposit.PubKey, amount, accountBeforeDeposit, &accountAfterDeposit, uint64(pos))
 	return tx
-}
-
-func mockDepositTx(isEnabled bool, tokenId uint32, accounts []*Account, hashState []byte, pk *zecrey.Point, amount *big.Int, acc1, acc2 *Account, pos uint64) (*DepositTx, []*Account, []byte) {
-	// old merkle proofs
-	var buf bytes.Buffer
-	buf.Write(hashState)
-	h := zmimc.Hmimc
-	h.Reset()
-	merkleRootBefore, proofInclusionWithdrawBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), pos)
-	if err != nil {
-		panic(err)
-	}
-	merkleProofHelperWithdrawBefore := merkle.GenerateProofHelper(proofInclusionWithdrawBefore, pos, numLeaves)
-	accounts, hashState = mockUpdateAccount(accounts, hashState, int(pos), acc2)
-	// new merkle proofs
-	buf.Reset()
-	buf.Write(hashState)
-	h.Reset()
-	merkleRootAfter, proofInclusionWithdrawAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), pos)
-	if err != nil {
-		panic(err)
-	}
-	merkleProofHelperWithdrawAfter := merkle.GenerateProofHelper(proofInclusionWithdrawAfter, pos, numLeaves)
-	tx := &DepositTx{
-		IsEnabled: isEnabled,
-		// token id
-		TokenId: tokenId,
-		// Public key
-		PublicKey: pk,
-		// deposit amount
-		Amount: amount,
-		// old Account Info
-		AccountBefore: acc1,
-		// new Account Info
-		AccountAfter: acc2,
-		// generator
-		H: zecrey.H,
-
-		// before deposit merkle proof
-		AccountMerkleProofsBefore:       setFixedMerkleProofs(proofInclusionWithdrawBefore),
-		AccountHelperMerkleProofsBefore: setFixedMerkleProofsHelper(merkleProofHelperWithdrawBefore),
-
-		// after deposit merkle proof
-		AccountMerkleProofsAfter:       setFixedMerkleProofs(proofInclusionWithdrawAfter),
-		AccountHelperMerkleProofsAfter: setFixedMerkleProofsHelper(merkleProofHelperWithdrawAfter),
-
-		// old account root
-		OldAccountRoot: merkleRootBefore,
-		// new account root
-		NewAccountRoot: merkleRootAfter,
-	}
-	return tx, accounts, hashState
 }
