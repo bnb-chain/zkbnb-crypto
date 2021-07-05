@@ -18,19 +18,13 @@
 package transactions
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/consensys/gnark-crypto/accumulator/merkletree"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/accumulator/merkle"
-	"math/big"
 	"testing"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 func TestVerifySwapTx(t *testing.T) {
@@ -57,43 +51,6 @@ func TestVerifySwapTx(t *testing.T) {
 	}
 	assert.SolvingSucceeded(r1cs, &witness)
 
-}
-
-func mockSwapProof(accountsT1 []*Account, accountsT2 []*Account, sks []*big.Int, poses [NbSwapCount]uint64) *zecrey.SwapProof {
-	// get accounts
-	accT1A := accountsT1[poses[0]]
-	accT2A := accountsT2[poses[0]]
-	skA := sks[poses[0]]
-	accT1B := accountsT1[poses[1]]
-	accT2B := accountsT2[poses[1]]
-	skB := sks[poses[1]]
-	// from/to amount
-	bStarFrom := big.NewInt(1)
-	bStarTo := big.NewInt(8)
-	// from/to tokenId
-	fromTokenId := uint32(1)
-	toTokenId := uint32(2)
-	relationPart1, err := zecrey.NewSwapRelationPart1(accT1A.Balance, accT1B.Balance, accT1A.PubKey, accT1B.PubKey, bStarFrom, bStarTo, skA, fromTokenId, toTokenId)
-	if err != nil {
-		panic(err)
-	}
-	swapProofPart1, err := zecrey.ProveSwapPart1(relationPart1, true)
-	if err != nil {
-		panic(err)
-	}
-	part1Res, err := swapProofPart1.Verify()
-	if err != nil || !part1Res {
-		panic(err)
-	}
-	relationPart2, err := zecrey.NewSwapRelationPart2(accT2B.Balance, accT2A.Balance, accT2B.PubKey, accT2A.PubKey, skB, fromTokenId, toTokenId, swapProofPart1)
-	if err != nil {
-		panic(err)
-	}
-	swapProof, err := zecrey.ProveSwapPart2(relationPart2, swapProofPart1)
-	if err != nil {
-		panic(err)
-	}
-	return swapProof
 }
 
 func prepareSwapTx() (*SwapTx, *SwapTx) {
@@ -131,50 +88,4 @@ func prepareSwapTx() (*SwapTx, *SwapTx) {
 	txT1, _, _ := mockSwapTx(true, true, swapProof, accountsT1, hashStateT1, accBeforeT1, accAfterT1, poses)
 	txT2, _, _ := mockSwapTx(true, false, swapProof, accountsT2, hashStateT2, accBeforeT2, accAfterT2, inversePoses)
 	return txT1, txT2
-}
-
-func mockSwapTx(isEnabled, isFirstProof bool, proof *zecrey.SwapProof, accounts []*Account, hashState []byte, acc1, acc2 [NbSwapCount]*Account, poses [NbSwapCount]uint64) (*SwapTx, []*Account, []byte) {
-	tx := &SwapTx{
-		IsEnabled:    isEnabled,
-		IsFirstProof: isFirstProof,
-		Proof:        proof,
-	}
-	// old merkle proofs
-	var buf bytes.Buffer
-	h := zmimc.Hmimc
-	// old merkle proof
-	for i := 0; i < NbSwapCount; i++ {
-		buf.Reset()
-		buf.Write(hashState)
-		h.Reset()
-		merkleRootBefore, proofInclusionTransferBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), poses[i])
-		if err != nil {
-			panic(err)
-		}
-		merkleProofHelperTransferBefore := merkle.GenerateProofHelper(proofInclusionTransferBefore, poses[i], numLeaves)
-		tx.AccountMerkleProofsBefore[i] = setFixedMerkleProofs(proofInclusionTransferBefore)
-		tx.AccountHelperMerkleProofsBefore[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
-		tx.OldAccountRoot = merkleRootBefore
-		tx.AccountBefore[i] = acc1[i]
-		tx.AccountAfter[i] = acc2[i]
-	}
-	for i := 0; i < NbSwapCount; i++ {
-		accounts, hashState = mockUpdateAccount(accounts, hashState, int(poses[i]), acc2[i])
-	}
-	for i := 0; i < NbSwapCount; i++ {
-		// new merkle proofs
-		buf.Reset()
-		buf.Write(hashState)
-		h.Reset()
-		merkleRootAfter, proofInclusionTransferAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), poses[i])
-		if err != nil {
-			panic(err)
-		}
-		merkleProofHelperTransferAfter := merkle.GenerateProofHelper(proofInclusionTransferAfter, poses[i], numLeaves)
-		tx.AccountMerkleProofsAfter[i] = setFixedMerkleProofs(proofInclusionTransferAfter)
-		tx.AccountHelperMerkleProofsAfter[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
-		tx.NewAccountRoot = merkleRootAfter
-	}
-
-	return tx, accounts, hashState
 }

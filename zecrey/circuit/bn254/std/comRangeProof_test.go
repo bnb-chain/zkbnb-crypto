@@ -39,7 +39,7 @@ func TestComRangeProofCircuit_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 	for i := 0; i < 1; i++ {
-		b := big.NewInt(-1)
+		b := big.NewInt(2)
 		var rs [RangeMaxBits]*big.Int
 		r := big.NewInt(0)
 		for i := 0; i < RangeMaxBits; i++ {
