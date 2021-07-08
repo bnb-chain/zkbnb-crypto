@@ -18,13 +18,9 @@
 package std
 
 import (
-	"bytes"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"math/big"
-	"zecrey-crypto/ffmath"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/util"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -46,6 +42,7 @@ type SwapProofPartConstraints struct {
 	// common inputs
 	BStar1                                   Variable
 	BStar2                                   Variable
+	Fee                                      Variable
 	RStar                                    Variable
 	CStar                                    ElGamalEncConstraints
 	C                                        ElGamalEncConstraints
@@ -101,7 +98,7 @@ func VerifySwapProofPart1(
 	verifyPt(cs, proof.Ht1, proof.Pt1, proof.A_Pt1, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	verifyPt(cs, proof.Ht2, proof.Pt2, proof.A_Pt2, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	// verify correct enc
-	verifyCorrectEnc(cs, proof.H, proof.Pk, proof.ReceiverPk, proof.CStar, proof.ReceiverCStar, proof.BStar1, proof.RStar, proof.IsEnabled, params)
+	verifyCorrectEnc1(cs, proof.H, proof.Pk, proof.ReceiverPk, proof.CStar, proof.ReceiverCStar, proof.BStar1, proof.Fee, proof.RStar, proof.IsEnabled, params)
 	// verify balance
 	verifyBalance(cs, proof.Pk, proof.A_pk, proof.CLprimeInv,
 		proof.TDivCRprime, proof.A_TDivCRprime, proof.Challenge,
@@ -120,7 +117,7 @@ func VerifySwapProofPart2(
 	verifyPt(cs, proof.Ht1, proof.Pt1, proof.A_Pt1, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	verifyPt(cs, proof.Ht2, proof.Pt2, proof.A_Pt2, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	// verify correct enc
-	verifyCorrectEnc(cs, proof.H, proof.Pk, proof.ReceiverPk, proof.CStar, proof.ReceiverCStar, proof.BStar2, proof.RStar, proof.IsEnabled, params)
+	verifyCorrectEnc2(cs, proof.H, proof.Pk, proof.ReceiverPk, proof.CStar, proof.ReceiverCStar, proof.BStar2, proof.RStar, proof.IsEnabled, params)
 	// verify balance
 	verifyBalance(cs, proof.Pk, proof.A_pk, proof.CLprimeInv,
 		proof.TDivCRprime, proof.A_TDivCRprime, proof.Challenge,
@@ -135,7 +132,47 @@ func VerifySwapProofPart2(
 	@rStar: the random value
 	@params: params for the curve tebn254
 */
-func verifyCorrectEnc(
+func verifyCorrectEnc1(
+	cs *ConstraintSystem,
+	h, pk Point,
+	receiverPk Point,
+	CStar ElGamalEncConstraints,
+	receiverCStar ElGamalEncConstraints,
+	bStar Variable,
+	fee Variable,
+	rStar Variable,
+	isEnabled Variable,
+	params twistededwards.EdCurve,
+) {
+	// check sender
+	var CL, CR, gr Point
+	// C_L = pk^r
+	CL.ScalarMulNonFixedBase(cs, &pk, rStar, params)
+	// C_R = g^r h^b
+	gr.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, rStar, params)
+	hNeg := Neg(cs, h, params)
+	deltaBalance := cs.Add(bStar, fee)
+	CR.ScalarMulNonFixedBase(cs, hNeg, deltaBalance, params)
+	CR.AddGeneric(cs, &gr, &CR, params)
+
+	IsElGamalEncEqual(cs, isEnabled, ElGamalEncConstraints{CL: CL, CR: CR}, CStar)
+
+	// check receiver
+	CL.ScalarMulNonFixedBase(cs, &receiverPk, rStar, params)
+	CR.ScalarMulNonFixedBase(cs, &h, deltaBalance, params)
+	CR.AddGeneric(cs, &gr, &CR, params)
+	IsElGamalEncEqual(cs, isEnabled, ElGamalEncConstraints{CL: CL, CR: CR}, receiverCStar)
+}
+
+/*
+	verifyCorrectEnc verify the encryption
+	@cs: the constraint system
+	@h,pk,CStar: public inputs
+	@bStar: the value
+	@rStar: the random value
+	@params: params for the curve tebn254
+*/
+func verifyCorrectEnc2(
 	cs *ConstraintSystem,
 	h, pk Point,
 	receiverPk Point,
@@ -197,36 +234,7 @@ func setSwapProofPartWitness(proof *zecrey.SwapProofPart, isEnabled bool) (witne
 		return witness, ErrInvalidProof
 	}
 
-	// generate the challenge
-	var buf bytes.Buffer
-	buf.Write(proof.G.Marshal())
-	buf.Write(proof.H.Marshal())
-	buf.Write(proof.Ht1.Marshal())
-	buf.Write(proof.Pt1.Marshal())
-	buf.Write(proof.Ht2.Marshal())
-	buf.Write(proof.Pt2.Marshal())
-	buf.Write(proof.C.CL.Marshal())
-	buf.Write(proof.C.CR.Marshal())
-	buf.Write(proof.CStar.CL.Marshal())
-	buf.Write(proof.CStar.CR.Marshal())
-	buf.Write(proof.T.Marshal())
-	buf.Write(proof.Pk.Marshal())
-	buf.Write(proof.BStar1.Bytes())
-	buf.Write(proof.BStar2.Bytes())
-	buf.Write(proof.A_pk.Marshal())
-	buf.Write(proof.A_TDivCRprime.Marshal())
-
-	// compute the challenge
-	c, err := util.HashToInt(buf, zmimc.Hmimc)
-	if err != nil {
-		return witness, err
-	}
-	// check challenge
-	if !ffmath.Equal(c, proof.Challenge) {
-		return witness, ErrInvalidChallenge
-	}
-
-	witness.Challenge.Assign(c.String())
+	witness.Challenge.Assign(proof.Challenge)
 
 	// commitments
 	witness.Pt1, err = SetPointWitness(proof.Pt1)
@@ -254,9 +262,9 @@ func setSwapProofPartWitness(proof *zecrey.SwapProofPart, isEnabled bool) (witne
 		return witness, err
 	}
 	// response
-	witness.Z_rbar.Assign(proof.Z_rbar.String())
-	witness.Z_sk.Assign(proof.Z_sk.String())
-	witness.Z_skInv.Assign(proof.Z_skInv.String())
+	witness.Z_rbar.Assign(proof.Z_rbar)
+	witness.Z_sk.Assign(proof.Z_sk)
+	witness.Z_skInv.Assign(proof.Z_skInv)
 	// Commitment Range Proofs
 	witness.RangeProof, err = setComRangeProofWitness(proof.RangeProof, true)
 	if err != nil {
@@ -309,11 +317,8 @@ func setSwapProofPartWitness(proof *zecrey.SwapProofPart, isEnabled bool) (witne
 	}
 	witness.BStar1.Assign(proof.BStar1)
 	witness.BStar2.Assign(proof.BStar2)
+	witness.Fee.Assign(proof.Fee)
 	witness.RStar.Assign(proof.RStar)
-	if isEnabled {
-		witness.IsEnabled.Assign(1)
-	} else {
-		witness.IsEnabled.Assign(0)
-	}
+	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

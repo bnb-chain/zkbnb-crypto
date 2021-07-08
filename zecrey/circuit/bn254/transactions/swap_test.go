@@ -23,8 +23,11 @@ import (
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
+	"math/big"
 	"testing"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
+	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 func TestVerifySwapTx(t *testing.T) {
@@ -55,9 +58,32 @@ func TestVerifySwapTx(t *testing.T) {
 
 func prepareSwapTx() (*SwapTx, *SwapTx) {
 	// mock two merkle trees
-	accountsT1, accountsT2, sks, hashStateT1, hashStateT2 := mockTwoAccountTree(8)
+	accountsT1, accountsT2, sks, balancesT1, balancesT2, hashStateT1, hashStateT2 := mockTwoAccountTree(8)
 	// two index array
-	poses := [NbSwapCount]uint64{0, 3}
+	feePos := uint64(0)
+	feeT1 := big.NewInt(1)
+	// feeT1 related
+	var T1feeAccountBefore, T1feeAccountAfter Account
+	T1feeAccountBefore = *accountsT1[feePos]
+	T1feeAccountAfter = *accountsT1[feePos]
+	T1feeNewBalance := &zecrey.ElGamalEnc{
+		CL: T1feeAccountAfter.Balance.CL,
+		CR: curve.Add(T1feeAccountAfter.Balance.CR, curve.ScalarMul(curve.H, feeT1)),
+	}
+	T1feeAccountAfter.Balance = T1feeNewBalance
+
+	// feeT1 related
+	feeT2 := big.NewInt(0)
+	var T2feeAccountBefore, T2feeAccountAfter Account
+	T2feeAccountBefore = *accountsT1[feePos]
+	T2feeAccountAfter = *accountsT1[feePos]
+	T2feeNewBalance := &zecrey.ElGamalEnc{
+		CL: T2feeAccountAfter.Balance.CL,
+		CR: curve.Add(T2feeAccountAfter.Balance.CR, curve.ScalarMul(curve.H, feeT2)),
+	}
+	T2feeAccountAfter.Balance = T2feeNewBalance
+
+	poses := [NbSwapCount]uint64{1, 3}
 	// before swap first chain accounts
 	accountBeforeSwap1 := accountsT1[poses[0]]
 	accountBeforeSwap2 := accountsT1[poses[1]]
@@ -68,7 +94,7 @@ func prepareSwapTx() (*SwapTx, *SwapTx) {
 	accountBeforeSwap4 := accountsT2[poses[0]]
 	accBeforeT2 := [NbSwapCount]*Account{accountBeforeSwap3, accountBeforeSwap4}
 	// create swap proof
-	swapProof := mockSwapProof(accountsT1, accountsT2, sks, poses)
+	swapProof := mockSwapProof(accountsT1, accountsT2, sks, balancesT1, balancesT2, poses, feeT1)
 	// acc after swap
 	var accountAfterSwap1, accountAfterSwap2, accountAfterSwap3, accountAfterSwap4 Account
 	accountAfterSwap1 = *accountBeforeSwap1
@@ -85,7 +111,7 @@ func prepareSwapTx() (*SwapTx, *SwapTx) {
 
 	inversePoses := [NbSwapCount]uint64{poses[1], poses[0]}
 	// create deposit tx
-	txT1, _, _ := mockSwapTx(true, true, swapProof, accountsT1, hashStateT1, accBeforeT1, accAfterT1, poses)
-	txT2, _, _ := mockSwapTx(true, false, swapProof, accountsT2, hashStateT2, accBeforeT2, accAfterT2, inversePoses)
+	txT1, _, _ := mockSwapTx(true, true, swapProof, accountsT1, hashStateT1, accBeforeT1, accAfterT1, poses, feeT1, &T1feeAccountBefore, &T1feeAccountAfter, feePos)
+	txT2, _, _ := mockSwapTx(true, false, swapProof, accountsT2, hashStateT2, accBeforeT2, accAfterT2, inversePoses, feeT2, &T2feeAccountBefore, &T2feeAccountAfter, feePos)
 	return txT1, txT2
 }

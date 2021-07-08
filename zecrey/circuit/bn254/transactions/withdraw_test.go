@@ -26,7 +26,6 @@ import (
 	"math/big"
 	"testing"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/ffmath"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -47,14 +46,15 @@ func TestVerifyWithdrawTx(t *testing.T) {
 }
 
 func prepareWithdrawTx() *WithdrawTx {
-	accounts, sks, hashState := mockAccountTree(8)
+	accounts, sks, balances, hashState := mockAccountTree(8)
 	pos := 2
 	accountBeforeWithdraw := accounts[pos]
 	sk := sks[pos]
 	// withdraw amount
 	receiveAddr := "0xb1c297bBb2DC33F3c68920F02e88d2746b2F456d"
 	amount := big.NewInt(int64(6))
-	relation, err := zecrey.NewWithdrawRelation(accountBeforeWithdraw.Balance, accountBeforeWithdraw.PubKey, ffmath.Neg(amount), sk, accountBeforeWithdraw.TokenId, receiveAddr)
+	fee := big.NewInt(0)
+	relation, err := zecrey.NewWithdrawRelation(accountBeforeWithdraw.Balance, accountBeforeWithdraw.PubKey, balances[pos], amount, sk, accountBeforeWithdraw.TokenId, receiveAddr, fee)
 	if err != nil {
 		panic(err)
 	}
@@ -67,11 +67,24 @@ func prepareWithdrawTx() *WithdrawTx {
 		CL: accountBeforeWithdraw.Balance.CL,
 		CR: curve.Add(accountBeforeWithdraw.Balance.CR, relation.CRStar),
 	}
+
 	// accountBeforeWithdraw after deposit
 	var accountAfterWithdraw Account
 	accountAfterWithdraw = *accountBeforeWithdraw
 	accountAfterWithdraw.Balance = newBalance
+
+	// fee related
+	feePos := uint64(0)
+	var feeAccountBefore, feeAccountAfter Account
+	feeAccountBefore = *accounts[feePos]
+	feeAccountAfter = *accounts[feePos]
+	feeNewBalance := &zecrey.ElGamalEnc{
+		CL: feeAccountAfter.Balance.CL,
+		CR: curve.Add(feeAccountAfter.Balance.CR, curve.ScalarMul(curve.H, fee)),
+	}
+	feeAccountAfter.Balance = feeNewBalance
+
 	// create deposit tx
-	tx, _, _ := mockWithdrawTx(true, proof, accounts, hashState, accountBeforeWithdraw, &accountAfterWithdraw, uint64(pos))
+	tx, _, _ := mockWithdrawTx(true, proof, accounts, hashState, accountBeforeWithdraw, &accountAfterWithdraw, uint64(pos), fee, &feeAccountBefore, &feeAccountAfter, feePos)
 	return tx
 }

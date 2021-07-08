@@ -61,7 +61,7 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 		bStarTo := big.NewInt(8)
 		fromTokenId := uint32(1)
 		toTokenId := uint32(2)
-		relationPart1, err := zecrey.NewSwapRelationPart1(bEnc, b2Enc, pk1, pk2, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId)
+		relationPart1, err := zecrey.NewSwapRelationPart1(bEnc, b2Enc, pk1, pk2, b1, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId, big.NewInt(0))
 		if err != nil {
 			t.Error(err)
 		}
@@ -88,7 +88,7 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		relationPart2, err := zecrey.NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, sk2, fromTokenId, toTokenId, swapProofPart1)
+		relationPart2, err := zecrey.NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, b3, sk2, fromTokenId, toTokenId, swapProofPart1)
 		if err != nil {
 			t.Error(err)
 		}

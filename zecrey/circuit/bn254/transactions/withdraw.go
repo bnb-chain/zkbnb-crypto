@@ -21,6 +21,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"math/big"
 	"zecrey-crypto/zecrey/circuit/bn254/std"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
@@ -31,17 +32,22 @@ type WithdrawTxConstraints struct {
 	// withdraw proof
 	Proof std.WithdrawProofConstraints
 	// before withdraw merkle proof
-	AccountMerkleProofsBefore       [AccountMerkleLevels]Variable
-	AccountHelperMerkleProofsBefore [AccountMerkleLevels - 1]Variable
+	AccountMerkleProofsBefore       [NbWithdrawCountAndFee][AccountMerkleLevels]Variable
+	AccountHelperMerkleProofsBefore [NbWithdrawCountAndFee][AccountMerkleLevels - 1]Variable
 
 	// after withdraw merkle proof
-	AccountMerkleProofsAfter       [AccountMerkleLevels]Variable
-	AccountHelperMerkleProofsAfter [AccountMerkleLevels - 1]Variable
+	AccountMerkleProofsAfter       [NbWithdrawCountAndFee][AccountMerkleLevels]Variable
+	AccountHelperMerkleProofsAfter [NbWithdrawCountAndFee][AccountMerkleLevels - 1]Variable
 
 	// old Account Info
-	AccountBeforeWithdraw AccountConstraints
+	AccountBefore AccountConstraints
 	// new Account Info
-	AccountAfterWithdraw AccountConstraints
+	AccountAfter AccountConstraints
+
+	// fee related
+	Fee              Variable
+	FeeAccountBefore AccountConstraints
+	FeeAccountAfter  AccountConstraints
 
 	// old account root
 	OldAccountRoot Variable
@@ -77,22 +83,37 @@ func (circuit *WithdrawTxConstraints) Define(curveID ecc.ID, cs *ConstraintSyste
 func VerifyWithdrawTx(cs *ConstraintSystem, tx WithdrawTxConstraints, params twistededwards.EdCurve, hFunc MiMC) {
 	// universal check
 	// check index
-	std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBeforeWithdraw.Index, tx.AccountAfterWithdraw.Index)
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBefore.Index, tx.AccountAfter.Index)
 	// check token id
-	std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBeforeWithdraw.TokenId, tx.AccountAfterWithdraw.TokenId)
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBefore.TokenId, tx.AccountAfter.TokenId)
 	// check public key
-	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBeforeWithdraw.PubKey, tx.AccountAfterWithdraw.PubKey)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBefore.PubKey, tx.AccountAfter.PubKey)
 	// check merkle proof
-	std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.OldAccountRoot, tx.AccountMerkleProofsBefore[:], tx.AccountHelperMerkleProofsBefore[:])
-	std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.NewAccountRoot, tx.AccountMerkleProofsAfter[:], tx.AccountHelperMerkleProofsAfter[:])
+	for i := 0; i < NbWithdrawCountAndFee; i++ {
+		std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.OldAccountRoot, tx.AccountMerkleProofsBefore[i][:], tx.AccountHelperMerkleProofsBefore[i][:])
+		std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.NewAccountRoot, tx.AccountMerkleProofsAfter[i][:], tx.AccountHelperMerkleProofsAfter[i][:])
+	}
+	// fee related check
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.Fee, tx.Proof.Fee)
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.Index, tx.FeeAccountAfter.Index)
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.TokenId, tx.FeeAccountAfter.TokenId)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.PubKey, tx.FeeAccountAfter.PubKey)
+	// update fee account
+	// TODO need to optimize
+	var fee Point
+	fee.ScalarMulNonFixedBase(cs, &tx.Proof.H, tx.Fee, params)
+	tx.FeeAccountBefore.Balance.CR = *tx.FeeAccountBefore.Balance.CR.AddGeneric(cs, &tx.FeeAccountBefore.Balance.CR, &fee, params)
+	// check if the balance is equal
+	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.Balance, tx.FeeAccountAfter.Balance)
+
 	// update balance first
 	// get CRDelta
 	var newCR Point
 	// update balance
-	newCR.AddGeneric(cs, &tx.AccountBeforeWithdraw.Balance.CR, &tx.Proof.CRStar, params)
-	tx.AccountBeforeWithdraw.Balance.CR = newCR
+	newCR.AddGeneric(cs, &tx.AccountBefore.Balance.CR, &tx.Proof.CRStar, params)
+	tx.AccountBefore.Balance.CR = newCR
 	// check updated balance
-	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBeforeWithdraw.Balance, tx.AccountAfterWithdraw.Balance)
+	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBefore.Balance, tx.AccountAfter.Balance)
 	// verify withdraw proof
 	std.VerifyWithdrawProof(cs, tx.Proof, params)
 }
@@ -107,17 +128,22 @@ type WithdrawTx struct {
 	// withdraw proof
 	Proof *zecrey.WithdrawProof
 	// before withdraw merkle proof
-	AccountMerkleProofsBefore       [AccountMerkleLevels][]byte
-	AccountHelperMerkleProofsBefore [AccountMerkleLevels - 1]int
+	AccountMerkleProofsBefore       [NbWithdrawCountAndFee][AccountMerkleLevels][]byte
+	AccountHelperMerkleProofsBefore [NbWithdrawCountAndFee][AccountMerkleLevels - 1]int
 
 	// after withdraw merkle proof
-	AccountMerkleProofsAfter       [AccountMerkleLevels][]byte
-	AccountHelperMerkleProofsAfter [AccountMerkleLevels - 1]int
+	AccountMerkleProofsAfter       [NbWithdrawCountAndFee][AccountMerkleLevels][]byte
+	AccountHelperMerkleProofsAfter [NbWithdrawCountAndFee][AccountMerkleLevels - 1]int
 
 	// old Account Info
 	AccountBefore *Account
 	// new Account Info
 	AccountAfter *Account
+
+	// fee related
+	Fee              *big.Int
+	FeeAccountBefore *Account
+	FeeAccountAfter  *Account
 
 	// old account root
 	OldAccountRoot []byte
@@ -130,18 +156,31 @@ type WithdrawTx struct {
 */
 func SetWithdrawTxWitness(tx *WithdrawTx) (witness WithdrawTxConstraints, err error) {
 	// set merkle proofs witness
-	witness.AccountMerkleProofsBefore = std.SetMerkleProofsWitness(tx.AccountMerkleProofsBefore)
-	witness.AccountHelperMerkleProofsBefore = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsBefore)
-	witness.AccountMerkleProofsAfter = std.SetMerkleProofsWitness(tx.AccountMerkleProofsAfter)
-	witness.AccountHelperMerkleProofsAfter = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsAfter)
+	for i := 0; i < NbWithdrawCountAndFee; i++ {
+		witness.AccountMerkleProofsBefore[i] = std.SetMerkleProofsWitness(tx.AccountMerkleProofsBefore[i])
+		witness.AccountHelperMerkleProofsBefore[i] = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsBefore[i])
+		witness.AccountMerkleProofsAfter[i] = std.SetMerkleProofsWitness(tx.AccountMerkleProofsAfter[i])
+		witness.AccountHelperMerkleProofsAfter[i] = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsAfter[i])
+	}
 
 	// set account witness
-	witness.AccountBeforeWithdraw, err = SetAccountWitness(tx.AccountBefore)
-	witness.AccountAfterWithdraw, err = SetAccountWitness(tx.AccountAfter)
+	witness.AccountBefore, err = SetAccountWitness(tx.AccountBefore)
+	witness.AccountAfter, err = SetAccountWitness(tx.AccountAfter)
 
 	// set account root witness
 	witness.OldAccountRoot.Assign(tx.OldAccountRoot)
 	witness.NewAccountRoot.Assign(tx.NewAccountRoot)
+
+	// set fee related
+	witness.Fee.Assign(tx.Fee)
+	witness.FeeAccountBefore, err = SetAccountWitness(tx.FeeAccountBefore)
+	if err != nil {
+		return witness, err
+	}
+	witness.FeeAccountAfter, err = SetAccountWitness(tx.FeeAccountAfter)
+	if err != nil {
+		return witness, err
+	}
 
 	// set proof
 	witness.Proof, err = std.SetWithdrawProofWitness(tx.Proof, tx.IsEnabled)

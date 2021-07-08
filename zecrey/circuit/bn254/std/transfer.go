@@ -18,12 +18,10 @@
 package std
 
 import (
-	"bytes"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/ffmath"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/util"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -43,6 +41,8 @@ type PTransferProofConstraints struct {
 	C1, C2    Variable
 	H, Ht     Point
 	IsEnabled Variable
+	Fee       Variable
+	FeeMulC   Variable
 }
 
 /*
@@ -70,14 +70,6 @@ type PTransferSubProofConstraints struct {
 	TCRprimeInv Point
 	// (C_L + C_L^{\Delta})^{-1}
 	CLprimeInv Point
-}
-
-/*
-	ElGamalEncConstraints describes ElGamal Enc in circuit
-*/
-type ElGamalEncConstraints struct {
-	CL Point // Pk^r
-	CR Point // g^r Waste^b
 }
 
 // define for testing transfer proof
@@ -160,7 +152,15 @@ func VerifyPTransferProof(
 		t.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.Z_bDelta, params)
 		lSum.AddGeneric(cs, &lSum, &t, params)
 	}
-	IsPointEqual(cs, proof.IsEnabled, lSum, proof.A_sum)
+	// Verify sum proof
+	var rSum, rTmp Point
+	G := Point{
+		X: cs.Constant(params.BaseX),
+		Y: cs.Constant(params.BaseY),
+	}
+	gNeg := Neg(cs, G, params)
+	rSum.AddGeneric(cs, &proof.A_sum, rTmp.ScalarMulNonFixedBase(cs, gNeg, proof.FeeMulC, params), params)
+	IsPointEqual(cs, proof.IsEnabled, lSum, rSum)
 }
 
 /*
@@ -280,32 +280,6 @@ func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 	if proof == nil || len(proof.Pts) != 1 || len(proof.Z_tsks) != 1 || len(proof.A_Pts) != 1 {
 		return witness, ErrInvalidSetParams
 	}
-
-	// generate the challenge
-	var buf bytes.Buffer
-	buf.Write(proof.G.Marshal())
-	buf.Write(proof.H.Marshal())
-	buf.Write(proof.Ht.Marshal())
-	for _, subProof := range proof.SubProofs {
-		// write common inputs into buf
-		buf.Write(subProof.C.CL.Marshal())
-		buf.Write(subProof.C.CR.Marshal())
-		buf.Write(subProof.CDelta.CL.Marshal())
-		buf.Write(subProof.CDelta.CR.Marshal())
-		buf.Write(subProof.T.Marshal())
-		buf.Write(subProof.Y.Marshal())
-		buf.Write(subProof.Pk.Marshal())
-		buf.Write(subProof.TCRprimeInv.Marshal())
-		buf.Write(subProof.CLprimeInv.Marshal())
-		buf.Write(subProof.A_CLDelta.Marshal())
-		buf.Write(subProof.A_CRDelta.Marshal())
-	}
-	// c = hash()
-	c, err := util.HashToInt(buf, zmimc.Hmimc)
-	if err != nil {
-		return witness, err
-	}
-
 	// proof must be correct
 	verifyRes, err := proof.Verify()
 	if err != nil {
@@ -342,10 +316,7 @@ func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 		return witness, err
 	}
 	// C = C1 \oplus C2
-	cCopy := ffmath.Xor(proof.C1, proof.C2)
-	if !ffmath.Equal(c, cCopy) {
-		return witness, ErrInvalidChallenge
-	}
+	c := ffmath.Xor(proof.C1, proof.C2)
 	witness.C.Assign(c)
 	witness.C1.Assign(proof.C1)
 	witness.C2.Assign(proof.C2)
@@ -446,6 +417,9 @@ func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 		// set into witness
 		witness.SubProofs[i] = subProofWitness
 	}
+	witness.Fee.Assign(proof.Fee)
+	// TODO need to optimize
+	witness.FeeMulC.Assign(ffmath.MultiplyMod(proof.Fee, c, curve.Order))
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }
