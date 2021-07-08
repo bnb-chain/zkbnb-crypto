@@ -23,6 +23,7 @@ type PTransferProof struct {
 	// challenges
 	C1, C2   *big.Int
 	G, H, Ht *Point
+	Fee      *big.Int
 }
 
 type PTransferSubProof struct {
@@ -51,41 +52,44 @@ type PTransferSubProof struct {
 
 type PTransferProofRelation struct {
 	Statements []*PTransferProofStatement
+	Fee        *big.Int
 	G          *Point
 	H          *Point
 	Ht         *Point
 	Pts        []*Point
-	Order      *big.Int
 	TokenId    uint32
 }
 
-func NewPTransferProofRelation(tokenId uint32) (*PTransferProofRelation, error) {
+func NewPTransferProofRelation(tokenId uint32, fee *big.Int) (*PTransferProofRelation, error) {
 	if tokenId == 0 {
 		return nil, ErrInvalidParams
 	}
+	if fee.Cmp(Zero) < 0 {
+		return nil, ErrInvalidParams
+	}
 	Ht := curve.ScalarMul(H, big.NewInt(int64(tokenId)))
-	return &PTransferProofRelation{G: G, H: H, Order: Order, Ht: Ht, TokenId: tokenId}, nil
+	return &PTransferProofRelation{G: G, H: H, Ht: Ht, TokenId: tokenId, Fee: fee}, nil
 }
 
-func (relation *PTransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, bDelta *big.Int, sk *big.Int) (err error) {
+func (relation *PTransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b *big.Int, bDelta *big.Int, sk *big.Int) (err error) {
 	// check params
 	if C == nil || pk == nil {
 		return ErrInvalidParams
 	}
 	// if the user owns the account, should do more verifications
-	var b *big.Int
 	if sk != nil {
 		oriPk := curve.ScalarBaseMul(sk)
 		// 1. should be the same public key
 		// 2. b should not be null and larger than zero
-		// 3. bDelta should larger than zero
+		// 3. bDelta should smaller than zero
 		if !oriPk.Equal(pk) {
 			return ErrInconsistentPublicKey
 		}
-		// compute b
-		b, err = twistedElgamal.Dec(C, sk, Max)
-		if err != nil {
-			return ErrElGamalDec
+		// check if the b is correct
+		hb := curve.Add(C.CR, curve.Neg(curve.ScalarMul(C.CL, ffmath.ModInverse(sk, Order))))
+		hbCheck := curve.ScalarMul(H, b)
+		if !hb.Equal(hbCheck) {
+			return ErrIncorrectBalance
 		}
 		if b == nil || b.Cmp(Zero) < 0 {
 			return ErrInsufficientBalance
@@ -110,7 +114,7 @@ func (relation *PTransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b
 		rs     [RangeMaxBits]*big.Int
 	)
 	// if user knows b which means that he owns the account
-	if b != nil {
+	if b != nil && sk != nil {
 		// b' = b + b^{\Delta}
 		bPrime = ffmath.Add(b, bDelta)
 		// bPrime should bigger than zero
@@ -231,10 +235,10 @@ func FakeTransferProof() *PTransferProof {
 	b1Enc, _ := twistedElgamal.Enc(b1, r1, pk1)
 	b2Enc, _ := twistedElgamal.Enc(b2, r2, pk2)
 	b3Enc, _ := twistedElgamal.Enc(b3, r3, pk3)
-	relation, _ := NewPTransferProofRelation(1)
-	relation.AddStatement(b2Enc, pk2, big.NewInt(2), nil)
-	relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
-	relation.AddStatement(b3Enc, pk3, big.NewInt(2), nil)
+	relation, _ := NewPTransferProofRelation(1, big.NewInt(0))
+	relation.AddStatement(b2Enc, pk2, nil, big.NewInt(2), nil)
+	relation.AddStatement(b1Enc, pk1, b1, big.NewInt(-4), sk1)
+	relation.AddStatement(b3Enc, pk3, b3, big.NewInt(2), nil)
 	transferProof, _ := ProvePTransfer(relation)
 	return transferProof
 }

@@ -21,6 +21,7 @@ import "errors"
 
 var (
 	ErrInvalidParams         = errors.New("err: invalid params")
+	ErrIncorrectBalance      = errors.New("err: incorrect balance")
 	ErrInvalidSwapProof      = errors.New("err: invalid swap proof")
 	ErrInvalidEncryption     = errors.New("err: invalid encryption")
 	ErrStatements            = errors.New("err: invalid statements")

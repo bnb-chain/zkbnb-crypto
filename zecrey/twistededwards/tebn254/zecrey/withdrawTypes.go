@@ -39,6 +39,7 @@ type WithdrawProof struct {
 	CRangeProof *commitRange.ComRangeProof
 	// common inputs
 	BStar                                        *big.Int
+	Fee                                          *big.Int
 	CRStar                                       *Point
 	C                                            *ElGamalEnc
 	G, H, Ht, Ha, TDivCRprime, CLprimeInv, T, Pk *Point
@@ -50,9 +51,9 @@ func FakeWithdrawProof() *WithdrawProof {
 	b := big.NewInt(8)
 	r := curve.RandomValue()
 	bEnc, _ := twistedElgamal.Enc(b, r, pk)
-	bStar := big.NewInt(-2)
+	bStar := big.NewInt(2)
 	addr := "0x99AC8881834797ebC32f185ee27c2e96842e1a47"
-	relation, _ := NewWithdrawRelation(bEnc, pk, bStar, sk, 1, addr)
+	relation, _ := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1, addr, big.NewInt(0))
 	withdrawProof, _ := ProveWithdraw(relation)
 	return withdrawProof
 }
@@ -87,6 +88,8 @@ type WithdrawProofRelation struct {
 	CLprimeInv *Point
 	// b^{\star}
 	Bstar *big.Int
+	// fee
+	Fee *big.Int
 	// ----------- private ---------------------
 	Sk     *big.Int
 	BPrime *big.Int
@@ -94,7 +97,7 @@ type WithdrawProofRelation struct {
 	Rs     [RangeMaxBits]*big.Int
 }
 
-func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, tokenId uint32, receiveAddr string) (*WithdrawProofRelation, error) {
+func NewWithdrawRelation(C *ElGamalEnc, pk *Point, b *big.Int, bStar *big.Int, sk *big.Int, tokenId uint32, receiveAddr string, fee *big.Int) (*WithdrawProofRelation, error) {
 	if C == nil || pk == nil || bStar == nil || sk == nil || tokenId == 0 {
 		return nil, ErrInvalidParams
 	}
@@ -108,26 +111,32 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, 
 		rBar   *big.Int
 		rs     [RangeMaxBits]*big.Int
 	)
-	// compute b first
-	b, err := twistedElgamal.Dec(C, sk, Max)
-	if err != nil {
-		return nil, ErrInvalidParams
-	}
 	// check balance
 	if b.Cmp(Zero) <= 0 {
 		return nil, ErrInsufficientBalance
 	}
-	if bStar.Cmp(Zero) >= 0 {
-		return nil, ErrNegativeBStar
+	if bStar.Cmp(Zero) < 0 {
+		return nil, ErrPostiveBStar
 	}
-	// b' = b + b^{\star}
-	bPrime = ffmath.Add(b, bStar)
+	if fee.Cmp(Zero) < 0 {
+		return nil, ErrInvalidParams
+	}
+	// check if the b is correct
+	hb := curve.Add(C.CR, curve.Neg(curve.ScalarMul(C.CL, ffmath.ModInverse(sk, Order))))
+	hbCheck := curve.ScalarMul(H, b)
+	if !hb.Equal(hbCheck) {
+		return nil, ErrIncorrectBalance
+	}
+	// b' = b - b^{\star} - fee
+	bPrime = ffmath.Sub(b, bStar)
+	bPrime.Sub(bPrime, fee)
 	// bPrime should bigger than zero
 	if bPrime.Cmp(Zero) < 0 {
 		return nil, ErrInsufficientBalance
 	}
-	// C^{\Delta} = (pk^rStar,G^rStar h^{b^{\Delta}})
-	CRStar := curve.ScalarMul(H, bStar)
+	// C^{\Delta} = (pk^rStar,G^rStar h^{b^{\Delta} - fee})
+	hNeg := curve.Neg(H)
+	CRStar := curve.ScalarMul(hNeg, ffmath.Add(bStar, fee))
 	// compute \bar{r} = \sum_{i=1}^32 r_i
 	rBar = big.NewInt(0)
 	for i := 0; i < RangeMaxBits; i++ {
@@ -136,7 +145,7 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, 
 	}
 	rBar.Mod(rBar, Order)
 	// T = g^{\bar{rStar}} h^{b'}
-	T, err = pedersen.Commit(rBar, bPrime, G, H)
+	T, err := pedersen.Commit(rBar, bPrime, G, H)
 	if err != nil {
 		return nil, err
 	}
@@ -162,6 +171,7 @@ func NewWithdrawRelation(C *ElGamalEnc, pk *Point, bStar *big.Int, sk *big.Int, 
 		TDivCRprime: curve.Add(T, curve.Neg(curve.Add(C.CR, CRStar))),
 		CLprimeInv:  curve.Neg(C.CL),
 		Bstar:       bStar,
+		Fee:         fee,
 		// ----------- private ---------------------
 		Sk:     sk,
 		BPrime: bPrime,

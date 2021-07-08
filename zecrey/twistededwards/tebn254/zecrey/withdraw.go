@@ -40,6 +40,7 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 	buf.Write(relation.G.Marshal())
 	buf.Write(relation.H.Marshal())
 	buf.Write(relation.Ht.Marshal())
+	buf.Write(relation.Fee.Bytes())
 	buf.Write(relation.Pt.Marshal())
 	buf.Write(relation.Ha.Marshal())
 	buf.Write(relation.Pa.Marshal())
@@ -54,7 +55,6 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 	if err != nil {
 		return nil, err
 	}
-	//z_r := respondHalfEnc(relation.RStar, alpha_r, c)
 	z_rbar, z_sk, z_skInv := respondBalance(relation.RBar, relation.Sk, alpha_rbar, alpha_sk, alpha_skInv, c)
 	A_Pt, _ := provePt(alpha_sk, relation.Sk, relation.Ht, c)
 	A_Pa, _ := provePt(alpha_sk, relation.Sk, relation.Ha, c)
@@ -79,6 +79,7 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 		CRangeProof: rangeProof,
 		// common inputs
 		BStar:       relation.Bstar,
+		Fee:         relation.Fee,
 		G:           relation.G,
 		H:           relation.H,
 		Ht:          relation.Ht,
@@ -97,8 +98,17 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 }
 
 func (proof *WithdrawProof) Verify() (bool, error) {
-	if proof.BStar.Cmp(Zero) >= 0 {
-		return false, ErrInvalidBStar
+	if proof.BStar.Cmp(Zero) < 0 {
+		return false, ErrPostiveBStar
+	}
+	if proof.Fee.Cmp(Zero) < 0 {
+		return false, ErrInvalidParams
+	}
+	// verify if the CRStar is correct
+	hNeg := curve.Neg(proof.H)
+	CRCheck := curve.ScalarMul(hNeg, ffmath.Add(proof.BStar, proof.Fee))
+	if !proof.CRStar.Equal(CRCheck) {
+		return false, ErrInvalidParams
 	}
 	// Verify range proof first
 	rangeRes, err := proof.CRangeProof.Verify()
@@ -110,6 +120,7 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	buf.Write(proof.G.Marshal())
 	buf.Write(proof.H.Marshal())
 	buf.Write(proof.Ht.Marshal())
+	buf.Write(proof.Fee.Bytes())
 	buf.Write(proof.Pt.Marshal())
 	buf.Write(proof.Ha.Marshal())
 	buf.Write(proof.Pa.Marshal())
@@ -169,6 +180,9 @@ func respondBalance(
 	return
 }
 
+/*
+	verifyBalance: verify if the owner balance is correct
+*/
 func verifyBalance(
 	g, pk, A_pk, CLprimeInv, TDivCRprime, A_TDivCRprime *Point,
 	c *big.Int,
@@ -197,7 +211,7 @@ func TryOnceWithdraw() WithdrawProof {
 	bEnc, _ := twistedElgamal.Enc(b, r, pk)
 	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
 	bStar := big.NewInt(-2)
-	relation, _ := NewWithdrawRelation(bEnc, pk, bStar, sk, 1, "0x99AC8881834797ebC32f185ee27c2e96842e1a47")
+	relation, _ := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1, "0x99AC8881834797ebC32f185ee27c2e96842e1a47", big.NewInt(0))
 	withdrawProof, _ := ProveWithdraw(relation)
 	return *withdrawProof
 }

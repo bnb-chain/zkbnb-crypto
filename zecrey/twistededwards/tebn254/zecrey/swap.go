@@ -32,19 +32,22 @@ func ProveSwapPart1(relation *SwapProofRelationPart, isFrom bool) (proof *SwapPr
 		return nil, ErrInvalidParams
 	}
 	var (
-		buf   bytes.Buffer
-		CStar *ElGamalEnc
-		bStar *big.Int
+		buf          bytes.Buffer
+		CStar        *ElGamalEnc
+		bStar        *big.Int
+		deltaBalance *big.Int
 	)
 	// check if the encryption is valid
 	if isFrom {
 		bStar = relation.BStarFrom
+		deltaBalance = ffmath.Add(bStar, relation.Fee)
 	} else {
 		bStar = relation.BStarTo
+		deltaBalance = bStar
 	}
 	CStar = relation.CStar
 	CLStarCheck := curve.ScalarMul(relation.Pk, relation.RStar)
-	CRStarCheck := curve.Add(curve.ScalarMul(relation.G, relation.RStar), curve.ScalarMul(relation.H, new(big.Int).Neg(bStar)))
+	CRStarCheck := curve.Add(curve.ScalarMul(relation.G, relation.RStar), curve.ScalarMul(relation.H, ffmath.Neg(deltaBalance)))
 	if !CStar.CL.Equal(CLStarCheck) || !CStar.CR.Equal(CRStarCheck) {
 		return nil, ErrInvalidEncryption
 	}
@@ -54,6 +57,7 @@ func ProveSwapPart1(relation *SwapProofRelationPart, isFrom bool) (proof *SwapPr
 	// set buf
 	buf.Write(relation.G.Marshal())
 	buf.Write(relation.H.Marshal())
+	buf.Write(relation.Fee.Bytes())
 	buf.Write(relation.Ht1.Marshal())
 	buf.Write(relation.Pt1.Marshal())
 	buf.Write(relation.Ht2.Marshal())
@@ -99,6 +103,7 @@ func ProveSwapPart1(relation *SwapProofRelationPart, isFrom bool) (proof *SwapPr
 		// common inputs
 		BStar1:        relation.BStarFrom,
 		BStar2:        relation.BStarTo,
+		Fee:           relation.Fee,
 		RStar:         relation.RStar,
 		CStar:         relation.CStar,
 		C:             relation.C,
@@ -155,6 +160,7 @@ func (proof *SwapProofPart) Verify() (bool, error) {
 	var buf bytes.Buffer
 	buf.Write(proof.G.Marshal())
 	buf.Write(proof.H.Marshal())
+	buf.Write(proof.Fee.Bytes())
 	buf.Write(proof.Ht1.Marshal())
 	buf.Write(proof.Pt1.Marshal())
 	buf.Write(proof.Ht2.Marshal())
