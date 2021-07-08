@@ -37,10 +37,12 @@ func mockUpdateAccount(accounts []*Account, hashState []byte, index int, newAcco
 	return accounts, hashState
 }
 
-func mockTwoAccountTree(nbAccounts int) ([]*Account, []*Account, []*big.Int, []byte, []byte) {
+func mockTwoAccountTree(nbAccounts int) ([]*Account, []*Account, []*big.Int, []*big.Int, []*big.Int, []byte, []byte) {
 	var (
 		accountsT1  []*Account
 		accountsT2  []*Account
+		balancesT1  []*big.Int
+		balancesT2  []*big.Int
 		sks         []*big.Int
 		hashStateT1 []byte
 		hashStateT2 []byte
@@ -49,6 +51,8 @@ func mockTwoAccountTree(nbAccounts int) ([]*Account, []*Account, []*big.Int, []b
 	tokenId := uint32(1)
 	accountsT1 = make([]*Account, nbAccounts)
 	accountsT2 = make([]*Account, nbAccounts)
+	balancesT1 = make([]*big.Int, nbAccounts)
+	balancesT2 = make([]*big.Int, nbAccounts)
 	sks = make([]*big.Int, nbAccounts)
 	hashStateT1 = make([]byte, nbAccounts*size)
 	hashStateT2 = make([]byte, nbAccounts*size)
@@ -76,22 +80,26 @@ func mockTwoAccountTree(nbAccounts int) ([]*Account, []*Account, []*big.Int, []b
 		accountsT1[i] = accT1
 		accountsT2[i] = accT2
 		sks[i] = sk
+		balancesT1[i] = b
+		balancesT2[i] = b
 		copy(hashStateT1[i*size:(i+1)*size], accHashT1)
 		copy(hashStateT2[i*size:(i+1)*size], accHashT2)
 	}
-	return accountsT1, accountsT2, sks, hashStateT1, hashStateT2
+	return accountsT1, accountsT2, sks, balancesT1, balancesT2, hashStateT1, hashStateT2
 }
 
-func mockAccountTree(nbAccounts int) ([]*Account, []*big.Int, []byte) {
+func mockAccountTree(nbAccounts int) ([]*Account, []*big.Int, []*big.Int, []byte) {
 	var (
 		accounts  []*Account
 		sks       []*big.Int
+		balances  []*big.Int
 		hashState []byte
 	)
 	size := zmimc.Hmimc.Size()
 	tokenId := uint32(1)
 	accounts = make([]*Account, nbAccounts)
 	sks = make([]*big.Int, nbAccounts)
+	balances = make([]*big.Int, nbAccounts)
 	hashState = make([]byte, nbAccounts*size)
 	for i := 0; i < nbAccounts; i++ {
 		sk, pk := twistedElgamal.GenKeyPair()
@@ -107,9 +115,10 @@ func mockAccountTree(nbAccounts int) ([]*Account, []*big.Int, []byte) {
 		accHash := mockAccountHash(acc, zmimc.Hmimc)
 		accounts[i] = acc
 		sks[i] = sk
+		balances[i] = b
 		copy(hashState[i*size:(i+1)*size], accHash)
 	}
-	return accounts, sks, hashState
+	return accounts, sks, balances, hashState
 }
 
 func PrepareBlockSmall() *Block {
@@ -119,7 +128,7 @@ func PrepareBlockSmall() *Block {
 	var oldAccountRoots, newAccountRoots [NbTxs][]byte
 	// change NbTxs to 2
 	// create accountsT1
-	accountsT1, _, sks, hashStateT1, _ := mockTwoAccountTree(8)
+	accountsT1, _, sks, balancesT1, _, hashStateT1, _ := mockTwoAccountTree(8)
 	// mock deposit
 	depositTx1, accountsT1, hashStateT1 := mockDeposit(hashStateT1, accountsT1, 1, 1)
 	tx1 := mockDepositTransaction(depositTx1)
@@ -128,7 +137,8 @@ func PrepareBlockSmall() *Block {
 	oldRoot = depositTx1.OldAccountRoot
 	oldAccountRoots[0] = depositTx1.OldAccountRoot
 	newAccountRoots[0] = depositTx1.NewAccountRoot
-	transferTx1, accountsT1, hashStateT1 := mockTransfer(hashStateT1, accountsT1, sks, [NbTransferCount]uint64{2, 3, 5}, [NbTransferCount]*big.Int{big.NewInt(-4), big.NewInt(1), big.NewInt(3)})
+	feePos := uint64(0)
+	transferTx1, accountsT1, hashStateT1 := mockTransfer(hashStateT1, accountsT1, sks, balancesT1, [NbTransferCount]uint64{2, 3, 5}, [NbTransferCount]*big.Int{big.NewInt(-4), big.NewInt(1), big.NewInt(3)}, feePos)
 	tx2 := mockTransferTransaction(transferTx1)
 	txsType[1] = TransferTxType
 	txs[1] = tx2
@@ -185,6 +195,15 @@ func mockWithdrawTransaction(tx *WithdrawTx) *Transaction {
 	}
 }
 
+func mockNoopTransaction() *Transaction {
+	return &Transaction{
+		DepositTransaction:  FakeDepositTx(),
+		TransferTransaction: FakeTransferTx(),
+		SwapTransaction:     FakeSwapTx(),
+		WithdrawTransaction: FakeWithdrawTx(),
+	}
+}
+
 func mockDeposit(hashState []byte, accounts []*Account, pos int, amount int) (*DepositTx, []*Account, []byte) {
 	accountBeforeDeposit := accounts[pos]
 	// deposit amount
@@ -204,7 +223,7 @@ func mockDeposit(hashState []byte, accounts []*Account, pos int, amount int) (*D
 	return tx, accounts, hashState
 }
 
-func mockTransfer(hashState []byte, accounts []*Account, sks []*big.Int, poses [NbTransferCount]uint64, bs [NbTransferCount]*big.Int) (*TransferTx, []*Account, []byte) {
+func mockTransfer(hashState []byte, accounts []*Account, sks []*big.Int, balances []*big.Int, poses [NbTransferCount]uint64, bs [NbTransferCount]*big.Int, feePos uint64) (*TransferTx, []*Account, []byte) {
 	accountBeforeTransfer1 := accounts[poses[0]]
 	accountBeforeTransfer2 := accounts[poses[1]]
 	accountBeforeTransfer3 := accounts[poses[2]]
@@ -212,13 +231,14 @@ func mockTransfer(hashState []byte, accounts []*Account, sks []*big.Int, poses [
 	var acc2 [NbTransferCount]*Account
 	sk1 := sks[poses[0]]
 	tokenId := uint32(1)
-	relation, err := zecrey.NewPTransferProofRelation(tokenId)
+	fee := big.NewInt(0)
+	relation, err := zecrey.NewPTransferProofRelation(tokenId, fee)
 	if err != nil {
 		panic(err)
 	}
-	relation.AddStatement(accountBeforeTransfer1.Balance, accountBeforeTransfer1.PubKey, bs[0], sk1)
-	relation.AddStatement(accountBeforeTransfer2.Balance, accountBeforeTransfer2.PubKey, bs[1], nil)
-	relation.AddStatement(accountBeforeTransfer3.Balance, accountBeforeTransfer3.PubKey, bs[2], nil)
+	relation.AddStatement(accountBeforeTransfer1.Balance, accountBeforeTransfer1.PubKey, balances[poses[0]], bs[0], sk1)
+	relation.AddStatement(accountBeforeTransfer2.Balance, accountBeforeTransfer2.PubKey, nil, bs[1], nil)
+	relation.AddStatement(accountBeforeTransfer3.Balance, accountBeforeTransfer3.PubKey, nil, bs[2], nil)
 	proof, err := zecrey.ProvePTransfer(relation)
 	if err != nil {
 		panic(err)
@@ -235,24 +255,44 @@ func mockTransfer(hashState []byte, accounts []*Account, sks []*big.Int, poses [
 		accountAfterTransfer.Balance = newBalance
 		acc2[i] = &accountAfterTransfer
 	}
+	// fee related
+	var feeAccountBefore, feeAccountAfter Account
+	feeAccountBefore = *accounts[feePos]
+	feeAccountAfter = *accounts[feePos]
+	newBalance := &zecrey.ElGamalEnc{
+		CL: feeAccountAfter.Balance.CL,
+		CR: curve.Add(feeAccountAfter.Balance.CR, curve.ScalarMul(curve.H, fee)),
+	}
+	feeAccountAfter.Balance = newBalance
 
 	// create deposit tx
-	tx, accounts, hashState := mockTransferTx(true, proof, accounts, hashState, acc1, acc2, poses)
+	tx, accounts, hashState := mockTransferTx(true, proof, accounts, hashState, acc1, acc2, poses, &feeAccountBefore, &feeAccountAfter, feePos, fee)
 	return tx, accounts, hashState
 }
 
-func mockSwap(hashStateT1 []byte, accountsT1 []*Account, hashStateT2 []byte, accountsT2 []*Account, sks []*big.Int, poses [NbSwapCount]uint64) (*SwapTx, *SwapTx, []*Account, []byte, []*Account, []byte) {
+func mockSwap(hashStateT1 []byte, accountsT1 []*Account, balancesT1 []*big.Int, hashStateT2 []byte, balancesT2 []*big.Int, accountsT2 []*Account, sks []*big.Int, poses [NbSwapCount]uint64) (*SwapTx, *SwapTx, []*Account, []byte, []*Account, []byte) {
 	// before swap first chain accounts
 	accountBeforeSwap1 := accountsT1[poses[0]]
 	accountBeforeSwap2 := accountsT1[poses[1]]
 	accBeforeT1 := [NbSwapCount]*Account{accountBeforeSwap1, accountBeforeSwap2}
 	// before swap second chain accounts
+	feePos := uint64(0)
+	fee := big.NewInt(1)
+	// fee related
+	var feeAccountBefore, feeAccountAfter Account
+	feeAccountBefore = *accountsT1[feePos]
+	feeAccountAfter = *accountsT1[feePos]
+	feeNewBalance := &zecrey.ElGamalEnc{
+		CL: feeAccountAfter.Balance.CL,
+		CR: curve.Add(feeAccountAfter.Balance.CR, curve.ScalarMul(curve.H, fee)),
+	}
+	feeAccountAfter.Balance = feeNewBalance
 	// inverse index
 	accountBeforeSwap3 := accountsT2[poses[1]]
 	accountBeforeSwap4 := accountsT2[poses[0]]
 	accBeforeT2 := [NbSwapCount]*Account{accountBeforeSwap3, accountBeforeSwap4}
 	// create swap proof
-	swapProof := mockSwapProof(accountsT1, accountsT2, sks, poses)
+	swapProof := mockSwapProof(accountsT1, accountsT2, balancesT1, balancesT2, sks, poses, fee)
 	// acc after swap
 	var accountAfterSwap1, accountAfterSwap2, accountAfterSwap3, accountAfterSwap4 Account
 	accountAfterSwap1 = *accountBeforeSwap1
@@ -269,18 +309,18 @@ func mockSwap(hashStateT1 []byte, accountsT1 []*Account, hashStateT2 []byte, acc
 
 	inversePoses := [NbSwapCount]uint64{poses[1], poses[0]}
 	// create deposit tx
-	txT1, accountsT1, hashStateT1 := mockSwapTx(true, true, swapProof, accountsT1, hashStateT1, accBeforeT1, accAfterT1, poses)
-	txT2, accountsT2, hashStateT2 := mockSwapTx(true, false, swapProof, accountsT2, hashStateT2, accBeforeT2, accAfterT2, inversePoses)
+	txT1, accountsT1, hashStateT1 := mockSwapTx(true, true, swapProof, accountsT1, hashStateT1, accBeforeT1, accAfterT1, poses, fee, &feeAccountBefore, &feeAccountAfter, feePos)
+	txT2, accountsT2, hashStateT2 := mockSwapTx(true, false, swapProof, accountsT2, hashStateT2, accBeforeT2, accAfterT2, inversePoses, fee, &feeAccountBefore, &feeAccountAfter, feePos)
 	return txT1, txT2, accountsT1, hashStateT1, accountsT2, hashStateT2
 }
 
-func mockWithdraw(hashState []byte, accounts []*Account, sks []*big.Int, pos, amount int) (*WithdrawTx, []*Account, []byte) {
+func mockWithdraw(hashState []byte, accounts []*Account, sks []*big.Int, balances []*big.Int, pos, amount int, fee *big.Int, feePos uint64) (*WithdrawTx, []*Account, []byte) {
 	accountBeforeWithdraw := accounts[pos]
 	sk := sks[pos]
 	// withdraw b
 	receiveAddr := "0xb1c297bBb2DC33F3c68920F02e88d2746b2F456d"
 	b := big.NewInt(int64(amount))
-	relation, err := zecrey.NewWithdrawRelation(accountBeforeWithdraw.Balance, accountBeforeWithdraw.PubKey, ffmath.Neg(b), sk, accountBeforeWithdraw.TokenId, receiveAddr)
+	relation, err := zecrey.NewWithdrawRelation(accountBeforeWithdraw.Balance, accountBeforeWithdraw.PubKey, balances[pos], ffmath.Neg(b), sk, accountBeforeWithdraw.TokenId, receiveAddr, fee)
 	if err != nil {
 		panic(err)
 	}
@@ -293,12 +333,23 @@ func mockWithdraw(hashState []byte, accounts []*Account, sks []*big.Int, pos, am
 		CL: accountBeforeWithdraw.Balance.CL,
 		CR: curve.Add(accountBeforeWithdraw.Balance.CR, relation.CRStar),
 	}
+
+	// fee related
+	var feeAccountBefore, feeAccountAfter Account
+	feeAccountBefore = *accounts[feePos]
+	feeAccountAfter = *accounts[feePos]
+	feeNewBalance := &zecrey.ElGamalEnc{
+		CL: feeAccountAfter.Balance.CL,
+		CR: curve.Add(feeAccountAfter.Balance.CR, curve.ScalarMul(curve.H, fee)),
+	}
+	feeAccountAfter.Balance = feeNewBalance
+
 	// accountBeforeWithdraw after deposit
 	var accountAfterWithdraw Account
 	accountAfterWithdraw = *accountBeforeWithdraw
 	accountAfterWithdraw.Balance = newBalance
 	// create deposit tx
-	tx, accounts, hashState := mockWithdrawTx(true, proof, accounts, hashState, accountBeforeWithdraw, &accountAfterWithdraw, uint64(pos))
+	tx, accounts, hashState := mockWithdrawTx(true, proof, accounts, hashState, accountBeforeWithdraw, &accountAfterWithdraw, uint64(pos), fee, &feeAccountBefore, &feeAccountAfter, feePos)
 	return tx, accounts, hashState
 }
 
@@ -354,7 +405,7 @@ func mockDepositTx(isEnabled bool, tokenId uint32, accounts []*Account, hashStat
 	return tx, accounts, hashState
 }
 
-func mockSwapTx(isEnabled, isFirstProof bool, proof *zecrey.SwapProof, accounts []*Account, hashState []byte, acc1, acc2 [NbSwapCount]*Account, poses [NbSwapCount]uint64) (*SwapTx, []*Account, []byte) {
+func mockSwapTx(isEnabled, isFirstProof bool, proof *zecrey.SwapProof, accounts []*Account, hashState []byte, acc1, acc2 [NbSwapCount]*Account, poses [NbSwapCount]uint64, fee *big.Int, feeAccountBefore, feeAccountAfter *Account, feePos uint64) (*SwapTx, []*Account, []byte) {
 	tx := &SwapTx{
 		IsEnabled:    isEnabled,
 		IsFirstProof: isFirstProof,
@@ -379,9 +430,21 @@ func mockSwapTx(isEnabled, isFirstProof bool, proof *zecrey.SwapProof, accounts 
 		tx.AccountBefore[i] = acc1[i]
 		tx.AccountAfter[i] = acc2[i]
 	}
+	buf.Reset()
+	buf.Write(hashState)
+	h.Reset()
+	_, proofInclusionTransferBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	if err != nil {
+		panic(err)
+	}
+	merkleProofHelperTransferBefore := merkle.GenerateProofHelper(proofInclusionTransferBefore, feePos, numLeaves)
+	tx.AccountMerkleProofsBefore[NbSwapCount] = setFixedMerkleProofs(proofInclusionTransferBefore)
+	tx.AccountHelperMerkleProofsBefore[NbSwapCount] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
+
 	for i := 0; i < NbSwapCount; i++ {
 		accounts, hashState = mockUpdateAccount(accounts, hashState, int(poses[i]), acc2[i])
 	}
+	accounts, hashState = mockUpdateAccount(accounts, hashState, int(feePos), feeAccountAfter)
 	for i := 0; i < NbSwapCount; i++ {
 		// new merkle proofs
 		buf.Reset()
@@ -396,11 +459,24 @@ func mockSwapTx(isEnabled, isFirstProof bool, proof *zecrey.SwapProof, accounts 
 		tx.AccountHelperMerkleProofsAfter[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
 		tx.NewAccountRoot = merkleRootAfter
 	}
+	buf.Reset()
+	buf.Write(hashState)
+	h.Reset()
+	_, proofInclusionTransferAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	if err != nil {
+		panic(err)
+	}
+	merkleProofHelperTransferAfter := merkle.GenerateProofHelper(proofInclusionTransferAfter, feePos, numLeaves)
+	tx.AccountMerkleProofsAfter[NbSwapCount] = setFixedMerkleProofs(proofInclusionTransferAfter)
+	tx.AccountHelperMerkleProofsAfter[NbSwapCount] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
 
+	tx.Fee = fee
+	tx.FeeAccountBefore = feeAccountBefore
+	tx.FeeAccountAfter = feeAccountAfter
 	return tx, accounts, hashState
 }
 
-func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Account, hashState []byte, acc1, acc2 [NbTransferCount]*Account, poses [NbTransferCount]uint64) (*TransferTx, []*Account, []byte) {
+func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Account, hashState []byte, acc1, acc2 [NbTransferCount]*Account, poses [NbTransferCount]uint64, feeAccountBefore, feeAccountAfter *Account, feePos uint64, fee *big.Int) (*TransferTx, []*Account, []byte) {
 	tx := &TransferTx{
 		IsEnabled: isEnabled,
 		Proof:     proof,
@@ -424,9 +500,24 @@ func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Ac
 		tx.AccountBefore[i] = acc1[i]
 		tx.AccountAfter[i] = acc2[i]
 	}
+	// set fee account
+	buf.Reset()
+	buf.Write(hashState)
+	h.Reset()
+	_, proofInclusionTransferBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	if err != nil {
+		panic(err)
+	}
+	merkleProofHelperTransferBefore := merkle.GenerateProofHelper(proofInclusionTransferBefore, feePos, numLeaves)
+	tx.AccountMerkleProofsBefore[NbTransferCount] = setFixedMerkleProofs(proofInclusionTransferBefore)
+	tx.AccountHelperMerkleProofsBefore[NbTransferCount] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
+	tx.FeeAccountBefore = feeAccountBefore
+	tx.FeeAccountAfter = feeAccountAfter
+
 	for i := 0; i < NbTransferCount; i++ {
 		accounts, hashState = mockUpdateAccount(accounts, hashState, int(poses[i]), acc2[i])
 	}
+	accounts, hashState = mockUpdateAccount(accounts, hashState, int(feePos), feeAccountAfter)
 	for i := 0; i < NbTransferCount; i++ {
 		// new merkle proofs
 		buf.Reset()
@@ -441,11 +532,21 @@ func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Ac
 		tx.AccountHelperMerkleProofsAfter[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
 		tx.NewAccountRoot = merkleRootAfter
 	}
-
+	buf.Reset()
+	buf.Write(hashState)
+	h.Reset()
+	_, proofInclusionTransferAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	if err != nil {
+		panic(err)
+	}
+	merkleProofHelperTransferAfter := merkle.GenerateProofHelper(proofInclusionTransferAfter, feePos, numLeaves)
+	tx.AccountMerkleProofsAfter[NbTransferCount] = setFixedMerkleProofs(proofInclusionTransferAfter)
+	tx.AccountHelperMerkleProofsAfter[NbTransferCount] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
+	tx.Fee = fee
 	return tx, accounts, hashState
 }
 
-func mockWithdrawTx(isEnabled bool, proof *zecrey.WithdrawProof, accounts []*Account, hashState []byte, acc1, acc2 *Account, pos uint64) (*WithdrawTx, []*Account, []byte) {
+func mockWithdrawTx(isEnabled bool, proof *zecrey.WithdrawProof, accounts []*Account, hashState []byte, acc1, acc2 *Account, pos uint64, fee *big.Int, feeAccountBefore, feeAccountAfter *Account, feePos uint64) (*WithdrawTx, []*Account, []byte) {
 	// old merkle proofs
 	var buf bytes.Buffer
 	buf.Write(hashState)
@@ -456,7 +557,17 @@ func mockWithdrawTx(isEnabled bool, proof *zecrey.WithdrawProof, accounts []*Acc
 		panic(err)
 	}
 	merkleProofHelperWithdrawBefore := merkle.GenerateProofHelper(proofInclusionWithdrawBefore, pos, numLeaves)
+	buf.Reset()
+	buf.Write(hashState)
+	h.Reset()
+	_, feeProofInclusionWithdrawBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	if err != nil {
+		panic(err)
+	}
+	feeMerkleProofHelperWithdrawBefore := merkle.GenerateProofHelper(feeProofInclusionWithdrawBefore, feePos, numLeaves)
+
 	accounts, hashState = mockUpdateAccount(accounts, hashState, int(pos), acc2)
+	accounts, hashState = mockUpdateAccount(accounts, hashState, int(feePos), feeAccountAfter)
 	// new merkle proofs
 	buf.Reset()
 	buf.Write(hashState)
@@ -466,33 +577,48 @@ func mockWithdrawTx(isEnabled bool, proof *zecrey.WithdrawProof, accounts []*Acc
 		panic(err)
 	}
 	merkleProofHelperWithdrawAfter := merkle.GenerateProofHelper(proofInclusionWithdrawAfter, pos, numLeaves)
+	buf.Reset()
+	buf.Write(hashState)
+	h.Reset()
+	_, feeProofInclusionWithdrawAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	if err != nil {
+		panic(err)
+	}
+	feeMerkleProofHelperWithdrawAfter := merkle.GenerateProofHelper(feeProofInclusionWithdrawAfter, feePos, numLeaves)
 
 	tx := &WithdrawTx{
 		IsEnabled: isEnabled,
 		// withdraw proof
 		Proof: proof,
-		// before withdraw merkle proof
-		AccountMerkleProofsBefore:       setFixedMerkleProofs(proofInclusionWithdrawBefore),
-		AccountHelperMerkleProofsBefore: setFixedMerkleProofsHelper(merkleProofHelperWithdrawBefore),
-
-		// after withdraw merkle proof
-		AccountMerkleProofsAfter:       setFixedMerkleProofs(proofInclusionWithdrawAfter),
-		AccountHelperMerkleProofsAfter: setFixedMerkleProofsHelper(merkleProofHelperWithdrawAfter),
 
 		// old Account Info
 		AccountBefore: acc1,
 		// new Account Info
 		AccountAfter: acc2,
 
+		Fee:              fee,
+		FeeAccountBefore: feeAccountBefore,
+		FeeAccountAfter:  feeAccountAfter,
+
 		// old account root
 		OldAccountRoot: merkleRootBefore,
 		// new account root
 		NewAccountRoot: merkleRootAfter,
 	}
+	tx.AccountMerkleProofsBefore[0] = setFixedMerkleProofs(proofInclusionWithdrawBefore)
+	tx.AccountHelperMerkleProofsBefore[0] = setFixedMerkleProofsHelper(merkleProofHelperWithdrawBefore)
+	tx.AccountMerkleProofsBefore[1] = setFixedMerkleProofs(feeProofInclusionWithdrawBefore)
+	tx.AccountHelperMerkleProofsBefore[1] = setFixedMerkleProofsHelper(feeMerkleProofHelperWithdrawBefore)
+
+	tx.AccountMerkleProofsAfter[0] = setFixedMerkleProofs(proofInclusionWithdrawAfter)
+	tx.AccountHelperMerkleProofsAfter[0] = setFixedMerkleProofsHelper(merkleProofHelperWithdrawAfter)
+	tx.AccountMerkleProofsAfter[1] = setFixedMerkleProofs(feeProofInclusionWithdrawAfter)
+	tx.AccountHelperMerkleProofsAfter[1] = setFixedMerkleProofsHelper(feeMerkleProofHelperWithdrawAfter)
+
 	return tx, accounts, hashState
 }
 
-func mockSwapProof(accountsT1 []*Account, accountsT2 []*Account, sks []*big.Int, poses [NbSwapCount]uint64) *zecrey.SwapProof {
+func mockSwapProof(accountsT1 []*Account, accountsT2 []*Account, sks []*big.Int, balancesT1 []*big.Int, balancesT2 []*big.Int, poses [NbSwapCount]uint64, fee *big.Int) *zecrey.SwapProof {
 	// get accounts
 	accT1A := accountsT1[poses[0]]
 	accT2A := accountsT2[poses[0]]
@@ -506,7 +632,7 @@ func mockSwapProof(accountsT1 []*Account, accountsT2 []*Account, sks []*big.Int,
 	// from/to tokenId
 	fromTokenId := uint32(1)
 	toTokenId := uint32(2)
-	relationPart1, err := zecrey.NewSwapRelationPart1(accT1A.Balance, accT1B.Balance, accT1A.PubKey, accT1B.PubKey, bStarFrom, bStarTo, skA, fromTokenId, toTokenId)
+	relationPart1, err := zecrey.NewSwapRelationPart1(accT1A.Balance, accT1B.Balance, accT1A.PubKey, accT1B.PubKey, balancesT1[poses[0]], bStarFrom, bStarTo, skA, fromTokenId, toTokenId, fee)
 	if err != nil {
 		panic(err)
 	}
@@ -518,7 +644,7 @@ func mockSwapProof(accountsT1 []*Account, accountsT2 []*Account, sks []*big.Int,
 	if err != nil || !part1Res {
 		panic(err)
 	}
-	relationPart2, err := zecrey.NewSwapRelationPart2(accT2B.Balance, accT2A.Balance, accT2B.PubKey, accT2A.PubKey, skB, fromTokenId, toTokenId, swapProofPart1)
+	relationPart2, err := zecrey.NewSwapRelationPart2(accT2B.Balance, accT2A.Balance, accT2B.PubKey, accT2A.PubKey, balancesT2[poses[1]], skB, fromTokenId, toTokenId, swapProofPart1)
 	if err != nil {
 		panic(err)
 	}

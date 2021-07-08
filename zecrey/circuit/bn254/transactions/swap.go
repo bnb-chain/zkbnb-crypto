@@ -21,6 +21,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"math/big"
 	"zecrey-crypto/zecrey/circuit/bn254/std"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
@@ -33,17 +34,22 @@ type SwapTxConstraints struct {
 	// is first proof
 	IsFirstProof Variable
 	// before withdraw merkle proof
-	AccountMerkleProofsBefore       [NbSwapCount][AccountMerkleLevels]Variable
-	AccountHelperMerkleProofsBefore [NbSwapCount][AccountMerkleLevels - 1]Variable
+	AccountMerkleProofsBefore       [NbSwapCountAndFee][AccountMerkleLevels]Variable
+	AccountHelperMerkleProofsBefore [NbSwapCountAndFee][AccountMerkleLevels - 1]Variable
 
 	// after withdraw merkle proof
-	AccountMerkleProofsAfter       [NbSwapCount][AccountMerkleLevels]Variable
-	AccountHelperMerkleProofsAfter [NbSwapCount][AccountMerkleLevels - 1]Variable
+	AccountMerkleProofsAfter       [NbSwapCountAndFee][AccountMerkleLevels]Variable
+	AccountHelperMerkleProofsAfter [NbSwapCountAndFee][AccountMerkleLevels - 1]Variable
 
 	// old Account Info
-	AccountBeforeSwap [NbSwapCount]AccountConstraints
+	AccountBefore [NbSwapCount]AccountConstraints
 	// new Account Info
-	AccountAfterSwap [NbSwapCount]AccountConstraints
+	AccountAfter [NbSwapCount]AccountConstraints
+
+	// fee
+	Fee              Variable
+	FeeAccountBefore AccountConstraints
+	FeeAccountAfter  AccountConstraints
 
 	// old account root
 	OldAccountRoot Variable
@@ -80,43 +86,66 @@ func VerifySwapTx(cs *ConstraintSystem, tx SwapTxConstraints, params twistededwa
 	// check public key match
 	pk, receiverPk := selectPk(cs, tx.IsFirstProof, tx.Proof)
 	// before
-	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBeforeSwap[0].PubKey, pk)
-	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBeforeSwap[0].PubKey, pk)
-	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBeforeSwap[1].PubKey, receiverPk)
-	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBeforeSwap[1].PubKey, receiverPk)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBefore[0].PubKey, pk)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBefore[0].PubKey, pk)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBefore[1].PubKey, receiverPk)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBefore[1].PubKey, receiverPk)
 	// after
-	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountAfterSwap[0].PubKey, pk)
-	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountAfterSwap[0].PubKey, pk)
-	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountAfterSwap[1].PubKey, receiverPk)
-	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountAfterSwap[1].PubKey, receiverPk)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountAfter[0].PubKey, pk)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountAfter[0].PubKey, pk)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountAfter[1].PubKey, receiverPk)
+	std.IsPointEqual(cs, tx.IsEnabled, tx.AccountAfter[1].PubKey, receiverPk)
 	// check balance match
 	isFirstProof := cs.And(tx.IsEnabled, tx.IsFirstProof)
-	std.IsElGamalEncEqual(cs, isFirstProof, tx.AccountBeforeSwap[0].Balance, tx.Proof.ProofPart1.C)
-	std.IsElGamalEncEqual(cs, isFirstProof, tx.AccountBeforeSwap[1].Balance, tx.Proof.ProofPart1.ReceiverC)
+	std.IsElGamalEncEqual(cs, isFirstProof, tx.AccountBefore[0].Balance, tx.Proof.ProofPart1.C)
+	std.IsElGamalEncEqual(cs, isFirstProof, tx.AccountBefore[1].Balance, tx.Proof.ProofPart1.ReceiverC)
 	isSecondProof := cs.Sub(cs.Constant(1), tx.IsFirstProof)
 	isSecondProof = cs.And(tx.IsEnabled, isSecondProof)
-	std.IsElGamalEncEqual(cs, isSecondProof, tx.AccountBeforeSwap[0].Balance, tx.Proof.ProofPart2.C)
-	std.IsElGamalEncEqual(cs, isSecondProof, tx.AccountBeforeSwap[1].Balance, tx.Proof.ProofPart2.ReceiverC)
+	std.IsElGamalEncEqual(cs, isSecondProof, tx.AccountBefore[0].Balance, tx.Proof.ProofPart2.C)
+	std.IsElGamalEncEqual(cs, isSecondProof, tx.AccountBefore[1].Balance, tx.Proof.ProofPart2.ReceiverC)
 	// universal check
 	for i := 0; i < NbSwapCount; i++ {
 		// check index
-		std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBeforeSwap[i].Index, tx.AccountAfterSwap[i].Index)
+		std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBefore[i].Index, tx.AccountAfter[i].Index)
 		// check token id
-		std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBeforeSwap[i].TokenId, tx.AccountAfterSwap[i].TokenId)
+		std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBefore[i].TokenId, tx.AccountAfter[i].TokenId)
 		// check public key
-		std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBeforeSwap[i].PubKey, tx.AccountAfterSwap[i].PubKey)
+		std.IsPointEqual(cs, tx.IsEnabled, tx.AccountBefore[i].PubKey, tx.AccountAfter[i].PubKey)
 		// check merkle proof
 		std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.OldAccountRoot, tx.AccountMerkleProofsBefore[i][:], tx.AccountHelperMerkleProofsBefore[i][:])
 		std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.NewAccountRoot, tx.AccountMerkleProofsAfter[i][:], tx.AccountHelperMerkleProofsAfter[i][:])
 	}
+	// fee account
+	// check index
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.Index, tx.FeeAccountAfter.Index)
+	// check token id
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.TokenId, tx.FeeAccountAfter.TokenId)
+	// check public key
+	std.IsPointEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.PubKey, tx.FeeAccountAfter.PubKey)
+	// check fee
+	secondFee := cs.Select(isSecondProof, tx.Proof.ProofPart1.Fee, tx.Fee)
+	std.IsVariableEqual(cs, tx.IsEnabled, secondFee, tx.Proof.ProofPart1.Fee)
+	std.IsVariableEqual(cs, tx.IsEnabled, secondFee, tx.Proof.ProofPart2.Fee)
+	// check merkle proof
+	std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.OldAccountRoot, tx.AccountMerkleProofsBefore[NbSwapCount][:], tx.AccountHelperMerkleProofsBefore[NbSwapCount][:])
+	std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.NewAccountRoot, tx.AccountMerkleProofsAfter[NbSwapCount][:], tx.AccountHelperMerkleProofsAfter[NbSwapCount][:])
+
+	// update fee account
+	realFee := cs.Select(isFirstProof, tx.Fee, cs.Constant(0))
+	// TODO need to optimize
+	var fee Point
+	fee.ScalarMulNonFixedBase(cs, &tx.Proof.ProofPart1.H, realFee, params)
+	tx.FeeAccountBefore.Balance.CR = *tx.FeeAccountBefore.Balance.CR.AddGeneric(cs, &tx.FeeAccountBefore.Balance.CR, &fee, params)
+	// check if the balance is equal
+	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.Balance, tx.FeeAccountAfter.Balance)
+
 	// select CStar
 	CStar, ReceiverCStar := selectCStar(cs, tx.IsFirstProof, tx.Proof)
 	// update balance
-	tx.AccountBeforeSwap[0].Balance = std.EncAdd(cs, tx.AccountBeforeSwap[0].Balance, CStar, params)
-	tx.AccountBeforeSwap[1].Balance = std.EncAdd(cs, tx.AccountBeforeSwap[1].Balance, ReceiverCStar, params)
-	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBeforeSwap[0].Balance, tx.AccountAfterSwap[0].Balance)
-	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBeforeSwap[1].Balance, tx.AccountAfterSwap[1].Balance)
-
+	tx.AccountBefore[0].Balance = std.EncAdd(cs, tx.AccountBefore[0].Balance, CStar, params)
+	tx.AccountBefore[1].Balance = std.EncAdd(cs, tx.AccountBefore[1].Balance, ReceiverCStar, params)
+	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBefore[0].Balance, tx.AccountAfter[0].Balance)
+	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBefore[1].Balance, tx.AccountAfter[1].Balance)
 	// verify swap proof
 	std.VerifySwapProof(cs, tx.Proof, params)
 }
@@ -133,17 +162,22 @@ type SwapTx struct {
 	// is first proof
 	IsFirstProof bool
 	// before withdraw merkle proof
-	AccountMerkleProofsBefore       [NbSwapCount][AccountMerkleLevels][]byte
-	AccountHelperMerkleProofsBefore [NbSwapCount][AccountMerkleLevels - 1]int
+	AccountMerkleProofsBefore       [NbSwapCountAndFee][AccountMerkleLevels][]byte
+	AccountHelperMerkleProofsBefore [NbSwapCountAndFee][AccountMerkleLevels - 1]int
 
 	// after withdraw merkle proof
-	AccountMerkleProofsAfter       [NbSwapCount][AccountMerkleLevels][]byte
-	AccountHelperMerkleProofsAfter [NbSwapCount][AccountMerkleLevels - 1]int
+	AccountMerkleProofsAfter       [NbSwapCountAndFee][AccountMerkleLevels][]byte
+	AccountHelperMerkleProofsAfter [NbSwapCountAndFee][AccountMerkleLevels - 1]int
 
 	// old Account Info
 	AccountBefore [NbSwapCount]*Account
 	// new Account Info
 	AccountAfter [NbSwapCount]*Account
+
+	// fee
+	Fee              *big.Int
+	FeeAccountBefore *Account
+	FeeAccountAfter  *Account
 
 	// old account root
 	OldAccountRoot []byte
@@ -166,15 +200,34 @@ func SetSwapTxWitness(tx *SwapTx) (witness SwapTxConstraints, err error) {
 		witness.AccountHelperMerkleProofsAfter[i] = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsAfter[i])
 
 		// set account witness
-		witness.AccountBeforeSwap[i], err = SetAccountWitness(tx.AccountBefore[i])
-		witness.AccountAfterSwap[i], err = SetAccountWitness(tx.AccountAfter[i])
+		witness.AccountBefore[i], err = SetAccountWitness(tx.AccountBefore[i])
+		witness.AccountAfter[i], err = SetAccountWitness(tx.AccountAfter[i])
 	}
+	// set merkle proofs witness
+	witness.AccountMerkleProofsBefore[NbSwapCount] = std.SetMerkleProofsWitness(tx.AccountMerkleProofsBefore[NbSwapCount])
+	witness.AccountHelperMerkleProofsBefore[NbSwapCount] = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsBefore[NbSwapCount])
+	witness.AccountMerkleProofsAfter[NbSwapCount] = std.SetMerkleProofsWitness(tx.AccountMerkleProofsAfter[NbSwapCount])
+	witness.AccountHelperMerkleProofsAfter[NbSwapCount] = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsAfter[NbSwapCount])
+
+	witness.Fee.Assign(tx.Fee)
+	witness.FeeAccountBefore, err = SetAccountWitness(tx.FeeAccountBefore)
+	if err != nil {
+		return witness, err
+	}
+	witness.FeeAccountAfter, err = SetAccountWitness(tx.FeeAccountAfter)
+	if err != nil {
+		return witness, err
+	}
+
 	// set account root witness
 	witness.OldAccountRoot.Assign(tx.OldAccountRoot)
 	witness.NewAccountRoot.Assign(tx.NewAccountRoot)
 
 	// set proof
 	witness.Proof, err = std.SetSwapProofWitness(tx.Proof, tx.IsEnabled)
+	if err != nil {
+		return witness, err
+	}
 
 	witness.IsEnabled = std.SetBoolWitness(tx.IsEnabled)
 	witness.IsFirstProof = std.SetBoolWitness(tx.IsFirstProof)

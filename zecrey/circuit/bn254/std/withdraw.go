@@ -18,13 +18,9 @@
 package std
 
 import (
-	"bytes"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
-	"math/big"
 	"zecrey-crypto/ffmath"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/util"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -41,6 +37,7 @@ type WithdrawProofConstraints struct {
 	CRStar                                 Point
 	C                                      ElGamalEncConstraints
 	BStar                                  Variable
+	Fee                                    Variable
 	H, Ht, Ha, TDivCRprime, CLprimeInv, Pk Point
 	Challenge                              Variable
 	IsEnabled                              Variable
@@ -79,7 +76,7 @@ func VerifyWithdrawProof(
 	// verify Ha
 	verifyPt(cs, proof.Ha, proof.Pa, proof.A_Pa, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
 	// verify half enc
-	verifyHalfEnc(cs, proof.H, proof.CRStar, proof.BStar, proof.IsEnabled, params)
+	verifyHalfEnc(cs, proof.H, proof.CRStar, proof.BStar, proof.Fee, proof.IsEnabled, params)
 	// verify balance
 	verifyBalance(cs, proof.Pk, proof.A_pk, proof.CLprimeInv,
 		proof.TDivCRprime, proof.A_TDivCRprime, proof.Challenge,
@@ -111,11 +108,12 @@ func verifyPt(
 }
 
 /*
-	verifyHalfEnc verify the C_L^{\star}
+	verifyHalfEnc verify the C_R^{\star}
 	@cs: the constraint system
-	@pk,CLStar: public inputs
-	@A_CLStar: the random commitment
-	@z_r: the response value
+	@h: generator
+	@CRStar: public inputs
+	@bStar, fee: withdraw amount & fee
+	@isEnabled: if it's enabled
 	@params: params for the curve tebn254
 */
 func verifyHalfEnc(
@@ -123,12 +121,14 @@ func verifyHalfEnc(
 	h Point,
 	CRStar Point,
 	bStar Variable,
+	fee Variable,
 	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
 	var l Point
 	hNeg := Neg(cs, h, params)
-	l.ScalarMulNonFixedBase(cs, hNeg, bStar, params)
+	delta := cs.Add(bStar, fee)
+	l.ScalarMulNonFixedBase(cs, hNeg, delta, params)
 	IsPointEqual(cs, isEnabled, l, CRStar)
 }
 
@@ -171,7 +171,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, err
 	}
 
-	if proof.BStar.Cmp(big.NewInt(0)) >= 0 {
+	if proof.BStar.Cmp(Zero) < 0 {
 		return witness, ErrInvalidBStar
 	}
 
@@ -184,33 +184,12 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, ErrInvalidProof
 	}
 
-	// generate the challenge
-	var buf bytes.Buffer
-	buf.Write(proof.G.Marshal())
-	buf.Write(proof.H.Marshal())
-	buf.Write(proof.Ht.Marshal())
-	buf.Write(proof.Pt.Marshal())
-	buf.Write(proof.Ha.Marshal())
-	buf.Write(proof.Pa.Marshal())
-	buf.Write(proof.C.CL.Marshal())
-	buf.Write(proof.C.CR.Marshal())
-	buf.Write(proof.CRStar.Marshal())
-	buf.Write(proof.T.Marshal())
-	buf.Write(proof.Pk.Marshal())
-	buf.Write(proof.A_pk.Marshal())
-	buf.Write(proof.A_TDivCRprime.Marshal())
-
-	// compute the challenge
-	c, err := util.HashToInt(buf, zmimc.Hmimc)
-	if err != nil {
-		return witness, err
-	}
 	// check challenge
-	if !ffmath.Equal(c, proof.Challenge) {
+	if !ffmath.Equal(proof.Challenge, proof.Challenge) {
 		return witness, ErrInvalidChallenge
 	}
 
-	witness.Challenge.Assign(c.String())
+	witness.Challenge.Assign(proof.Challenge.String())
 
 	// commitments
 	witness.Pt, err = SetPointWitness(proof.Pt)
@@ -279,12 +258,8 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	if err != nil {
 		return witness, err
 	}
-	bStarNeg := new(big.Int).Neg(proof.BStar)
-	witness.BStar.Assign(bStarNeg)
-	if isEnabled {
-		witness.IsEnabled.Assign(1)
-	} else {
-		witness.IsEnabled.Assign(0)
-	}
+	witness.BStar.Assign(proof.BStar)
+	witness.Fee.Assign(proof.Fee)
+	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

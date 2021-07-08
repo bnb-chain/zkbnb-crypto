@@ -47,7 +47,7 @@ func TestVerifyDepositTransaction(t *testing.T) {
 }
 
 func prepareDepositTx() *DepositTx {
-	accounts, _, hashState := mockAccountTree(8)
+	accounts, _, _, hashState := mockAccountTree(8)
 	pos := 3
 	accountBeforeDeposit := accounts[pos]
 	// deposit amount

@@ -28,7 +28,7 @@ import (
 
 func TestProveSwap(t *testing.T) {
 	sk1, pk1 := twistedElgamal.GenKeyPair()
-	b1 := big.NewInt(8)
+	b1 := big.NewInt(1)
 	r1 := curve.RandomValue()
 	bEnc1, err := twistedElgamal.Enc(b1, r1, pk1)
 	if err != nil {
@@ -48,7 +48,7 @@ func TestProveSwap(t *testing.T) {
 	fmt.Println("sk1:", sk1.String())
 	fmt.Println("pk1:", curve.ToString(pk1))
 	fmt.Println("benc:", bEnc1.String())
-	relationPart1, err := NewSwapRelationPart1(bEnc1, bEnc2, pk1, pk2, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId)
+	relationPart1, err := NewSwapRelationPart1(bEnc1, bEnc2, pk1, pk2, b1, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId, big.NewInt(1))
 	if err != nil {
 		t.Error(err)
 	}
@@ -73,7 +73,7 @@ func TestProveSwap(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	relationPart2, err := NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, sk2, fromTokenId, toTokenId, swapProofPart1)
+	relationPart2, err := NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, b3, sk2, fromTokenId, toTokenId, swapProofPart1)
 	if err != nil {
 		t.Error(err)
 	}

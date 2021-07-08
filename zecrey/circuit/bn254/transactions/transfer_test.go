@@ -25,6 +25,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"math/big"
 	"testing"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
@@ -47,8 +48,8 @@ func TestVerifyTransferTx(t *testing.T) {
 }
 
 func prepareTransferTx() *TransferTx {
-	accounts, sks, hashState := mockAccountTree(8)
-	pos1 := uint64(0)
+	accounts, sks, balances, hashState := mockAccountTree(8)
+	pos1 := uint64(1)
 	pos2 := uint64(6)
 	pos3 := uint64(2)
 	poses := [NbTransferCount]uint64{pos1, pos2, pos3}
@@ -60,16 +61,17 @@ func prepareTransferTx() *TransferTx {
 	sk1 := sks[pos1]
 	b1 := big.NewInt(-6)
 	b2 := big.NewInt(1)
-	b3 := big.NewInt(5)
+	b3 := big.NewInt(4)
+	fee := big.NewInt(1)
 	tokenId := uint32(1)
-	relation, err := zecrey.NewPTransferProofRelation(tokenId)
+	relation, err := zecrey.NewPTransferProofRelation(tokenId, fee)
 	if err != nil {
 		panic(err)
 	}
 
-	relation.AddStatement(accountBeforeTransfer1.Balance, accountBeforeTransfer1.PubKey, b1, sk1)
-	relation.AddStatement(accountBeforeTransfer2.Balance, accountBeforeTransfer2.PubKey, b2, nil)
-	relation.AddStatement(accountBeforeTransfer3.Balance, accountBeforeTransfer3.PubKey, b3, nil)
+	relation.AddStatement(accountBeforeTransfer1.Balance, accountBeforeTransfer1.PubKey, balances[pos1], b1, sk1)
+	relation.AddStatement(accountBeforeTransfer2.Balance, accountBeforeTransfer2.PubKey, nil, b2, nil)
+	relation.AddStatement(accountBeforeTransfer3.Balance, accountBeforeTransfer3.PubKey, nil, b3, nil)
 	proof, err := zecrey.ProvePTransfer(relation)
 	if err != nil {
 		panic(err)
@@ -87,7 +89,17 @@ func prepareTransferTx() *TransferTx {
 		acc2[i] = &accountAfterTransfer
 	}
 
+	// fee related
+	feePos := uint64(0)
+	var feeAccountBefore, feeAccountAfter Account
+	feeAccountBefore = *accounts[feePos]
+	feeAccountAfter = *accounts[feePos]
+	newBalance := &zecrey.ElGamalEnc{
+		CL: feeAccountAfter.Balance.CL,
+		CR: curve.Add(feeAccountAfter.Balance.CR, curve.ScalarMul(curve.H, fee)),
+	}
+	feeAccountAfter.Balance = newBalance
 	// create deposit tx
-	tx, _, _ := mockTransferTx(true, proof, accounts, hashState, acc1, acc2, poses)
+	tx, _, _ := mockTransferTx(true, proof, accounts, hashState, acc1, acc2, poses, &feeAccountBefore, &feeAccountAfter, feePos, fee)
 	return tx
 }

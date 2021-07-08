@@ -44,21 +44,31 @@ var (
 		PubKey:  fakePoint,
 	}
 	fakeMerkleProofs               = [AccountMerkleLevels][]byte{}
-	fakeTransferMerkleProofs       = [NbTransferCount][AccountMerkleLevels][]byte{}
-	fakeSwapMerkleProofs           = [NbSwapCount][AccountMerkleLevels][]byte{}
+	fakeWithdrawMerkleProofs       = [NbWithdrawCountAndFee][AccountMerkleLevels][]byte{}
+	fakeTransferMerkleProofs       = [NbTransferCountAndFee][AccountMerkleLevels][]byte{}
+	fakeSwapMerkleProofs           = [NbSwapCountAndFee][AccountMerkleLevels][]byte{}
 	fakeHelperMerkleProofs         = [AccountMerkleLevels - 1]int{}
-	fakeTransferHelperMerkleProofs = [NbTransferCount][AccountMerkleLevels - 1]int{}
-	fakeSwapHelperMerkleProofs     = [NbSwapCount][AccountMerkleLevels - 1]int{}
+	fakeWithdrawHelperMerkleProofs = [NbWithdrawCountAndFee][AccountMerkleLevels - 1]int{}
+	fakeTransferHelperMerkleProofs = [NbTransferCountAndFee][AccountMerkleLevels - 1]int{}
+	fakeSwapHelperMerkleProofs     = [NbSwapCountAndFee][AccountMerkleLevels - 1]int{}
 )
 
 func init() {
+	for j := 0; j < NbWithdrawCountAndFee; j++ {
+		for i := 0; i < AccountMerkleLevels; i++ {
+			fakeWithdrawMerkleProofs[j][i] = []byte{0}
+			if i != AccountMerkleLevels-1 {
+				fakeWithdrawHelperMerkleProofs[j][i] = 0
+			}
+		}
+	}
 	for i := 0; i < AccountMerkleLevels; i++ {
 		fakeMerkleProofs[i] = []byte{0}
 		if i != AccountMerkleLevels-1 {
 			fakeHelperMerkleProofs[i] = 0
 		}
 	}
-	for i := 0; i < NbTransferCount; i++ {
+	for i := 0; i < NbTransferCountAndFee; i++ {
 		for j := 0; j < AccountMerkleLevels; j++ {
 			fakeTransferMerkleProofs[i][j] = []byte{0}
 			if j != AccountMerkleLevels-1 {
@@ -111,12 +121,12 @@ func FakeWithdrawTx() *WithdrawTx {
 		// withdraw proof
 		Proof: zecrey.FakeWithdrawProof(),
 		// before withdraw merkle proof
-		AccountMerkleProofsBefore:       fakeMerkleProofs,
-		AccountHelperMerkleProofsBefore: fakeHelperMerkleProofs,
+		AccountMerkleProofsBefore:       fakeWithdrawMerkleProofs,
+		AccountHelperMerkleProofsBefore: fakeWithdrawHelperMerkleProofs,
 
 		// after withdraw merkle proof
-		AccountMerkleProofsAfter:       fakeMerkleProofs,
-		AccountHelperMerkleProofsAfter: fakeHelperMerkleProofs,
+		AccountMerkleProofsAfter:       fakeWithdrawMerkleProofs,
+		AccountHelperMerkleProofsAfter: fakeWithdrawHelperMerkleProofs,
 
 		// old Account Info
 		AccountBefore: fakeAccount,

@@ -32,16 +32,15 @@ func TestProveWithdraw(t *testing.T) {
 	b := big.NewInt(8)
 	r := curve.RandomValue()
 	bEnc, err := twistedElgamal.Enc(b, r, pk)
-	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
 	if err != nil {
 		t.Error(err)
 	}
-	bStar := big.NewInt(-2)
+	bStar := big.NewInt(2)
 	fmt.Println("sk:", sk.String())
 	fmt.Println("pk:", curve.ToString(pk))
 	fmt.Println("benc:", bEnc.String())
 	addr := "0x99AC8881834797ebC32f185ee27c2e96842e1a47"
-	relation, err := NewWithdrawRelation(bEnc, pk, bStar, sk, 1, addr)
+	relation, err := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1, addr, big.NewInt(1))
 	if err != nil {
 		t.Error(err)
 	}
@@ -69,7 +68,7 @@ func TestProveWithdraw(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		assert.Equal(t, decVal.String(), "6", "withdraw works correctly")
+		assert.Equal(t, decVal.String(), "5", "withdraw works correctly")
 		fmt.Println(decVal)
 	}
 }

@@ -35,11 +35,14 @@ type (
 )
 
 const (
-	NbTxs               = 2
-	AccountMerkleLevels = std.AccountMerkleLevels
-	NbTransferCount     = std.NbTransferCount
-	NbSwapCount         = 2
-	BalanceMerkleLevels = 16
+	NbTxs                 = 2
+	AccountMerkleLevels   = std.AccountMerkleLevels
+	NbTransferCount       = std.NbTransferCount
+	NbTransferCountAndFee = NbTransferCount + 1
+	NbSwapCount           = 2
+	NbSwapCountAndFee     = NbSwapCount + 1
+	NbWithdrawCountAndFee = 2
+	BalanceMerkleLevels   = 16
 
 	// size
 	PointSize   = curve.PointSize

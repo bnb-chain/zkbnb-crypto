@@ -36,11 +36,12 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 	if relation == nil || relation.Statements == nil {
 		return nil, ErrInvalidParams
 	}
-	// Verify \sum b_i^{\Delta} = 0
+	// Verify \sum b_i^{\Delta} + fee = 0
 	sum := big.NewInt(0)
 	for _, statement := range relation.Statements {
-		sum = ffmath.Add(sum, statement.BDelta)
+		sum.Add(sum, statement.BDelta)
 	}
+	sum.Add(sum, relation.Fee)
 	// statements must be correct
 	if !ffmath.Equal(sum, big.NewInt(0)) {
 		return nil, ErrInvalidParams
@@ -58,10 +59,12 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 	proof.G = relation.G
 	proof.H = relation.H
 	proof.Ht = relation.Ht
+	proof.Fee = relation.Fee
 	// write public statements into buf
 	buf.Write(proof.G.Marshal())
 	buf.Write(proof.H.Marshal())
 	buf.Write(proof.Ht.Marshal())
+	buf.Write(proof.Fee.Bytes())
 	// commit phase
 	n := len(relation.Statements)
 	commitEntities := make([]*transferCommitValues, n)
@@ -109,10 +112,6 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			commitEntities[i].alpha_rstarSubr, commitEntities[i].A_YDivCRDelta = commitValidDelta(G)
 		} else { // Otherwise, commit ownership
 			// commit to ownership
-			//commitEntities[i].alpha_rstarSubrbar, commitEntities[i].alpha_rbar, commitEntities[i].alpha_bprime,
-			//	commitEntities[i].alpha_sk, commitEntities[i].alpha_skInv,
-			//	commitEntities[i].A_YDivT, commitEntities[i].A_T,
-			//	commitEntities[i].A_pk, commitEntities[i].A_TDivCPrime = commitOwnership(G, H, curve.Neg(curve.Add(C.CL, CStar.CL))) // commit to tokenId
 			go commitOwnershipRoutine(G, H, curve.Neg(curve.Add(C.CL, CDelta.CL)), commitEntities, i)
 		}
 		// generate sub proofs
@@ -121,10 +120,6 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			A_CLDelta:     commitValues.A_CLDelta,
 			A_CRDelta:     commitValues.A_CRDelta,
 			A_YDivCRDelta: commitValues.A_YDivCRDelta,
-			//A_YDivT:       commitValues.A_YDivT,
-			//A_T:           commitValues.A_T,
-			//A_pk:          commitValues.A_pk,
-			//A_TDivCPrime:  commitValues.A_TDivCPrime,
 			// original balance enc
 			C: statement.C,
 			// delta balance enc
@@ -252,6 +247,7 @@ func (proof *PTransferProof) Verify() (bool, error) {
 	buf.Write(proof.G.Marshal())
 	buf.Write(proof.H.Marshal())
 	buf.Write(proof.Ht.Marshal())
+	buf.Write(proof.Fee.Bytes())
 	for _, subProof := range proof.SubProofs {
 		// write common inputs into buf
 		buf.Write(subProof.C.CL.Marshal())
@@ -333,7 +329,9 @@ func (proof *PTransferProof) Verify() (bool, error) {
 	}
 
 	// Verify sum proof
-	rSum := proof.A_sum
+	gNeg := curve.Neg(proof.G)
+	feec := ffmath.MultiplyMod(proof.Fee, c, Order)
+	rSum := curve.Add(proof.A_sum, curve.ScalarMul(gNeg, feec))
 	return lSum.Equal(rSum), nil
 }
 
@@ -529,10 +527,10 @@ func TryOnceTransfer() PTransferProof {
 	b2Enc, _ := twistedElgamal.Enc(b2, r2, pk2)
 	b3Enc, _ := twistedElgamal.Enc(b3, r3, pk3)
 	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
-	relation, _ := NewPTransferProofRelation(1)
-	relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
-	relation.AddStatement(b2Enc, pk2, big.NewInt(1), nil)
-	relation.AddStatement(b3Enc, pk3, big.NewInt(3), nil)
+	relation, _ := NewPTransferProofRelation(1, big.NewInt(1))
+	relation.AddStatement(b1Enc, pk1, b1, big.NewInt(-5), sk1)
+	relation.AddStatement(b2Enc, pk2, b2, big.NewInt(1), nil)
+	relation.AddStatement(b3Enc, pk3, b3, big.NewInt(3), nil)
 	//err = relation.AddStatement(b4Enc, pk4, nil, big.NewInt(1), nil)
 	//if err != nil {
 	//	panic(err)

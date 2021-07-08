@@ -19,6 +19,14 @@ package std
 
 import "github.com/consensys/gnark/std/algebra/twistededwards"
 
+/*
+	ElGamalEncConstraints describes ElGamal Enc in circuit
+*/
+type ElGamalEncConstraints struct {
+	CL Point // Pk^r
+	CR Point // g^r Waste^b
+}
+
 func EncAdd(cs *ConstraintSystem, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
 	C.CL.AddGeneric(cs, &C.CL, &CDelta.CL, params)
 	C.CR.AddGeneric(cs, &C.CR, &CDelta.CR, params)
