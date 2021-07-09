@@ -138,7 +138,8 @@ func PrepareBlockSmall() *Block {
 	oldAccountRoots[0] = depositTx1.OldAccountRoot
 	newAccountRoots[0] = depositTx1.NewAccountRoot
 	feePos := uint64(0)
-	transferTx1, accountsT1, hashStateT1 := mockTransfer(hashStateT1, accountsT1, sks, balancesT1, [NbTransferCount]uint64{2, 3, 5}, [NbTransferCount]*big.Int{big.NewInt(-4), big.NewInt(1), big.NewInt(3)}, feePos)
+	fee := big.NewInt(1)
+	transferTx1, accountsT1, hashStateT1 := mockTransfer(hashStateT1, accountsT1, sks, balancesT1, [NbTransferCount]uint64{2, 3, 5}, [NbTransferCount]*big.Int{big.NewInt(-5), big.NewInt(1), big.NewInt(3)}, feePos, fee)
 	tx2 := mockTransferTransaction(transferTx1)
 	txsType[1] = TransferTxType
 	txs[1] = tx2
@@ -223,7 +224,7 @@ func mockDeposit(hashState []byte, accounts []*Account, pos int, amount int) (*D
 	return tx, accounts, hashState
 }
 
-func mockTransfer(hashState []byte, accounts []*Account, sks []*big.Int, balances []*big.Int, poses [NbTransferCount]uint64, bs [NbTransferCount]*big.Int, feePos uint64) (*TransferTx, []*Account, []byte) {
+func mockTransfer(hashState []byte, accounts []*Account, sks []*big.Int, balances []*big.Int, poses [NbTransferCount]uint64, bs [NbTransferCount]*big.Int, feePos uint64, fee *big.Int) (*TransferTx, []*Account, []byte) {
 	accountBeforeTransfer1 := accounts[poses[0]]
 	accountBeforeTransfer2 := accounts[poses[1]]
 	accountBeforeTransfer3 := accounts[poses[2]]
@@ -231,7 +232,6 @@ func mockTransfer(hashState []byte, accounts []*Account, sks []*big.Int, balance
 	var acc2 [NbTransferCount]*Account
 	sk1 := sks[poses[0]]
 	tokenId := uint32(1)
-	fee := big.NewInt(0)
 	relation, err := zecrey.NewPTransferProofRelation(tokenId, fee)
 	if err != nil {
 		panic(err)
@@ -259,11 +259,11 @@ func mockTransfer(hashState []byte, accounts []*Account, sks []*big.Int, balance
 	var feeAccountBefore, feeAccountAfter Account
 	feeAccountBefore = *accounts[feePos]
 	feeAccountAfter = *accounts[feePos]
-	newBalance := &zecrey.ElGamalEnc{
+	feeNewBalance := &zecrey.ElGamalEnc{
 		CL: feeAccountAfter.Balance.CL,
 		CR: curve.Add(feeAccountAfter.Balance.CR, curve.ScalarMul(curve.H, fee)),
 	}
-	feeAccountAfter.Balance = newBalance
+	feeAccountAfter.Balance = feeNewBalance
 
 	// create deposit tx
 	tx, accounts, hashState := mockTransferTx(true, proof, accounts, hashState, acc1, acc2, poses, &feeAccountBefore, &feeAccountAfter, feePos, fee)

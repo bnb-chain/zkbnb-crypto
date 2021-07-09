@@ -49,8 +49,9 @@ const (
 	EncSize     = twistedElgamal.EncSize
 	AccountSize = 160
 
-	DepositTxType  = 1
-	TransferTxType = 2
-	SwapTxType     = 3
-	WithdrawTxType = 4
+	NoopTxType     = 1
+	DepositTxType  = 2
+	TransferTxType = 3
+	SwapTxType     = 4
+	WithdrawTxType = 5
 )

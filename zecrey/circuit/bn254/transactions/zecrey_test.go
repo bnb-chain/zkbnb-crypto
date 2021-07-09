@@ -112,4 +112,3 @@ func TestVerifyBlock(t *testing.T) {
 //		NewAccountRoots: newAccountRoots,
 //	}
 //}
-
