@@ -45,6 +45,9 @@ func ProveWithdraw() js.Func {
 		}
 		// transfer tokenId to uint32
 		tId := uint32(tokenId)
+		// fee
+		feeInt := args[1].Int()
+		fee := uint32(feeInt)
 		// layer 2 address
 		accountIndex := args[1].Int()
 		// layer 1 address
@@ -57,7 +60,7 @@ func ProveWithdraw() js.Func {
 			return errStr
 		}
 		// create withdraw relation
-		relation, err := zecrey.NewWithdrawRelation(segment.EncBalance, segment.Pk, segment.Balance, segment.BStar, segment.Sk, tId, l1addr, segment.Fee)
+		relation, err := zecrey.NewWithdrawRelation(segment.EncBalance, segment.Pk, segment.Balance, segment.BStar, segment.Sk, tId, l1addr, big.NewInt(int64(fee)))
 		if err != nil {
 			return ErrInvalidWithdrawRelationParams
 		}
@@ -71,7 +74,7 @@ func ProveWithdraw() js.Func {
 			AccountIndex: uint32(accountIndex),
 			L1Address:    l1addr,
 			Amount:       uint32(segment.BStar.Uint64()),
-			Fee:          uint32(segment.Fee.Uint64()),
+			Fee:          fee,
 			Proof:        withdrawProof,
 			CreateAt:     time.Now().Unix(),
 		}

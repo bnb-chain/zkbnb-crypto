@@ -34,7 +34,6 @@ type WithdrawSegment struct {
 	Balance    *big.Int    `json:"balance"`
 	BStar      *big.Int    `json:"b_star"`
 	Sk         *big.Int    `json:"sk"`
-	Fee        *big.Int    `json:"fee"`
 }
 
 /*
@@ -46,7 +45,6 @@ type WithdrawSegmentFormat struct {
 	Pk         string `json:"pk"`
 	BStar      int    `json:"b_star"`
 	Sk         string `json:"sk"`
-	Fee        int    `json:"fee"`
 }
 
 func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, string) {
@@ -73,14 +71,12 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, string) {
 	if !b {
 		return nil, ErrParseBigInt
 	}
-	fee := big.NewInt(int64(withdrawSegmentFormat.Fee))
 	withdrawSegment := &WithdrawSegment{
 		EncBalance: encBalance,
 		Balance:    balance,
 		Pk:         pk,
 		BStar:      bStar,
 		Sk:         sk,
-		Fee:        fee,
 	}
 	return withdrawSegment, Success
 }
