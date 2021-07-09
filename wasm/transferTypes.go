@@ -27,7 +27,9 @@ import (
 
 type PTransferSegment struct {
 	// ElGamalEnc
-	EncVal *ElGamalEnc `json:"enc_val"`
+	EncBalance *ElGamalEnc `json:"enc_balance"`
+	// balance
+	Balance *big.Int `json:"balance"`
 	// public key
 	Pk *Point `json:"pk"`
 	// bDelta
@@ -39,7 +41,9 @@ type PTransferSegment struct {
 // PTransferSegmentFormat Format is used to accept JSON string
 type PTransferSegmentFormat struct {
 	// ElGamalEnc
-	EncVal string `json:"enc_val"`
+	EncBalance string `json:"enc_balance"`
+	// balance
+	Balance int `json:"balance"`
 	// public key
 	Pk string `json:"pk"`
 	// bDelta
@@ -60,13 +64,13 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 	skCount := 0
 	var segments []*PTransferSegment
 	for _, segmentFormat := range transferSegmentFormats {
-		if segmentFormat.EncVal == "" || segmentFormat.Pk == "" {
+		if segmentFormat.EncBalance == "" || segmentFormat.Pk == "" {
 			return nil, ErrInvalidTransferParams
 		}
 		// create a new segment
 		segment := new(PTransferSegment)
 		// get ElGamalEnc
-		encVal, err := twistedElgamal.FromString(segmentFormat.EncVal)
+		encBalance, err := twistedElgamal.FromString(segmentFormat.EncBalance)
 		if err != nil {
 			return nil, ErrParseEnc
 		}
@@ -78,7 +82,7 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 		// get bDelta
 		bDelta := big.NewInt(int64(segmentFormat.BDelta))
 		// set values into segment
-		segment.EncVal = encVal
+		segment.EncBalance = encBalance
 		segment.Pk = pk
 		segment.BDelta = bDelta
 		// check if exists sk
@@ -90,6 +94,9 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 				return nil, ErrParseBigInt
 			}
 			segment.Sk = sk
+			// get balance
+			balance := big.NewInt(int64(segmentFormat.Balance))
+			segment.Balance = balance
 		}
 		segments = append(segments, segment)
 	}
@@ -102,8 +109,10 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 type TransferTransactionAo struct {
 	// token id
 	TokenId uint32
-	// account addresses
-	Addresses []string
+	// account indexes
+	AccountsIndex []int
+	// fee
+	Fee uint32
 	// transfer proof
 	Proof *zecrey.PTransferProof
 	// create time
