@@ -29,26 +29,28 @@ import (
 	SwapSegment: which is used to construct swap proof
 */
 type SwapSegment struct {
-	EncVal         *ElGamalEnc `json:"enc_val"`
-	Pk             *Point      `json:"pk"`
-	ReceiverEncVal *ElGamalEnc `json:"receiver_enc_val"`
-	ReceiverPk     *Point      `json:"receiver_pk"`
-	BStarFrom      *big.Int    `json:"b_star_from"`
-	BStarTo        *big.Int    `json:"b_star_to"`
-	Sk             *big.Int    `json:"sk"`
+	EncBalance         *ElGamalEnc `json:"enc_balance"`
+	Balance            *big.Int    `json:"balance"`
+	Pk                 *Point      `json:"pk"`
+	ReceiverEncBalance *ElGamalEnc `json:"receiver_enc_balance"`
+	ReceiverPk         *Point      `json:"receiver_pk"`
+	BStarFrom          *big.Int    `json:"b_star_from"`
+	BStarTo            *big.Int    `json:"b_star_to"`
+	Sk                 *big.Int    `json:"sk"`
 }
 
 /*
 	SwapSegmentFormat: format version of SwapSegment
 */
 type SwapSegmentFormat struct {
-	EncVal         string `json:"enc_val"`
-	Pk             string `json:"pk"`
-	ReceiverEncVal string `json:"receiver_enc_val"`
-	ReceiverPk     string `json:"receiver_pk"`
-	BStarFrom      int    `json:"b_star_from"`
-	BStarTo        int    `json:"b_star_to"`
-	Sk             string `json:"sk"`
+	EncBalance         string `json:"enc_balance"`
+	Balance            int    `json:"balance"`
+	Pk                 string `json:"pk"`
+	ReceiverEncBalance string `json:"receiver_enc_balance"`
+	ReceiverPk         string `json:"receiver_pk"`
+	BStarFrom          int    `json:"b_star_from"`
+	BStarTo            int    `json:"b_star_to"`
+	Sk                 string `json:"sk"`
 }
 
 func FromSwapSegmentJSON(segmentStr string) (*SwapSegment, string) {
@@ -57,15 +59,16 @@ func FromSwapSegmentJSON(segmentStr string) (*SwapSegment, string) {
 	if err != nil {
 		return nil, ErrUnmarshal
 	}
-	if swapSegmentFormat.EncVal == "" || swapSegmentFormat.Pk == "" ||
+	if swapSegmentFormat.EncBalance == "" || swapSegmentFormat.Pk == "" ||
 		swapSegmentFormat.BStarFrom <= 0 || swapSegmentFormat.BStarTo <= 0 || swapSegmentFormat.Sk == "" {
 		return nil, ErrInvalidSwapParams
 	}
-	encVal, err := twistedElgamal.FromString(swapSegmentFormat.EncVal)
+	encBalance, err := twistedElgamal.FromString(swapSegmentFormat.EncBalance)
 	if err != nil {
 		return nil, ErrParseEnc
 	}
-	receiverEncVal, err := twistedElgamal.FromString(swapSegmentFormat.ReceiverEncVal)
+	balance := big.NewInt(int64(swapSegmentFormat.Balance))
+	receiverEncBalance, err := twistedElgamal.FromString(swapSegmentFormat.ReceiverEncBalance)
 	if err != nil {
 		return nil, ErrParseEnc
 	}
@@ -84,13 +87,14 @@ func FromSwapSegmentJSON(segmentStr string) (*SwapSegment, string) {
 		return nil, ErrParseBigInt
 	}
 	swapSegment := &SwapSegment{
-		EncVal:         encVal,
-		Pk:             pk,
-		ReceiverEncVal: receiverEncVal,
-		ReceiverPk:     receiverPk,
-		BStarFrom:      bStarFrom,
-		BStarTo:        bStarTo,
-		Sk:             sk,
+		EncBalance:         encBalance,
+		Balance:            balance,
+		Pk:                 pk,
+		ReceiverEncBalance: receiverEncBalance,
+		ReceiverPk:         receiverPk,
+		BStarFrom:          bStarFrom,
+		BStarTo:            bStarTo,
+		Sk:                 sk,
 	}
 	return swapSegment, Success
 }
@@ -99,8 +103,10 @@ type SwapTransactionAo struct {
 	// token id
 	TokenIdFrom uint32
 	TokenIdTo   uint32
-	// L2 address
-	L2Address string
+	// account index
+	AccountIndex uint32
+	// fee
+	Fee uint32
 	// withdraw amount
 	BStarFrom *big.Int
 	BStarTo   *big.Int

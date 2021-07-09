@@ -29,20 +29,24 @@ import (
 	WithdrawSegment: which is used to construct withdraw proof
 */
 type WithdrawSegment struct {
-	EncVal *ElGamalEnc `json:"enc_val"`
-	Pk     *Point      `json:"pk"`
-	BStar  *big.Int    `json:"b_star"`
-	Sk     *big.Int    `json:"sk"`
+	EncBalance *ElGamalEnc `json:"enc_balance"`
+	Pk         *Point      `json:"pk"`
+	Balance    *big.Int    `json:"balance"`
+	BStar      *big.Int    `json:"b_star"`
+	Sk         *big.Int    `json:"sk"`
+	Fee        *big.Int    `json:"fee"`
 }
 
 /*
 	WithdrawSegmentFormat: format version of WithdrawSegment
 */
 type WithdrawSegmentFormat struct {
-	EncVal string `json:"enc_val"`
-	Pk     string `json:"pk"`
-	BStar  int    `json:"b_star"`
-	Sk     string `json:"sk"`
+	EncBalance string `json:"enc_balance"`
+	Balance    int    `json:"balance"`
+	Pk         string `json:"pk"`
+	BStar      int    `json:"b_star"`
+	Sk         string `json:"sk"`
+	Fee        int    `json:"fee"`
 }
 
 func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, string) {
@@ -51,14 +55,15 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, string) {
 	if err != nil {
 		return nil, ErrUnmarshal
 	}
-	if withdrawSegmentFormat.EncVal == "" || withdrawSegmentFormat.Pk == "" ||
-		withdrawSegmentFormat.BStar >= 0 || withdrawSegmentFormat.Sk == "" {
+	if withdrawSegmentFormat.EncBalance == "" || withdrawSegmentFormat.Pk == "" ||
+		withdrawSegmentFormat.BStar < 0 || withdrawSegmentFormat.Sk == "" {
 		return nil, ErrInvalidWithdrawParams
 	}
-	encVal, err := twistedElgamal.FromString(withdrawSegmentFormat.EncVal)
+	encBalance, err := twistedElgamal.FromString(withdrawSegmentFormat.EncBalance)
 	if err != nil {
 		return nil, ErrParseEnc
 	}
+	balance := big.NewInt(int64(withdrawSegmentFormat.Balance))
 	pk, err := curve.FromString(withdrawSegmentFormat.Pk)
 	if err != nil {
 		return nil, ErrParsePoint
@@ -68,11 +73,14 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, string) {
 	if !b {
 		return nil, ErrParseBigInt
 	}
+	fee := big.NewInt(int64(withdrawSegmentFormat.Fee))
 	withdrawSegment := &WithdrawSegment{
-		EncVal: encVal,
-		Pk:     pk,
-		BStar:  bStar,
-		Sk:     sk,
+		EncBalance: encBalance,
+		Balance:    balance,
+		Pk:         pk,
+		BStar:      bStar,
+		Sk:         sk,
+		Fee:        fee,
 	}
 	return withdrawSegment, Success
 }
@@ -80,12 +88,14 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, string) {
 type WithdrawTransactionAo struct {
 	// token id
 	TokenId uint32
-	// L2 address
-	L2Address string
+	// zecrey index
+	AccountIndex uint32
 	// L1 address
 	L1Address string
 	// withdraw amount
 	Amount uint32
+	// withdraw fee
+	Fee uint32
 	// withdraw proof
 	Proof *zecrey.WithdrawProof
 	// create time
