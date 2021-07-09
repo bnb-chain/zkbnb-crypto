@@ -74,8 +74,6 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 		if err != nil {
 			return nil, ErrParseEnc
 		}
-		// get balance
-		balance := big.NewInt(int64(segmentFormat.Balance))
 		// get pk
 		pk, err := curve.FromString(segmentFormat.Pk)
 		if err != nil {
@@ -85,7 +83,6 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 		bDelta := big.NewInt(int64(segmentFormat.BDelta))
 		// set values into segment
 		segment.EncBalance = encBalance
-		segment.Balance = balance
 		segment.Pk = pk
 		segment.BDelta = bDelta
 		// check if exists sk
@@ -97,6 +94,9 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 				return nil, ErrParseBigInt
 			}
 			segment.Sk = sk
+			// get balance
+			balance := big.NewInt(int64(segmentFormat.Balance))
+			segment.Balance = balance
 		}
 		segments = append(segments, segment)
 	}

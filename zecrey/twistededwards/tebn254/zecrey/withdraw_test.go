@@ -36,11 +36,12 @@ func TestProveWithdraw(t *testing.T) {
 		t.Error(err)
 	}
 	bStar := big.NewInt(2)
+	fee := big.NewInt(1)
 	fmt.Println("sk:", sk.String())
 	fmt.Println("pk:", curve.ToString(pk))
 	fmt.Println("benc:", bEnc.String())
 	addr := "0x99AC8881834797ebC32f185ee27c2e96842e1a47"
-	relation, err := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1, addr, big.NewInt(1))
+	relation, err := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1, addr, fee)
 	if err != nil {
 		t.Error(err)
 	}

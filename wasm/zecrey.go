@@ -35,7 +35,7 @@ import (
 func ProveWithdraw() js.Func {
 	proveWithdrawFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// length of args should be 3
-		if len(args) != 4 {
+		if len(args) != 5 {
 			return ErrInvalidWithdrawParams
 		}
 		// read tokenId
@@ -49,11 +49,11 @@ func ProveWithdraw() js.Func {
 		feeInt := args[1].Int()
 		fee := uint32(feeInt)
 		// layer 2 address
-		accountIndex := args[1].Int()
+		accountIndex := args[2].Int()
 		// layer 1 address
-		l1addr := args[2].String()
+		l1addr := args[3].String()
 		// read segmentInfo JSON str
-		segmentInfo := args[3].String()
+		segmentInfo := args[4].String()
 		// parse segmentInfo
 		segment, errStr := FromWithdrawSegmentJSON(segmentInfo)
 		if errStr != Success {
@@ -95,7 +95,7 @@ func ProveWithdraw() js.Func {
 */
 func ProveTransfer() js.Func {
 	proveTransferFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		if len(args) != 3 {
+		if len(args) != 4 {
 			return ErrInvalidTransferParams
 		}
 		// read token id
@@ -170,7 +170,7 @@ func ProveTransfer() js.Func {
 func ProveSwap() js.Func {
 	proveSwapFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// length of args should be 3
-		if len(args) != 4 {
+		if len(args) != 5 {
 			return ErrInvalidSwapParams
 		}
 		// read fromTokenId
