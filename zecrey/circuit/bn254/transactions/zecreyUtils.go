@@ -133,6 +133,11 @@ func FakeWithdrawTx() *WithdrawTx {
 		// new Account Info
 		AccountAfter: fakeAccount,
 
+		// fee releated
+		Fee:              fakeAmount,
+		FeeAccountBefore: fakeAccount,
+		FeeAccountAfter:  fakeAccount,
+
 		// old account root
 		OldAccountRoot: fakeBytes,
 		// new account root
@@ -157,6 +162,11 @@ func FakeTransferTx() *TransferTx {
 		AccountBefore: [NbTransferCount]*Account{fakeAccount, fakeAccount, fakeAccount},
 		// new Account Info
 		AccountAfter: [NbTransferCount]*Account{fakeAccount, fakeAccount, fakeAccount},
+
+		// fee releated
+		Fee:              fakeAmount,
+		FeeAccountBefore: fakeAccount,
+		FeeAccountAfter:  fakeAccount,
 
 		// old account root
 		OldAccountRoot: fakeBytes,
@@ -184,6 +194,11 @@ func FakeSwapTx() *SwapTx {
 		AccountBefore: [NbSwapCount]*Account{fakeAccount, fakeAccount},
 		// new Account Info
 		AccountAfter: [NbSwapCount]*Account{fakeAccount, fakeAccount},
+
+		// fee releated
+		Fee:              fakeAmount,
+		FeeAccountBefore: fakeAccount,
+		FeeAccountAfter:  fakeAccount,
 
 		// old account root
 		OldAccountRoot: fakeBytes,
