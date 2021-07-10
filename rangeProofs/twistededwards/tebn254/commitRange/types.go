@@ -82,17 +82,26 @@ func FromBytes(proofBytes []byte) (*ComRangeProof, error) {
 		proof.Zbs[i] = new(big.Int)
 		proof.As[i] = new(Point)
 		readSize, err := proof.Cas[i].SetBytes(proofBytes[i*size : i*size+PointSize])
-		if err != nil || readSize != PointSize {
+		if err != nil {
+			return nil, err
+		}
+		if readSize != PointSize {
 			return nil, ErrInvalidPointBytes
 		}
 		readSize, err = proof.Cbs[i].SetBytes(proofBytes[i*size+PointSize : i*size+PointSize*2])
-		if err != nil || readSize != PointSize {
+		if err != nil {
+			return nil, err
+		}
+		if readSize != PointSize {
 			return nil, ErrInvalidPointBytes
 		}
 		proof.Zas[i].SetBytes(proofBytes[i*size+PointSize*2 : i*size+PointSize*3])
 		proof.Zbs[i].SetBytes(proofBytes[i*size+PointSize*3 : i*size+PointSize*4])
 		readSize, err = proof.As[i].SetBytes(proofBytes[i*size+PointSize*4 : i*size+PointSize*5])
-		if err != nil || readSize != PointSize {
+		if err != nil {
+			return nil, err
+		}
+		if readSize != PointSize {
 			return nil, ErrInvalidPointBytes
 		}
 	}
@@ -102,15 +111,24 @@ func FromBytes(proofBytes []byte) (*ComRangeProof, error) {
 	proof.C1 = new(big.Int)
 	proof.C2 = new(big.Int)
 	readSize, err := proof.T.SetBytes(proofBytes[size*RangeMaxBits : size*RangeMaxBits+PointSize])
-	if err != nil || readSize != PointSize {
+	if err != nil {
+		return nil, err
+	}
+	if readSize != PointSize {
 		return nil, ErrInvalidPointBytes
 	}
 	readSize, err = proof.G.SetBytes(proofBytes[size*RangeMaxBits+PointSize*1 : size*RangeMaxBits+PointSize*2])
-	if err != nil || readSize != PointSize {
+	if err != nil {
+		return nil, err
+	}
+	if readSize != PointSize {
 		return nil, ErrInvalidPointBytes
 	}
 	readSize, err = proof.H.SetBytes(proofBytes[size*RangeMaxBits+PointSize*2 : size*RangeMaxBits+PointSize*3])
-	if err != nil || readSize != PointSize {
+	if err != nil {
+		return nil, err
+	}
+	if readSize != PointSize {
 		return nil, ErrInvalidPointBytes
 	}
 	proof.C1.SetBytes(proofBytes[size*RangeMaxBits+PointSize*3 : size*RangeMaxBits+PointSize*4])
