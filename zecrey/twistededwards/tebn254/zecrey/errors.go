@@ -37,4 +37,6 @@ var (
 	ErrInvalidWithdrawProofSize    = errors.New("err: invalid withdraw proof size")
 	ErrInvalidTransferSubProofSize = errors.New("err: invalid transfer sub proof size")
 	ErrInvalidTransferProofSize    = errors.New("err: invalid transfer proof size")
+	ErrInvalidSwapProofPartSize    = errors.New("err: invalid swap proof part size")
+	ErrInvalidSwapProofSize        = errors.New("err: invalid swap proof size")
 )

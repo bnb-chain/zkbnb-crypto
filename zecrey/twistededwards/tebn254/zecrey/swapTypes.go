@@ -18,6 +18,7 @@
 package zecrey
 
 import (
+	"encoding/base64"
 	"math/big"
 	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -29,6 +30,41 @@ import (
 type SwapProof struct {
 	ProofPart1 *SwapProofPart
 	ProofPart2 *SwapProofPart
+}
+
+func (proof *SwapProof) Bytes() []byte {
+	proofBytes := make([]byte, SwapProofSize)
+	copy(proofBytes[:SwapProofPartSize], proof.ProofPart1.Bytes())
+	copy(proofBytes[SwapProofPartSize:], proof.ProofPart2.Bytes())
+	return proofBytes
+}
+
+func (proof *SwapProof) String() string {
+	return base64.StdEncoding.EncodeToString(proof.Bytes())
+}
+
+func ParseSwapProofBytes(proofBytes []byte) (proof *SwapProof, err error) {
+	if len(proofBytes) != SwapProofSize {
+		return nil, ErrInvalidSwapProofSize
+	}
+	proof = new(SwapProof)
+	proof.ProofPart1, err = ParseSwapProofPartBytes(proofBytes[:SwapProofPartSize])
+	if err != nil {
+		return nil, err
+	}
+	proof.ProofPart2, err = ParseSwapProofPartBytes(proofBytes[SwapProofPartSize:])
+	if err != nil {
+		return nil, err
+	}
+	return proof, nil
+}
+
+func ParseSwapProofStr(proofStr string) (*SwapProof, error) {
+	proofBytes, err := base64.StdEncoding.DecodeString(proofStr)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSwapProofBytes(proofBytes)
 }
 
 type SwapProofPart struct {
@@ -52,6 +88,152 @@ type SwapProofPart struct {
 	ReceiverPk                                     *Point
 	G, H, Ht1, Ht2, TDivCRprime, CLprimeInv, T, Pk *Point
 	Challenge                                      *big.Int
+}
+
+func (proof *SwapProofPart) Bytes() []byte {
+	proofBytes := make([]byte, SwapProofPartSize)
+	copy(proofBytes[:PointSize], proof.Pt1.Marshal())
+	copy(proofBytes[PointSize:PointSize*2], proof.Pt2.Marshal())
+	copy(proofBytes[PointSize*2:PointSize*3], proof.A_pk.Marshal())
+	copy(proofBytes[PointSize*3:PointSize*4], proof.A_TDivCRprime.Marshal())
+	copy(proofBytes[PointSize*4:PointSize*5], proof.A_Pt1.Marshal())
+	copy(proofBytes[PointSize*5:PointSize*6], proof.A_Pt2.Marshal())
+	copy(proofBytes[PointSize*6:PointSize*7], proof.Z_rbar.FillBytes(make([]byte, PointSize)))
+	copy(proofBytes[PointSize*7:PointSize*8], proof.Z_sk.FillBytes(make([]byte, PointSize)))
+	copy(proofBytes[PointSize*8:PointSize*9], proof.Z_skInv.FillBytes(make([]byte, PointSize)))
+	copy(proofBytes[PointSize*9:PointSize*10], proof.RStar.FillBytes(make([]byte, PointSize)))
+	C := proof.C.Bytes()
+	CStar := proof.CStar.Bytes()
+	RecevierC := proof.ReceiverC.Bytes()
+	ReceiverCStar := proof.ReceiverCStar.Bytes()
+	copy(proofBytes[PointSize*10:PointSize*12], C[:])
+	copy(proofBytes[PointSize*12:PointSize*14], CStar[:])
+	copy(proofBytes[PointSize*14:PointSize*16], RecevierC[:])
+	copy(proofBytes[PointSize*16:PointSize*18], ReceiverCStar[:])
+	copy(proofBytes[PointSize*18:PointSize*19], proof.ReceiverPk.Marshal())
+	// G, H, Ht1, Ht2, TDivCRprime, CLprimeInv, T, Pk
+	copy(proofBytes[PointSize*19:PointSize*20], proof.G.Marshal())
+	copy(proofBytes[PointSize*20:PointSize*21], proof.H.Marshal())
+	copy(proofBytes[PointSize*21:PointSize*22], proof.Ht1.Marshal())
+	copy(proofBytes[PointSize*22:PointSize*23], proof.Ht2.Marshal())
+	copy(proofBytes[PointSize*23:PointSize*24], proof.TDivCRprime.Marshal())
+	copy(proofBytes[PointSize*24:PointSize*25], proof.CLprimeInv.Marshal())
+	copy(proofBytes[PointSize*25:PointSize*26], proof.T.Marshal())
+	copy(proofBytes[PointSize*26:PointSize*27], proof.Pk.Marshal())
+	copy(proofBytes[PointSize*27:PointSize*28], proof.Challenge.FillBytes(make([]byte, PointSize)))
+	copy(proofBytes[PointSize*28:PointSize*28+8], proof.BStar1.FillBytes(make([]byte, 8)))
+	copy(proofBytes[PointSize*28+8:PointSize*28+8*2], proof.BStar2.FillBytes(make([]byte, 8)))
+	copy(proofBytes[PointSize*28+8*2:PointSize*28+8*3], proof.Fee.FillBytes(make([]byte, 8)))
+	copy(proofBytes[PointSize*28+8*3:], proof.RangeProof.Bytes())
+	return proofBytes
+}
+
+func (proof *SwapProofPart) String() string {
+	return base64.StdEncoding.EncodeToString(proof.Bytes())
+}
+
+func ParseSwapProofPartBytes(proofBytes []byte) (proof *SwapProofPart, err error) {
+	if len(proofBytes) != SwapProofPartSize {
+		return nil, ErrInvalidSwapProofPartSize
+	}
+	proof = new(SwapProofPart)
+	proof.Pt1, err = curve.FromBytes(proofBytes[:PointSize])
+	if err != nil {
+		return nil, err
+	}
+	proof.Pt2, err = curve.FromBytes(proofBytes[PointSize : PointSize*2])
+	if err != nil {
+		return nil, err
+	}
+	proof.A_pk, err = curve.FromBytes(proofBytes[PointSize*2 : PointSize*3])
+	if err != nil {
+		return nil, err
+	}
+	proof.A_TDivCRprime, err = curve.FromBytes(proofBytes[PointSize*3 : PointSize*4])
+	if err != nil {
+		return nil, err
+	}
+	proof.A_Pt1, err = curve.FromBytes(proofBytes[PointSize*4 : PointSize*5])
+	if err != nil {
+		return nil, err
+	}
+	proof.A_Pt2, err = curve.FromBytes(proofBytes[PointSize*5 : PointSize*6])
+	if err != nil {
+		return nil, err
+	}
+	proof.Z_rbar = new(big.Int).SetBytes(proofBytes[PointSize*6 : PointSize*7])
+	proof.Z_sk = new(big.Int).SetBytes(proofBytes[PointSize*7 : PointSize*8])
+	proof.Z_skInv = new(big.Int).SetBytes(proofBytes[PointSize*8 : PointSize*9])
+	proof.RStar = new(big.Int).SetBytes(proofBytes[PointSize*9 : PointSize*10])
+	proof.C, err = twistedElgamal.FromBytes(proofBytes[PointSize*10 : PointSize*12])
+	if err != nil {
+		return nil, err
+	}
+	proof.CStar, err = twistedElgamal.FromBytes(proofBytes[PointSize*12 : PointSize*14])
+	if err != nil {
+		return nil, err
+	}
+	proof.ReceiverC, err = twistedElgamal.FromBytes(proofBytes[PointSize*14 : PointSize*16])
+	if err != nil {
+		return nil, err
+	}
+	proof.ReceiverCStar, err = twistedElgamal.FromBytes(proofBytes[PointSize*16 : PointSize*18])
+	if err != nil {
+		return nil, err
+	}
+	proof.ReceiverPk, err = curve.FromBytes(proofBytes[PointSize*18 : PointSize*19])
+	if err != nil {
+		return nil, err
+	}
+	proof.G, err = curve.FromBytes(proofBytes[PointSize*19 : PointSize*20])
+	if err != nil {
+		return nil, err
+	}
+	proof.H, err = curve.FromBytes(proofBytes[PointSize*20 : PointSize*21])
+	if err != nil {
+		return nil, err
+	}
+	proof.Ht1, err = curve.FromBytes(proofBytes[PointSize*21 : PointSize*22])
+	if err != nil {
+		return nil, err
+	}
+	proof.Ht2, err = curve.FromBytes(proofBytes[PointSize*22 : PointSize*23])
+	if err != nil {
+		return nil, err
+	}
+	proof.TDivCRprime, err = curve.FromBytes(proofBytes[PointSize*23 : PointSize*24])
+	if err != nil {
+		return nil, err
+	}
+	proof.CLprimeInv, err = curve.FromBytes(proofBytes[PointSize*24 : PointSize*25])
+	if err != nil {
+		return nil, err
+	}
+	proof.T, err = curve.FromBytes(proofBytes[PointSize*25 : PointSize*26])
+	if err != nil {
+		return nil, err
+	}
+	proof.Pk, err = curve.FromBytes(proofBytes[PointSize*26 : PointSize*27])
+	if err != nil {
+		return nil, err
+	}
+	proof.Challenge = new(big.Int).SetBytes(proofBytes[PointSize*27 : PointSize*28])
+	proof.BStar1 = new(big.Int).SetBytes(proofBytes[PointSize*28 : PointSize*28+8])
+	proof.BStar2 = new(big.Int).SetBytes(proofBytes[PointSize*28+8 : PointSize*28+8*2])
+	proof.Fee = new(big.Int).SetBytes(proofBytes[PointSize*28+8*2 : PointSize*28+8*3])
+	proof.RangeProof, err = commitRange.FromBytes(proofBytes[PointSize*28+8*3:])
+	if err != nil {
+		return nil, err
+	}
+	return proof, nil
+}
+
+func ParseSwapProofPartStr(proofStr string) (*SwapProofPart, error) {
+	proofBytes, err := base64.StdEncoding.DecodeString(proofStr)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSwapProofPartBytes(proofBytes)
 }
 
 type SwapProofRelationPart struct {
