@@ -17,7 +17,10 @@
 
 package commitRange
 
-import "math/big"
+import (
+	"encoding/base64"
+	"math/big"
+)
 
 type ComRangeProof struct {
 	// 0 or 2^i commitment proof
@@ -28,4 +31,89 @@ type ComRangeProof struct {
 	// commitment to each bit
 	As     [RangeMaxBits]*Point
 	C1, C2 *big.Int
+}
+
+const size = PointSize * 5
+
+func (proof *ComRangeProof) Bytes() []byte {
+	res := make([]byte, RangeProofSize)
+	for i := 0; i < RangeMaxBits; i++ {
+		Ca := proof.Cas[i].Bytes()
+		Cb := proof.Cbs[i].Bytes()
+		A := proof.As[i].Bytes()
+		copy(res[i*size:i*size+PointSize], Ca[:])
+		copy(res[i*size+PointSize:i*size+PointSize*2], Cb[:])
+		copy(res[i*size+PointSize*2:i*size+PointSize*3], proof.Zas[i].FillBytes(make([]byte, PointSize)))
+		copy(res[i*size+PointSize*3:i*size+PointSize*4], proof.Zbs[i].FillBytes(make([]byte, PointSize)))
+		copy(res[i*size+PointSize*4:i*size+PointSize*5], A[:])
+	}
+	T := proof.T.Bytes()
+	G := proof.G.Bytes()
+	H := proof.H.Bytes()
+	copy(res[size*RangeMaxBits:size*RangeMaxBits+PointSize], T[:])
+	copy(res[size*RangeMaxBits+PointSize*1:size*RangeMaxBits+PointSize*2], G[:])
+	copy(res[size*RangeMaxBits+PointSize*2:size*RangeMaxBits+PointSize*3], H[:])
+	copy(res[size*RangeMaxBits+PointSize*3:size*RangeMaxBits+PointSize*4], proof.C1.FillBytes(make([]byte, PointSize)))
+	copy(res[size*RangeMaxBits+PointSize*4:size*RangeMaxBits+PointSize*5], proof.C2.FillBytes(make([]byte, PointSize)))
+	return res
+}
+
+func (proof *ComRangeProof) String() string {
+	return base64.StdEncoding.EncodeToString(proof.Bytes())
+}
+
+func FromString(proofStr string) (*ComRangeProof, error) {
+	proofBytes, err := base64.StdEncoding.DecodeString(proofStr)
+	if err != nil {
+		return nil, err
+	}
+	return FromBytes(proofBytes)
+}
+
+func FromBytes(proofBytes []byte) (*ComRangeProof, error) {
+	if len(proofBytes) != RangeProofSize {
+		return nil, ErrInvalidProofSize
+	}
+	proof := new(ComRangeProof)
+	for i := 0; i < RangeMaxBits; i++ {
+		proof.Cas[i] = new(Point)
+		proof.Cbs[i] = new(Point)
+		proof.Zas[i] = new(big.Int)
+		proof.Zbs[i] = new(big.Int)
+		proof.As[i] = new(Point)
+		readSize, err := proof.Cas[i].SetBytes(proofBytes[i*size : i*size+PointSize])
+		if err != nil || readSize != PointSize {
+			return nil, ErrInvalidPointBytes
+		}
+		readSize, err = proof.Cbs[i].SetBytes(proofBytes[i*size+PointSize : i*size+PointSize*2])
+		if err != nil || readSize != PointSize {
+			return nil, ErrInvalidPointBytes
+		}
+		proof.Zas[i].SetBytes(proofBytes[i*size+PointSize*2 : i*size+PointSize*3])
+		proof.Zbs[i].SetBytes(proofBytes[i*size+PointSize*3 : i*size+PointSize*4])
+		readSize, err = proof.As[i].SetBytes(proofBytes[i*size+PointSize*4 : i*size+PointSize*5])
+		if err != nil || readSize != PointSize {
+			return nil, ErrInvalidPointBytes
+		}
+	}
+	proof.T = new(Point)
+	proof.G = new(Point)
+	proof.H = new(Point)
+	proof.C1 = new(big.Int)
+	proof.C2 = new(big.Int)
+	readSize, err := proof.T.SetBytes(proofBytes[size*RangeMaxBits : size*RangeMaxBits+PointSize])
+	if err != nil || readSize != PointSize {
+		return nil, ErrInvalidPointBytes
+	}
+	readSize, err = proof.G.SetBytes(proofBytes[size*RangeMaxBits+PointSize*1 : size*RangeMaxBits+PointSize*2])
+	if err != nil || readSize != PointSize {
+		return nil, ErrInvalidPointBytes
+	}
+	readSize, err = proof.H.SetBytes(proofBytes[size*RangeMaxBits+PointSize*2 : size*RangeMaxBits+PointSize*3])
+	if err != nil || readSize != PointSize {
+		return nil, ErrInvalidPointBytes
+	}
+	proof.C1.SetBytes(proofBytes[size*RangeMaxBits+PointSize*3 : size*RangeMaxBits+PointSize*4])
+	proof.C2.SetBytes(proofBytes[size*RangeMaxBits+PointSize*4 : size*RangeMaxBits+PointSize*5])
+	return proof, nil
 }
