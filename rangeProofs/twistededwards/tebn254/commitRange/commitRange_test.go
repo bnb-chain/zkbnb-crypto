@@ -47,7 +47,18 @@ func TestProveAndVerify(t *testing.T) {
 			t.Fatal(err)
 		}
 		fmt.Println(time.Since(elapse))
-		res, err := proof.Verify()
+		proofBytes := proof.Bytes()
+		proofCopy, err := FromBytes(proofBytes)
+		if err != nil {
+			t.Fatal(err)
+		}
+		proofStr := proof.String()
+		proofCheck, err := FromString(proofStr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		res, err := proofCopy.Verify()
+		res, err = proofCheck.Verify()
 		if err != nil {
 			t.Fatal(err)
 		}

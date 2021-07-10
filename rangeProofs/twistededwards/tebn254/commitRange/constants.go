@@ -23,7 +23,9 @@ import (
 )
 
 const (
-	RangeMaxBits = 32
+	RangeMaxBits   = 32
+	RangeProofSize = RangeMaxBits*5*PointSize + 5*PointSize
+	PointSize      = 32
 )
 
 var (

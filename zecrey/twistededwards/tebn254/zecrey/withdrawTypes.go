@@ -19,6 +19,7 @@ package zecrey
 
 import (
 	"bytes"
+	"encoding/base64"
 	"math/big"
 	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -44,6 +45,129 @@ type WithdrawProof struct {
 	C                                            *ElGamalEnc
 	G, H, Ht, Ha, TDivCRprime, CLprimeInv, T, Pk *Point
 	Challenge                                    *big.Int
+}
+
+func (proof *WithdrawProof) Bytes() []byte {
+	res := make([]byte, WithdrawProofSize)
+	copy(res[:PointSize], proof.Pt.Marshal())
+	copy(res[PointSize:PointSize*2], proof.Pa.Marshal())
+	copy(res[PointSize*2:PointSize*3], proof.A_pk.Marshal())
+	copy(res[PointSize*3:PointSize*4], proof.A_TDivCRprime.Marshal())
+	copy(res[PointSize*4:PointSize*5], proof.A_Pt.Marshal())
+	copy(res[PointSize*5:PointSize*6], proof.A_Pa.Marshal())
+	copy(res[PointSize*6:PointSize*7], proof.Z_rbar.FillBytes(make([]byte, PointSize)))
+	copy(res[PointSize*7:PointSize*8], proof.Z_sk.FillBytes(make([]byte, PointSize)))
+	copy(res[PointSize*8:PointSize*9], proof.Z_skInv.FillBytes(make([]byte, PointSize)))
+	copy(res[PointSize*9:PointSize*10], proof.CRStar.Marshal())
+	C := proof.C.Bytes()
+	copy(res[PointSize*10:PointSize*12], C[:])
+	copy(res[PointSize*12:PointSize*13], proof.G.Marshal())
+	copy(res[PointSize*13:PointSize*14], proof.H.Marshal())
+	copy(res[PointSize*14:PointSize*15], proof.Ht.Marshal())
+	copy(res[PointSize*15:PointSize*16], proof.Ha.Marshal())
+	copy(res[PointSize*16:PointSize*17], proof.TDivCRprime.Marshal())
+	copy(res[PointSize*17:PointSize*18], proof.CLprimeInv.Marshal())
+	copy(res[PointSize*18:PointSize*19], proof.T.Marshal())
+	copy(res[PointSize*19:PointSize*20], proof.Pk.Marshal())
+	copy(res[PointSize*20:PointSize*21], proof.Challenge.FillBytes(make([]byte, PointSize)))
+	copy(res[PointSize*21:PointSize*21+8], proof.BStar.FillBytes(make([]byte, 8)))
+	copy(res[PointSize*21+8:PointSize*21+16], proof.Fee.FillBytes(make([]byte, 8)))
+	copy(res[PointSize*21+16:], proof.CRangeProof.Bytes())
+	return res
+}
+
+func (proof *WithdrawProof) String() string {
+	return base64.StdEncoding.EncodeToString(proof.Bytes())
+}
+
+func ParseWithdrawProofBytes(proofBytes []byte) (proof *WithdrawProof, err error) {
+	if len(proofBytes) != WithdrawProofSize {
+		return nil, ErrInvalidWithdrawProofSize
+	}
+	proof = new(WithdrawProof)
+	proof.Pt, err = curve.FromBytes(proofBytes[:PointSize])
+	if err != nil {
+		return nil, err
+	}
+	proof.Pa, err = curve.FromBytes(proofBytes[PointSize : PointSize*2])
+	if err != nil {
+		return nil, err
+	}
+	proof.A_pk, err = curve.FromBytes(proofBytes[PointSize*2 : PointSize*3])
+	if err != nil {
+		return nil, err
+	}
+	proof.A_TDivCRprime, err = curve.FromBytes(proofBytes[PointSize*3 : PointSize*4])
+	if err != nil {
+		return nil, err
+	}
+	proof.A_Pt, err = curve.FromBytes(proofBytes[PointSize*4 : PointSize*5])
+	if err != nil {
+		return nil, err
+	}
+	proof.A_Pa, err = curve.FromBytes(proofBytes[PointSize*5 : PointSize*6])
+	if err != nil {
+		return nil, err
+	}
+	proof.Z_rbar = new(big.Int).SetBytes(proofBytes[PointSize*6 : PointSize*7])
+	proof.Z_sk = new(big.Int).SetBytes(proofBytes[PointSize*7 : PointSize*8])
+	proof.Z_skInv = new(big.Int).SetBytes(proofBytes[PointSize*8 : PointSize*9])
+	proof.CRStar, err = curve.FromBytes(proofBytes[PointSize*9 : PointSize*10])
+	if err != nil {
+		return nil, err
+	}
+	proof.C, err = twistedElgamal.FromBytes(proofBytes[PointSize*10 : PointSize*12])
+	if err != nil {
+		return nil, err
+	}
+	proof.G, err = curve.FromBytes(proofBytes[PointSize*12 : PointSize*13])
+	if err != nil {
+		return nil, err
+	}
+	proof.H, err = curve.FromBytes(proofBytes[PointSize*13 : PointSize*14])
+	if err != nil {
+		return nil, err
+	}
+	proof.Ht, err = curve.FromBytes(proofBytes[PointSize*14 : PointSize*15])
+	if err != nil {
+		return nil, err
+	}
+	proof.Ha, err = curve.FromBytes(proofBytes[PointSize*15 : PointSize*16])
+	if err != nil {
+		return nil, err
+	}
+	proof.TDivCRprime, err = curve.FromBytes(proofBytes[PointSize*16 : PointSize*17])
+	if err != nil {
+		return nil, err
+	}
+	proof.CLprimeInv, err = curve.FromBytes(proofBytes[PointSize*17 : PointSize*18])
+	if err != nil {
+		return nil, err
+	}
+	proof.T, err = curve.FromBytes(proofBytes[PointSize*18 : PointSize*19])
+	if err != nil {
+		return nil, err
+	}
+	proof.Pk, err = curve.FromBytes(proofBytes[PointSize*19 : PointSize*20])
+	if err != nil {
+		return nil, err
+	}
+	proof.Challenge = new(big.Int).SetBytes(proofBytes[PointSize*20 : PointSize*21])
+	proof.BStar = new(big.Int).SetBytes(proofBytes[PointSize*21 : PointSize*21+8])
+	proof.Fee = new(big.Int).SetBytes(proofBytes[PointSize*21+8 : PointSize*21+16])
+	proof.CRangeProof, err = commitRange.FromBytes(proofBytes[PointSize*21+16:])
+	if err != nil {
+		return nil, err
+	}
+	return proof, nil
+}
+
+func ParseWithdrawProofStr(withdrawProofStr string) (*WithdrawProof, error) {
+	proofBytes, err := base64.StdEncoding.DecodeString(withdrawProofStr)
+	if err != nil {
+		return nil, err
+	}
+	return ParseWithdrawProofBytes(proofBytes)
 }
 
 func FakeWithdrawProof() *WithdrawProof {

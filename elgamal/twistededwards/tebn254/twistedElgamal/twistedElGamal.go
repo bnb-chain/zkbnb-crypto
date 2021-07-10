@@ -18,7 +18,7 @@
 package twistedElgamal
 
 import (
-	"encoding/hex"
+	"encoding/base64"
 	"math/big"
 	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -50,7 +50,7 @@ func FakeElGamalEnc() *ElGamalEnc {
 
 const EncSize = 64
 
-func (enc *ElGamalEnc) Serialize() [EncSize]byte {
+func (enc *ElGamalEnc) Bytes() [EncSize]byte {
 	var res [EncSize]byte
 	copy(res[:curve.PointSize], enc.CL.Marshal())
 	copy(res[curve.PointSize:], enc.CR.Marshal())
@@ -60,11 +60,35 @@ func (enc *ElGamalEnc) Serialize() [EncSize]byte {
 func (enc *ElGamalEnc) String() string {
 	buf := enc.CL.Marshal()
 	buf = append(buf, enc.CR.Marshal()...)
-	return hex.EncodeToString(buf)
+	return base64.StdEncoding.EncodeToString(buf)
+}
+
+func FromBytes(encBytes []byte) (*ElGamalEnc, error) {
+	if len(encBytes) != curve.PointSize*2 {
+		return nil, ErrInvalidEncValue
+	}
+	enc := new(ElGamalEnc)
+	enc.CL = new(Point)
+	enc.CR = new(Point)
+	readSize, err := enc.CL.SetBytes(encBytes[:curve.PointSize])
+	if err != nil {
+		return nil, err
+	}
+	if readSize != curve.PointSize {
+		return nil, ErrInvalidPointSize
+	}
+	readSize, err = enc.CR.SetBytes(encBytes[curve.PointSize:])
+	if err != nil {
+		return nil, err
+	}
+	if readSize != curve.PointSize {
+		return nil, ErrInvalidPointSize
+	}
+	return enc, nil
 }
 
 func FromString(encStr string) (enc *ElGamalEnc, err error) {
-	encBytes, err := hex.DecodeString(encStr)
+	encBytes, err := base64.StdEncoding.DecodeString(encStr)
 	if err != nil {
 		return nil, err
 	}

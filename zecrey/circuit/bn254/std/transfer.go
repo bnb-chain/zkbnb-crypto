@@ -277,7 +277,7 @@ func verifyOwnership(
 	SetPTransferProofWitness set witness for the privacy transfer proof
 */
 func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (witness PTransferProofConstraints, err error) {
-	if proof == nil || len(proof.Pts) != 1 || len(proof.Z_tsks) != 1 || len(proof.A_Pts) != 1 {
+	if proof == nil {
 		return witness, ErrInvalidSetParams
 	}
 	// proof must be correct
@@ -294,12 +294,12 @@ func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 		return witness, err
 	}
 	// A_Pt
-	witness.A_Pt, err = SetPointWitness(proof.A_Pts[0])
+	witness.A_Pt, err = SetPointWitness(proof.A_Pt)
 	if err != nil {
 		return witness, err
 	}
 	// z_tsk
-	witness.Z_tsk.Assign(proof.Z_tsks[0])
+	witness.Z_tsk.Assign(proof.Z_tsk)
 	// generator Waste
 	witness.H, err = SetPointWitness(proof.H)
 	if err != nil {
@@ -311,7 +311,7 @@ func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 		return witness, err
 	}
 	// Pt = Ht^{sk}
-	witness.Pt, err = SetPointWitness(proof.Pts[0])
+	witness.Pt, err = SetPointWitness(proof.Pt)
 	if err != nil {
 		return witness, err
 	}
