@@ -33,7 +33,7 @@ import (
 var ownershipChan = make(chan int, 1)
 
 func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, err error) {
-	if relation == nil || relation.Statements == nil {
+	if relation == nil || relation.Statements == nil || len(relation.Statements) != TransferSubProofCount {
 		return nil, ErrInvalidParams
 	}
 	// Verify \sum b_i^{\Delta} + fee = 0
@@ -54,8 +54,8 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 	)
 	// initialize proof
 	proof = new(PTransferProof)
-	// add Pts,G,Waste from relation
-	proof.Pts = relation.Pts
+	// add Pt,G,Waste from relation
+	proof.Pt = relation.Pt
 	proof.G = relation.G
 	proof.H = relation.H
 	proof.Ht = relation.Ht
@@ -116,7 +116,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 		}
 		// generate sub proofs
 		commitValues := commitEntities[i]
-		proof.SubProofs = append(proof.SubProofs, &PTransferSubProof{
+		proof.SubProofs[i] = &PTransferSubProof{
 			A_CLDelta:     commitValues.A_CLDelta,
 			A_CRDelta:     commitValues.A_CRDelta,
 			A_YDivCRDelta: commitValues.A_YDivCRDelta,
@@ -134,7 +134,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			TCRprimeInv: statement.TCRprimeInv,
 			// (C_L + C_L^{\Delta})^{-1}
 			CLprimeInv: statement.CLprimeInv,
-		})
+		}
 		// complete range proof statements
 		secrets = append(secrets, statement.BStar)
 		gammas = append(gammas, statement.RStar)
@@ -217,8 +217,8 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			proof.SubProofs[i].Z_skInv = z_skInv
 			// commit to Pt = Ht^{sk}
 			A_Pt, z_tsk := provePt(nil, statement.Sk, relation.Ht, c)
-			proof.A_Pts = append(proof.A_Pts, A_Pt)
-			proof.Z_tsks = append(proof.Z_tsks, z_tsk)
+			proof.A_Pt = A_Pt
+			proof.Z_tsk = z_tsk
 		}
 		// compute the range proof
 		rangeProof, err := commitRange.Prove(statement.BStar, statement.RStar, statement.Y, statement.Rs, H, G)
@@ -273,15 +273,10 @@ func (proof *PTransferProof) Verify() (bool, error) {
 		return false, ErrInvalidChallenge
 	}
 	// Verify Pt proof
-	if len(proof.Pts) != len(proof.A_Pts) || len(proof.Pts) != len(proof.Z_tsks) {
-		return false, ErrInvalidParams
-	}
-	for i := 0; i < len(proof.Pts); i++ {
-		l := curve.ScalarMul(proof.Ht, proof.Z_tsks[i])
-		r := curve.Add(proof.A_Pts[i], curve.ScalarMul(proof.Pts[i], c))
-		if !l.Equal(r) {
-			return false, nil
-		}
+	l := curve.ScalarMul(proof.Ht, proof.Z_tsk)
+	r := curve.Add(proof.A_Pt, curve.ScalarMul(proof.Pt, c))
+	if !l.Equal(r) {
+		return false, nil
 	}
 	g := proof.G
 	h := proof.H

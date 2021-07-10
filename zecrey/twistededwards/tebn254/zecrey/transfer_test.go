@@ -81,6 +81,26 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	proofBytes = proof.Bytes()
+	proof, err = ParseTransferProofBytes(proofBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err = proof.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("bytes res:", res)
+	proofStr := proof.String()
+	proof, err = ParseTransferProofStr(proofStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err = proof.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("str res:", res)
 	fmt.Println("Verify time:", time.Since(elapse))
 	assert.Equal(t, res, true, "privacy proof works correctly")
 }

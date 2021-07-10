@@ -33,10 +33,14 @@ type (
 )
 
 const (
-	RangeMaxBits      = commitRange.RangeMaxBits // max bits
-	PointSize         = curve.PointSize
-	RangeProofSize    = commitRange.RangeProofSize
-	WithdrawProofSize = 21*PointSize + RangeProofSize + 2*8
+	RangeMaxBits          = commitRange.RangeMaxBits // max bits
+	PointSize             = curve.PointSize
+	RangeProofSize        = commitRange.RangeProofSize
+	WithdrawProofSize     = 21*PointSize + RangeProofSize + 2*8
+	TransferSubProofCount = 3
+	TransferSubProofSize  = 24*PointSize + RangeProofSize
+	TransferProofSize     = 3*TransferSubProofSize + 9*PointSize + 8
+	SwapProofSize         = 27*PointSize + RangeProofSize
 )
 
 var (
