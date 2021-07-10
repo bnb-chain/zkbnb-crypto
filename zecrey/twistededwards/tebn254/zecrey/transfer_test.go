@@ -44,6 +44,13 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	fmt.Println("sk1:", sk1.String())
+	fmt.Println("pk1:", curve.ToString(pk1))
+	fmt.Println("pk2:", curve.ToString(pk2))
+	fmt.Println("pk3:", curve.ToString(pk3))
+	fmt.Println("b1Enc:", b1Enc.String())
+	fmt.Println("b2Enc:", b2Enc.String())
+	fmt.Println("b3Enc:", b3Enc.String())
 	elapse := time.Now()
 	fee := big.NewInt(1)
 	relation, err := NewPTransferProofRelation(1, fee)
