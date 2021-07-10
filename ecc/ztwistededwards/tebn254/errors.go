@@ -20,5 +20,6 @@ package tebn254
 import "errors"
 
 var (
-	ErrMapToGroup = errors.New("Failed to Hash-to-point.")
+	ErrMapToGroup       = errors.New("Failed to Hash-to-point.")
+	ErrInvalidPointSize = errors.New("err: invalid point size")
 )

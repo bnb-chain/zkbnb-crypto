@@ -58,31 +58,22 @@ func (enc *ElGamalEnc) Bytes() [EncSize]byte {
 }
 
 func (enc *ElGamalEnc) String() string {
-	buf := enc.CL.Marshal()
-	buf = append(buf, enc.CR.Marshal()...)
-	return base64.StdEncoding.EncodeToString(buf)
+	buf := enc.Bytes()
+	return base64.StdEncoding.EncodeToString(buf[:])
 }
 
-func FromBytes(encBytes []byte) (*ElGamalEnc, error) {
+func FromBytes(encBytes []byte) (enc *ElGamalEnc, err error) {
 	if len(encBytes) != curve.PointSize*2 {
 		return nil, ErrInvalidEncValue
 	}
-	enc := new(ElGamalEnc)
-	enc.CL = new(Point)
-	enc.CR = new(Point)
-	readSize, err := enc.CL.SetBytes(encBytes[:curve.PointSize])
+	enc = new(ElGamalEnc)
+	enc.CL, err = curve.FromBytes(encBytes[:curve.PointSize])
 	if err != nil {
 		return nil, err
 	}
-	if readSize != curve.PointSize {
-		return nil, ErrInvalidPointSize
-	}
-	readSize, err = enc.CR.SetBytes(encBytes[curve.PointSize:])
+	enc.CR, err = curve.FromBytes(encBytes[curve.PointSize:])
 	if err != nil {
 		return nil, err
-	}
-	if readSize != curve.PointSize {
-		return nil, ErrInvalidPointSize
 	}
 	return enc, nil
 }
