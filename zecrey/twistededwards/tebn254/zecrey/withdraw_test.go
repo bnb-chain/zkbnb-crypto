@@ -60,6 +60,24 @@ func TestProveWithdraw(t *testing.T) {
 	}
 	res, err := proof.Verify()
 	if err != nil {
+		t.Fatal(err)
+	}
+	proofBytes = proof.Bytes()
+	proof, err = ParseWithdrawProofBytes(proofBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err = proof.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	proofStr := proof.String()
+	proof, err = ParseWithdrawProofStr(proofStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err = proof.Verify()
+	if err != nil {
 		t.Error(err)
 	}
 	assert.Equal(t, res, true, "withdraw proof works correctly")

@@ -38,21 +38,15 @@ const size = PointSize * 5
 func (proof *ComRangeProof) Bytes() []byte {
 	res := make([]byte, RangeProofSize)
 	for i := 0; i < RangeMaxBits; i++ {
-		Ca := proof.Cas[i].Bytes()
-		Cb := proof.Cbs[i].Bytes()
-		A := proof.As[i].Bytes()
-		copy(res[i*size:i*size+PointSize], Ca[:])
-		copy(res[i*size+PointSize:i*size+PointSize*2], Cb[:])
+		copy(res[i*size:i*size+PointSize], proof.Cas[i].Marshal())
+		copy(res[i*size+PointSize:i*size+PointSize*2], proof.Cbs[i].Marshal())
 		copy(res[i*size+PointSize*2:i*size+PointSize*3], proof.Zas[i].FillBytes(make([]byte, PointSize)))
 		copy(res[i*size+PointSize*3:i*size+PointSize*4], proof.Zbs[i].FillBytes(make([]byte, PointSize)))
-		copy(res[i*size+PointSize*4:i*size+PointSize*5], A[:])
+		copy(res[i*size+PointSize*4:i*size+PointSize*5], proof.As[i].Marshal())
 	}
-	T := proof.T.Bytes()
-	G := proof.G.Bytes()
-	H := proof.H.Bytes()
-	copy(res[size*RangeMaxBits:size*RangeMaxBits+PointSize], T[:])
-	copy(res[size*RangeMaxBits+PointSize*1:size*RangeMaxBits+PointSize*2], G[:])
-	copy(res[size*RangeMaxBits+PointSize*2:size*RangeMaxBits+PointSize*3], H[:])
+	copy(res[size*RangeMaxBits:size*RangeMaxBits+PointSize], proof.T.Marshal())
+	copy(res[size*RangeMaxBits+PointSize*1:size*RangeMaxBits+PointSize*2], proof.G.Marshal())
+	copy(res[size*RangeMaxBits+PointSize*2:size*RangeMaxBits+PointSize*3], proof.H.Marshal())
 	copy(res[size*RangeMaxBits+PointSize*3:size*RangeMaxBits+PointSize*4], proof.C1.FillBytes(make([]byte, PointSize)))
 	copy(res[size*RangeMaxBits+PointSize*4:size*RangeMaxBits+PointSize*5], proof.C2.FillBytes(make([]byte, PointSize)))
 	return res
