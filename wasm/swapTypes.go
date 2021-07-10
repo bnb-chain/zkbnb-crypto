@@ -22,7 +22,6 @@ import (
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 /*
@@ -111,7 +110,7 @@ type SwapTransactionAo struct {
 	BStarFrom *big.Int
 	BStarTo   *big.Int
 	// withdraw proof
-	Proof *zecrey.SwapProofPart
+	Proof string
 	// create time
 	CreateAt int64
 }

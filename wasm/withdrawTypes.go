@@ -22,7 +22,6 @@ import (
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 /*
@@ -93,7 +92,7 @@ type WithdrawTransactionAo struct {
 	// withdraw fee
 	Fee uint32
 	// withdraw proof
-	Proof *zecrey.WithdrawProof
+	Proof string
 	// create time
 	CreateAt int64
 }
