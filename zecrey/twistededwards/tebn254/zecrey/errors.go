@@ -39,4 +39,6 @@ var (
 	ErrInvalidTransferProofSize    = errors.New("err: invalid transfer proof size")
 	ErrInvalidSwapProofPartSize    = errors.New("err: invalid swap proof part size")
 	ErrInvalidSwapProofSize        = errors.New("err: invalid swap proof size")
+	ErrUnableSimOwnership          = errors.New("err: unable to sim ownership")
+	ErrUnableRangeProof            = errors.New("err: error when go routine for range proofs")
 )

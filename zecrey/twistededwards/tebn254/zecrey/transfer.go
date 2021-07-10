@@ -31,6 +31,8 @@ import (
 )
 
 var ownershipChan = make(chan int, 1)
+var simChan = make(chan int, TransferSubProofCount-1)
+var rangeChan = make(chan int, TransferSubProofSize)
 
 func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, err error) {
 	if relation == nil || relation.Statements == nil || len(relation.Statements) != TransferSubProofCount {
@@ -169,23 +171,14 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 				ffmath.SubMod(statement.RStar, statement.R, Order),
 				commitValues.alpha_rstarSubr, c1,
 			)
-			A_YDivT, A_T, A_pk, A_TDivCPrime,
-			z_rstarSubrbar, z_rbar, z_bprime, z_sk, z_skInv := simOwnership(
+			go simOwnershipRoutine(
 				G, H, statement.Y, statement.T, statement.Pk,
 				statement.TCRprimeInv, statement.CLprimeInv,
 				c2,
+				proof, i,
 			)
 			// complete sub proofs
 			proof.SubProofs[i].Z_rstarSubr = z_rstarSubr
-			proof.SubProofs[i].A_YDivT = A_YDivT
-			proof.SubProofs[i].A_T = A_T
-			proof.SubProofs[i].A_pk = A_pk
-			proof.SubProofs[i].A_TDivCPrime = A_TDivCPrime
-			proof.SubProofs[i].Z_rstarSubrbar = z_rstarSubrbar
-			proof.SubProofs[i].Z_rbar = z_rbar
-			proof.SubProofs[i].Z_bprime = z_bprime
-			proof.SubProofs[i].Z_sk = z_sk
-			proof.SubProofs[i].Z_skInv = z_skInv
 		} else { // otherwise, run simValidDelta
 			j := <-ownershipChan
 			if j != i {
@@ -221,12 +214,7 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 			proof.Z_tsk = z_tsk
 		}
 		// compute the range proof
-		rangeProof, err := commitRange.Prove(statement.BStar, statement.RStar, statement.Y, statement.Rs, H, G)
-		if err != nil {
-			return nil, err
-		}
-		// set the range proof into sub proofs
-		proof.SubProofs[i].CRangeProof = rangeProof
+		go ProveRangeRoutine(statement.BStar, statement.RStar, statement.Y, statement.Rs, H, G, proof, i)
 		// complete sub proofs
 		proof.SubProofs[i].Z_r = z_r
 		proof.SubProofs[i].Z_bDelta = z_bDelta
@@ -237,8 +225,29 @@ func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, er
 	if slen != glen || slen != Vlen {
 		return nil, ErrInvalidBPParams
 	}
+	for i := 0; i < TransferSubProofCount-1; i++ {
+		index := <-simChan
+		if index == -1 {
+			return nil, ErrUnableSimOwnership
+		}
+	}
+	for i := 0; i < TransferSubProofCount; i++ {
+		index := <-rangeChan
+		if index == -1 {
+			return nil, ErrUnableRangeProof
+		}
+	}
 	// response phase
 	return proof, nil
+}
+
+func ProveRangeRoutine(b *big.Int, r *big.Int, T *Point, rs [RangeMaxBits]*big.Int, g, h *Point, proof *PTransferProof, i int) {
+	rangeProof, err := commitRange.Prove(b, r, T, rs, g, h)
+	if err != nil {
+		rangeChan <- -1
+	}
+	proof.SubProofs[i].CRangeProof = rangeProof
+	rangeChan <- i
 }
 
 func (proof *PTransferProof) Verify() (bool, error) {
@@ -503,6 +512,37 @@ func simOwnership(
 		curve.ScalarMul(curve.Neg(TCRprimeInv), cSim),
 	)
 	return
+}
+
+func simOwnershipRoutine(
+	g, h, Y, T, pk, TCRprimeInv, CLprimeInv *Point,
+	cSim *big.Int,
+	proof *PTransferProof, i int,
+) {
+	proof.SubProofs[i].Z_rstarSubrbar, proof.SubProofs[i].Z_rbar, proof.SubProofs[i].Z_bprime, proof.SubProofs[i].Z_sk, proof.SubProofs[i].Z_skInv =
+		curve.RandomValue(), curve.RandomValue(), curve.RandomValue(), curve.RandomValue(), curve.RandomValue()
+	// A_{Y/T} = g^{z_{r^{\star} - \bar{r}}} (Y T^{-1})^{-c}
+	proof.SubProofs[i].A_YDivT = curve.Add(
+		curve.ScalarMul(g, proof.SubProofs[i].Z_rstarSubrbar),
+		curve.ScalarMul(curve.Neg(curve.Add(Y, curve.Neg(T))), cSim),
+	)
+	// A_T = g^{z_{\bar{r}}} h^{z_{b'}} (T)^{-c}
+	proof.SubProofs[i].A_T = curve.Add(
+		curve.Add(curve.ScalarMul(g, proof.SubProofs[i].Z_rbar), curve.ScalarMul(h, proof.SubProofs[i].Z_bprime)),
+		curve.ScalarMul(curve.Neg(T), cSim),
+	)
+	// A_{pk} = g^{z_{sk}} pk^{-c}
+	proof.SubProofs[i].A_pk = curve.Add(
+		curve.ScalarMul(g, proof.SubProofs[i].Z_sk),
+		curve.ScalarMul(curve.Neg(pk), cSim),
+	)
+	// A_{T(C_R + C_R^{\Delta})^{-1}} =
+	// g^{z_{\bar{r}}} [(C_L + C_L^{\Delta})^{-1}]^{z_{skInv}} [T(C_R + C_R^{\Delta})^{-1}]^{-c}
+	proof.SubProofs[i].A_TDivCPrime = curve.Add(
+		curve.Add(curve.ScalarMul(g, proof.SubProofs[i].Z_rbar), curve.ScalarMul(CLprimeInv, proof.SubProofs[i].Z_skInv)),
+		curve.ScalarMul(curve.Neg(TCRprimeInv), cSim),
+	)
+	simChan <- i
 }
 
 func TryOnceTransfer() PTransferProof {
