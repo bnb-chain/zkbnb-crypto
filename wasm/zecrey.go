@@ -75,7 +75,7 @@ func ProveWithdraw() js.Func {
 			L1Address:    l1addr,
 			Amount:       uint32(segment.BStar.Uint64()),
 			Fee:          fee,
-			Proof:        withdrawProof,
+			Proof:        withdrawProof.String(),
 			CreateAt:     time.Now().Unix(),
 		}
 		txBytes, err := json.Marshal(withdrawTx)
@@ -147,7 +147,7 @@ func ProveTransfer() js.Func {
 			// fee
 			Fee: fee,
 			// transfer proof
-			Proof: transferProof,
+			Proof: transferProof.String(),
 			// create time
 			CreateAt: time.Now().Unix(),
 		}
@@ -219,7 +219,7 @@ func ProveSwap() js.Func {
 			Fee:          fee,
 			BStarFrom:    segment.BStarFrom,
 			BStarTo:      segment.BStarTo,
-			Proof:        swapProofPart1,
+			Proof:        swapProofPart1.String(),
 			CreateAt:     time.Now().Unix(),
 		}
 		txBytes, err := json.Marshal(swapTx)
