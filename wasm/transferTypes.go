@@ -107,7 +107,7 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 
 type TransferTransactionAo struct {
 	// token id
-	TokenId uint32
+	AssetId uint32
 	// account indexes
 	AccountsIndex []int
 	// fee

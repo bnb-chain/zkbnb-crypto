@@ -70,7 +70,7 @@ func ProveWithdraw() js.Func {
 			return ErrProveWithdraw
 		}
 		withdrawTx := &WithdrawTransactionAo{
-			TokenId:      tId,
+			AssetId:      tId,
 			AccountIndex: uint32(accountIndex),
 			L1Address:    l1addr,
 			Amount:       uint32(segment.BStar.Uint64()),
@@ -141,7 +141,7 @@ func ProveTransfer() js.Func {
 		}
 		tx := &TransferTransactionAo{
 			// token id
-			TokenId: tId,
+			AssetId: tId,
 			// account indexes
 			AccountsIndex: accountsIndex,
 			// fee
@@ -213,8 +213,8 @@ func ProveSwap() js.Func {
 			return ErrProveWithdraw
 		}
 		swapTx := &SwapTransactionAo{
-			TokenIdFrom:  tIdFrom,
-			TokenIdTo:    tIdTo,
+			AssetIdFrom:  tIdFrom,
+			AssetIdTo:    tIdTo,
 			AccountIndex: uint32(accountIndex),
 			Fee:          fee,
 			BStarFrom:    segment.BStarFrom,

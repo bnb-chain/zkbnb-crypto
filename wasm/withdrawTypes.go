@@ -82,7 +82,7 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, string) {
 
 type WithdrawTransactionAo struct {
 	// token id
-	TokenId uint32
+	AssetId uint32
 	// zecrey index
 	AccountIndex uint32
 	// L1 address

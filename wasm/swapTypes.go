@@ -100,8 +100,8 @@ func FromSwapSegmentJSON(segmentStr string) (*SwapSegment, string) {
 
 type SwapTransactionAo struct {
 	// token id
-	TokenIdFrom uint32
-	TokenIdTo   uint32
+	AssetIdFrom uint32
+	AssetIdTo   uint32
 	// account index
 	AccountIndex uint32
 	// fee
