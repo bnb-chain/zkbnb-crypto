@@ -99,6 +99,7 @@ func TestCorrectInfoProve(t *testing.T) {
 	}
 	fmt.Println("bytes res:", res)
 	proofStr := proof.String()
+	fmt.Println(len(proofStr))
 	proof, err = ParseTransferProofStr(proofStr)
 	if err != nil {
 		t.Fatal(err)

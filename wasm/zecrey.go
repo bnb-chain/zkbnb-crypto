@@ -40,7 +40,7 @@ func ProveWithdraw() js.Func {
 		}
 		// read tokenId
 		tokenId := args[0].Int()
-		if tokenId <= 0 {
+		if tokenId < 0 {
 			return ErrInvalidWithdrawParams
 		}
 		// transfer tokenId to uint32
@@ -100,7 +100,7 @@ func ProveTransfer() js.Func {
 		}
 		// read token id
 		tokenId := args[0].Int()
-		if tokenId <= 0 {
+		if tokenId < 0 {
 			return ErrInvalidTransferParams
 		}
 		tId := uint32(tokenId)
@@ -175,14 +175,14 @@ func ProveSwap() js.Func {
 		}
 		// read fromTokenId
 		fromTokenId := args[0].Int()
-		if fromTokenId <= 0 {
+		if fromTokenId < 0 {
 			return ErrInvalidSwapParams
 		}
 		// transfer fromTokenId to uint32
 		tIdFrom := uint32(fromTokenId)
 		// read toTokenId
 		toTokenId := args[1].Int()
-		if toTokenId <= 0 {
+		if toTokenId < 0 {
 			return ErrInvalidSwapParams
 		}
 		// transfer fromTokenId to uint32

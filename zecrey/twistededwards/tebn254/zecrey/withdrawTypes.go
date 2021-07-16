@@ -222,7 +222,7 @@ type WithdrawProofRelation struct {
 }
 
 func NewWithdrawRelation(C *ElGamalEnc, pk *Point, b *big.Int, bStar *big.Int, sk *big.Int, tokenId uint32, receiveAddr string, fee *big.Int) (*WithdrawProofRelation, error) {
-	if C == nil || pk == nil || bStar == nil || sk == nil || tokenId == 0 {
+	if C == nil || pk == nil || bStar == nil || sk == nil  {
 		return nil, ErrInvalidParams
 	}
 	oriPk := curve.ScalarBaseMul(sk)

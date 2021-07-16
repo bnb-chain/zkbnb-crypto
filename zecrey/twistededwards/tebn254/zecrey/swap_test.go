@@ -69,6 +69,7 @@ func TestProveSwap(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("bytes res:", res)
+	fmt.Println("proof:", proof.String())
 	part1Res, err := swapProofPart1.Verify()
 	if err != nil {
 		t.Error(err)
@@ -86,6 +87,9 @@ func TestProveSwap(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	fmt.Println("sk2:", sk2.String())
+	fmt.Println("bEnc3:", bEnc3.String())
+	fmt.Println("bEnc4:", bEnc4.String())
 	relationPart2, err := NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, b3, sk2, fromTokenId, toTokenId, swapProofPart1)
 	if err != nil {
 		t.Error(err)

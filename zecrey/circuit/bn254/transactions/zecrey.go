@@ -47,8 +47,9 @@ type Transaction struct {
 
 type BlockConstraints struct {
 	// public inputs
-	OldRoot Variable `gnark:",public"`
-	NewRoot Variable `gnark:",public"`
+	OldRoot         Variable `gnark:",public"`
+	NewRoot         Variable `gnark:",public"`
+	BlockCommitment Variable `gnark:",public"`
 	// tx types
 	TxsType [NbTxs]Variable
 	// transactions
