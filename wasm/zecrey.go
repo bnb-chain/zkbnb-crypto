@@ -18,6 +18,7 @@
 package wasm
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"math/big"
 	"syscall/js"
@@ -82,7 +83,7 @@ func ProveWithdraw() js.Func {
 		if err != nil {
 			return ErrMarshalTx
 		}
-		return string(txBytes)
+		return base64.StdEncoding.EncodeToString(txBytes)
 	})
 	return proveWithdrawFunc
 }
@@ -155,7 +156,7 @@ func ProveTransfer() js.Func {
 		if err != nil {
 			return ErrMarshalTx
 		}
-		return string(txBytes)
+		return base64.StdEncoding.EncodeToString(txBytes)
 	})
 	return proveTransferFunc
 }
@@ -226,7 +227,7 @@ func ProveSwap() js.Func {
 		if err != nil {
 			return ErrMarshalTx
 		}
-		return string(txBytes)
+		return base64.StdEncoding.EncodeToString(txBytes)
 	})
 	return proveSwapFunc
 }
