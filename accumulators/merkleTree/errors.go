@@ -15,21 +15,12 @@
  *
  */
 
-package transactions
+package merkleTree
 
-func setFixedMerkleProofs(proof [][]byte) [AccountMerkleLevels][]byte {
-	var res [AccountMerkleLevels][]byte
-	for i := 0; i < AccountMerkleLevels; i++ {
-		res[i] = make([]byte, len(proof[i]))
-		copy(res[i], proof[i])
-	}
-	return res
-}
+import "errors"
 
-func setFixedMerkleProofsHelper(proof []int) [AccountMerkleLevels - 1]int {
-	var res [AccountMerkleLevels - 1]int
-	for i := 0; i < AccountMerkleLevels-1; i++ {
-		res[i] = proof[i]
-	}
-	return res
-}
+var (
+	ErrInvalidLeavesSize = errors.New("err: invalid leaves size, should be power of 2")
+	ErrInvalidIndex      = errors.New("err: invalid index")
+	ErrInvalidMerkleTree = errors.New("err: invalid merkle tree")
+)

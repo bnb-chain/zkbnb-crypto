@@ -17,15 +17,6 @@
 
 package std
 
-// leafSum returns the hash created from data inserted to form a leaf.
-// Without domain separation.
-func leafSum(cs *ConstraintSystem, h MiMC, data Variable) Variable {
-
-	res := h.Hash(cs, data)
-
-	return res
-}
-
 // nodeSum returns the hash created from data inserted to form a leaf.
 // Without domain separation.
 func nodeSum(cs *ConstraintSystem, h MiMC, a, b Variable) Variable {
@@ -43,16 +34,16 @@ func nodeSum(cs *ConstraintSystem, h MiMC, a, b Variable) Variable {
 */
 func VerifyMerkleProof(cs *ConstraintSystem, isEnabled Variable, h MiMC, merkleRoot Variable, proofSet, helper []Variable) {
 
-	sum := leafSum(cs, h, proofSet[0])
+	node := proofSet[0]
 
 	for i := 1; i < len(proofSet); i++ {
 		cs.AssertIsBoolean(helper[i-1])
-		d1 := cs.Select(helper[i-1], sum, proofSet[i])
-		d2 := cs.Select(helper[i-1], proofSet[i], sum)
-		sum = nodeSum(cs, h, d1, d2)
+		d1 := cs.Select(helper[i-1], proofSet[i], node)
+		d2 := cs.Select(helper[i-1], node, proofSet[i])
+		node = nodeSum(cs, h, d1, d2)
 	}
 	// Compare our calculated Merkle root to the desired Merkle root.
-	IsVariableEqual(cs, isEnabled, sum, merkleRoot)
+	IsVariableEqual(cs, isEnabled, node, merkleRoot)
 
 }
 

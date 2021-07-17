@@ -49,7 +49,7 @@ func TestSerialize(t *testing.T) {
 }
 
 func TestMerkleProof(t *testing.T) {
-	accounts, _, _, hashState := mockAccountTree(8)
+	accounts, _, _, hashState := MockAccountTree(8)
 	fmt.Println(len(hashState))
 	var buf bytes.Buffer
 	buf.Write(hashState)

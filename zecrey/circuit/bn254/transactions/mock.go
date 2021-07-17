@@ -18,10 +18,8 @@
 package transactions
 
 import (
-	"bytes"
-	"github.com/consensys/gnark-crypto/accumulator/merkletree"
-	"github.com/consensys/gnark/std/accumulator/merkle"
 	"math/big"
+	"zecrey-crypto/accumulators/merkleTree"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
@@ -88,7 +86,7 @@ func mockTwoAccountTree(nbAccounts int) ([]*Account, []*Account, []*big.Int, []*
 	return accountsT1, accountsT2, sks, balancesT1, balancesT2, hashStateT1, hashStateT2
 }
 
-func mockAccountTree(nbAccounts int) ([]*Account, []*big.Int, []*big.Int, []byte) {
+func MockAccountTree(nbAccounts int) ([]*Account, []*big.Int, []*big.Int, []byte) {
 	var (
 		accounts  []*Account
 		sks       []*big.Int
@@ -354,26 +352,41 @@ func mockWithdraw(hashState []byte, accounts []*Account, sks []*big.Int, balance
 }
 
 func mockDepositTx(isEnabled bool, tokenId uint32, accounts []*Account, hashState []byte, pk *zecrey.Point, amount *big.Int, acc1, acc2 *Account, pos uint64) (*DepositTx, []*Account, []byte) {
-	// old merkle proofs
-	var buf bytes.Buffer
-	buf.Write(hashState)
 	h := zmimc.Hmimc
-	h.Reset()
-	merkleRootBefore, proofInclusionWithdrawBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), pos)
+	var state [][]byte
+	for i := 0; i < len(hashState)/h.Size(); i++ {
+		state = append(state, hashState[i*h.Size():(i+1)*h.Size()])
+	}
+	leaves := merkleTree.CreateLeaves(state)
+	tree, err := merkleTree.NewTree(leaves, h)
 	if err != nil {
 		panic(err)
 	}
-	merkleProofHelperWithdrawBefore := merkle.GenerateProofHelper(proofInclusionWithdrawBefore, pos, numLeaves)
+	proofInclusionWithdrawBefore, merkleProofHelperWithdrawBefore, err := tree.BuildMerkleProofs(int64(pos))
+	if err != nil {
+		panic(err)
+	}
+	inclusionBefore := merkleTree.CopyMerkleProofs(proofInclusionWithdrawBefore)
+	res := tree.VerifyMerkleProofs(proofInclusionWithdrawBefore, merkleProofHelperWithdrawBefore)
+	if !res {
+		panic("invalid proof 1")
+	}
+	oldRoot := tree.Root
 	accounts, hashState = mockUpdateAccount(accounts, hashState, int(pos), acc2)
-	// new merkle proofs
-	buf.Reset()
-	buf.Write(hashState)
-	h.Reset()
-	merkleRootAfter, proofInclusionWithdrawAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), pos)
+	newAccHash := mockAccountHash(acc2, zmimc.Hmimc)
+	err = tree.UpdateNode(int64(pos), newAccHash)
 	if err != nil {
 		panic(err)
 	}
-	merkleProofHelperWithdrawAfter := merkle.GenerateProofHelper(proofInclusionWithdrawAfter, pos, numLeaves)
+	proofInclusionWithdrawAfter, merkleProofHelperWithdrawAfter, err := tree.BuildMerkleProofs(int64(pos))
+	if err != nil {
+		panic(err)
+	}
+	newRoot := tree.Root
+	res = tree.VerifyMerkleProofs(proofInclusionWithdrawAfter, merkleProofHelperWithdrawAfter)
+	if !res {
+		panic("invalid proof 2")
+	}
 	tx := &DepositTx{
 		IsEnabled: isEnabled,
 		// token id
@@ -390,7 +403,7 @@ func mockDepositTx(isEnabled bool, tokenId uint32, accounts []*Account, hashStat
 		H: zecrey.H,
 
 		// before deposit merkle proof
-		AccountMerkleProofsBefore:       setFixedMerkleProofs(proofInclusionWithdrawBefore),
+		AccountMerkleProofsBefore:       setFixedMerkleProofs(inclusionBefore),
 		AccountHelperMerkleProofsBefore: setFixedMerkleProofsHelper(merkleProofHelperWithdrawBefore),
 
 		// after deposit merkle proof
@@ -398,9 +411,9 @@ func mockDepositTx(isEnabled bool, tokenId uint32, accounts []*Account, hashStat
 		AccountHelperMerkleProofsAfter: setFixedMerkleProofsHelper(merkleProofHelperWithdrawAfter),
 
 		// old account root
-		OldAccountRoot: merkleRootBefore,
+		OldAccountRoot: oldRoot,
 		// new account root
-		NewAccountRoot: merkleRootAfter,
+		NewAccountRoot: newRoot,
 	}
 	return tx, accounts, hashState
 }
@@ -412,61 +425,63 @@ func mockSwapTx(isEnabled, isFirstProof bool, proof *zecrey.SwapProof, accounts 
 		Proof:        proof,
 	}
 	// old merkle proofs
-	var buf bytes.Buffer
 	h := zmimc.Hmimc
-	// old merkle proof
-	for i := 0; i < NbSwapCount; i++ {
-		buf.Reset()
-		buf.Write(hashState)
-		h.Reset()
-		merkleRootBefore, proofInclusionTransferBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), poses[i])
-		if err != nil {
-			panic(err)
-		}
-		merkleProofHelperTransferBefore := merkle.GenerateProofHelper(proofInclusionTransferBefore, poses[i], numLeaves)
-		tx.AccountMerkleProofsBefore[i] = setFixedMerkleProofs(proofInclusionTransferBefore)
-		tx.AccountHelperMerkleProofsBefore[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
-		tx.OldAccountRoot = merkleRootBefore
-		tx.AccountBefore[i] = acc1[i]
-		tx.AccountAfter[i] = acc2[i]
+	var state [][]byte
+	for i := 0; i < len(hashState)/h.Size(); i++ {
+		state = append(state, hashState[i*h.Size():(i+1)*h.Size()])
 	}
-	buf.Reset()
-	buf.Write(hashState)
-	h.Reset()
-	_, proofInclusionTransferBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	leaves := merkleTree.CreateLeaves(state)
+	tree, err := merkleTree.NewTree(leaves, h)
 	if err != nil {
 		panic(err)
 	}
-	merkleProofHelperTransferBefore := merkle.GenerateProofHelper(proofInclusionTransferBefore, feePos, numLeaves)
+	// old merkle proof
+	for i := 0; i < NbSwapCount; i++ {
+		proofInclusionTransferBefore, merkleProofHelperTransferBefore, err := tree.BuildMerkleProofs(int64(poses[i]))
+		if err != nil {
+			panic(err)
+		}
+		tx.AccountMerkleProofsBefore[i] = setFixedMerkleProofs(proofInclusionTransferBefore)
+		tx.AccountHelperMerkleProofsBefore[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
+		tx.AccountBefore[i] = acc1[i]
+		tx.AccountAfter[i] = acc2[i]
+	}
+	tx.OldAccountRoot = tree.Root
+	proofInclusionTransferBefore, merkleProofHelperTransferBefore, err := tree.BuildMerkleProofs(int64(feePos))
+	if err != nil {
+		panic(err)
+	}
 	tx.AccountMerkleProofsBefore[NbSwapCount] = setFixedMerkleProofs(proofInclusionTransferBefore)
 	tx.AccountHelperMerkleProofsBefore[NbSwapCount] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
 
 	for i := 0; i < NbSwapCount; i++ {
 		accounts, hashState = mockUpdateAccount(accounts, hashState, int(poses[i]), acc2[i])
-	}
-	accounts, hashState = mockUpdateAccount(accounts, hashState, int(feePos), feeAccountAfter)
-	for i := 0; i < NbSwapCount; i++ {
-		// new merkle proofs
-		buf.Reset()
-		buf.Write(hashState)
-		h.Reset()
-		merkleRootAfter, proofInclusionTransferAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), poses[i])
+		newAccHash := mockAccountHash(acc2[i], zmimc.Hmimc)
+		err := tree.UpdateNode(int64(poses[i]), newAccHash)
 		if err != nil {
 			panic(err)
 		}
-		merkleProofHelperTransferAfter := merkle.GenerateProofHelper(proofInclusionTransferAfter, poses[i], numLeaves)
-		tx.AccountMerkleProofsAfter[i] = setFixedMerkleProofs(proofInclusionTransferAfter)
-		tx.AccountHelperMerkleProofsAfter[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
-		tx.NewAccountRoot = merkleRootAfter
 	}
-	buf.Reset()
-	buf.Write(hashState)
-	h.Reset()
-	_, proofInclusionTransferAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	accounts, hashState = mockUpdateAccount(accounts, hashState, int(feePos), feeAccountAfter)
+	newAccHash := mockAccountHash(feeAccountAfter, zmimc.Hmimc)
+	err = tree.UpdateNode(int64(feePos), newAccHash)
 	if err != nil {
 		panic(err)
 	}
-	merkleProofHelperTransferAfter := merkle.GenerateProofHelper(proofInclusionTransferAfter, feePos, numLeaves)
+	for i := 0; i < NbSwapCount; i++ {
+		// new merkle proofs
+		proofInclusionTransferAfter, merkleProofHelperTransferAfter, err := tree.BuildMerkleProofs(int64(poses[i]))
+		if err != nil {
+			panic(err)
+		}
+		tx.AccountMerkleProofsAfter[i] = setFixedMerkleProofs(proofInclusionTransferAfter)
+		tx.AccountHelperMerkleProofsAfter[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
+	}
+	tx.NewAccountRoot = tree.Root
+	proofInclusionTransferAfter, merkleProofHelperTransferAfter, err := tree.BuildMerkleProofs(int64(feePos))
+	if err != nil {
+		panic(err)
+	}
 	tx.AccountMerkleProofsAfter[NbSwapCount] = setFixedMerkleProofs(proofInclusionTransferAfter)
 	tx.AccountHelperMerkleProofsAfter[NbSwapCount] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
 
@@ -482,33 +497,33 @@ func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Ac
 		Proof:     proof,
 	}
 	// old merkle proofs
-	var buf bytes.Buffer
 	h := zmimc.Hmimc
-	// old merkle proof
-	for i := 0; i < NbTransferCount; i++ {
-		buf.Reset()
-		buf.Write(hashState)
-		h.Reset()
-		merkleRootBefore, proofInclusionTransferBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), poses[i])
-		if err != nil {
-			panic(err)
-		}
-		merkleProofHelperTransferBefore := merkle.GenerateProofHelper(proofInclusionTransferBefore, poses[i], numLeaves)
-		tx.AccountMerkleProofsBefore[i] = setFixedMerkleProofs(proofInclusionTransferBefore)
-		tx.AccountHelperMerkleProofsBefore[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
-		tx.OldAccountRoot = merkleRootBefore
-		tx.AccountBefore[i] = acc1[i]
-		tx.AccountAfter[i] = acc2[i]
+	var state [][]byte
+	for i := 0; i < len(hashState)/h.Size(); i++ {
+		state = append(state, hashState[i*h.Size():(i+1)*h.Size()])
 	}
-	// set fee account
-	buf.Reset()
-	buf.Write(hashState)
-	h.Reset()
-	_, proofInclusionTransferBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	leaves := merkleTree.CreateLeaves(state)
+	tree, err := merkleTree.NewTree(leaves, h)
 	if err != nil {
 		panic(err)
 	}
-	merkleProofHelperTransferBefore := merkle.GenerateProofHelper(proofInclusionTransferBefore, feePos, numLeaves)
+	// old merkle proof
+	for i := 0; i < NbTransferCount; i++ {
+		proofInclusionTransferBefore, merkleProofHelperTransferBefore, err := tree.BuildMerkleProofs(int64(poses[i]))
+		if err != nil {
+			panic(err)
+		}
+		tx.AccountMerkleProofsBefore[i] = setFixedMerkleProofs(proofInclusionTransferBefore)
+		tx.AccountHelperMerkleProofsBefore[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
+		tx.AccountBefore[i] = acc1[i]
+		tx.AccountAfter[i] = acc2[i]
+	}
+	tx.OldAccountRoot = tree.Root
+	// set fee account
+	proofInclusionTransferBefore, merkleProofHelperTransferBefore, err := tree.BuildMerkleProofs(int64(feePos))
+	if err != nil {
+		panic(err)
+	}
 	tx.AccountMerkleProofsBefore[NbTransferCount] = setFixedMerkleProofs(proofInclusionTransferBefore)
 	tx.AccountHelperMerkleProofsBefore[NbTransferCount] = setFixedMerkleProofsHelper(merkleProofHelperTransferBefore)
 	tx.FeeAccountBefore = feeAccountBefore
@@ -516,30 +531,32 @@ func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Ac
 
 	for i := 0; i < NbTransferCount; i++ {
 		accounts, hashState = mockUpdateAccount(accounts, hashState, int(poses[i]), acc2[i])
-	}
-	accounts, hashState = mockUpdateAccount(accounts, hashState, int(feePos), feeAccountAfter)
-	for i := 0; i < NbTransferCount; i++ {
-		// new merkle proofs
-		buf.Reset()
-		buf.Write(hashState)
-		h.Reset()
-		merkleRootAfter, proofInclusionTransferAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), poses[i])
+		newAccHash := mockAccountHash(acc2[i], zmimc.Hmimc)
+		err := tree.UpdateNode(int64(poses[i]), newAccHash)
 		if err != nil {
 			panic(err)
 		}
-		merkleProofHelperTransferAfter := merkle.GenerateProofHelper(proofInclusionTransferAfter, poses[i], numLeaves)
-		tx.AccountMerkleProofsAfter[i] = setFixedMerkleProofs(proofInclusionTransferAfter)
-		tx.AccountHelperMerkleProofsAfter[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
-		tx.NewAccountRoot = merkleRootAfter
 	}
-	buf.Reset()
-	buf.Write(hashState)
-	h.Reset()
-	_, proofInclusionTransferAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	accounts, hashState = mockUpdateAccount(accounts, hashState, int(feePos), feeAccountAfter)
+	newAccHash := mockAccountHash(feeAccountAfter, zmimc.Hmimc)
+	err = tree.UpdateNode(int64(feePos), newAccHash)
 	if err != nil {
 		panic(err)
 	}
-	merkleProofHelperTransferAfter := merkle.GenerateProofHelper(proofInclusionTransferAfter, feePos, numLeaves)
+	for i := 0; i < NbTransferCount; i++ {
+		// new merkle proofs
+		proofInclusionTransferAfter, merkleProofHelperTransferAfter, err := tree.BuildMerkleProofs(int64(poses[i]))
+		if err != nil {
+			panic(err)
+		}
+		tx.AccountMerkleProofsAfter[i] = setFixedMerkleProofs(proofInclusionTransferAfter)
+		tx.AccountHelperMerkleProofsAfter[i] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
+	}
+	tx.NewAccountRoot = tree.Root
+	proofInclusionTransferAfter, merkleProofHelperTransferAfter, err := tree.BuildMerkleProofs(int64(feePos))
+	if err != nil {
+		panic(err)
+	}
 	tx.AccountMerkleProofsAfter[NbTransferCount] = setFixedMerkleProofs(proofInclusionTransferAfter)
 	tx.AccountHelperMerkleProofsAfter[NbTransferCount] = setFixedMerkleProofsHelper(merkleProofHelperTransferAfter)
 	tx.Fee = fee
@@ -548,43 +565,51 @@ func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Ac
 
 func mockWithdrawTx(isEnabled bool, proof *zecrey.WithdrawProof, accounts []*Account, hashState []byte, acc1, acc2 *Account, pos uint64, fee *big.Int, feeAccountBefore, feeAccountAfter *Account, feePos uint64) (*WithdrawTx, []*Account, []byte) {
 	// old merkle proofs
-	var buf bytes.Buffer
-	buf.Write(hashState)
 	h := zmimc.Hmimc
-	h.Reset()
-	merkleRootBefore, proofInclusionWithdrawBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), pos)
+	var state [][]byte
+	for i := 0; i < len(hashState)/h.Size(); i++ {
+		state = append(state, hashState[i*h.Size():(i+1)*h.Size()])
+	}
+	leaves := merkleTree.CreateLeaves(state)
+	tree, err := merkleTree.NewTree(leaves, h)
 	if err != nil {
 		panic(err)
 	}
-	merkleProofHelperWithdrawBefore := merkle.GenerateProofHelper(proofInclusionWithdrawBefore, pos, numLeaves)
-	buf.Reset()
-	buf.Write(hashState)
-	h.Reset()
-	_, feeProofInclusionWithdrawBefore, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	proofInclusionWithdrawBefore, merkleProofHelperWithdrawBefore, err := tree.BuildMerkleProofs(int64(pos))
 	if err != nil {
 		panic(err)
 	}
-	feeMerkleProofHelperWithdrawBefore := merkle.GenerateProofHelper(feeProofInclusionWithdrawBefore, feePos, numLeaves)
+	feeProofInclusionWithdrawBefore, feeMerkleProofHelperWithdrawBefore, err := tree.BuildMerkleProofs(int64(feePos))
+	if err != nil {
+		panic(err)
+	}
+	oldRoot := tree.Root
+
+	accInclusionBefore := merkleTree.CopyMerkleProofs(proofInclusionWithdrawBefore)
+	feeInclusionBefore := merkleTree.CopyMerkleProofs(feeProofInclusionWithdrawBefore)
 
 	accounts, hashState = mockUpdateAccount(accounts, hashState, int(pos), acc2)
 	accounts, hashState = mockUpdateAccount(accounts, hashState, int(feePos), feeAccountAfter)
+	newAccHash1 := mockAccountHash(acc2, zmimc.Hmimc)
+	err = tree.UpdateNode(int64(pos), newAccHash1)
+	if err != nil {
+		panic(err)
+	}
+	newAccHash2 := mockAccountHash(feeAccountAfter, zmimc.Hmimc)
+	err = tree.UpdateNode(int64(feePos), newAccHash2)
+	if err != nil {
+		panic(err)
+	}
 	// new merkle proofs
-	buf.Reset()
-	buf.Write(hashState)
-	h.Reset()
-	merkleRootAfter, proofInclusionWithdrawAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), pos)
+	proofInclusionWithdrawAfter, merkleProofHelperWithdrawAfter, err := tree.BuildMerkleProofs(int64(pos))
 	if err != nil {
 		panic(err)
 	}
-	merkleProofHelperWithdrawAfter := merkle.GenerateProofHelper(proofInclusionWithdrawAfter, pos, numLeaves)
-	buf.Reset()
-	buf.Write(hashState)
-	h.Reset()
-	_, feeProofInclusionWithdrawAfter, numLeaves, err := merkletree.BuildReaderProof(&buf, h, h.Size(), feePos)
+	feeProofInclusionWithdrawAfter, feeMerkleProofHelperWithdrawAfter, err := tree.BuildMerkleProofs(int64(feePos))
 	if err != nil {
 		panic(err)
 	}
-	feeMerkleProofHelperWithdrawAfter := merkle.GenerateProofHelper(feeProofInclusionWithdrawAfter, feePos, numLeaves)
+	newRoot := tree.Root
 
 	tx := &WithdrawTx{
 		IsEnabled: isEnabled,
@@ -601,13 +626,13 @@ func mockWithdrawTx(isEnabled bool, proof *zecrey.WithdrawProof, accounts []*Acc
 		FeeAccountAfter:  feeAccountAfter,
 
 		// old account root
-		OldAccountRoot: merkleRootBefore,
+		OldAccountRoot: oldRoot,
 		// new account root
-		NewAccountRoot: merkleRootAfter,
+		NewAccountRoot: newRoot,
 	}
-	tx.AccountMerkleProofsBefore[0] = setFixedMerkleProofs(proofInclusionWithdrawBefore)
+	tx.AccountMerkleProofsBefore[0] = setFixedMerkleProofs(accInclusionBefore)
 	tx.AccountHelperMerkleProofsBefore[0] = setFixedMerkleProofsHelper(merkleProofHelperWithdrawBefore)
-	tx.AccountMerkleProofsBefore[1] = setFixedMerkleProofs(feeProofInclusionWithdrawBefore)
+	tx.AccountMerkleProofsBefore[1] = setFixedMerkleProofs(feeInclusionBefore)
 	tx.AccountHelperMerkleProofsBefore[1] = setFixedMerkleProofsHelper(feeMerkleProofHelperWithdrawBefore)
 
 	tx.AccountMerkleProofsAfter[0] = setFixedMerkleProofs(proofInclusionWithdrawAfter)

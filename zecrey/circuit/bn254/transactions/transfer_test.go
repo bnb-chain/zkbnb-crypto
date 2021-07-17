@@ -48,7 +48,7 @@ func TestVerifyTransferTx(t *testing.T) {
 }
 
 func prepareTransferTx() *TransferTx {
-	accounts, sks, balances, hashState := mockAccountTree(8)
+	accounts, sks, balances, hashState := MockAccountTree(8)
 	pos1 := uint64(1)
 	pos2 := uint64(6)
 	pos3 := uint64(2)
