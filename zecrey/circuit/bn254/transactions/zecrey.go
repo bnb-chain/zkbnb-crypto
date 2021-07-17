@@ -156,5 +156,6 @@ func SetBlockWitness(block *Block) (witness BlockConstraints, err error) {
 		witness.OldAccountRoots[i].Assign(block.OldAccountRoots[i])
 		witness.NewAccountRoots[i].Assign(block.NewAccountRoots[i])
 	}
+	witness.BlockCommitment.Assign(block.OldRoot)
 	return witness, nil
 }

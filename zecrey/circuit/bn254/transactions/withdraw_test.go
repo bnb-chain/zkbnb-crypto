@@ -46,7 +46,7 @@ func TestVerifyWithdrawTx(t *testing.T) {
 }
 
 func prepareWithdrawTx() *WithdrawTx {
-	accounts, sks, balances, hashState := mockAccountTree(8)
+	accounts, sks, balances, hashState := MockAccountTree(8)
 	pos := 2
 	accountBeforeWithdraw := accounts[pos]
 	sk := sks[pos]

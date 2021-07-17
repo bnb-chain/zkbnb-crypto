@@ -15,21 +15,8 @@
  *
  */
 
-package transactions
+package merkleTree
 
-func setFixedMerkleProofs(proof [][]byte) [AccountMerkleLevels][]byte {
-	var res [AccountMerkleLevels][]byte
-	for i := 0; i < AccountMerkleLevels; i++ {
-		res[i] = make([]byte, len(proof[i]))
-		copy(res[i], proof[i])
-	}
-	return res
-}
+import "zecrey-crypto/hash/bn254/zmimc"
 
-func setFixedMerkleProofsHelper(proof []int) [AccountMerkleLevels - 1]int {
-	var res [AccountMerkleLevels - 1]int
-	for i := 0; i < AccountMerkleLevels-1; i++ {
-		res[i] = proof[i]
-	}
-	return res
-}
+const SEED = zmimc.SEED

@@ -15,21 +15,24 @@
  *
  */
 
-package transactions
+package merkleTree
 
-func setFixedMerkleProofs(proof [][]byte) [AccountMerkleLevels][]byte {
-	var res [AccountMerkleLevels][]byte
-	for i := 0; i < AccountMerkleLevels; i++ {
-		res[i] = make([]byte, len(proof[i]))
-		copy(res[i], proof[i])
-	}
-	return res
+/*
+IsPowerOfTwo returns true for arguments that are a power of 2, false otherwise.
+https://stackoverflow.com/a/600306/844313
+*/
+func IsPowerOfTwo(x int64) bool {
+	return (x != 0) && ((x & (x - 1)) == 0)
 }
 
-func setFixedMerkleProofsHelper(proof []int) [AccountMerkleLevels - 1]int {
-	var res [AccountMerkleLevels - 1]int
-	for i := 0; i < AccountMerkleLevels-1; i++ {
-		res[i] = proof[i]
+/*
+	CopyMerkleProofs: deep copy for merkle proofs
+*/
+func CopyMerkleProofs(a [][]byte) [][]byte {
+	res := make([][]byte, len(a))
+	for i := 0; i < len(a); i++ {
+		res[i] = make([]byte, len(a[i]))
+		copy(res[i], a[i])
 	}
 	return res
 }
