@@ -243,9 +243,6 @@ type PTransferProofRelation struct {
 }
 
 func NewPTransferProofRelation(tokenId uint32, fee *big.Int) (*PTransferProofRelation, error) {
-	if tokenId == 0 {
-		return nil, ErrInvalidParams
-	}
 	if fee.Cmp(Zero) < 0 {
 		return nil, ErrInvalidParams
 	}
