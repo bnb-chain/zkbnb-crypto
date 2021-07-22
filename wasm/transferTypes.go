@@ -105,15 +105,15 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 	return segments, Success
 }
 
-type TransferTransactionAo struct {
+type TransferTxInfo struct {
+	// chain id
+	ChainId uint8
 	// token id
 	AssetId uint32
 	// account indexes
-	AccountsIndex []int
+	AccountsIndex []uint32
 	// fee
 	Fee uint32
 	// transfer proof
 	Proof string
-	// create time
-	CreateAt int64
 }

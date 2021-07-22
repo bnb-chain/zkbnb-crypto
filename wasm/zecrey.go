@@ -18,17 +18,16 @@
 package wasm
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"math/big"
 	"syscall/js"
-	"time"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 /*
 	ProveWithdraw: helper function for the frontend for building withdraw tx
-	@tokenId: token id
+	@chainId: chain id
+	@assetId: token id
 	@zecreyAddr: transactions address
 	@l1Addr: layer 1 address
 	@segmentInfo: segmentInfo JSON string
@@ -36,25 +35,27 @@ import (
 func ProveWithdraw() js.Func {
 	proveWithdrawFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// length of args should be 3
-		if len(args) != 5 {
+		if len(args) != 6 {
 			return ErrInvalidWithdrawParams
 		}
-		// read tokenId
-		tokenId := args[0].Int()
-		if tokenId < 0 {
+		chainId := args[0].Int()
+		cId := uint8(chainId)
+		// read assetId
+		assetId := args[1].Int()
+		if assetId < 0 {
 			return ErrInvalidWithdrawParams
 		}
-		// transfer tokenId to uint32
-		tId := uint32(tokenId)
+		// transfer assetId to uint32
+		tId := uint32(assetId)
 		// fee
-		feeInt := args[1].Int()
+		feeInt := args[2].Int()
 		fee := uint32(feeInt)
 		// layer 2 address
-		accountIndex := args[2].Int()
+		accountIndex := args[3].Int()
 		// layer 1 address
-		l1addr := args[3].String()
+		l1addr := args[4].String()
 		// read segmentInfo JSON str
-		segmentInfo := args[4].String()
+		segmentInfo := args[5].String()
 		// parse segmentInfo
 		segment, errStr := FromWithdrawSegmentJSON(segmentInfo)
 		if errStr != Success {
@@ -70,53 +71,57 @@ func ProveWithdraw() js.Func {
 		if err != nil {
 			return ErrProveWithdraw
 		}
-		withdrawTx := &WithdrawTransactionAo{
-			AssetId:      tId,
-			AccountIndex: uint32(accountIndex),
-			L1Address:    l1addr,
-			Amount:       uint32(segment.BStar.Uint64()),
-			Fee:          fee,
-			Proof:        withdrawProof.String(),
-			CreateAt:     time.Now().Unix(),
+		withdrawTx := &WithdrawTxInfo{
+			ChainId:       cId,
+			AssetId:       tId,
+			AccountIndex:  uint32(accountIndex),
+			NativeAddress: l1addr,
+			Amount:        uint32(segment.BStar.Uint64()),
+			Fee:           fee,
+			Proof:         withdrawProof.String(),
 		}
 		txBytes, err := json.Marshal(withdrawTx)
 		if err != nil {
 			return ErrMarshalTx
 		}
-		return base64.StdEncoding.EncodeToString(txBytes)
+		return string(txBytes)
 	})
 	return proveWithdrawFunc
 }
 
 /*
 	ProveTransfer: prove privacy transfer
-	@tokenId: token id
-	@zecreyAddrsStr: string of int array represents account indexes
+	@chainId: chain id
+	@assetId: token id
+	@fee: fee
+	@accountsIndexStr: string of int array represents account indexes
 	@segmentInfosStr: string of segmentInfo array, which are used to generate the transfer proof
 */
 func ProveTransfer() js.Func {
 	proveTransferFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		if len(args) != 4 {
+		if len(args) != 5 {
 			return ErrInvalidTransferParams
 		}
+		chainId := args[0].Int()
+		cId := uint8(chainId)
 		// read token id
-		tokenId := args[0].Int()
-		if tokenId < 0 {
+		assetId := args[1].Int()
+		if assetId < 0 {
 			return ErrInvalidTransferParams
 		}
-		tId := uint32(tokenId)
+		tId := uint32(assetId)
 		// fee
-		feeInt := args[1].Int()
+		feeInt := args[2].Int()
 		if feeInt < 0 {
 			return ErrInvalidTransferParams
 		}
 		fee := uint32(feeInt)
 		// read accounts indexes str
-		accountsIndexStr := args[2].String()
+		accountsIndexStr := args[3].String()
 		// read segmentInfo Str
-		segmentInfosStr := args[3].String()
+		segmentInfosStr := args[4].String()
 
-		var accountsIndex []int
+		var accountsIndex []uint32
 		err := json.Unmarshal([]byte(accountsIndexStr), &accountsIndex)
 		if err != nil {
 			return ErrInvalidTransferParams
@@ -140,7 +145,8 @@ func ProveTransfer() js.Func {
 		if err != nil {
 			return ErrProveTransfer
 		}
-		tx := &TransferTransactionAo{
+		tx := &TransferTxInfo{
+			ChainId: cId,
 			// token id
 			AssetId: tId,
 			// account indexes
@@ -149,62 +155,68 @@ func ProveTransfer() js.Func {
 			Fee: fee,
 			// transfer proof
 			Proof: transferProof.String(),
-			// create time
-			CreateAt: time.Now().Unix(),
 		}
 		txBytes, err := json.Marshal(tx)
 		if err != nil {
 			return ErrMarshalTx
 		}
-		return base64.StdEncoding.EncodeToString(txBytes)
+		return string(txBytes)
 	})
 	return proveTransferFunc
 }
 
 /*
 	ProveSwap: helper function for the frontend for building swap tx
-	@fromTokenId: from token id
-	@toTokenId: to token id
+	@chainIdFrom: swap from which chain
+	@chainIdTo: swap to which chain
+	@fromAssetId: from token id
+	@toAssetId: to token id
+	@fee: fee
 	@zecreyAddr: transactions address
 	@segmentInfo: segmentInfo JSON string
 */
 func ProveSwap() js.Func {
 	proveSwapFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		// length of args should be 3
-		if len(args) != 5 {
+		// length of args should be 8
+		if len(args) != 8 {
 			return ErrInvalidSwapParams
 		}
-		// read fromTokenId
-		fromTokenId := args[0].Int()
-		if fromTokenId < 0 {
+		chainIdFrom := args[0].Int()
+		cIdFrom := uint8(chainIdFrom)
+		chainIdTo := args[1].Int()
+		cIdTo := uint8(chainIdTo)
+		// read fromAssetId
+		fromAssetId := args[2].Int()
+		if fromAssetId < 0 {
 			return ErrInvalidSwapParams
 		}
-		// transfer fromTokenId to uint32
-		tIdFrom := uint32(fromTokenId)
-		// read toTokenId
-		toTokenId := args[1].Int()
-		if toTokenId < 0 {
+		// transfer fromAssetId to uint32
+		assetIdFrom := uint32(fromAssetId)
+		// read toAssetId
+		toAssetId := args[3].Int()
+		if toAssetId < 0 {
 			return ErrInvalidSwapParams
 		}
-		// transfer fromTokenId to uint32
-		tIdTo := uint32(toTokenId)
+		// transfer fromAssetId to uint32
+		assetIdTo := uint32(toAssetId)
 		// fee
-		feeInt := args[2].Int()
+		feeInt := args[4].Int()
 		if feeInt < 0 {
 			return ErrInvalidSwapParams
 		}
 		fee := uint32(feeInt)
 		// account index
-		accountIndex := args[3].Int()
+		accountIndexFrom := args[5].Int()
+		accountIndexTo := args[6].Int()
 		// read segmentInfo JSON str
-		segmentInfo := args[4].String()
+		segmentInfo := args[7].String()
 		// parse segmentInfo
 		segment, errStr := FromSwapSegmentJSON(segmentInfo)
 		if errStr != Success {
 			return errStr
 		}
 		// create withdraw relation
-		relation, err := zecrey.NewSwapRelationPart1(segment.EncBalance, segment.ReceiverEncBalance, segment.Pk, segment.ReceiverPk, segment.Balance, segment.BStarFrom, segment.BStarTo, segment.Sk, tIdFrom, tIdTo, big.NewInt(int64(fee)))
+		relation, err := zecrey.NewSwapRelationPart1(segment.EncBalance, segment.ReceiverEncBalance, segment.Pk, segment.ReceiverPk, segment.Balance, segment.BStarFrom, segment.BStarTo, segment.Sk, assetIdFrom, assetIdTo, big.NewInt(int64(fee)))
 		if err != nil {
 			return ErrInvalidSwapRelationParams
 		}
@@ -213,21 +225,23 @@ func ProveSwap() js.Func {
 		if err != nil {
 			return ErrProveWithdraw
 		}
-		swapTx := &SwapTransactionAo{
-			AssetIdFrom:  tIdFrom,
-			AssetIdTo:    tIdTo,
-			AccountIndex: uint32(accountIndex),
-			Fee:          fee,
-			BStarFrom:    segment.BStarFrom,
-			BStarTo:      segment.BStarTo,
-			Proof:        swapProofPart1.String(),
-			CreateAt:     time.Now().Unix(),
+		swapTx := &SwapTxInfo{
+			ChainIdFrom:      cIdFrom,
+			ChainIdTo:        cIdTo,
+			AssetIdFrom:      assetIdFrom,
+			AssetIdTo:        assetIdTo,
+			AccountIndexFrom: uint32(accountIndexFrom),
+			AccountIndexTo:   uint32(accountIndexTo),
+			Fee:              fee,
+			BStarFrom:        segment.BStarFrom,
+			BStarTo:          segment.BStarTo,
+			Proof:            swapProofPart1.String(),
 		}
 		txBytes, err := json.Marshal(swapTx)
 		if err != nil {
 			return ErrMarshalTx
 		}
-		return base64.StdEncoding.EncodeToString(txBytes)
+		return string(txBytes)
 	})
 	return proveSwapFunc
 }

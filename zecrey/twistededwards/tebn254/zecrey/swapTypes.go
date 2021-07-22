@@ -286,7 +286,7 @@ type SwapProofRelationPart struct {
 }
 
 func NewSwapRelationPart1(C, receiverC *ElGamalEnc, pk, receiverPk *Point, b, bStarFrom, bStarTo *big.Int, sk *big.Int, fromTokenId, toTokenId uint32, fee *big.Int) (*SwapProofRelationPart, error) {
-	if C == nil || receiverC == nil || pk == nil || receiverPk == nil || bStarFrom == nil || bStarTo == nil || sk == nil || fromTokenId == toTokenId || fee == nil || fee.Cmp(Zero) < 0 {
+	if C == nil || receiverC == nil || pk == nil || receiverPk == nil || bStarFrom == nil || bStarTo == nil || sk == nil || fee == nil || fee.Cmp(Zero) < 0 {
 		return nil, ErrInvalidParams
 	}
 	// check if the public key is valid
