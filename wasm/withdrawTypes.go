@@ -80,19 +80,19 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, string) {
 	return withdrawSegment, Success
 }
 
-type WithdrawTransactionAo struct {
+type WithdrawTxInfo struct {
+	// chain id
+	ChainId uint8
 	// token id
 	AssetId uint32
 	// zecrey index
 	AccountIndex uint32
 	// L1 address
-	L1Address string
+	NativeAddress string
 	// withdraw amount
 	Amount uint32
 	// withdraw fee
 	Fee uint32
 	// withdraw proof
 	Proof string
-	// create time
-	CreateAt int64
 }

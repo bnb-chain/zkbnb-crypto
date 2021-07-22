@@ -98,19 +98,21 @@ func FromSwapSegmentJSON(segmentStr string) (*SwapSegment, string) {
 	return swapSegment, Success
 }
 
-type SwapTransactionAo struct {
+type SwapTxInfo struct {
+	// chain id
+	ChainIdFrom uint8
+	ChainIdTo   uint8
 	// token id
 	AssetIdFrom uint32
 	AssetIdTo   uint32
 	// account index
-	AccountIndex uint32
+	AccountIndexFrom uint32
+	AccountIndexTo   uint32
 	// fee
 	Fee uint32
-	// withdraw amount
+	// swap amount
 	BStarFrom *big.Int
 	BStarTo   *big.Int
-	// withdraw proof
+	// swap proof
 	Proof string
-	// create time
-	CreateAt int64
 }
