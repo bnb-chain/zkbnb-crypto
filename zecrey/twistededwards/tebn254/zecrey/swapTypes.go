@@ -379,9 +379,8 @@ func NewSwapRelationPart1(C, receiverC *ElGamalEnc, pk, receiverPk *Point, b, bS
 }
 
 func NewSwapRelationPart2(C, receiverC *ElGamalEnc, pk, receiverPk *Point, b, sk *big.Int, fromTokenId, toTokenId uint32, proof *SwapProofPart) (*SwapProofRelationPart, error) {
-	if C == nil || receiverC == nil || pk == nil || receiverPk == nil || sk == nil || proof == nil || fromTokenId == 0 ||
-		toTokenId == 0 || fromTokenId == toTokenId || proof.Ht1 == nil ||
-		proof.Ht2 == nil || proof.BStar1.Cmp(big.NewInt(0)) <= 0 || proof.BStar2.Cmp(big.NewInt(0)) <= 0 {
+	if C == nil || receiverC == nil || pk == nil || receiverPk == nil || sk == nil || proof == nil || proof.Ht1 == nil ||
+		proof.Ht2 == nil || proof.BStar1.Cmp(big.NewInt(0)) < 0 || proof.BStar2.Cmp(big.NewInt(0)) < 0 {
 		return nil, ErrInvalidParams
 	}
 	// check if the public key is valid
