@@ -117,18 +117,19 @@ func VerifySwapTx(cs *ConstraintSystem, tx SwapTxConstraints, params twistededwa
 	}
 	// fee account
 	// check index
-	std.IsVariableEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.Index, tx.FeeAccountAfter.Index)
+	std.IsVariableEqual(cs, isFirstProof, tx.FeeAccountBefore.Index, tx.FeeAccountAfter.Index)
 	// check token id
-	std.IsVariableEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.TokenId, tx.FeeAccountAfter.TokenId)
+	std.IsVariableEqual(cs, isFirstProof, tx.FeeAccountBefore.TokenId, tx.FeeAccountAfter.TokenId)
 	// check public key
-	std.IsPointEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.PubKey, tx.FeeAccountAfter.PubKey)
+	std.IsPointEqual(cs, isFirstProof, tx.FeeAccountBefore.PubKey, tx.FeeAccountAfter.PubKey)
 	// check fee
 	secondFee := cs.Select(isSecondProof, tx.Proof.ProofPart1.Fee, tx.Fee)
 	std.IsVariableEqual(cs, tx.IsEnabled, secondFee, tx.Proof.ProofPart1.Fee)
 	std.IsVariableEqual(cs, tx.IsEnabled, secondFee, tx.Proof.ProofPart2.Fee)
 	// check merkle proof
-	std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.OldAccountRoot, tx.AccountMerkleProofsBefore[NbSwapCount][:], tx.AccountHelperMerkleProofsBefore[NbSwapCount][:])
-	std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.NewAccountRoot, tx.AccountMerkleProofsAfter[NbSwapCount][:], tx.AccountHelperMerkleProofsAfter[NbSwapCount][:])
+	// if it is the first proof, do not check anything
+	std.VerifyMerkleProof(cs, isFirstProof, hFunc, tx.OldAccountRoot, tx.AccountMerkleProofsBefore[NbSwapCount][:], tx.AccountHelperMerkleProofsBefore[NbSwapCount][:])
+	std.VerifyMerkleProof(cs, isFirstProof, hFunc, tx.NewAccountRoot, tx.AccountMerkleProofsAfter[NbSwapCount][:], tx.AccountHelperMerkleProofsAfter[NbSwapCount][:])
 
 	// update fee account
 	realFee := cs.Select(isFirstProof, tx.Fee, cs.Constant(0))
@@ -137,7 +138,7 @@ func VerifySwapTx(cs *ConstraintSystem, tx SwapTxConstraints, params twistededwa
 	fee.ScalarMulNonFixedBase(cs, &tx.Proof.ProofPart1.H, realFee, params)
 	tx.FeeAccountBefore.Balance.CR = *tx.FeeAccountBefore.Balance.CR.AddGeneric(cs, &tx.FeeAccountBefore.Balance.CR, &fee, params)
 	// check if the balance is equal
-	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.Balance, tx.FeeAccountAfter.Balance)
+	std.IsElGamalEncEqual(cs, isFirstProof, tx.FeeAccountBefore.Balance, tx.FeeAccountAfter.Balance)
 
 	// select CStar
 	CStar, ReceiverCStar := selectCStar(cs, tx.IsFirstProof, tx.Proof)

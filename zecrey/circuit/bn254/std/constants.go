@@ -34,11 +34,11 @@ type (
 
 const (
 	// TODO only for test
-	AccountMerkleLevels = 4
+	AccountMerkleLevels = 18
 	NbTransferCount     = 3
 	RangeMaxBits        = commitRange.RangeMaxBits
 )
 
-var(
+var (
 	Zero = big.NewInt(0)
 )
