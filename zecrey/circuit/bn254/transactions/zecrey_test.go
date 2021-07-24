@@ -18,11 +18,15 @@
 package transactions
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -35,8 +39,29 @@ func TestVerifyBlock(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("constraints:", r1cs.GetNbConstraints())
-	tx := PrepareBlockSmall()
-	witness, err = SetBlockWitness(tx)
+
+	file, err := os.Open("./blockInfo.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	blockInfoBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rawBlockInfo, err := base64.StdEncoding.DecodeString(string(blockInfoBytes))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var block *Block
+	err = json.Unmarshal(rawBlockInfo, &block)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	//tx := PrepareBlockSmall()
+	witness, err = SetBlockWitness(block)
 	if err != nil {
 		t.Fatal(err)
 	}
