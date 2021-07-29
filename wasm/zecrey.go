@@ -245,3 +245,106 @@ func ProveSwap() js.Func {
 	})
 	return proveSwapFunc
 }
+
+/*
+	ProveL1PrivacyTransfer: prove l1 privacy transfer
+	@depositInfo: deposit segment info
+	@chainId: chain id
+	@assetId: token id
+	@fee: fee
+	@accountsIndexStr: string of int array represents account indexes
+	@segmentInfosStr: string of segmentInfo array, which are used to generate the transfer proof
+*/
+func ProveL1PrivacyTransfer() js.Func {
+	proveTransferFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		if len(args) != 9 {
+			return ErrInvalidL1TransferParams
+		}
+		withdrawTo := args[0].String()
+		aIndex := args[1].Int()
+		if aIndex < 0 {
+			return ErrInvalidL1TransferParams
+		}
+		accountIndex := uint32(aIndex)
+		// deposit amount
+		depositAmountInt := args[2].Int()
+		depositAmount := uint32(depositAmountInt)
+		// deposit tx hash
+		depositTxHash := args[3].String()
+		// chain id
+		chainId := args[4].Int()
+		cId := uint8(chainId)
+		// asset id
+		assetId := args[5].Int()
+		if assetId < 0 {
+			return ErrInvalidTransferParams
+		}
+		aId := uint32(assetId)
+		// fee
+		// TODO check fee is right
+		feeInt := args[6].Int()
+		if feeInt < 0 {
+			return ErrInvalidTransferParams
+		}
+		fee := uint32(feeInt)
+		// read accounts indexes str
+		accountsIndexStr := args[7].String()
+		// read segmentInfo Str
+		segmentInfosStr := args[8].String()
+		//check deposit amount
+		// construct deposit signed transferTxInfo
+		// TODO need to optimize
+		amountAndFee := big.NewInt(int64(depositAmount + fee))
+		var accountsIndex []uint32
+		err := json.Unmarshal([]byte(accountsIndexStr), &accountsIndex)
+		if err != nil {
+			return ErrInvalidTransferParams
+		}
+		// parse segmentInfo: []PTransferSegment
+		segments, errStr := FromL1PTransferSegmentJSON(segmentInfosStr, amountAndFee)
+		if errStr != Success {
+			return errStr
+		}
+		relation, err := zecrey.NewPTransferProofRelation(aId, big.NewInt(int64(fee)))
+		if err != nil {
+			return ErrInvalidTransferRelationParams
+		}
+		for _, segment := range segments {
+			err := relation.AddStatement(segment.EncBalance, segment.Pk, segment.Balance, segment.BDelta, segment.Sk)
+			if err != nil {
+				return err.Error()
+			}
+		}
+		transferProof, err := zecrey.ProvePTransfer(relation)
+		if err != nil {
+			return err.Error()
+		}
+		transferTxInfo := &TransferTxInfo{
+			ChainId: cId,
+			// token id
+			AssetId: aId,
+			// account indexes
+			AccountsIndex: accountsIndex,
+			// fee
+			Fee: fee,
+			// transfer proof
+			Proof: transferProof.String(),
+		}
+		l1TxInfo := &L1PrivacyTransferTxInfo{
+			ChainId:       cId,
+			AssetId:       aId,
+			Fee:           fee,
+			DepositAmount: depositAmount,
+			DepositTxHash: depositTxHash,
+			AccountIndex:  accountIndex,
+			TransferTx:    transferTxInfo,
+			WithdrawTo:    withdrawTo,
+		}
+		txBytes, err := json.Marshal(l1TxInfo)
+		if err != nil {
+			return err.Error()
+		}
+		return string(txBytes)
+	})
+	return proveTransferFunc
+}

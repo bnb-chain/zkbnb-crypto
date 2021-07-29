@@ -31,6 +31,9 @@ const (
 	ErrInvalidTransferRelationParams = "ErrInvalidTransferRelationParams"
 	ErrProveTransfer                 = "ErrProveTransfer"
 
+	ErrInvalidL1TransferParams  = "ErrInvalidL1TransferParams"
+	ErrUnableConstructDepositTx = "ErrUnableConstructDepositTx"
+
 	ErrL2SkParams = "ErrL2SkParams"
 
 	ErrInvalidEncParams = "ErrInvalidEncParams"
@@ -38,7 +41,7 @@ const (
 	ErrInvalidDecParams = "ErrInvalidDecParams"
 	ErrElGamalDec       = "ErrElGamalDec"
 
-	ErrInvalidSwapParams = "ErrInvalidSwapParams"
+	ErrInvalidSwapParams         = "ErrInvalidSwapParams"
 	ErrInvalidSwapRelationParams = "ErrInvalidSwapRelationParams"
 
 	Success = "success"
