@@ -8,5 +8,7 @@ require (
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/magiconair/properties v1.8.1
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	gotest.tools v2.2.0+incompatible
 )
+

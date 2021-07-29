@@ -31,5 +31,6 @@ func main() {
 	js.Global().Set("proveWithdraw", wasm.ProveWithdraw())
 	js.Global().Set("proveTransfer", wasm.ProveTransfer())
 	js.Global().Set("proveSwap", wasm.ProveSwap())
+	js.Global().Set("proveL1PrivacyTransfer", wasm.ProveL1PrivacyTransfer())
 	<-make(chan bool)
 }

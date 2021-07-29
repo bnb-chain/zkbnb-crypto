@@ -74,3 +74,10 @@ func TestDecByStartRoutine(t *testing.T) {
 	fmt.Println(time.Since(elapse))
 	assert.Equal(t, res, b, "decryption works correctly")
 }
+
+func TestFakeElGamalEnc(t *testing.T) {
+	CL := curve.ZeroPoint()
+	CR := curve.ScalarMul(curve.H, big.NewInt(100))
+	enc := &ElGamalEnc{CL: CL, CR: CR}
+	fmt.Println(enc.String())
+}

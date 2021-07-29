@@ -85,6 +85,24 @@ func ElgamalDec() js.Func {
 		if !b {
 			return ErrParseBigInt
 		}
+		// if CL is zero point, just dec CR
+		if C.CL.Equal(curve.ZeroPoint()) {
+			if start < 0 || end < 0 || start > end {
+				return ErrInvalidEncParams
+			}
+			base := curve.H
+			current := curve.ZeroPoint()
+			for i := int64(start); i < int64(end); i++ {
+				if current.Equal(C.CR) {
+					return i
+				}
+				if curve.Neg(current).Equal(C.CR) {
+					return -i
+				}
+				current.Add(current, base)
+			}
+			return ErrInvalidEncParams
+		}
 		// call elgamal dec
 		decVal, err := twistedElgamal.DecByStart(C, sk, int64(start), int64(end))
 		if err != nil {

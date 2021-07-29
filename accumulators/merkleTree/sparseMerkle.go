@@ -19,9 +19,7 @@ package merkleTree
 
 import (
 	"bytes"
-	"fmt"
 	"hash"
-	"math/big"
 )
 
 /*
