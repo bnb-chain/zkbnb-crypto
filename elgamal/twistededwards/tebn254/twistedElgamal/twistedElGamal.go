@@ -211,7 +211,7 @@ func DecByStart(enc *ElGamalEnc, sk *big.Int, start int64, Max int64) (*big.Int,
 	gExpr := curve.ScalarMul(enc.CL, skInv)
 	hExpb := curve.Add(enc.CR, curve.Neg(gExpr))
 	base := H
-	current := curve.ZeroPoint()
+	current := curve.ScalarMul(curve.H, big.NewInt(start))
 	for i := start; i <= Max; i++ {
 		if current.Equal(hExpb) {
 			return big.NewInt(i), nil
