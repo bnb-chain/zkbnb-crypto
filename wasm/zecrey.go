@@ -19,8 +19,10 @@ package wasm
 
 import (
 	"encoding/json"
+	"errors"
 	"math/big"
 	"syscall/js"
+	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -35,27 +37,25 @@ import (
 func ProveWithdraw() js.Func {
 	proveWithdrawFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// length of args should be 3
-		if len(args) != 6 {
+		if len(args) != 5 {
 			return ErrInvalidWithdrawParams
 		}
-		chainId := args[0].Int()
-		cId := uint8(chainId)
 		// read assetId
-		assetId := args[1].Int()
+		assetId := args[0].Int()
 		if assetId < 0 {
 			return ErrInvalidWithdrawParams
 		}
 		// transfer assetId to uint32
 		tId := uint32(assetId)
 		// fee
-		feeInt := args[2].Int()
+		feeInt := args[1].Int()
 		fee := uint32(feeInt)
 		// layer 2 address
-		accountIndex := args[3].Int()
+		accountIndex := args[2].Int()
 		// layer 1 address
-		l1addr := args[4].String()
+		l1addr := args[3].String()
 		// read segmentInfo JSON str
-		segmentInfo := args[5].String()
+		segmentInfo := args[4].String()
 		// parse segmentInfo
 		segment, errStr := FromWithdrawSegmentJSON(segmentInfo)
 		if errStr != Success {
@@ -72,7 +72,6 @@ func ProveWithdraw() js.Func {
 			return ErrProveWithdraw
 		}
 		withdrawTx := &WithdrawTxInfo{
-			ChainId:       cId,
 			AssetId:       tId,
 			AccountIndex:  uint32(accountIndex),
 			NativeAddress: l1addr,
@@ -99,32 +98,34 @@ func ProveWithdraw() js.Func {
 */
 func ProveTransfer() js.Func {
 	proveTransferFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		if len(args) != 5 {
+		if len(args) != 4 {
 			return ErrInvalidTransferParams
 		}
-		chainId := args[0].Int()
-		cId := uint8(chainId)
 		// read token id
-		assetId := args[1].Int()
+		assetId := args[0].Int()
 		if assetId < 0 {
 			return ErrInvalidTransferParams
 		}
 		tId := uint32(assetId)
 		// fee
-		feeInt := args[2].Int()
+		feeInt := args[1].Int()
 		if feeInt < 0 {
 			return ErrInvalidTransferParams
 		}
 		fee := uint32(feeInt)
 		// read accounts indexes str
-		accountsIndexStr := args[3].String()
+		accountsIndexStr := args[2].String()
 		// read segmentInfo Str
-		segmentInfosStr := args[4].String()
+		segmentInfosStr := args[3].String()
 
 		var accountsIndex []uint32
 		err := json.Unmarshal([]byte(accountsIndexStr), &accountsIndex)
 		if err != nil {
 			return ErrInvalidTransferParams
+		}
+		// TODO will be deleted
+		if len(accountsIndex) != 3 {
+			return errors.New("err: invalid account size, should be 3").Error()
 		}
 		// parse segmentInfo: []PTransferSegment
 		segments, errStr := FromPTransferSegmentJSON(segmentInfosStr)
@@ -146,7 +147,6 @@ func ProveTransfer() js.Func {
 			return ErrProveTransfer
 		}
 		tx := &TransferTxInfo{
-			ChainId: cId,
 			// token id
 			AssetId: tId,
 			// account indexes
@@ -178,38 +178,39 @@ func ProveTransfer() js.Func {
 func ProveSwap() js.Func {
 	proveSwapFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// length of args should be 8
-		if len(args) != 8 {
+		if len(args) != 7 {
 			return ErrInvalidSwapParams
 		}
-		chainIdFrom := args[0].Int()
-		cIdFrom := uint8(chainIdFrom)
-		chainIdTo := args[1].Int()
-		cIdTo := uint8(chainIdTo)
+		pIndex := args[0].Int()
+		if pIndex < 0 {
+			return ErrInvalidSwapParams
+		}
+		pairIndex := uint32(pIndex)
 		// read fromAssetId
-		fromAssetId := args[2].Int()
+		fromAssetId := args[1].Int()
 		if fromAssetId < 0 {
 			return ErrInvalidSwapParams
 		}
 		// transfer fromAssetId to uint32
 		assetIdFrom := uint32(fromAssetId)
 		// read toAssetId
-		toAssetId := args[3].Int()
+		toAssetId := args[2].Int()
 		if toAssetId < 0 {
 			return ErrInvalidSwapParams
 		}
 		// transfer fromAssetId to uint32
 		assetIdTo := uint32(toAssetId)
 		// fee
-		feeInt := args[4].Int()
+		feeInt := args[3].Int()
 		if feeInt < 0 {
 			return ErrInvalidSwapParams
 		}
 		fee := uint32(feeInt)
 		// account index
-		accountIndexFrom := args[5].Int()
-		accountIndexTo := args[6].Int()
+		accountIndexFrom := args[4].Int()
+		accountIndexTo := args[5].Int()
 		// read segmentInfo JSON str
-		segmentInfo := args[7].String()
+		segmentInfo := args[6].String()
 		// parse segmentInfo
 		segment, errStr := FromSwapSegmentJSON(segmentInfo)
 		if errStr != Success {
@@ -226,15 +227,16 @@ func ProveSwap() js.Func {
 			return ErrProveWithdraw
 		}
 		swapTx := &SwapTxInfo{
-			ChainIdFrom:      cIdFrom,
-			ChainIdTo:        cIdTo,
-			AssetIdFrom:      assetIdFrom,
-			AssetIdTo:        assetIdTo,
+			// pair index
+			PairIndex: pairIndex,
+			AssetAId:  assetIdFrom,
+			AssetBId:  assetIdTo,
+			// account index
 			AccountIndexFrom: uint32(accountIndexFrom),
 			AccountIndexTo:   uint32(accountIndexTo),
 			Fee:              fee,
-			BStarFrom:        segment.BStarFrom,
-			BStarTo:          segment.BStarTo,
+			DeltaX:           segment.BStarFrom,
+			DeltaY:           segment.BStarTo,
 			Proof:            swapProofPart1.String(),
 		}
 		txBytes, err := json.Marshal(swapTx)
@@ -320,7 +322,6 @@ func ProveL1PrivacyTransfer() js.Func {
 			return err.Error()
 		}
 		transferTxInfo := &TransferTxInfo{
-			ChainId: cId,
 			// token id
 			AssetId: aId,
 			// account indexes
@@ -347,4 +348,138 @@ func ProveL1PrivacyTransfer() js.Func {
 		return string(txBytes)
 	})
 	return proveTransferFunc
+}
+
+/*
+	ProveAddLiquidity: add liquidity
+	TODO need to rewrite
+*/
+func ProveAddLiquidity() js.Func {
+	proveAddLiquidityFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		// length of args should be 8
+		if len(args) != 9 {
+			return ErrInvalidAddLiquidityParams
+		}
+		// account index
+		aIndex := args[0].Int()
+		accountIndex := uint32(aIndex)
+		// pair index
+		pIndex := args[1].Int()
+		pairIndex := uint32(pIndex)
+		// delta x
+		dX := args[2].Int()
+		deltaX := uint32(dX)
+		// delta y
+		dY := args[3].Int()
+		deltaY := uint32(dY)
+		// sk
+		skStr := args[4].String()
+		sk, b := new(big.Int).SetString(skStr, 10)
+		if !b {
+			return ErrParseBigInt
+		}
+		// asset a balance enc
+		assetABalanceEnc := args[5].String()
+		// asset a balance
+		assetABalance := args[6].Int()
+		// check balance is correct
+		assetARawBalanceEnc, err := twistedElgamal.FromString(assetABalanceEnc)
+		if err != nil {
+			return ErrInvalidDecParams
+		}
+		amount, err := twistedElgamal.DecByStart(assetARawBalanceEnc, sk, int64(assetABalance), int64(assetABalance)+1)
+		if err != nil {
+			return ErrInvalidDecParams
+		}
+		if amount.Int64() != int64(assetABalance) {
+			return ErrInvalidDecParams
+		}
+		// asset b balance enc
+		assetBBalanceEnc := args[7].String()
+		// asset b balance
+		assetBBalance := args[8].Int()
+		// check balance is correct
+		assetBRawBalanceEnc, err := twistedElgamal.FromString(assetBBalanceEnc)
+		if err != nil {
+			return ErrInvalidDecParams
+		}
+		amount, err = twistedElgamal.DecByStart(assetBRawBalanceEnc, sk, int64(assetBBalance), int64(assetBBalance)+1)
+		if err != nil {
+			return ErrInvalidDecParams
+		}
+		if amount.Int64() != int64(assetBBalance) {
+			return ErrInvalidDecParams
+		}
+		if dX > assetABalance {
+			return ErrInvalidAddLiquidityParams
+		}
+		if dY > assetBBalance {
+			return ErrInvalidAddLiquidityParams
+		}
+		addLiquidityTx := &AddLiquidityTxAo{
+			AccountIndex: accountIndex,
+			PairIndex:    pairIndex,
+			DeltaX:       deltaX,
+			DeltaY:       deltaY,
+		}
+		txBytes, err := json.Marshal(addLiquidityTx)
+		if err != nil {
+			return ErrMarshalTx
+		}
+		return string(txBytes)
+	})
+	return proveAddLiquidityFunc
+}
+
+/*
+	ProveRemoveLiquidity: remove liquidity
+	TODO need to rewrite
+*/
+func ProveRemoveLiquidity() js.Func {
+	proveRemoveLiquidityFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		// length of args should be 8
+		if len(args) != 6 {
+			return ErrInvalidRemoveLiquidityParams
+		}
+		// account index
+		aIndex := args[0].Int()
+		accountIndex := uint32(aIndex)
+		// pair index
+		pIndex := args[1].Int()
+		pairIndex := uint32(pIndex)
+		// sk
+		skStr := args[2].String()
+		sk, b := new(big.Int).SetString(skStr, 10)
+		if !b {
+			return ErrParseBigInt
+		}
+		// lp balance enc
+		// asset lp balance enc
+		lpEnc := args[3].String()
+		totalLpAmount := args[4].Int()
+		lpAmount := args[5].Int()
+		// check balance is correct
+		lpRawEnc, err := twistedElgamal.FromString(lpEnc)
+		if err != nil {
+			return ErrInvalidDecParams
+		}
+		amount, err := twistedElgamal.DecByStart(lpRawEnc, sk, int64(totalLpAmount), int64(totalLpAmount)+1)
+		if err != nil {
+			return ErrInvalidDecParams
+		}
+		if amount.Int64() != int64(totalLpAmount) {
+			return ErrInvalidDecParams
+		}
+		removeLiquidityTx := &RemoveLiquidityTxAo{
+			AccountIndex: accountIndex,
+			PairIndex:    pairIndex,
+			LpAmount:     uint32(lpAmount),
+		}
+		txBytes, err := json.Marshal(removeLiquidityTx)
+		if err != nil {
+			return ErrMarshalTx
+		}
+		return string(txBytes)
+	})
+	return proveRemoveLiquidityFunc
 }

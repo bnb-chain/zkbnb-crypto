@@ -44,5 +44,9 @@ const (
 	ErrInvalidSwapParams         = "ErrInvalidSwapParams"
 	ErrInvalidSwapRelationParams = "ErrInvalidSwapRelationParams"
 
+	ErrInvalidAddLiquidityParams = "ErrInvalidAddLiquidityParams"
+
+	ErrInvalidRemoveLiquidityParams = "ErrInvalidRemoveLiquidityParams"
+
 	Success = "success"
 )

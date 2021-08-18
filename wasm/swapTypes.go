@@ -99,20 +99,18 @@ func FromSwapSegmentJSON(segmentStr string) (*SwapSegment, string) {
 }
 
 type SwapTxInfo struct {
-	// chain id
-	ChainIdFrom uint8
-	ChainIdTo   uint8
-	// token id
-	AssetIdFrom uint32
-	AssetIdTo   uint32
+	// pair index
+	PairIndex uint32
+	AssetAId  uint32
+	AssetBId  uint32
 	// account index
 	AccountIndexFrom uint32
 	AccountIndexTo   uint32
 	// fee
 	Fee uint32
 	// swap amount
-	BStarFrom *big.Int
-	BStarTo   *big.Int
+	DeltaX *big.Int
+	DeltaY *big.Int
 	// swap proof
 	Proof string
 }

@@ -106,8 +106,6 @@ func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
 }
 
 type TransferTxInfo struct {
-	// chain id
-	ChainId uint8
 	// token id
 	AssetId uint32
 	// account indexes

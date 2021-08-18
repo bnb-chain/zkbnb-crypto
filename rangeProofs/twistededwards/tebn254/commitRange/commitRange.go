@@ -90,11 +90,7 @@ func Prove(b *big.Int, r *big.Int, T *Point, rs [RangeMaxBits]*big.Int, g, h *Po
 	var A2 *Point
 	for i, bi := range bsInt {
 		A2 = curve.Add(proof.As[i], base)
-		if bi == 0 {
-			go computeBitProofRoutine(rs[i], proof.As[i], A2, proof.H, c1, c2, proof, i, true)
-		} else {
-			go computeBitProofRoutine(rs[i], proof.As[i], A2, proof.H, c1, c2, proof, i, false)
-		}
+		go computeBitProofRoutine(rs[i], proof.As[i], A2, proof.H, c1, c2, proof, i, bi == 0)
 		base.Double(base)
 	}
 	for i := 0; i < RangeMaxBits; i++ {

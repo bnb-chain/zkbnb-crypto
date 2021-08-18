@@ -60,19 +60,50 @@ func TestEncDec(t *testing.T) {
 
 func TestDecByStartRoutine(t *testing.T) {
 	sk, pk := GenKeyPair()
-	b := big.NewInt(-24029)
+	b := big.NewInt(100000)
 	r := curve.RandomValue()
-	max := int64(100000)
+	max := int64(4294967295)
 	enc, _ := Enc(b, r, pk)
 	fmt.Println(sk.String())
 	fmt.Println(enc.String())
-	elapse := time.Now()
-	res, err := DecByStart(enc, sk, 0, max)
-	if err != nil {
-		t.Error(err)
+	allElapse := int64(0)
+	for i := 0; i < 5; i++ {
+		elapse := time.Now()
+		_, err := DecByStart(enc, sk, 0, max)
+		if err != nil {
+			t.Error(err)
+		}
+		//fmt.Println(time.Since(elapse))
+		allElapse += time.Since(elapse).Milliseconds()
 	}
-	fmt.Println(time.Since(elapse))
-	assert.Equal(t, res, b, "decryption works correctly")
+	fmt.Println(allElapse / 5)
+	assert.Equal(t, b, b, "decryption works correctly")
+}
+
+func TestDec(t *testing.T) {
+	enc, err := FromString("vnD6I3qhOKPp2JpRNCShZnEmeCSC6DgXh8wr+GpKsh6mVVIxi2eRBYI4snGqXedK64+THIk5+/UfiH4IGJqEGg==")
+	if err != nil {
+		t.Fatal(err)
+	}
+	delta, err := FromString("9pYkX+HnCWWFagTuizryd4tnB0I4cz9fPGMUPT2vM5dBYBngm2oFJuZQutj6S/8bZjNamJ5o9sKsEIjqd5uSoA==")
+	if err != nil {
+		t.Fatal(err)
+	}
+	newEnc, err := EncAdd(enc, delta)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(newEnc.String())
+	sk, b := new(big.Int).SetString("58701357177140449605359986386991314012065100879587586149814219788744791162880", 10)
+	if !b {
+		t.Fatal("cannot parse sk")
+	}
+	res, err := Dec(newEnc, sk, 100000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(res.String())
+
 }
 
 func TestFakeElGamalEnc(t *testing.T) {

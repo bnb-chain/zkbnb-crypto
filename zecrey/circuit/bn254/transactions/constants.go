@@ -35,7 +35,7 @@ type (
 )
 
 const (
-	NbTxs                 = 2
+	NbTxs                 = 20
 	AccountMerkleLevels   = std.AccountMerkleLevels
 	NbTransferCount       = std.NbTransferCount
 	NbTransferCountAndFee = NbTransferCount + 1
