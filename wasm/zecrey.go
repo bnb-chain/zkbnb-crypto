@@ -37,25 +37,29 @@ import (
 func ProveWithdraw() js.Func {
 	proveWithdrawFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// length of args should be 3
-		if len(args) != 5 {
+		if len(args) != 6 {
+			return ErrInvalidWithdrawParams
+		}
+		chainId := args[0].Int()
+		if chainId < 0 {
 			return ErrInvalidWithdrawParams
 		}
 		// read assetId
-		assetId := args[0].Int()
+		assetId := args[1].Int()
 		if assetId < 0 {
 			return ErrInvalidWithdrawParams
 		}
 		// transfer assetId to uint32
 		tId := uint32(assetId)
 		// fee
-		feeInt := args[1].Int()
+		feeInt := args[2].Int()
 		fee := uint32(feeInt)
 		// layer 2 address
-		accountIndex := args[2].Int()
+		accountIndex := args[3].Int()
 		// layer 1 address
-		l1addr := args[3].String()
+		l1addr := args[4].String()
 		// read segmentInfo JSON str
-		segmentInfo := args[4].String()
+		segmentInfo := args[5].String()
 		// parse segmentInfo
 		segment, errStr := FromWithdrawSegmentJSON(segmentInfo)
 		if errStr != Success {
@@ -72,6 +76,7 @@ func ProveWithdraw() js.Func {
 			return ErrProveWithdraw
 		}
 		withdrawTx := &WithdrawTxInfo{
+			ChainId:       uint8(chainId),
 			AssetId:       tId,
 			AccountIndex:  uint32(accountIndex),
 			NativeAddress: l1addr,

@@ -81,6 +81,8 @@ func FromWithdrawSegmentJSON(segmentStr string) (*WithdrawSegment, string) {
 }
 
 type WithdrawTxInfo struct {
+	// chain id
+	ChainId uint8
 	// token id
 	AssetId uint32
 	// zecrey index
