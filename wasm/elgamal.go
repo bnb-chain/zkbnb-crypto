@@ -132,14 +132,14 @@ func ElgamalRawDec() js.Func {
 		if err != nil {
 			return ErrParseEnc
 		}
+		// if CL is zero point, just return CR
+		if C.CL.Equal(curve.ZeroPoint()) {
+			return curve.ToString(C.CR)
+		}
 		// parse sk
 		sk, b := new(big.Int).SetString(skStr, 10)
 		if !b {
 			return ErrParseBigInt
-		}
-		// if CL is zero point, just return CR
-		if C.CL.Equal(curve.ZeroPoint()) {
-			return C.CR
 		}
 		// call elgamal dec
 		// (pk^r)^{sk^{-1}}
