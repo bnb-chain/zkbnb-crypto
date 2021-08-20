@@ -121,7 +121,7 @@ func ElgamalDec() js.Func {
 */
 func ElgamalRawDec() js.Func {
 	elgamalRawDecFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		if len(args) != 4 {
+		if len(args) != 2 {
 			return ErrInvalidDecParams
 		}
 		// read values
