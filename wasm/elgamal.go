@@ -22,6 +22,7 @@ import (
 	"syscall/js"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
+	"zecrey-crypto/ffmath"
 )
 
 /*
@@ -111,4 +112,41 @@ func ElgamalDec() js.Func {
 		return decVal.Int64()
 	})
 	return elgamalDecFunc
+}
+
+/*
+	ElgamalRawDec: raw dec function for ElGamalEnc
+	@CStr: string of encryption value(ElGamalEnc)
+	@skStr: string of sk
+*/
+func ElgamalRawDec() js.Func {
+	elgamalRawDecFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		if len(args) != 4 {
+			return ErrInvalidDecParams
+		}
+		// read values
+		CStr := args[0].String()
+		skStr := args[1].String()
+		// parse C
+		C, err := twistedElgamal.FromString(CStr)
+		if err != nil {
+			return ErrParseEnc
+		}
+		// parse sk
+		sk, b := new(big.Int).SetString(skStr, 10)
+		if !b {
+			return ErrParseBigInt
+		}
+		// if CL is zero point, just return CR
+		if C.CL.Equal(curve.ZeroPoint()) {
+			return C.CR
+		}
+		// call elgamal dec
+		// (pk^r)^{sk^{-1}}
+		skInv := ffmath.ModInverse(sk, curve.Order)
+		gExpr := curve.ScalarMul(C.CL, skInv)
+		hExpb := curve.Add(C.CR, curve.Neg(gExpr))
+		return curve.ToString(hExpb)
+	})
+	return elgamalRawDecFunc
 }
