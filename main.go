@@ -28,6 +28,7 @@ func main() {
 	js.Global().Set("getL2PublicKey", wasm.GetL2PublicKey())
 	js.Global().Set("elgamalEnc", wasm.ElgamalEnc())
 	js.Global().Set("elgamalDec", wasm.ElgamalDec())
+	js.Global().Set("elgamalRawDec", wasm.ElgamalRawDec())
 	js.Global().Set("proveWithdraw", wasm.ProveWithdraw())
 	js.Global().Set("proveTransfer", wasm.ProveTransfer())
 	js.Global().Set("proveSwap", wasm.ProveSwap())

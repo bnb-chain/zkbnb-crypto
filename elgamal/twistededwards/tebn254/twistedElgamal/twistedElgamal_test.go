@@ -106,6 +106,11 @@ func TestDec(t *testing.T) {
 
 }
 
+func TestGenKeyPair(t *testing.T) {
+	_, pk := GenKeyPair()
+	fmt.Println(curve.ToString(pk))
+}
+
 func TestFakeElGamalEnc(t *testing.T) {
 	CL := curve.ZeroPoint()
 	CR := curve.ScalarMul(curve.H, big.NewInt(100))
