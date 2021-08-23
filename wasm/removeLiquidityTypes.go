@@ -22,4 +22,5 @@ type RemoveLiquidityTxAo struct {
 	AccountIndex uint32
 	PairIndex    uint32
 	LpAmount     uint32
+	LpEnc        string
 }

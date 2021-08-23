@@ -426,6 +426,8 @@ func ProveAddLiquidity() js.Func {
 			PairIndex:    pairIndex,
 			DeltaX:       deltaX,
 			DeltaY:       deltaY,
+			BalanceEncX:  assetABalanceEnc,
+			BalanceEncY:  assetBBalanceEnc,
 		}
 		txBytes, err := json.Marshal(addLiquidityTx)
 		if err != nil {
@@ -479,6 +481,7 @@ func ProveRemoveLiquidity() js.Func {
 			AccountIndex: accountIndex,
 			PairIndex:    pairIndex,
 			LpAmount:     uint32(lpAmount),
+			LpEnc:        lpEnc,
 		}
 		txBytes, err := json.Marshal(removeLiquidityTx)
 		if err != nil {
