@@ -34,10 +34,11 @@ func TestWithdrawProofCircuit_Define(t *testing.T) {
 	assert := groth16.NewAssert(t)
 
 	var circuit, witness WithdrawProofConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
+	r1cs, err := frontend.Compile(ecc.BN254, backend.PLONK, &circuit)
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println(r1cs.GetNbConstraints())
 	for i := 0; i < 1; i++ {
 		// generate withdraw proof
 		sk, pk := twistedElgamal.GenKeyPair()

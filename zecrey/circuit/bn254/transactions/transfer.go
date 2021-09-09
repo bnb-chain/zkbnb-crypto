@@ -64,7 +64,7 @@ func (circuit *TransferTxConstraints) Define(curveID ecc.ID, cs *ConstraintSyste
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID)
+	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID, cs)
 
 	VerifyTransferTx(cs, *circuit, params, hFunc)
 

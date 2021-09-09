@@ -19,9 +19,10 @@ package std
 
 // nodeSum returns the hash created from data inserted to form a leaf.
 // Without domain separation.
-func nodeSum(cs *ConstraintSystem, h MiMC, a, b Variable) Variable {
-
-	res := h.Hash(cs, a, b)
+func nodeSum(h MiMC, a, b Variable) Variable {
+	h.Write(a)
+	h.Write(b)
+	res := h.Sum()
 
 	return res
 }
@@ -40,7 +41,7 @@ func VerifyMerkleProof(cs *ConstraintSystem, isEnabled Variable, h MiMC, merkleR
 		cs.AssertIsBoolean(helper[i-1])
 		d1 := cs.Select(helper[i-1], proofSet[i], node)
 		d2 := cs.Select(helper[i-1], node, proofSet[i])
-		node = nodeSum(cs, h, d1, d2)
+		node = nodeSum(h, d1, d2)
 	}
 	// Compare our calculated Merkle root to the desired Merkle root.
 	IsVariableEqual(cs, isEnabled, node, merkleRoot)

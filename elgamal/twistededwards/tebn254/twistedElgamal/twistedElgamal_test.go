@@ -107,8 +107,19 @@ func TestDec(t *testing.T) {
 }
 
 func TestGenKeyPair(t *testing.T) {
-	_, pk := GenKeyPair()
-	fmt.Println(curve.ToString(pk))
+	sk, pk := GenKeyPair()
+	enc, err := Enc(big.NewInt(100000), big.NewInt(444211), pk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ellapse := time.Now()
+	fmt.Println(enc.String())
+	fmt.Println(sk.String())
+	_, err = Dec(enc, sk, 10000000000)
+	fmt.Println(time.Since(ellapse))
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestFakeElGamalEnc(t *testing.T) {

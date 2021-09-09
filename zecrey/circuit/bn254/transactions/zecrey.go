@@ -67,7 +67,7 @@ func (circuit *BlockConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) er
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID)
+	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID, cs)
 
 	VerifyBlock(cs, *circuit, curveID, params, hFunc)
 

@@ -65,7 +65,7 @@ func (circuit *SwapTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) e
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID)
+	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID, cs)
 
 	VerifySwapTx(cs, *circuit, params, hFunc)
 
