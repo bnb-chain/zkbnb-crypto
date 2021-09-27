@@ -15,8 +15,28 @@
  *
  */
 
-package zecrey
+package ctrange
 
-func notNullElGamal(C *ElGamalEnc) bool {
-	return C != nil && C.CL != nil && C.CR != nil
+import (
+	"math"
+)
+
+/*
+	toBinary receives as input a bigint x and outputs an array of integers such that
+	x = sum(xi.2^i), i.e. it returns the decomposition of x into base 2.
+*/
+func toBinary(x int64, l int64) ([]int, error) {
+	var (
+		resultBigInt []int
+		i            int64
+	)
+	resultBigInt = make([]int, l)
+	two := float64(2)
+	i = 0
+	for i < l {
+		resultBigInt[i] = int(math.Mod(float64(x), two))
+		x = x / int64(two)
+		i = i + 1
+	}
+	return resultBigInt, nil
 }

@@ -30,7 +30,7 @@ import (
 
 func TestProveAndVerify(t *testing.T) {
 	for i := 0; i < 1; i++ {
-		b := big.NewInt(8)
+		b := big.NewInt(1)
 		var rs [RangeMaxBits]*big.Int
 		sum := big.NewInt(0)
 		for i := 0; i < RangeMaxBits; i++ {
@@ -46,6 +46,7 @@ func TestProveAndVerify(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		fmt.Println(curve.Count)
 		fmt.Println(time.Since(elapse))
 		proofBytes := proof.Bytes()
 		proofCopy, err := FromBytes(proofBytes)
@@ -58,6 +59,7 @@ func TestProveAndVerify(t *testing.T) {
 			t.Fatal(err)
 		}
 		res, err := proofCopy.Verify()
+		fmt.Println(curve.Count)
 		res, err = proofCheck.Verify()
 		if err != nil {
 			t.Fatal(err)

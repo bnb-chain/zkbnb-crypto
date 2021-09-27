@@ -20,6 +20,7 @@ package std
 import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
+	"zecrey-crypto/ffmath"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 )
 
@@ -28,11 +29,14 @@ type ComRangeProofConstraints struct {
 	Cas, Cbs [RangeMaxBits]Point
 	Zas, Zbs [RangeMaxBits]Variable
 	// public statements
-	T         Point
-	G         Point
-	As        [RangeMaxBits]Point
-	C1, C2    Variable
-	IsEnabled Variable
+	T                    Point
+	G                    Point
+	As                   [RangeMaxBits]Point
+	C1, C2               Variable
+	C                    Variable
+	A_A                  Point
+	Z_alpha_r, Z_alpha_b Variable
+	IsEnabled            Variable
 }
 
 // define for range proof test
@@ -67,6 +71,14 @@ func verifyComRangeProof(
 	}
 	// check commitment first
 	IsPointEqual(cs, proof.IsEnabled, TCheck, proof.T)
+	// check h^{z_{\alpha_{r}}} g^{z_{\alpha_{b}}} = A_A A^c
+	var l1, hzb, r1 Point
+	l1.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Z_alpha_r, params)
+	l1.AddGeneric(cs, &l1, hzb.ScalarMulNonFixedBase(cs, &proof.G, proof.Z_alpha_b, params), params)
+	r1.ScalarMulNonFixedBase(cs, &proof.T, proof.C, params)
+	r1.AddGeneric(cs, &r1, &proof.A_A, params)
+	IsPointEqual(cs, proof.IsEnabled, l1, r1)
+	// check A_i
 	base := Neg(cs, proof.G, params)
 	var A2 Point
 	for i, A1 := range proof.As {
@@ -140,6 +152,13 @@ func setComRangeProofWitness(proof *commitRange.ComRangeProof, isEnabled bool) (
 	}
 	witness.C1.Assign(proof.C1)
 	witness.C2.Assign(proof.C2)
+	witness.A_A, err = SetPointWitness(proof.A_A)
+	if err != nil {
+		return witness, err
+	}
+	witness.Z_alpha_r.Assign(proof.Z_alpha_r)
+	witness.Z_alpha_b.Assign(proof.Z_alpha_b)
+	witness.C.Assign(ffmath.Xor(proof.C1, proof.C2))
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

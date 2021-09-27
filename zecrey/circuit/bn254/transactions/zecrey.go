@@ -83,10 +83,10 @@ func VerifyBlock(cs *ConstraintSystem, block BlockConstraints, curveID ecc.ID, p
 	}
 	for i := 0; i < NbTxs; i++ {
 		// set transaction type
-		block.Transactions[i].DepositTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(DepositTxType)), curveID)
-		block.Transactions[i].TransferTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(TransferTxType)), curveID)
-		block.Transactions[i].SwapTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(SwapTxType)), curveID)
-		block.Transactions[i].WithdrawTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(WithdrawTxType)), curveID)
+		block.Transactions[i].DepositTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(DepositTxType)))
+		block.Transactions[i].TransferTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(TransferTxType)))
+		block.Transactions[i].SwapTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(SwapTxType)))
+		block.Transactions[i].WithdrawTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(WithdrawTxType)))
 
 		// set transaction old root and new root
 		block.Transactions[i].DepositTransaction.OldAccountRoot = block.OldAccountRoots[i]

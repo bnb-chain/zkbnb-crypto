@@ -37,11 +37,16 @@ const (
 	PointSize             = curve.PointSize
 	RangeProofSize        = commitRange.RangeProofSize
 	WithdrawProofSize     = 21*PointSize + RangeProofSize + 2*8
+	OneMillion            = 1000000
+	FourBytes             = 4
+	EightBytes            = 8
 	TransferSubProofCount = 3
 	TransferSubProofSize  = 24*PointSize + RangeProofSize
 	TransferProofSize     = 3*TransferSubProofSize + 9*PointSize + 8
 	SwapProofPartSize     = 28*PointSize + RangeProofSize + 3*8
-	SwapProofSize         = 2 * SwapProofPartSize
+
+	SwapProofSize2 = 35*PointSize + 2*RangeProofSize + 5*4 + 2*8
+	SwapProofSize  = 2 * SwapProofPartSize
 )
 
 var (

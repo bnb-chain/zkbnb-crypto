@@ -15,30 +15,36 @@
  *
  */
 
-package binary
+package std
 
 import (
 	"fmt"
-	"math/big"
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend"
+	"github.com/consensys/gnark/backend/groth16"
+	"github.com/consensys/gnark/frontend"
 	"testing"
-	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
-var (
-	H = curve.H
-)
-
-func TestProveAndVerify(t *testing.T) {
-	m := 0
-	r := curve.RandomValue()
-	c, _ := pedersen.Commit(big.NewInt(int64(m)), r, G, H)
-	ca, cb, f, za, zb, err := Prove(m, r)
+func TestVerifyRangeProof(t *testing.T) {
+	proof, err := ctrange.Prove(1, curve.G, curve.H)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
-	fmt.Println(curve.Count)
-	isValid, _ := Verify(c, ca, cb, f, za, zb)
-	fmt.Println(curve.Count)
-	fmt.Println(isValid)
+
+	assert := groth16.NewAssert(t)
+	var circuit, witness RangeProofConstraints
+	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("constraints:", r1cs.GetNbConstraints())
+	witness, err = setRangeProofWitness(proof, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.SolvingSucceeded(r1cs, &witness)
 }

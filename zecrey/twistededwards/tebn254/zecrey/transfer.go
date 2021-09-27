@@ -32,7 +32,7 @@ import (
 
 var ownershipChan = make(chan int, 1)
 var simChan = make(chan int, TransferSubProofCount-1)
-var rangeChan = make(chan int, TransferSubProofSize)
+var rangeChan = make(chan int, TransferSubProofCount)
 
 func ProvePTransfer(relation *PTransferProofRelation) (proof *PTransferProof, err error) {
 	if relation == nil || relation.Statements == nil || len(relation.Statements) != TransferSubProofCount {

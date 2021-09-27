@@ -17,6 +17,3 @@
 
 package zecrey
 
-func notNullElGamal(C *ElGamalEnc) bool {
-	return C != nil && C.CL != nil && C.CR != nil
-}

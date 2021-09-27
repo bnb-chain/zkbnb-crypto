@@ -238,16 +238,16 @@ type PTransferProofRelation struct {
 	G          *Point
 	H          *Point
 	Ht         *Point
-	Pt         *Point
-	TokenId    uint32
+	Pt      *Point
+	AssetId uint32
 }
 
-func NewPTransferProofRelation(tokenId uint32, fee *big.Int) (*PTransferProofRelation, error) {
+func NewPTransferProofRelation(assetId uint32, fee *big.Int) (*PTransferProofRelation, error) {
 	if fee.Cmp(Zero) < 0 {
 		return nil, ErrInvalidParams
 	}
-	Ht := curve.ScalarMul(H, big.NewInt(int64(tokenId)))
-	return &PTransferProofRelation{G: G, H: H, Ht: Ht, TokenId: tokenId, Fee: fee}, nil
+	Ht := curve.ScalarMul(H, big.NewInt(int64(assetId)))
+	return &PTransferProofRelation{G: G, H: H, Ht: Ht, AssetId: assetId, Fee: fee}, nil
 }
 
 func (relation *PTransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b *big.Int, bDelta *big.Int, sk *big.Int) (err error) {
@@ -388,7 +388,7 @@ type PTransferProofStatement struct {
 	// rs
 	Rs [RangeMaxBits]*big.Int
 	// token id
-	TokenId uint32
+	AssetId uint32
 }
 
 type transferCommitValues struct {

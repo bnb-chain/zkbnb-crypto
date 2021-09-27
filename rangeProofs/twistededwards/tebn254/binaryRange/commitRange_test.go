@@ -42,11 +42,13 @@ func TestProveAndVerify(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		fmt.Println(curve.Count)
 		fmt.Println(time.Since(elapse))
 		res, err := proof.Verify()
 		if err != nil {
 			t.Fatal(err)
 		}
+		fmt.Println(curve.Count)
 		assert.Equal(t, res, true, "ComRangeProof works correctly")
 	}
 }

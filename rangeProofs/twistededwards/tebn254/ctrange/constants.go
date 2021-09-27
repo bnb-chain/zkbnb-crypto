@@ -15,8 +15,23 @@
  *
  */
 
-package zecrey
+package ctrange
 
-func notNullElGamal(C *ElGamalEnc) bool {
-	return C != nil && C.CL != nil && C.CR != nil
-}
+import (
+	"math/big"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+)
+
+const (
+	RangeMaxBits   = 32
+	RangeProofSize = RangeMaxBits*2*PointSize + 4*PointSize
+	PointSize      = 32
+	ErrCode        = -1
+)
+
+var (
+	Order = curve.Order
+	Q, _  = new(big.Int).SetString("21888242871839275222246405745257275088548364400416034343698204186575808495617", 10)
+)
+
+type Point = curve.Point
