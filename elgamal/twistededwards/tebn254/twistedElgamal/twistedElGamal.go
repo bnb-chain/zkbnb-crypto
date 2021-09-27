@@ -223,3 +223,15 @@ func DecByStart(enc *ElGamalEnc, sk *big.Int, start int64, Max int64) (*big.Int,
 	}
 	return nil, ErrDec
 }
+
+func RawDec(enc *ElGamalEnc, sk *big.Int) (*Point, error) {
+	if enc == nil || sk == nil {
+		return nil, ErrParams
+	}
+	// (pk^r)^{sk^{-1}}
+	skInv := ffmath.ModInverse(sk, Order)
+	gExpr := curve.ScalarMul(enc.CL, skInv)
+	// h^b = (C_R)/(C_L)^{sk^{-1}}
+	hExpb := curve.Add(enc.CR, curve.Neg(gExpr))
+	return hExpb, nil
+}

@@ -88,6 +88,7 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	fmt.Println("verify time:", time.Since(elapse))
 	proofBytes = proof.Bytes()
 	proof, err = ParseTransferProofBytes(proofBytes)
 	if err != nil {

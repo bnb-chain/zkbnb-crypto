@@ -85,8 +85,6 @@ func TestAdd(t *testing.T) {
 	fmt.Println(A1)
 }
 
-var ch = make(chan int, 1)
-
 func TestAssign(t *testing.T) {
 	//A := ScalarBaseMul(big.NewInt(230928302))
 	//fmt.Println(A.X)

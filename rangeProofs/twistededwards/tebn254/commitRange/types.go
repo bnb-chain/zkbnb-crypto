@@ -26,6 +26,11 @@ type ComRangeProof struct {
 	// 0 or 2^i commitment proof
 	Cas, Cbs [RangeMaxBits]*Point
 	Zas, Zbs [RangeMaxBits]*big.Int
+	// A_A
+	A_A *Point
+	// Z_{\alpha_{r}}
+	Z_alpha_r, Z_alpha_b *big.Int
+	// Z_{\alpha_{b}}
 	// public statements
 	T, G, H *Point
 	// commitment to each bit
@@ -34,6 +39,8 @@ type ComRangeProof struct {
 }
 
 const size = PointSize * 5
+
+// serialize methods
 
 func (proof *ComRangeProof) Bytes() []byte {
 	res := make([]byte, RangeProofSize)
@@ -49,6 +56,9 @@ func (proof *ComRangeProof) Bytes() []byte {
 	copy(res[size*RangeMaxBits+PointSize*2:size*RangeMaxBits+PointSize*3], proof.H.Marshal())
 	copy(res[size*RangeMaxBits+PointSize*3:size*RangeMaxBits+PointSize*4], proof.C1.FillBytes(make([]byte, PointSize)))
 	copy(res[size*RangeMaxBits+PointSize*4:size*RangeMaxBits+PointSize*5], proof.C2.FillBytes(make([]byte, PointSize)))
+	copy(res[size*RangeMaxBits+PointSize*5:size*RangeMaxBits+PointSize*6], proof.A_A.Marshal())
+	copy(res[size*RangeMaxBits+PointSize*6:size*RangeMaxBits+PointSize*7], proof.Z_alpha_r.FillBytes(make([]byte, PointSize)))
+	copy(res[size*RangeMaxBits+PointSize*7:size*RangeMaxBits+PointSize*8], proof.Z_alpha_b.FillBytes(make([]byte, PointSize)))
 	return res
 }
 
@@ -104,6 +114,9 @@ func FromBytes(proofBytes []byte) (*ComRangeProof, error) {
 	proof.H = new(Point)
 	proof.C1 = new(big.Int)
 	proof.C2 = new(big.Int)
+	proof.A_A = new(Point)
+	proof.Z_alpha_r = new(big.Int)
+	proof.Z_alpha_b = new(big.Int)
 	readSize, err := proof.T.SetBytes(proofBytes[size*RangeMaxBits : size*RangeMaxBits+PointSize])
 	if err != nil {
 		return nil, err
@@ -127,5 +140,14 @@ func FromBytes(proofBytes []byte) (*ComRangeProof, error) {
 	}
 	proof.C1.SetBytes(proofBytes[size*RangeMaxBits+PointSize*3 : size*RangeMaxBits+PointSize*4])
 	proof.C2.SetBytes(proofBytes[size*RangeMaxBits+PointSize*4 : size*RangeMaxBits+PointSize*5])
+	readSize, err = proof.A_A.SetBytes(proofBytes[size*RangeMaxBits+PointSize*5 : size*RangeMaxBits+PointSize*6])
+	if err != nil {
+		return nil, err
+	}
+	if readSize != PointSize {
+		return nil, ErrInvalidPointBytes
+	}
+	proof.Z_alpha_r.SetBytes(proofBytes[size*RangeMaxBits+PointSize*6 : size*RangeMaxBits+PointSize*7])
+	proof.Z_alpha_b.SetBytes(proofBytes[size*RangeMaxBits+PointSize*7 : size*RangeMaxBits+PointSize*8])
 	return proof, nil
 }

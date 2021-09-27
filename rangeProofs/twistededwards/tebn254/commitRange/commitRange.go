@@ -86,6 +86,12 @@ func Prove(b *big.Int, r *big.Int, T *Point, rs [RangeMaxBits]*big.Int, g, h *Po
 	base := curve.Neg(proof.G)
 	proof.C1 = c1
 	proof.C2 = c2
+	// A_A = g^{\alpha_{b}} h^{\alpha_{r}}
+	alphar := curve.RandomValue()
+	alphab := curve.RandomValue()
+	proof.A_A = curve.Add(curve.ScalarMul(proof.G, alphab), curve.ScalarMul(proof.H, alphar))
+	proof.Z_alpha_r = ffmath.AddMod(alphar, ffmath.Multiply(c, r), Order)
+	proof.Z_alpha_b = ffmath.AddMod(alphab, ffmath.Multiply(c, b), Order)
 	// A2 = A1 h^{-2^i}
 	var A2 *Point
 	for i, bi := range bsInt {
@@ -134,6 +140,13 @@ func (proof *ComRangeProof) Verify() (bool, error) {
 	if !ffmath.Equal(cCheck, c) {
 		return false, ErrInvalidRangeParams
 	}
+	// check g^{z_{\alpha_{b}}} h^{z_{\alpha_{r}}} = A_A A^c
+	l1 := curve.Add(curve.ScalarMul(proof.G, proof.Z_alpha_b), curve.ScalarMul(proof.H, proof.Z_alpha_r))
+	r1 := curve.Add(proof.A_A, curve.ScalarMul(proof.T, c))
+	if !l1.Equal(r1) {
+		return false, ErrInvalidRangeParams
+	}
+	// check A_i
 	base := curve.Neg(proof.G)
 	for i, A1 := range proof.As {
 		A2 := curve.Add(A1, base)

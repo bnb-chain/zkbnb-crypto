@@ -17,6 +17,12 @@
 
 package zecrey
 
-func notNullElGamal(C *ElGamalEnc) bool {
-	return C != nil && C.CL != nil && C.CR != nil
+import "errors"
+
+func ProveSwap(relation *SwapProofRelation) (proof *SwapProof2, err error) {
+	if relation == nil {
+		return nil, errors.New("[ProveSwap] invalid relation params")
+	}
+
+	return nil, nil
 }

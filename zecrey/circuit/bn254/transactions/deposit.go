@@ -67,7 +67,7 @@ func (circuit *DepositTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID)
+	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID, cs)
 	VerifyDepositTx(cs, *circuit, params, hFunc)
 
 	return nil

@@ -63,7 +63,7 @@ func (circuit *WithdrawTxConstraints) Define(curveID ecc.ID, cs *ConstraintSyste
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID)
+	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID, cs)
 
 	VerifyWithdrawTx(cs, *circuit, params, hFunc)
 

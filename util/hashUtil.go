@@ -33,6 +33,7 @@ func HashToInt(b bytes.Buffer, h hash.Hash) (*big.Int, error) {
 	digest := h
 	digest.Write(b.Bytes())
 	output := digest.Sum(nil)
-	tmp := output[0:]
-	return FromByteArray(tmp)
+	//tmp := output[0:]
+	//return FromByteArray(tmp)
+	return new(big.Int).SetBytes(output), nil
 }

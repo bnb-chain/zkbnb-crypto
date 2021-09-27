@@ -15,8 +15,10 @@
  *
  */
 
-package zecrey
+package ctrange
 
-func notNullElGamal(C *ElGamalEnc) bool {
-	return C != nil && C.CL != nil && C.CR != nil
-}
+import "errors"
+
+var (
+	ErrInvalidPointBytes = errors.New("[ctrange FromBytes] err: invalid point bytes")
+)

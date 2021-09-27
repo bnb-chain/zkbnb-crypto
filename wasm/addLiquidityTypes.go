@@ -23,4 +23,6 @@ type AddLiquidityTxAo struct {
 	PairIndex    uint32
 	DeltaX       uint32
 	DeltaY       uint32
+	BalanceEncX  string
+	BalanceEncY  string
 }

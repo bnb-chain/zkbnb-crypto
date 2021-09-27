@@ -40,5 +40,5 @@ const (
 )
 
 var (
-	Zero = big.NewInt(0)
+	Zero      = big.NewInt(0)
 )
