@@ -21,23 +21,22 @@ import (
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/bulletProofs"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
 type (
-	ElGamalEnc     = twistedElgamal.ElGamalEnc
-	Point          = curve.Point
-	BPSetupParams  = bulletProofs.BPSetupParams
-	AggBulletProof = bulletProofs.AggBulletProof
+	ElGamalEnc = twistedElgamal.ElGamalEnc
+	Point      = curve.Point
+	RangeProof = ctrange.RangeProof
 )
 
 const (
-	RangeMaxBits          = commitRange.RangeMaxBits // max bits
+	RangeMaxBits          = ctrange.RangeMaxBits // max bits
 	PointSize             = curve.PointSize
-	RangeProofSize        = commitRange.RangeProofSize
+	RangeProofSize        = ctrange.RangeProofSize
 	WithdrawProofSize     = 21*PointSize + RangeProofSize + 2*8
 	OneMillion            = 1000000
+	OneThousand           = 1000
 	FourBytes             = 4
 	EightBytes            = 8
 	TransferSubProofCount = 3

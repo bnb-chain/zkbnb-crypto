@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"math/big"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
 type RangeProof struct {
@@ -56,44 +57,29 @@ func FromBytes(proofBytes []byte) (*RangeProof, error) {
 	if len(proofBytes) != RangeProofSize {
 		return nil, errors.New("[ctrange FromBytes] err: invalid size")
 	}
+	var (
+		err error
+	)
 	proof := new(RangeProof)
-	proof.A = new(Point)
-	readSize, err := proof.A.SetBytes(proofBytes[:PointSize])
+	proof.A, err = curve.FromBytes(proofBytes[:PointSize])
 	if err != nil {
 		return nil, err
 	}
-	if readSize != PointSize {
-		return nil, ErrInvalidPointBytes
-	}
-	proof.G = new(Point)
-	readSize, err = proof.G.SetBytes(proofBytes[PointSize : PointSize*2])
+	proof.G, err = curve.FromBytes(proofBytes[PointSize : PointSize*2])
 	if err != nil {
 		return nil, err
 	}
-	if readSize != PointSize {
-		return nil, ErrInvalidPointBytes
-	}
-	proof.H = new(Point)
-	readSize, err = proof.H.SetBytes(proofBytes[PointSize*2 : PointSize*3])
+	proof.H, err = curve.FromBytes(proofBytes[PointSize*2 : PointSize*3])
 	if err != nil {
 		return nil, err
 	}
-	if readSize != PointSize {
-		return nil, ErrInvalidPointBytes
-	}
-	proof.C = new(big.Int)
-	proof.C.SetBytes(proofBytes[PointSize*3 : PointSize*4])
+	proof.C = new(big.Int).SetBytes(proofBytes[PointSize*3 : PointSize*4])
 	for i := 0; i < RangeMaxBits; i++ {
-		proof.As[i] = new(Point)
-		readSize, err = proof.As[i].SetBytes(proofBytes[PointSize*4+i*2*PointSize : PointSize*4+i*2*PointSize+PointSize])
+		proof.As[i], err = curve.FromBytes(proofBytes[PointSize*4+i*2*PointSize : PointSize*4+i*2*PointSize+PointSize])
 		if err != nil {
 			return nil, err
 		}
-		if readSize != PointSize {
-			return nil, ErrInvalidPointBytes
-		}
-		proof.Zs[i] = new(big.Int)
-		proof.Zs[i].SetBytes(proofBytes[PointSize*4+i*2*PointSize+PointSize : PointSize*4+i*2*PointSize+PointSize*2])
+		proof.Zs[i] = new(big.Int).SetBytes(proofBytes[PointSize*4+i*2*PointSize+PointSize : PointSize*4+i*2*PointSize+PointSize*2])
 	}
 	return proof, nil
 }

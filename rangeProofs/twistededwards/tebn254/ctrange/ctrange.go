@@ -19,7 +19,9 @@ package ctrange
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
+	"log"
 	"math/big"
 	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -30,10 +32,13 @@ import (
 
 var bitchan = make(chan int, RangeMaxBits)
 
-func Prove(b int64, g, h *Point) (proof *RangeProof, err error) {
+var rchan = make(chan *big.Int, 1)
+
+func Prove(b int64, g, h *Point) (r *big.Int, proof *RangeProof, err error) {
 	// check params
 	if b < 0 || !curve.IsInSubGroup(g) || !curve.IsInSubGroup(h) {
-		return nil, errors.New("[ctrange Prove] err: invalid params")
+		log.Printf("err info: b: %v \n", b)
+		return nil, nil, errors.New("[ctrange Prove] err: invalid params")
 	}
 	// define new variable
 	proof = new(RangeProof)
@@ -47,19 +52,24 @@ func Prove(b int64, g, h *Point) (proof *RangeProof, err error) {
 		A_As   [RangeMaxBits]*Point
 		buf    bytes.Buffer
 	)
+	// initial r
+	r = new(big.Int).SetInt64(0)
+	rchan <- r
 	bs, err := toBinary(b, RangeMaxBits)
 	if err != nil {
-		return nil, err
+		log.Println("err info: err", err)
+		return nil, nil, err
 	}
 	current := curve.H
 	for i, bi := range bs {
-		go phase1(i, bi, current, proof, &alphas, &rs, &cs, &A_As, g, h)
+		go phase1(i, bi, current, proof, &alphas, &rs, &cs, &A_As, g, h, rchan)
 		current = curve.Add(current, current)
 	}
 	for i := 0; i < RangeMaxBits; i++ {
 		index := <-bitchan
 		if index == ErrCode {
-			return nil, errors.New("[ctrange Prove] unable to construct the proof")
+			log.Println("err info: err", ErrCode)
+			return nil, nil, errors.New("[ctrange Prove] unable to construct the proof")
 		}
 	}
 	for i := 0; i < RangeMaxBits; i++ {
@@ -68,28 +78,41 @@ func Prove(b int64, g, h *Point) (proof *RangeProof, err error) {
 	}
 	proof.C, err = util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
-		return nil, err
+		log.Println("err info: err", err)
+		return nil, nil, err
 	}
 	proof.C = ffmath.Mod(proof.C, Q)
 	twoExp := int64(1)
 	for i, bi := range bs {
-		go phase2(i, bi, twoExp, proof, &rs, &cs, &alphas, g, h)
+		go phase2(i, bi, twoExp, proof, &rs, &cs, &alphas, g, h, rchan)
 		twoExp += twoExp
 	}
 	for i := 0; i < RangeMaxBits; i++ {
 		index := <-bitchan
 		if index == ErrCode {
-			return nil, errors.New("[ctrange Prove] unable to construct the proof")
+			log.Println("err info: err", ErrCode)
+			return nil, nil, errors.New("[ctrange Prove] unable to construct the proof")
 		}
 	}
 	proof.A = curve.ZeroPoint()
 	for i := 0; i < RangeMaxBits; i++ {
 		proof.A = curve.Add(proof.A, proof.As[i])
 	}
-	return proof, nil
+	r = <-rchan
+	r = ffmath.Mod(r, Order)
+	return r, proof, nil
 }
 
-func phase1(i int, bi int, htwoExp *Point, proof *RangeProof, alphas, rs, cs *[RangeMaxBits]*big.Int, A_As *[RangeMaxBits]*Point, g, h *Point) {
+func phase1(
+	i int,
+	bi int,
+	htwoExp *Point,
+	proof *RangeProof,
+	alphas, rs, cs *[RangeMaxBits]*big.Int,
+	A_As *[RangeMaxBits]*Point,
+	g, h *Point,
+	rchan chan *big.Int,
+) {
 	var (
 		err error
 		buf bytes.Buffer
@@ -112,6 +135,10 @@ func phase1(i int, bi int, htwoExp *Point, proof *RangeProof, alphas, rs, cs *[R
 		if err != nil {
 			bitchan <- ErrCode
 		}
+		// set r
+		r := <-rchan
+		r = ffmath.Add(r, rs[i])
+		rchan <- r
 		A_As[i] = curve.ScalarMul(proof.As[i], cs[i])
 		bitchan <- i
 	} else {
@@ -123,6 +150,7 @@ func phase2(
 	i int, bi int, twoExp int64, proof *RangeProof,
 	rs *[RangeMaxBits]*big.Int, cs *[RangeMaxBits]*big.Int, alphas *[RangeMaxBits]*big.Int,
 	g, h *Point,
+	rchan chan *big.Int,
 ) {
 	var (
 		err error
@@ -141,8 +169,13 @@ func phase2(
 		if err != nil {
 			bitchan <- ErrCode
 		}
-		proof.As[i] = curve.ScalarMul(g, ffmath.Multiply(alphas[i], ffmath.ModInverse(cs[i], Order)))
+		alphas_i_c_i_inv := ffmath.Multiply(alphas[i], ffmath.ModInverse(cs[i], Order))
+		proof.As[i] = curve.ScalarMul(g, alphas_i_c_i_inv)
 		proof.Zs[i] = ffmath.AddMod(rs[i], ffmath.Multiply(ffmath.Multiply(alphas[i], proof.C), ffmath.ModInverse(cs[i], Order)), Order)
+		// set r
+		r := <-rchan
+		r = ffmath.Add(r, alphas_i_c_i_inv)
+		rchan <- r
 		bitchan <- i
 	} else if bi == 1 {
 		proof.Zs[i] = ffmath.AddMod(alphas[i], ffmath.Multiply(proof.C, rs[i]), Order)
@@ -182,16 +215,19 @@ func (proof *RangeProof) Verify() (bool, error) {
 	}
 	hatc, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
+		log.Println("err info: err", err)
 		return false, err
 	}
 	hatc = ffmath.Mod(hatc, Q)
 	if !ffmath.Equal(hatc, proof.C) {
+		log.Println("not equal: ", hatc.String(), " != ", proof.C.String())
 		return false, nil
 	}
 	for _, Ai := range proof.As {
 		A = curve.Add(A, Ai)
 	}
 	if !A.Equal(proof.A) {
+		log.Println("not equal: ", hex.EncodeToString(A.Marshal()), " != ", hex.EncodeToString(proof.A.Marshal()))
 		return false, nil
 	}
 	return true, nil
