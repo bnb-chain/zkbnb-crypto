@@ -18,31 +18,10 @@
 package zecrey
 
 import (
-	"bytes"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"math/big"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
-func notNullElGamal(C *ElGamalEnc) bool {
-	return C != nil && C.CL != nil && C.CR != nil
-}
-
-func writePointIntoBuf(buf *bytes.Buffer, p *Point) {
-	buf.Write(p.X.Marshal())
-	buf.Write(p.Y.Marshal())
-}
-
-func writeEncIntoBuf(buf *bytes.Buffer, enc *ElGamalEnc) {
-	writePointIntoBuf(buf, enc.CL)
-	writePointIntoBuf(buf, enc.CR)
-}
-
-func equalEnc(a, b *ElGamalEnc) bool {
-	return a.CL.Equal(b.CL) && a.CR.Equal(b.CR)
-}
-
-func negElgamal(enc *ElGamalEnc) *ElGamalEnc {
-	return &ElGamalEnc{
-		CL: curve.Neg(enc.CL),
-		CR: curve.Neg(enc.CR),
-	}
+func proveCtRange(b int64, g, h *Point) (r *big.Int, proof *RangeProof, err error) {
+	return ctrange.Prove(b, g, h)
 }

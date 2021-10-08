@@ -29,7 +29,7 @@ import (
 )
 
 func TestVerifyRangeProof(t *testing.T) {
-	proof, err := ctrange.Prove(1, curve.G, curve.H)
+	_, proof, err := ctrange.Prove(1, curve.G, curve.H)
 	if err != nil {
 		t.Fatal(err)
 	}
