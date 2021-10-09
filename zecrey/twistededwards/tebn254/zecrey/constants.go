@@ -46,6 +46,8 @@ const (
 
 	SwapProofSize2 = 35*PointSize + 2*RangeProofSize + 5*4 + 2*8
 	SwapProofSize  = 2 * SwapProofPartSize
+
+	ErrCode = -1
 )
 
 var (
