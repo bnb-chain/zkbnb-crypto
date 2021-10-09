@@ -30,10 +30,6 @@ import (
 	"zecrey-crypto/util"
 )
 
-var bitchan = make(chan int, RangeMaxBits)
-
-var rchan = make(chan *big.Int, 1)
-
 func Prove(b int64, g, h *Point) (r *big.Int, proof *RangeProof, err error) {
 	// check params
 	if b < 0 || !curve.IsInSubGroup(g) || !curve.IsInSubGroup(h) {
@@ -46,11 +42,13 @@ func Prove(b int64, g, h *Point) (r *big.Int, proof *RangeProof, err error) {
 	proof.H = h
 	// convert b into binary
 	var (
-		alphas [RangeMaxBits]*big.Int
-		rs     [RangeMaxBits]*big.Int
-		cs     [RangeMaxBits]*big.Int
-		A_As   [RangeMaxBits]*Point
-		buf    bytes.Buffer
+		alphas  [RangeMaxBits]*big.Int
+		rs      [RangeMaxBits]*big.Int
+		cs      [RangeMaxBits]*big.Int
+		A_As    [RangeMaxBits]*Point
+		buf     bytes.Buffer
+		bitchan = make(chan int, RangeMaxBits)
+		rchan   = make(chan *big.Int, 1)
 	)
 	// initial r
 	r = new(big.Int).SetInt64(0)
@@ -62,7 +60,7 @@ func Prove(b int64, g, h *Point) (r *big.Int, proof *RangeProof, err error) {
 	}
 	current := curve.H
 	for i, bi := range bs {
-		go phase1(i, bi, current, proof, &alphas, &rs, &cs, &A_As, g, h, rchan)
+		go phase1(i, bi, current, proof, &alphas, &rs, &cs, &A_As, g, h, bitchan, rchan)
 		current = curve.Add(current, current)
 	}
 	for i := 0; i < RangeMaxBits; i++ {
@@ -84,7 +82,7 @@ func Prove(b int64, g, h *Point) (r *big.Int, proof *RangeProof, err error) {
 	proof.C = ffmath.Mod(proof.C, Q)
 	twoExp := int64(1)
 	for i, bi := range bs {
-		go phase2(i, bi, twoExp, proof, &rs, &cs, &alphas, g, h, rchan)
+		go phase2(i, bi, twoExp, proof, &rs, &cs, &alphas, g, h, bitchan, rchan)
 		twoExp += twoExp
 	}
 	for i := 0; i < RangeMaxBits; i++ {
@@ -111,6 +109,7 @@ func phase1(
 	alphas, rs, cs *[RangeMaxBits]*big.Int,
 	A_As *[RangeMaxBits]*Point,
 	g, h *Point,
+	bitchan chan int,
 	rchan chan *big.Int,
 ) {
 	var (
@@ -150,6 +149,7 @@ func phase2(
 	i int, bi int, twoExp int64, proof *RangeProof,
 	rs *[RangeMaxBits]*big.Int, cs *[RangeMaxBits]*big.Int, alphas *[RangeMaxBits]*big.Int,
 	g, h *Point,
+	bitchan chan int,
 	rchan chan *big.Int,
 ) {
 	var (

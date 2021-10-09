@@ -18,7 +18,7 @@
 package zecrey
 
 import (
-	"fmt"
+	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -34,8 +34,8 @@ func TestSwapProof2_Verify(t *testing.T) {
 	b_A_Delta := uint32(1)
 	b_B_Delta := uint32(2)
 	b_fee_Delta := uint32(1)
-	b_Dao_A := uint32(10)
-	b_Dao_B := uint32(10)
+	//b_Dao_A := uint32(10)
+	//b_Dao_B := uint32(10)
 	feeRate := uint32(3)
 	sk_u, Pk_u := twistedElgamal.GenKeyPair()
 	_, Pk_Dao := twistedElgamal.GenKeyPair()
@@ -46,7 +46,6 @@ func TestSwapProof2_Verify(t *testing.T) {
 		Pk_Dao, Pk_u,
 		assetAId, assetBId, assetFeeId,
 		b_A_Delta, b_B_Delta, b_fee_Delta, b_u_A, b_u_fee,
-		b_Dao_A, b_Dao_B,
 		feeRate,
 		sk_u,
 	)
@@ -61,5 +60,5 @@ func TestSwapProof2_Verify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(res)
+	assert.Equal(t, true, res, "invalid proof")
 }

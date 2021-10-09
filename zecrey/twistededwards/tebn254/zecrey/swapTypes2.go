@@ -27,6 +27,10 @@ import (
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
+const (
+	swapRangeProofCount = 2
+)
+
 func (proof *SwapProof2) Bytes() []byte {
 	proofBytes := make([]byte, SwapProofSize2)
 	// valid Enc
@@ -356,14 +360,13 @@ func NewSwapRelation(
 	Pk_Dao, Pk_u *Point,
 	assetAId, assetBId, assetFeeId uint32,
 	b_A_Delta, b_B_Delta, b_fee_Delta, b_u_A, b_u_fee uint32,
-	b_Dao_A, b_Dao_B uint32,
 	feeRate uint32,
 	sk_u *big.Int,
 ) (relation *SwapProofRelation, err error) {
 	// check params
 	if !notNullElGamal(C_uA) || !notNullElGamal(C_ufee) ||
 		Pk_Dao == nil || !curve.IsInSubGroup(Pk_Dao) || Pk_u == nil || !curve.IsInSubGroup(Pk_u) ||
-		assetAId == assetBId || b_B_Delta > b_Dao_B || b_A_Delta > b_u_A || b_fee_Delta > b_u_fee {
+		assetAId == assetBId || b_A_Delta > b_u_A || b_fee_Delta > b_u_fee {
 		if assetAId == assetFeeId && (!equalEnc(C_uA, C_ufee) || int64(b_A_Delta)+int64(b_fee_Delta) > int64(b_u_A)) {
 			return nil, errors.New("[NewSwapRelation] not enough balance")
 		}
@@ -374,15 +377,18 @@ func NewSwapRelation(
 		C_ufee_Delta, C_uA_Delta, C_uB_Delta *ElGamalEnc
 		LC_DaoA_Delta, LC_DaoB_Delta         *ElGamalEnc
 		R_DeltaA, R_DeltaB                   *big.Int
-		T_uA, T_ufee                         *Point
-		Alpha, Beta                          *big.Int
+		Alpha                                = big.NewInt(0)
+		Beta                                 = big.NewInt(0)
 		Gamma                                uint32
-		Bar_r_A, Bar_r_fee                   *big.Int
+		Bar_r_A                              = new(big.Int)
+		Bar_r_fee                            = new(big.Int)
 		Ht_A, Ht_B, Ht_fee                   *Point
 		Pt_A, Pt_B, Pt_fee                   *Point
 		R_Deltafee                           *big.Int
 		B_uA_prime, B_ufee_prime             uint32
-		ARangeProof, FeeRangeProof           *RangeProof
+		ARangeProof                          = new(RangeProof)
+		FeeRangeProof                        = new(RangeProof)
+		swapRangeChan                        = make(chan int, swapRangeProofCount)
 	)
 	// check if C is correct
 	hExpb_uA, err := twistedElgamal.RawDec(C_uA, sk_u)
@@ -432,30 +438,12 @@ func NewSwapRelation(
 	if assetFeeId == assetAId {
 		B_uA_prime = b_u_A - b_A_Delta - b_fee_Delta
 		B_ufee_prime = B_uA_prime
-		Bar_r_A, ARangeProof, err = proveCtRange(int64(B_uA_prime), curve.G, curve.H)
-		if err != nil {
-			return nil, err
-		}
-		T_uA = new(Point).Set(ARangeProof.A)
-		Bar_r_fee, FeeRangeProof, err = proveCtRange(int64(B_ufee_prime), curve.G, curve.H)
-		if err != nil {
-			return nil, err
-		}
-		T_ufee = new(Point).Set(FeeRangeProof.A)
 	} else {
 		B_uA_prime = b_u_A - b_A_Delta
 		B_ufee_prime = b_u_fee - b_fee_Delta
-		Bar_r_A, ARangeProof, err = proveCtRange(int64(B_uA_prime), curve.G, curve.H)
-		if err != nil {
-			return nil, err
-		}
-		T_uA = new(Point).Set(ARangeProof.A)
-		Bar_r_fee, FeeRangeProof, err = proveCtRange(int64(B_ufee_prime), curve.G, curve.H)
-		if err != nil {
-			return nil, err
-		}
-		T_ufee = new(Point).Set(FeeRangeProof.A)
 	}
+	go proveCtRangeRoutine(int64(B_uA_prime), curve.G, curve.H, Bar_r_A, ARangeProof, swapRangeChan)
+	go proveCtRangeRoutine(int64(B_ufee_prime), curve.G, curve.H, Bar_r_fee, FeeRangeProof, swapRangeChan)
 	// compute Ht & Pt
 	Ht_A = curve.ScalarMul(curve.H, big.NewInt(int64(assetAId)))
 	Ht_B = curve.ScalarMul(curve.H, big.NewInt(int64(assetBId)))
@@ -464,9 +452,13 @@ func NewSwapRelation(
 	Pt_B = curve.ScalarMul(Ht_B, sk_u)
 	Pt_fee = curve.ScalarMul(Ht_fee, sk_u)
 	// compute Alpha, Beta, Gamma
-	Alpha = big.NewInt(int64(float64(b_A_Delta) / float64(b_Dao_A) * OneMillion))
-	Beta = big.NewInt(int64(float64(b_B_Delta) / float64(b_Dao_B) * OneMillion))
 	Gamma = OneThousand - feeRate
+	for i := 0; i < swapRangeProofCount; i++ {
+		val := <-swapRangeChan
+		if val == ErrCode {
+			return nil, errors.New("[NewSwapRelation] range proof works error")
+		}
+	}
 	// construct swap proof relation
 	relation = &SwapProofRelation{
 		// public inputs
@@ -489,8 +481,8 @@ func NewSwapRelation(
 		R_DeltaA: R_DeltaA,
 		R_DeltaB: R_DeltaB,
 		// commitment for user asset A & fee
-		T_uA:   T_uA,
-		T_ufee: T_ufee,
+		T_uA:   new(Point).Set(ARangeProof.A),
+		T_ufee: new(Point).Set(FeeRangeProof.A),
 		// liquidity pool asset B balance, this will be added when operator received
 		// LC_DaoB: LC_DaoB,
 		// R_Dao_B will be computed until operator received
@@ -499,7 +491,6 @@ func NewSwapRelation(
 		B_A_Delta:   b_A_Delta,
 		B_B_Delta:   b_B_Delta,
 		B_fee_Delta: b_fee_Delta,
-		B_DaoB:      b_Dao_B,
 		// alpha = \delta{x} / x
 		// beta = \delta{y} / y
 		// gamma = 1 - fee %
