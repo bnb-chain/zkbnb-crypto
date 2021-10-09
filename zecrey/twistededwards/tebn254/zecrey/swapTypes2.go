@@ -484,9 +484,9 @@ func NewSwapRelation(
 		T_uA:   new(Point).Set(ARangeProof.A),
 		T_ufee: new(Point).Set(FeeRangeProof.A),
 		// liquidity pool asset B balance, this will be added when operator received
-		// LC_DaoB: LC_DaoB,
+		LC_DaoB: &ElGamalEnc{CL: curve.ZeroPoint(), CR: curve.ZeroPoint()},
 		// R_Dao_B will be computed until operator received
-		//R_DaoB: R_DaoB,
+		R_DaoB: new(big.Int),
 		// asset A,B,fee Delta & dao liquidity asset B balance
 		B_A_Delta:   b_A_Delta,
 		B_B_Delta:   b_B_Delta,

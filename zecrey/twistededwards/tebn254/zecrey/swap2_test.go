@@ -19,8 +19,10 @@ package zecrey
 
 import (
 	"github.com/stretchr/testify/assert"
+	"log"
 	"math/big"
 	"testing"
+	"time"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
@@ -52,11 +54,18 @@ func TestSwapProof2_Verify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	elapse := time.Now()
 	proof, err := ProveSwap(relation)
 	if err != nil {
 		t.Fatal(err)
 	}
-	res, err := proof.Verify()
+	log.Println("prove time:", time.Since(elapse))
+	proofStr := proof.String()
+	proof2, err := ParseSwapProof2Str(proofStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := proof2.Verify()
 	if err != nil {
 		t.Fatal(err)
 	}
