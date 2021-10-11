@@ -175,7 +175,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 		log.Println("[AddLiquidityProof Verify] unable to compute challenge")
 		return false, err
 	}
-	// TODO verify params
+	// verify params
 	isValidParams, err := verifyAddLiquidityParams(proof)
 	if err != nil {
 		return false, err
@@ -265,13 +265,24 @@ func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
 	}
 	if !equalEnc(C_uA_Delta, proof.C_uA_Delta) || !equalEnc(C_uB_Delta, proof.C_uB_Delta) ||
 		!equalEnc(LC_DaoA_Delta, proof.LC_DaoA_Delta) || !equalEnc(LC_DaoB_Delta, proof.LC_DaoB_Delta) {
+		log.Println("[verifyAddLiquidityParams] invalid balance enc")
 		return false, nil
 	}
 	// verify LP
 	Delta_LPCheck := uint64(math.Floor(math.Sqrt(float64(proof.B_A_Delta * proof.B_B_Delta))))
 	if Delta_LPCheck != proof.Delta_LP {
+		log.Println("[verifyAddLiquidityParams] invalid LP")
 		return false, nil
 	}
-	// TODO verify AMM info & DAO balance info
+	// verify AMM info & DAO balance info
+	if proof.B_DaoB*proof.B_A_Delta != proof.B_DaoA*proof.B_B_Delta {
+		log.Println("[verifyAddLiquidityParams] invalid liquidity rate")
+		return false, nil
+	}
 	return true, nil
+}
+
+func (proof *AddLiquidityProof) addDaoInfo(b_Dao_A, b_Dao_B uint64) {
+	proof.B_DaoA = b_Dao_A
+	proof.B_DaoB = b_Dao_B
 }

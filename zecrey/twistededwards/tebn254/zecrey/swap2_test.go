@@ -36,8 +36,8 @@ func TestSwapProof2_Verify(t *testing.T) {
 	b_A_Delta := uint64(1)
 	b_B_Delta := uint64(2)
 	b_fee_Delta := uint64(1)
-	//b_Dao_A := uint32(10)
-	//b_Dao_B := uint32(10)
+	b_Dao_A := uint64(10)
+	b_Dao_B := uint64(10)
 	feeRate := uint32(3)
 	sk_u, Pk_u := twistedElgamal.GenKeyPair()
 	_, Pk_Dao := twistedElgamal.GenKeyPair()
@@ -59,6 +59,8 @@ func TestSwapProof2_Verify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// set params
+	proof.addDaoInfo(b_Dao_A, b_Dao_B)
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
 	proof2, err := ParseSwapProof2Str(proofStr)
