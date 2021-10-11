@@ -279,7 +279,13 @@ func ParseSwapProof2Bytes(proofBytes []byte) (proof *SwapProof2, err error) {
 	proof.Beta = new(big.Int).SetBytes(proofBytes[PointSize*35+EightBytes*4+FourBytes+EightBytes : PointSize*35+EightBytes*4+FourBytes+EightBytes*2])
 	// range proofs
 	proof.ARangeProof, err = ctrange.FromBytes(proofBytes[PointSize*35+EightBytes*4+FourBytes+EightBytes*2 : PointSize*35+EightBytes*4+FourBytes+EightBytes*2+RangeProofSize])
+	if err != nil {
+		return nil, err
+	}
 	proof.FeeRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*35+EightBytes*4+FourBytes+EightBytes*2+RangeProofSize : PointSize*35+EightBytes*4+FourBytes+EightBytes*2+RangeProofSize*2])
+	if err != nil {
+		return nil, err
+	}
 	return proof, nil
 }
 

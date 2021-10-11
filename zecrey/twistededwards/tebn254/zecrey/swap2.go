@@ -52,6 +52,8 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof2, err error) {
 	writeEncIntoBuf(&buf, relation.C_ufee)
 	writeEncIntoBuf(&buf, relation.C_uA_Delta)
 	writeEncIntoBuf(&buf, relation.C_ufee_Delta)
+	writePointIntoBuf(&buf, relation.T_uA)
+	writePointIntoBuf(&buf, relation.T_ufee)
 	// valid enc
 	alpha_r_Deltafee = curve.RandomValue()
 	A_C_ufeeL_Delta = curve.ScalarMul(relation.Pk_u, alpha_r_Deltafee)
@@ -65,7 +67,7 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof2, err error) {
 	alpha_bar_r_A = curve.RandomValue()
 	alpha_bar_r_fee = curve.RandomValue()
 	A_Pk_u = curve.ScalarMul(relation.G, alpha_sk_u)
-	// if asset fee id == asset A id, use the same random value
+	// if asset fee id == asset A id, construct two same value proofs
 	if relation.AssetFeeId == relation.AssetAId {
 		CLDelta := curve.Add(
 			curve.Neg(relation.C_uA_Delta.CL),
@@ -189,6 +191,8 @@ func (proof *SwapProof2) Verify() (res bool, err error) {
 	writeEncIntoBuf(&buf, proof.C_ufee)
 	writeEncIntoBuf(&buf, proof.C_uA_Delta)
 	writeEncIntoBuf(&buf, proof.C_ufee_Delta)
+	writePointIntoBuf(&buf, proof.T_uA)
+	writePointIntoBuf(&buf, proof.T_ufee)
 	// write into buf
 	writePointIntoBuf(&buf, proof.A_C_ufeeL_Delta)
 	writePointIntoBuf(&buf, proof.A_CufeeR_DeltaHExpb_fee_DeltaInv)
