@@ -16,24 +16,3 @@
  */
 
 package zecrey
-
-import (
-	"log"
-	"math/big"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
-)
-
-func proveCtRangeRoutine(b int64, g, h *Point, r *big.Int, proof *RangeProof, rangeChan chan int) {
-	var (
-		err error
-	)
-	bar_r, rangeProof, err := ctrange.Prove(b, g, h)
-	if err != nil {
-		log.Println("[proveCtRangeRoutine] err info:", err)
-		rangeChan <- ErrCode
-		return
-	}
-	*proof = *rangeProof
-	*r = *bar_r
-	rangeChan <- 1
-}

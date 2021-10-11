@@ -52,6 +52,8 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof2, err error) {
 	writeEncIntoBuf(&buf, relation.C_ufee)
 	writeEncIntoBuf(&buf, relation.C_uA_Delta)
 	writeEncIntoBuf(&buf, relation.C_ufee_Delta)
+	writePointIntoBuf(&buf, relation.T_uA)
+	writePointIntoBuf(&buf, relation.T_ufee)
 	// valid enc
 	alpha_r_Deltafee = curve.RandomValue()
 	A_C_ufeeL_Delta = curve.ScalarMul(relation.Pk_u, alpha_r_Deltafee)
@@ -65,7 +67,7 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof2, err error) {
 	alpha_bar_r_A = curve.RandomValue()
 	alpha_bar_r_fee = curve.RandomValue()
 	A_Pk_u = curve.ScalarMul(relation.G, alpha_sk_u)
-	// if asset fee id == asset A id, use the same random value
+	// if asset fee id == asset A id, construct two same value proofs
 	if relation.AssetFeeId == relation.AssetAId {
 		CLDelta := curve.Add(
 			curve.Neg(relation.C_uA_Delta.CL),
@@ -130,18 +132,18 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof2, err error) {
 	Z_sk_uInv = ffmath.AddMod(alpha_sk_uInv, ffmath.Multiply(c, ffmath.ModInverse(relation.Sk_u, Order)), Order)
 	// construct proof
 	proof = &SwapProof2{
-		A_C_ufeeL_Delta:               A_C_ufeeL_Delta,
-		A_CufeeR_DeltaHb_fee_DeltaInv: A_CufeeR_DeltaHb_fee_DeltaInv,
-		Z_r_Deltafee:                  Z_r_Deltafee,
-		A_Pk_u:                        A_Pk_u,
-		A_T_uAC_uARPrimeInv:           A_T_uAC_uARPrimeInv,
-		A_T_ufeeC_ufeeRPrimeInv:       A_T_ufeeC_ufeeRPrimeInv,
-		Z_sk_u:                        Z_sk_u,
-		Z_bar_r_A:                     Z_bar_r_A,
-		Z_bar_r_fee:                   Z_bar_r_fee,
-		Z_sk_uInv:                     Z_sk_uInv,
-		ARangeProof:                   relation.ARangeProof,
-		FeeRangeProof:                 relation.FeeRangeProof,
+		A_C_ufeeL_Delta:                  A_C_ufeeL_Delta,
+		A_CufeeR_DeltaHExpb_fee_DeltaInv: A_CufeeR_DeltaHb_fee_DeltaInv,
+		Z_r_Deltafee:                     Z_r_Deltafee,
+		A_pk_u:                           A_Pk_u,
+		A_T_uAC_uARPrimeInv:              A_T_uAC_uARPrimeInv,
+		A_T_ufeeC_ufeeRPrimeInv:          A_T_ufeeC_ufeeRPrimeInv,
+		Z_sk_u:                           Z_sk_u,
+		Z_bar_r_A:                        Z_bar_r_A,
+		Z_bar_r_fee:                      Z_bar_r_fee,
+		Z_sk_uInv:                        Z_sk_uInv,
+		ARangeProof:                      relation.ARangeProof,
+		FeeRangeProof:                    relation.FeeRangeProof,
 		C_uA:                          relation.C_uA,
 		C_ufee:                        relation.C_ufee,
 		C_ufee_Delta:                  relation.C_ufee_Delta,
@@ -189,11 +191,13 @@ func (proof *SwapProof2) Verify() (res bool, err error) {
 	writeEncIntoBuf(&buf, proof.C_ufee)
 	writeEncIntoBuf(&buf, proof.C_uA_Delta)
 	writeEncIntoBuf(&buf, proof.C_ufee_Delta)
+	writePointIntoBuf(&buf, proof.T_uA)
+	writePointIntoBuf(&buf, proof.T_ufee)
 	// write into buf
 	writePointIntoBuf(&buf, proof.A_C_ufeeL_Delta)
-	writePointIntoBuf(&buf, proof.A_CufeeR_DeltaHb_fee_DeltaInv)
+	writePointIntoBuf(&buf, proof.A_CufeeR_DeltaHExpb_fee_DeltaInv)
 	// write into buf
-	writePointIntoBuf(&buf, proof.A_Pk_u)
+	writePointIntoBuf(&buf, proof.A_pk_u)
 	writePointIntoBuf(&buf, proof.A_T_uAC_uARPrimeInv)
 	writePointIntoBuf(&buf, proof.A_T_ufeeC_ufeeRPrimeInv)
 	// compute challenge
@@ -218,7 +222,7 @@ func (proof *SwapProof2) Verify() (res bool, err error) {
 	}
 	// verify ownership
 	l2 := curve.ScalarMul(proof.G, proof.Z_sk_u)
-	r2 := curve.Add(proof.A_Pk_u, curve.ScalarMul(proof.Pk_u, c))
+	r2 := curve.Add(proof.A_pk_u, curve.ScalarMul(proof.Pk_u, c))
 	if !l2.Equal(r2) {
 		log.Println("[SwapProof Verify] l2 != r2")
 		return false, nil
