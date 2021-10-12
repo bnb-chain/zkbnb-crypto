@@ -18,7 +18,7 @@
 package zecrey
 
 import (
-	"github.com/stretchr/testify/assert"
+	"gotest.tools/assert"
 	"log"
 	"math/big"
 	"testing"
@@ -27,43 +27,43 @@ import (
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
-func TestSwapProof2_Verify(t *testing.T) {
-	b_u_A := uint64(8)
-	b_u_fee := uint64(4)
+func TestRemoveLiquidityProof_Verify(t *testing.T) {
+	//b_u_A := uint64(8)
+	//b_u_B := uint64(4)
+	b_u_LP := uint64(1)
 	assetAId := uint32(1)
 	assetBId := uint32(2)
-	assetFeeId := uint32(3)
 	b_A_Delta := uint64(1)
-	b_B_Delta := uint64(2)
-	b_fee_Delta := uint64(1)
-	b_Dao_A := uint64(10)
-	b_Dao_B := uint64(10)
-	feeRate := uint32(3)
+	b_B_Delta := uint64(1)
+	Delta_LP := uint64(1)
+	b_Dao_A := uint64(100)
+	b_Dao_B := uint64(100)
 	sk_u, Pk_u := twistedElgamal.GenKeyPair()
 	_, Pk_Dao := twistedElgamal.GenKeyPair()
-	C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_A)), curve.RandomValue(), Pk_u)
-	C_ufee, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_fee)), curve.RandomValue(), Pk_u)
-	relation, err := NewSwapRelation(
-		C_uA, C_ufee,
+	//C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_A)), curve.RandomValue(), Pk_u)
+	//C_uB, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_B)), curve.RandomValue(), Pk_u)
+	C_uLP, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_LP)), curve.RandomValue(), Pk_u)
+	relation, err := NewRemoveLiquidityRelation(
+		C_uLP,
 		Pk_Dao, Pk_u,
-		assetAId, assetBId, assetFeeId,
-		b_A_Delta, b_B_Delta, b_fee_Delta, b_u_A, b_u_fee,
-		feeRate,
+		b_u_LP,
+		Delta_LP,
+		b_A_Delta, b_B_Delta,
+		assetAId, assetBId,
 		sk_u,
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	elapse := time.Now()
-	proof, err := ProveSwap(relation)
+	proof, err := ProveRemoveLiquidity(relation)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// set params
-	proof.addDaoInfo(b_Dao_A, b_Dao_B)
+	proof.addDaoInfo(b_Dao_A, b_Dao_B, curve.RandomValue(), curve.RandomValue())
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
-	proof2, err := ParseSwapProof2Str(proofStr)
+	proof2, err := ParseRemoveLiquidityProofStr(proofStr)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -87,27 +87,33 @@ func (proof *SwapProof2) Bytes() []byte {
 	B_A_DeltaBytes := make([]byte, EightBytes)
 	B_B_DeltaBytes := make([]byte, EightBytes)
 	B_fee_DeltaBytes := make([]byte, EightBytes)
+	B_DaoABytes := make([]byte, EightBytes)
 	B_DaoBBytes := make([]byte, EightBytes)
 	binary.BigEndian.PutUint64(B_A_DeltaBytes, proof.B_A_Delta)
 	binary.BigEndian.PutUint64(B_B_DeltaBytes, proof.B_B_Delta)
 	binary.BigEndian.PutUint64(B_fee_DeltaBytes, proof.B_fee_Delta)
+	binary.BigEndian.PutUint64(B_DaoABytes, proof.B_DaoA)
 	binary.BigEndian.PutUint64(B_DaoBBytes, proof.B_DaoB)
 	copy(proofBytes[PointSize*35:PointSize*35+EightBytes], B_A_DeltaBytes)
 	copy(proofBytes[PointSize*35+EightBytes:PointSize*35+EightBytes*2], B_B_DeltaBytes)
 	copy(proofBytes[PointSize*35+EightBytes*2:PointSize*35+EightBytes*3], B_fee_DeltaBytes)
-	copy(proofBytes[PointSize*35+EightBytes*3:PointSize*35+EightBytes*4], B_DaoBBytes)
-	// gamma
-	GammaBytes := make([]byte, FourBytes)
-	binary.BigEndian.PutUint32(GammaBytes, proof.Gamma)
-	copy(proofBytes[PointSize*35+EightBytes*4:PointSize*35+EightBytes*4+FourBytes], GammaBytes)
+	copy(proofBytes[PointSize*35+EightBytes*3:PointSize*35+EightBytes*4], B_DaoABytes)
+	copy(proofBytes[PointSize*35+EightBytes*4:PointSize*35+EightBytes*5], B_DaoBBytes)
 	// alpha = \delta{x} / x
 	// beta = \delta{y} / y
+	AlphaBytes := make([]byte, EightBytes)
+	BetaBytes := make([]byte, EightBytes)
+	binary.BigEndian.PutUint64(AlphaBytes, proof.Alpha)
+	binary.BigEndian.PutUint64(BetaBytes, proof.Beta)
+	copy(proofBytes[PointSize*35+EightBytes*5:PointSize*35+EightBytes*6], AlphaBytes)
+	copy(proofBytes[PointSize*35+EightBytes*6:PointSize*35+EightBytes*7], BetaBytes)
 	// gamma = 1 - fee %
-	copy(proofBytes[PointSize*35+EightBytes*4+FourBytes:PointSize*35+EightBytes*4+FourBytes+EightBytes], proof.Alpha.FillBytes(make([]byte, EightBytes)))
-	copy(proofBytes[PointSize*35+EightBytes*4+FourBytes+EightBytes:PointSize*35+EightBytes*4+FourBytes+EightBytes*2], proof.Beta.FillBytes(make([]byte, EightBytes)))
+	GammaBytes := make([]byte, FourBytes)
+	binary.BigEndian.PutUint32(GammaBytes, proof.Gamma)
+	copy(proofBytes[PointSize*35+EightBytes*7:PointSize*35+EightBytes*7+FourBytes], GammaBytes)
 	// range proofs
-	copy(proofBytes[PointSize*35+EightBytes*4+FourBytes+EightBytes*2:PointSize*35+EightBytes*4+FourBytes+EightBytes*2+RangeProofSize], proof.ARangeProof.Bytes())
-	copy(proofBytes[PointSize*35+EightBytes*4+FourBytes+EightBytes*2+RangeProofSize:PointSize*35+EightBytes*4+FourBytes+EightBytes*2+RangeProofSize*2], proof.FeeRangeProof.Bytes())
+	copy(proofBytes[PointSize*35+EightBytes*7+FourBytes:PointSize*35+EightBytes*7+FourBytes+RangeProofSize], proof.ARangeProof.Bytes())
+	copy(proofBytes[PointSize*35+EightBytes*7+FourBytes+RangeProofSize:PointSize*35+EightBytes*7+FourBytes+RangeProofSize*2], proof.FeeRangeProof.Bytes())
 	return proofBytes
 }
 
@@ -147,11 +153,12 @@ type SwapProof2 struct {
 	// random value for dao liquidity asset B
 	R_DaoB *big.Int
 	// asset A,B,fee Delta & dao liquidity asset B balance
-	B_A_Delta, B_B_Delta, B_fee_Delta, B_DaoB uint64
+	B_A_Delta, B_B_Delta, B_fee_Delta uint64
+	B_DaoA, B_DaoB                    uint64
 	// alpha = \delta{x} / x
 	// beta = \delta{y} / y
 	// gamma = 1 - fee %
-	Alpha, Beta *big.Int
+	Alpha, Beta uint64
 	Gamma       uint32
 	// generators
 	G, H *Point
@@ -269,20 +276,20 @@ func ParseSwapProof2Bytes(proofBytes []byte) (proof *SwapProof2, err error) {
 	proof.B_A_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*35 : PointSize*35+EightBytes])
 	proof.B_B_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes : PointSize*35+EightBytes*2])
 	proof.B_fee_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*2 : PointSize*35+EightBytes*3])
-	proof.B_DaoB = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*3 : PointSize*35+EightBytes*4])
-	// gamma
-	proof.Gamma = binary.BigEndian.Uint32(proofBytes[PointSize*35+EightBytes*4 : PointSize*35+EightBytes*4+FourBytes])
+	proof.B_DaoA = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*3 : PointSize*35+EightBytes*4])
+	proof.B_DaoB = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*4 : PointSize*35+EightBytes*5])
 	// alpha = \delta{x} / x
 	// beta = \delta{y} / y
+	proof.Alpha = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*5 : PointSize*35+EightBytes*6])
+	proof.Beta = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*6 : PointSize*35+EightBytes*7])
 	// gamma = 1 - fee %
-	proof.Alpha = new(big.Int).SetBytes(proofBytes[PointSize*35+EightBytes*4+FourBytes : PointSize*35+EightBytes*4+FourBytes+EightBytes])
-	proof.Beta = new(big.Int).SetBytes(proofBytes[PointSize*35+EightBytes*4+FourBytes+EightBytes : PointSize*35+EightBytes*4+FourBytes+EightBytes*2])
+	proof.Gamma = binary.BigEndian.Uint32(proofBytes[PointSize*35+EightBytes*7 : PointSize*35+EightBytes*7+FourBytes])
 	// range proofs
-	proof.ARangeProof, err = ctrange.FromBytes(proofBytes[PointSize*35+EightBytes*4+FourBytes+EightBytes*2 : PointSize*35+EightBytes*4+FourBytes+EightBytes*2+RangeProofSize])
+	proof.ARangeProof, err = ctrange.FromBytes(proofBytes[PointSize*35+EightBytes*7+FourBytes : PointSize*35+EightBytes*7+FourBytes+RangeProofSize])
 	if err != nil {
 		return nil, err
 	}
-	proof.FeeRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*35+EightBytes*4+FourBytes+EightBytes*2+RangeProofSize : PointSize*35+EightBytes*4+FourBytes+EightBytes*2+RangeProofSize*2])
+	proof.FeeRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*35+EightBytes*7+FourBytes+RangeProofSize : PointSize*35+EightBytes*7+FourBytes+RangeProofSize*2])
 	if err != nil {
 		return nil, err
 	}
@@ -323,11 +330,12 @@ type SwapProofRelation struct {
 	// random value for dao liquidity asset B
 	R_DaoB *big.Int
 	// asset A,B,fee Delta & dao liquidity asset B balance
-	B_A_Delta, B_B_Delta, B_fee_Delta, B_DaoB uint64
+	B_A_Delta, B_B_Delta, B_fee_Delta uint64
+	B_DaoA, B_DaoB                    uint64
 	// alpha = \delta{x} / x
 	// beta = \delta{y} / y
 	// gamma = 1 - fee %
-	Alpha, Beta *big.Int
+	Alpha, Beta uint64
 	Gamma       uint32
 	// generators
 	G, H *Point
@@ -362,8 +370,7 @@ func NewSwapRelation(
 	if !notNullElGamal(C_uA) || !notNullElGamal(C_ufee) || Sk_u == nil ||
 		Pk_Dao == nil || !curve.IsInSubGroup(Pk_Dao) || Pk_u == nil || !curve.IsInSubGroup(Pk_u) ||
 		assetAId == assetBId ||
-		B_u_A < 0 || B_u_fee < 0 || B_A_Delta < 0 || B_B_Delta < 0 || B_fee_Delta < 0 ||
-		B_A_Delta > B_u_A || B_fee_Delta > B_u_fee {
+		B_u_A < B_A_Delta || B_u_fee < B_fee_Delta {
 		log.Println("[NewSwapRelation] err: invalid params")
 		if assetAId == assetFeeId && (!equalEnc(C_uA, C_ufee) || B_A_Delta+B_fee_Delta > B_u_A) {
 			log.Println("[NewSwapRelation] not enough balance")
@@ -397,8 +404,6 @@ func NewSwapRelation(
 		C_ufee_Delta, C_uA_Delta, C_uB_Delta *ElGamalEnc
 		LC_DaoA_Delta, LC_DaoB_Delta         *ElGamalEnc
 		R_DeltaA, R_DeltaB                   *big.Int
-		Alpha                                = big.NewInt(0)
-		Beta                                 = big.NewInt(0)
 		Gamma                                uint32
 		Bar_r_A                              = new(big.Int)
 		Bar_r_fee                            = new(big.Int)
@@ -485,7 +490,7 @@ func NewSwapRelation(
 		// liquidity pool asset B balance, this will be added when operator received
 		LC_DaoB: &ElGamalEnc{CL: curve.ZeroPoint(), CR: curve.ZeroPoint()},
 		// R_Dao_B will be computed until operator received
-		R_DaoB: new(big.Int),
+		R_DaoB: big.NewInt(0),
 		// asset A,B,fee Delta & dao liquidity asset B balance
 		B_A_Delta:   B_A_Delta,
 		B_B_Delta:   B_B_Delta,
@@ -493,8 +498,8 @@ func NewSwapRelation(
 		// alpha = \delta{x} / x
 		// beta = \delta{y} / y
 		// gamma = 1 - fee %
-		Alpha: Alpha,
-		Beta:  Beta,
+		Alpha: 0,
+		Beta:  0,
 		Gamma: Gamma,
 		// generators
 		G: G,
@@ -521,8 +526,4 @@ func NewSwapRelation(
 		FeeRangeProof: FeeRangeProof,
 	}
 	return relation, nil
-}
-
-func getValidAssetId(a uint32) int64 {
-	return int64(a) + OneThousand
 }

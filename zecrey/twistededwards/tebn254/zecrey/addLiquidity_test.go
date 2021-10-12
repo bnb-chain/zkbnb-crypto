@@ -33,9 +33,9 @@ func TestAddLiquidityProof_Verify(t *testing.T) {
 	assetAId := uint32(1)
 	assetBId := uint32(2)
 	b_A_Delta := uint64(1)
-	b_B_Delta := uint64(2)
-	//b_Dao_A := uint32(10)
-	//b_Dao_B := uint32(10)
+	b_B_Delta := uint64(1)
+	b_Dao_A := uint64(10)
+	b_Dao_B := uint64(10)
 	sk_u, Pk_u := twistedElgamal.GenKeyPair()
 	_, Pk_Dao := twistedElgamal.GenKeyPair()
 	C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_A)), curve.RandomValue(), Pk_u)
@@ -56,6 +56,7 @@ func TestAddLiquidityProof_Verify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	proof.addDaoInfo(b_Dao_A, b_Dao_B)
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
 	proof2, err := ParseAddLiquidityProofStr(proofStr)

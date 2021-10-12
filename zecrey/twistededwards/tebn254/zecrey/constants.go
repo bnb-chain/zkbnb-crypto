@@ -44,10 +44,11 @@ const (
 	TransferProofSize     = 3*TransferSubProofSize + 9*PointSize + 8
 	SwapProofPartSize     = 28*PointSize + RangeProofSize + 3*8
 
-	SwapProofSize2 = 35*PointSize + 2*RangeProofSize + 6*EightBytes + 1*FourBytes
+	SwapProofSize2 = 35*PointSize + 2*RangeProofSize + 7*EightBytes + 1*FourBytes
 	SwapProofSize  = 2 * SwapProofPartSize
 
 	AddLiquidityProofSize = 32*PointSize + 5*EightBytes + 2*RangeProofSize
+	RemoveLiquidityProofSize = 33*PointSize + 6*EightBytes + 1*RangeProofSize
 
 	ErrCode = -1
 )

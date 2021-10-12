@@ -144,30 +144,31 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof2, err error) {
 		Z_sk_uInv:                        Z_sk_uInv,
 		ARangeProof:                      relation.ARangeProof,
 		FeeRangeProof:                    relation.FeeRangeProof,
-		C_uA:                          relation.C_uA,
-		C_ufee:                        relation.C_ufee,
-		C_ufee_Delta:                  relation.C_ufee_Delta,
-		C_uA_Delta:                    relation.C_uA_Delta,
-		C_uB_Delta:                    relation.C_uB_Delta,
-		LC_DaoA_Delta:                 relation.LC_DaoA_Delta,
-		LC_DaoB_Delta:                 relation.LC_DaoB_Delta,
-		Pk_Dao:                        relation.Pk_Dao,
-		Pk_u:                          relation.Pk_u,
-		R_DeltaA:                      relation.R_DeltaA,
-		R_DeltaB:                      relation.R_DeltaB,
-		T_uA:                          relation.T_uA,
-		T_ufee:                        relation.T_ufee,
-		LC_DaoB:                       relation.LC_DaoB,
-		R_DaoB:                        relation.R_DaoB,
-		B_A_Delta:                     relation.B_A_Delta,
-		B_B_Delta:                     relation.B_B_Delta,
-		B_fee_Delta:                   relation.B_fee_Delta,
-		B_DaoB:                        relation.B_DaoB,
-		Alpha:                         relation.Alpha,
-		Beta:                          relation.Beta,
-		Gamma:                         relation.Gamma,
-		G:                             relation.G,
-		H:                             relation.H,
+		C_uA:                             relation.C_uA,
+		C_ufee:                           relation.C_ufee,
+		C_ufee_Delta:                     relation.C_ufee_Delta,
+		C_uA_Delta:                       relation.C_uA_Delta,
+		C_uB_Delta:                       relation.C_uB_Delta,
+		LC_DaoA_Delta:                    relation.LC_DaoA_Delta,
+		LC_DaoB_Delta:                    relation.LC_DaoB_Delta,
+		Pk_Dao:                           relation.Pk_Dao,
+		Pk_u:                             relation.Pk_u,
+		R_DeltaA:                         relation.R_DeltaA,
+		R_DeltaB:                         relation.R_DeltaB,
+		T_uA:                             relation.T_uA,
+		T_ufee:                           relation.T_ufee,
+		LC_DaoB:                          relation.LC_DaoB,
+		R_DaoB:                           relation.R_DaoB,
+		B_A_Delta:                        relation.B_A_Delta,
+		B_B_Delta:                        relation.B_B_Delta,
+		B_fee_Delta:                      relation.B_fee_Delta,
+		B_DaoA:                           relation.B_DaoA,
+		B_DaoB:                           relation.B_DaoB,
+		Alpha:                            relation.Alpha,
+		Beta:                             relation.Beta,
+		Gamma:                            relation.Gamma,
+		G:                                relation.G,
+		H:                                relation.H,
 	}
 	return proof, nil
 }
@@ -250,7 +251,7 @@ func (proof *SwapProof2) Verify() (res bool, err error) {
 	C_uAPrimeNeg = negElgamal(C_uAPrime)
 	C_ufeePrimeNeg = negElgamal(C_ufeePrime)
 	l3 := curve.Add(
-		curve.ScalarMul(curve.G, proof.Z_bar_r_A),
+		curve.ScalarMul(proof.G, proof.Z_bar_r_A),
 		curve.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r3 := curve.Add(
@@ -268,7 +269,7 @@ func (proof *SwapProof2) Verify() (res bool, err error) {
 		return false, nil
 	}
 	l4 := curve.Add(
-		curve.ScalarMul(curve.G, proof.Z_bar_r_fee),
+		curve.ScalarMul(proof.G, proof.Z_bar_r_fee),
 		curve.ScalarMul(C_ufeePrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r4 := curve.Add(
@@ -310,5 +311,16 @@ func verifySwapParams(proof *SwapProof2) (res bool, err error) {
 		return false, nil
 	}
 	// TODO verify AMM info & DAO balance info
+	if proof.B_DaoB < proof.B_B_Delta {
+		return false, nil
+	}
 	return true, nil
+}
+
+func (proof *SwapProof2) addDaoInfo(b_Dao_A, b_Dao_B uint64) {
+	// set params
+	proof.B_DaoA = b_Dao_A
+	proof.B_DaoB = b_Dao_B
+	proof.Alpha = uint64(float64(proof.B_A_Delta) / float64(proof.B_DaoA) * OneMillion)
+	proof.Beta = uint64(float64(proof.B_B_Delta) / float64(proof.B_DaoB) * OneMillion)
 }
