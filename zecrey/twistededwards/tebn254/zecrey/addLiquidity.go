@@ -208,7 +208,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 	C_uAPrimeNeg = negElgamal(C_uAPrime)
 	C_uBPrimeNeg = negElgamal(C_uBPrime)
 	l3 := curve.Add(
-		curve.ScalarMul(curve.G, proof.Z_bar_r_A),
+		curve.ScalarMul(proof.G, proof.Z_bar_r_A),
 		curve.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r3 := curve.Add(
@@ -226,7 +226,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 		return false, nil
 	}
 	l4 := curve.Add(
-		curve.ScalarMul(curve.G, proof.Z_bar_r_B),
+		curve.ScalarMul(proof.G, proof.Z_bar_r_B),
 		curve.ScalarMul(C_uBPrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r4 := curve.Add(
@@ -275,7 +275,8 @@ func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
 		return false, nil
 	}
 	// verify AMM info & DAO balance info
-	if proof.B_DaoB*proof.B_A_Delta != proof.B_DaoA*proof.B_B_Delta {
+	if ffmath.Multiply(big.NewInt(int64(proof.B_DaoB)), big.NewInt(int64(proof.B_A_Delta))).Cmp(
+		ffmath.Multiply(big.NewInt(int64(proof.B_DaoA)), big.NewInt(int64(proof.B_B_Delta)))) != 0 {
 		log.Println("[verifyAddLiquidityParams] invalid liquidity rate")
 		return false, nil
 	}

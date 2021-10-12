@@ -23,6 +23,15 @@ import (
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
+func proveCtRange(b int64, g, h *Point) (r *big.Int, proof *RangeProof, err error) {
+	r, proof, err = ctrange.Prove(b, g, h)
+	if err != nil {
+		log.Println("[proveCtRange] err info:", err)
+		return nil, nil, err
+	}
+	return r, proof, nil
+}
+
 func proveCtRangeRoutine(b int64, g, h *Point, r *big.Int, proof *RangeProof, rangeChan chan int) {
 	var (
 		err error

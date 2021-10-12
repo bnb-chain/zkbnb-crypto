@@ -370,8 +370,7 @@ func NewSwapRelation(
 	if !notNullElGamal(C_uA) || !notNullElGamal(C_ufee) || Sk_u == nil ||
 		Pk_Dao == nil || !curve.IsInSubGroup(Pk_Dao) || Pk_u == nil || !curve.IsInSubGroup(Pk_u) ||
 		assetAId == assetBId ||
-		B_u_A < 0 || B_u_fee < 0 || B_A_Delta < 0 || B_B_Delta < 0 || B_fee_Delta < 0 ||
-		B_A_Delta > B_u_A || B_fee_Delta > B_u_fee {
+		B_u_A < B_A_Delta || B_u_fee < B_fee_Delta {
 		log.Println("[NewSwapRelation] err: invalid params")
 		if assetAId == assetFeeId && (!equalEnc(C_uA, C_ufee) || B_A_Delta+B_fee_Delta > B_u_A) {
 			log.Println("[NewSwapRelation] not enough balance")

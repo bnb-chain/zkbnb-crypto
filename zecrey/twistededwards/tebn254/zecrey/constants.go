@@ -48,6 +48,7 @@ const (
 	SwapProofSize  = 2 * SwapProofPartSize
 
 	AddLiquidityProofSize = 32*PointSize + 5*EightBytes + 2*RangeProofSize
+	RemoveLiquidityProofSize = 33*PointSize + 6*EightBytes + 1*RangeProofSize
 
 	ErrCode = -1
 )

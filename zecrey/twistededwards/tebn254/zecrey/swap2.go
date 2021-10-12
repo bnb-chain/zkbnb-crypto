@@ -251,7 +251,7 @@ func (proof *SwapProof2) Verify() (res bool, err error) {
 	C_uAPrimeNeg = negElgamal(C_uAPrime)
 	C_ufeePrimeNeg = negElgamal(C_ufeePrime)
 	l3 := curve.Add(
-		curve.ScalarMul(curve.G, proof.Z_bar_r_A),
+		curve.ScalarMul(proof.G, proof.Z_bar_r_A),
 		curve.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r3 := curve.Add(
@@ -269,7 +269,7 @@ func (proof *SwapProof2) Verify() (res bool, err error) {
 		return false, nil
 	}
 	l4 := curve.Add(
-		curve.ScalarMul(curve.G, proof.Z_bar_r_fee),
+		curve.ScalarMul(proof.G, proof.Z_bar_r_fee),
 		curve.ScalarMul(C_ufeePrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r4 := curve.Add(

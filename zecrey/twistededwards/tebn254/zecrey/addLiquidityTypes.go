@@ -291,7 +291,7 @@ func NewAddLiquidityRelation(
 	if !notNullElGamal(C_uA) || !notNullElGamal(C_uB) || Sk_u == nil ||
 		!curve.IsInSubGroup(Pk_u) || !curve.IsInSubGroup(Pk_Dao) ||
 		assetAId == assetBId ||
-		B_uA < 0 || B_uB < 0 || B_A_Delta < 0 || B_B_Delta < 0 || B_uA < B_A_Delta || B_uB < B_B_Delta {
+		B_uA < B_A_Delta || B_uB < B_B_Delta {
 		log.Println("[NewAddLiquidityRelation] err: invalid params")
 		return nil, errors.New("[NewAddLiquidityRelation] err: invalid params")
 	}
