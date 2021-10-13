@@ -19,200 +19,308 @@ package zecrey
 
 import (
 	"bytes"
+	"errors"
+	"log"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
 	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 	"zecrey-crypto/util"
 )
 
-func ProveSwapPart1(relation *SwapProofRelationPart, isFrom bool) (proof *SwapProofPart, err error) {
+func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
+	// check params
 	if relation == nil {
-		return nil, ErrInvalidParams
+		return nil, errors.New("[ProveSwap] invalid relation params")
 	}
 	var (
-		buf          bytes.Buffer
-		CStar        *ElGamalEnc
-		bStar        *big.Int
-		deltaBalance *big.Int
+		alpha_r_Deltafee                                          *big.Int
+		alpha_sk_u, alpha_sk_uInv, alpha_bar_r_A, alpha_bar_r_fee *big.Int
+		A_C_ufeeL_Delta, A_CufeeR_DeltaHb_fee_DeltaInv            *Point
+		A_Pk_u, A_T_ufeeC_ufeeRPrimeInv, A_T_uAC_uARPrimeInv      *Point
+		c                                                         *big.Int
+		Z_r_Deltafee, Z_sk_u, Z_bar_r_A, Z_bar_r_fee, Z_sk_uInv   *big.Int
+		buf                                                       bytes.Buffer
 	)
-	// check if the encryption is valid
-	if isFrom {
-		bStar = relation.BStarFrom
-		deltaBalance = ffmath.Add(bStar, relation.Fee)
+	// challenge buf
+	writePointIntoBuf(&buf, relation.G)
+	writePointIntoBuf(&buf, relation.H)
+	writePointIntoBuf(&buf, relation.Pk_u)
+	writePointIntoBuf(&buf, relation.Pk_Dao)
+	writeEncIntoBuf(&buf, relation.C_uA)
+	writeEncIntoBuf(&buf, relation.C_ufee)
+	writeEncIntoBuf(&buf, relation.C_uA_Delta)
+	writeEncIntoBuf(&buf, relation.C_ufee_Delta)
+	writePointIntoBuf(&buf, relation.T_uA)
+	writePointIntoBuf(&buf, relation.T_ufee)
+	// valid enc
+	alpha_r_Deltafee = curve.RandomValue()
+	A_C_ufeeL_Delta = curve.ScalarMul(relation.Pk_u, alpha_r_Deltafee)
+	A_CufeeR_DeltaHb_fee_DeltaInv = curve.ScalarMul(relation.G, alpha_r_Deltafee)
+	// write into buf
+	writePointIntoBuf(&buf, A_C_ufeeL_Delta)
+	writePointIntoBuf(&buf, A_CufeeR_DeltaHb_fee_DeltaInv)
+	// ownership
+	alpha_sk_u = curve.RandomValue()
+	alpha_sk_uInv = ffmath.ModInverse(alpha_sk_u, Order)
+	alpha_bar_r_A = curve.RandomValue()
+	alpha_bar_r_fee = curve.RandomValue()
+	A_Pk_u = curve.ScalarMul(relation.G, alpha_sk_u)
+	// if asset fee id == asset A id, construct two same value proofs
+	if relation.AssetFeeId == relation.AssetAId {
+		CLDelta := curve.Add(
+			curve.Neg(relation.C_uA_Delta.CL),
+			curve.Neg(relation.C_ufee_Delta.CL),
+		)
+		// user asset A & fee part
+		A_T_uAC_uARPrimeInv = curve.Add(
+			relation.C_uA.CL,
+			CLDelta,
+		)
+		A_T_uAC_uARPrimeInv = curve.Neg(A_T_uAC_uARPrimeInv)
+		A_T_uAC_uARPrimeInv = curve.ScalarMul(A_T_uAC_uARPrimeInv, alpha_sk_uInv)
+		A_T_uAC_uARPrimeInv = curve.Add(A_T_uAC_uARPrimeInv, curve.ScalarMul(relation.G, alpha_bar_r_A))
+		// user asset fee part
+		A_T_ufeeC_ufeeRPrimeInv = curve.Add(
+			relation.C_ufee.CL,
+			CLDelta,
+		)
+		A_T_ufeeC_ufeeRPrimeInv = curve.Neg(A_T_ufeeC_ufeeRPrimeInv)
+		A_T_ufeeC_ufeeRPrimeInv = curve.ScalarMul(A_T_ufeeC_ufeeRPrimeInv, alpha_sk_uInv)
+		A_T_ufeeC_ufeeRPrimeInv = curve.Add(A_T_ufeeC_ufeeRPrimeInv, curve.ScalarMul(relation.G, alpha_bar_r_fee))
 	} else {
-		bStar = relation.BStarTo
-		deltaBalance = bStar
+		// user asset A part
+		A_T_uAC_uARPrimeInv = curve.Add(
+			relation.C_uA.CL,
+			curve.Neg(relation.C_uA_Delta.CL),
+		)
+		A_T_uAC_uARPrimeInv = curve.Neg(A_T_uAC_uARPrimeInv)
+		A_T_uAC_uARPrimeInv = curve.ScalarMul(A_T_uAC_uARPrimeInv, alpha_sk_uInv)
+		A_T_uAC_uARPrimeInv = curve.Add(A_T_uAC_uARPrimeInv, curve.ScalarMul(relation.G, alpha_bar_r_A))
+		// user asset fee part
+		A_T_ufeeC_ufeeRPrimeInv = curve.Add(
+			relation.C_ufee.CL,
+			curve.Neg(relation.C_ufee_Delta.CL),
+		)
+		A_T_ufeeC_ufeeRPrimeInv = curve.Neg(A_T_ufeeC_ufeeRPrimeInv)
+		A_T_ufeeC_ufeeRPrimeInv = curve.ScalarMul(A_T_ufeeC_ufeeRPrimeInv, alpha_sk_uInv)
+		A_T_ufeeC_ufeeRPrimeInv = curve.Add(A_T_ufeeC_ufeeRPrimeInv, curve.ScalarMul(relation.G, alpha_bar_r_fee))
 	}
-	CStar = relation.CStar
-	CLStarCheck := curve.ScalarMul(relation.Pk, relation.RStar)
-	CRStarCheck := curve.Add(curve.ScalarMul(relation.G, relation.RStar), curve.ScalarMul(relation.H, ffmath.Neg(deltaBalance)))
-	if !CStar.CL.Equal(CLStarCheck) || !CStar.CR.Equal(CRStarCheck) {
-		return nil, ErrInvalidEncryption
-	}
-	// commit balance proof
-	alpha_rbar, alpha_sk, alpha_skInv,
-	A_pk, A_TDivCRprime := commitBalance(relation.G, relation.CLprimeInv)
-	// set buf
-	buf.Write(relation.G.Marshal())
-	buf.Write(relation.H.Marshal())
-	buf.Write(relation.Fee.Bytes())
-	buf.Write(relation.Ht1.Marshal())
-	buf.Write(relation.Pt1.Marshal())
-	buf.Write(relation.Ht2.Marshal())
-	buf.Write(relation.Pt2.Marshal())
-	buf.Write(relation.C.CL.Marshal())
-	buf.Write(relation.C.CR.Marshal())
-	buf.Write(relation.CStar.CL.Marshal())
-	buf.Write(relation.CStar.CR.Marshal())
-	buf.Write(relation.T.Marshal())
-	buf.Write(relation.Pk.Marshal())
-	buf.Write(relation.BStarFrom.Bytes())
-	buf.Write(relation.BStarTo.Bytes())
-	buf.Write(A_pk.Marshal())
-	buf.Write(A_TDivCRprime.Marshal())
-	c, err := util.HashToInt(buf, zmimc.Hmimc)
+	// write into buf
+	writePointIntoBuf(&buf, A_Pk_u)
+	writePointIntoBuf(&buf, A_T_uAC_uARPrimeInv)
+	writePointIntoBuf(&buf, A_T_ufeeC_ufeeRPrimeInv)
+	// compute challenge
+	c, err = util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
 		return nil, err
 	}
-	A_Pt1, _ := provePt(alpha_sk, relation.Sk, relation.Ht1, c)
-	A_Pt2, _ := provePt(alpha_sk, relation.Sk, relation.Ht2, c)
-	//z_r := respondHalfEnc(relation.RStar, alpha_r, c)
-	z_rbar, z_sk, z_skInv := respondBalance(relation.RBar, relation.Sk, alpha_rbar, alpha_sk, alpha_skInv, c)
-	// range proof
-	// make range proofs
-	rangeProof, err := commitRange.Prove(relation.BPrime, relation.RBar, relation.T, relation.Rs, H, G)
-	if err != nil {
-		return nil, err
+	// compute response values
+	Z_r_Deltafee = ffmath.AddMod(alpha_r_Deltafee, ffmath.Multiply(c, relation.R_Deltafee), Order)
+	Z_sk_u = ffmath.AddMod(alpha_sk_u, ffmath.Multiply(c, relation.Sk_u), Order)
+	if relation.AssetAId == relation.AssetFeeId {
+		// construct responses
+		Z_bar_r_A = ffmath.AddMod(ffmath.Add(alpha_bar_r_A, alpha_bar_r_fee),
+			ffmath.Multiply(c, ffmath.Add(relation.Bar_r_A, relation.Bar_r_fee)), Order)
+		Z_bar_r_fee = new(big.Int).Set(Z_bar_r_A)
+	} else {
+		// construct responses
+		Z_bar_r_A = ffmath.AddMod(alpha_bar_r_A, ffmath.Multiply(c, relation.Bar_r_A), Order)
+		Z_bar_r_fee = ffmath.AddMod(alpha_bar_r_fee, ffmath.Multiply(c, relation.Bar_r_fee), Order)
 	}
-	proof = &SwapProofPart{
-		// commitments
-		Pt1:           relation.Pt1,
-		Pt2:           relation.Pt2,
-		A_pk:          A_pk,
-		A_TDivCRprime: A_TDivCRprime,
-		A_Pt1:         A_Pt1,
-		A_Pt2:         A_Pt2,
-		// response
-		Z_rbar:  z_rbar,
-		Z_sk:    z_sk,
-		Z_skInv: z_skInv,
-		// Commitment Range Proofs
-		RangeProof: rangeProof,
-		// common inputs
-		BStar1:        relation.BStarFrom,
-		BStar2:        relation.BStarTo,
-		Fee:           relation.Fee,
-		RStar:         relation.RStar,
-		CStar:         relation.CStar,
-		C:             relation.C,
-		ReceiverCStar: relation.ReceiverCStar,
-		ReceiverPk:    relation.ReceiverPk,
-		ReceiverC:     relation.ReceiverC,
-		G:             relation.G,
-		H:             relation.H,
-		Ht1:           relation.Ht1,
-		Ht2:           relation.Ht2,
-		TDivCRprime:   relation.TDivCRprime,
-		CLprimeInv:    relation.CLprimeInv,
-		T:             relation.T,
-		Pk:            relation.Pk,
-		Challenge:     c,
-	}
-	return proof, nil
-}
-
-func ProveSwapPart2(relation *SwapProofRelationPart, proofPart1 *SwapProofPart) (proof *SwapProof, err error) {
-	if relation == nil || proofPart1 == nil || !relation.Ht1.Equal(proofPart1.Ht1) || !relation.Ht2.Equal(proofPart1.Ht2) || !ffmath.Equal(relation.BStarFrom, proofPart1.BStar1) || !ffmath.Equal(relation.BStarTo, proofPart1.BStar2) {
-		return nil, ErrInvalidParams
-	}
-	// Verify the proof part first
-	partRes, err := proofPart1.Verify()
-	if err != nil || !partRes {
-		return nil, ErrInvalidSwapProof
-	}
-	proofPart2, err := ProveSwapPart1(relation, false)
-	if err != nil {
-		return nil, err
-	}
-	// add receiver for each part
+	Z_sk_uInv = ffmath.AddMod(alpha_sk_uInv, ffmath.Multiply(c, ffmath.ModInverse(relation.Sk_u, Order)), Order)
+	// construct proof
 	proof = &SwapProof{
-		ProofPart1: proofPart1,
-		ProofPart2: proofPart2,
+		A_C_ufeeL_Delta:                  A_C_ufeeL_Delta,
+		A_CufeeR_DeltaHExpb_fee_DeltaInv: A_CufeeR_DeltaHb_fee_DeltaInv,
+		Z_r_Deltafee:                     Z_r_Deltafee,
+		A_pk_u:                           A_Pk_u,
+		A_T_uAC_uARPrimeInv:              A_T_uAC_uARPrimeInv,
+		A_T_ufeeC_ufeeRPrimeInv:          A_T_ufeeC_ufeeRPrimeInv,
+		Z_sk_u:                           Z_sk_u,
+		Z_bar_r_A:                        Z_bar_r_A,
+		Z_bar_r_fee:                      Z_bar_r_fee,
+		Z_sk_uInv:                        Z_sk_uInv,
+		ARangeProof:                      relation.ARangeProof,
+		FeeRangeProof:                    relation.FeeRangeProof,
+		C_uA:                             relation.C_uA,
+		C_ufee:                           relation.C_ufee,
+		C_ufee_Delta:                     relation.C_ufee_Delta,
+		C_uA_Delta:                       relation.C_uA_Delta,
+		C_uB_Delta:                       relation.C_uB_Delta,
+		LC_DaoA_Delta:                    relation.LC_DaoA_Delta,
+		LC_DaoB_Delta:                    relation.LC_DaoB_Delta,
+		Pk_Dao:                           relation.Pk_Dao,
+		Pk_u:                             relation.Pk_u,
+		R_DeltaA:                         relation.R_DeltaA,
+		R_DeltaB:                         relation.R_DeltaB,
+		T_uA:                             relation.T_uA,
+		T_ufee:                           relation.T_ufee,
+		LC_DaoB:                          relation.LC_DaoB,
+		R_DaoB:                           relation.R_DaoB,
+		B_A_Delta:                        relation.B_A_Delta,
+		B_B_Delta:                        relation.B_B_Delta,
+		B_fee_Delta:                      relation.B_fee_Delta,
+		B_DaoA:                           relation.B_DaoA,
+		B_DaoB:                           relation.B_DaoB,
+		Alpha:                            relation.Alpha,
+		Beta:                             relation.Beta,
+		Gamma:                            relation.Gamma,
+		G:                                relation.G,
+		H:                                relation.H,
 	}
 	return proof, nil
 }
 
-func (proof *SwapProofPart) Verify() (bool, error) {
+func (proof *SwapProof) Verify() (res bool, err error) {
 	if proof == nil {
-		return false, ErrInvalidParams
+		return false, errors.New("[SwapProof Verify] invalid params")
 	}
-	if proof.BStar1.Cmp(Zero) <= 0 || proof.BStar2.Cmp(Zero) <= 0 {
-		return false, ErrInvalidBStar
-	}
-	// Verify range proof first
-	rangeRes, err := proof.RangeProof.Verify()
-	if err != nil || !rangeRes {
-		return false, err
-	}
-	// generate the challenge
-	var buf bytes.Buffer
-	buf.Write(proof.G.Marshal())
-	buf.Write(proof.H.Marshal())
-	buf.Write(proof.Fee.Bytes())
-	buf.Write(proof.Ht1.Marshal())
-	buf.Write(proof.Pt1.Marshal())
-	buf.Write(proof.Ht2.Marshal())
-	buf.Write(proof.Pt2.Marshal())
-	buf.Write(proof.C.CL.Marshal())
-	buf.Write(proof.C.CR.Marshal())
-	buf.Write(proof.CStar.CL.Marshal())
-	buf.Write(proof.CStar.CR.Marshal())
-	buf.Write(proof.T.Marshal())
-	buf.Write(proof.Pk.Marshal())
-	buf.Write(proof.BStar1.Bytes())
-	buf.Write(proof.BStar2.Bytes())
-	buf.Write(proof.A_pk.Marshal())
-	buf.Write(proof.A_TDivCRprime.Marshal())
-	c, err := util.HashToInt(buf, zmimc.Hmimc)
+	var (
+		C_uAPrime, C_ufeePrime       *ElGamalEnc
+		C_uAPrimeNeg, C_ufeePrimeNeg *ElGamalEnc
+		c                            *big.Int
+		buf                          bytes.Buffer
+	)
+	// challenge buf
+	writePointIntoBuf(&buf, proof.G)
+	writePointIntoBuf(&buf, proof.H)
+	writePointIntoBuf(&buf, proof.Pk_u)
+	writePointIntoBuf(&buf, proof.Pk_Dao)
+	writeEncIntoBuf(&buf, proof.C_uA)
+	writeEncIntoBuf(&buf, proof.C_ufee)
+	writeEncIntoBuf(&buf, proof.C_uA_Delta)
+	writeEncIntoBuf(&buf, proof.C_ufee_Delta)
+	writePointIntoBuf(&buf, proof.T_uA)
+	writePointIntoBuf(&buf, proof.T_ufee)
+	// write into buf
+	writePointIntoBuf(&buf, proof.A_C_ufeeL_Delta)
+	writePointIntoBuf(&buf, proof.A_CufeeR_DeltaHExpb_fee_DeltaInv)
+	// write into buf
+	writePointIntoBuf(&buf, proof.A_pk_u)
+	writePointIntoBuf(&buf, proof.A_T_uAC_uARPrimeInv)
+	writePointIntoBuf(&buf, proof.A_T_ufeeC_ufeeRPrimeInv)
+	// compute challenge
+	c, err = util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
 		return false, err
 	}
-	// Verify challenge
-	if !ffmath.Equal(c, proof.Challenge) {
-		return false, ErrInvalidChallenge
-	}
-	// Verify Ht
-	ptRes1, err := verifyPt(proof.Ht1, proof.Pt1, proof.A_Pt1, c, proof.Z_sk)
-	if err != nil || !ptRes1 {
-		return false, err
-	}
-	ptRes2, err := verifyPt(proof.Ht2, proof.Pt2, proof.A_Pt2, c, proof.Z_sk)
-	if err != nil || !ptRes2 {
-		return false, err
-	}
-	// Verify balance
-	balanceRes, err := verifyBalance(proof.G, proof.Pk, proof.A_pk, proof.CLprimeInv, proof.TDivCRprime, proof.A_TDivCRprime, c, proof.Z_sk, proof.Z_skInv, proof.Z_rbar)
+	// TODO verify params
+	isValidParams, err := verifySwapParams(proof)
 	if err != nil {
 		return false, err
 	}
-	return balanceRes, nil
-}
-
-func (proof *SwapProof) Verify() (bool, error) {
-	if proof == nil {
-		return false, ErrInvalidParams
+	if !isValidParams {
+		return false, errors.New("[SwapProof Verify] invalid params")
 	}
-	// Verify part 1
-	part1Res, err := proof.ProofPart1.Verify()
-	if err != nil || !part1Res {
-		return false, err
+	// verify enc
+	l1 := curve.ScalarMul(proof.Pk_u, proof.Z_r_Deltafee)
+	r1 := curve.Add(proof.A_C_ufeeL_Delta, curve.ScalarMul(proof.C_ufee_Delta.CL, c))
+	if !l1.Equal(r1) {
+		log.Println("[SwapProof Verify] l1 != r1")
+		return false, nil
 	}
-	// Verify part2
-	part2Res, err := proof.ProofPart2.Verify()
-	if err != nil || !part2Res {
-		return false, err
+	// verify ownership
+	l2 := curve.ScalarMul(proof.G, proof.Z_sk_u)
+	r2 := curve.Add(proof.A_pk_u, curve.ScalarMul(proof.Pk_u, c))
+	if !l2.Equal(r2) {
+		log.Println("[SwapProof Verify] l2 != r2")
+		return false, nil
+	}
+	if equalEnc(proof.C_uA, proof.C_ufee) {
+		C_uAPrime, err = twistedElgamal.EncSub(proof.C_uA, proof.C_uA_Delta)
+		if err != nil {
+			return false, err
+		}
+		C_uAPrime, err = twistedElgamal.EncSub(C_uAPrime, proof.C_ufee_Delta)
+		if err != nil {
+			return false, err
+		}
+		C_ufeePrime = C_uAPrime
+	} else {
+		C_uAPrime, err = twistedElgamal.EncSub(proof.C_uA, proof.C_uA_Delta)
+		if err != nil {
+			return false, err
+		}
+		C_ufeePrime, err = twistedElgamal.EncSub(proof.C_ufee, proof.C_ufee_Delta)
+		if err != nil {
+			return false, err
+		}
+	}
+	C_uAPrimeNeg = negElgamal(C_uAPrime)
+	C_ufeePrimeNeg = negElgamal(C_ufeePrime)
+	l3 := curve.Add(
+		curve.ScalarMul(proof.G, proof.Z_bar_r_A),
+		curve.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
+	)
+	r3 := curve.Add(
+		proof.A_T_uAC_uARPrimeInv,
+		curve.ScalarMul(
+			curve.Add(
+				proof.T_uA,
+				C_uAPrimeNeg.CR,
+			),
+			c,
+		),
+	)
+	if !l3.Equal(r3) {
+		log.Println("[SwapProof Verify] l3 != r3")
+		return false, nil
+	}
+	l4 := curve.Add(
+		curve.ScalarMul(proof.G, proof.Z_bar_r_fee),
+		curve.ScalarMul(C_ufeePrimeNeg.CL, proof.Z_sk_uInv),
+	)
+	r4 := curve.Add(
+		proof.A_T_ufeeC_ufeeRPrimeInv,
+		curve.ScalarMul(
+			curve.Add(
+				proof.T_ufee,
+				C_ufeePrimeNeg.CR,
+			),
+			c,
+		),
+	)
+	if !l4.Equal(r4) {
+		log.Println("[SwapProof Verify] l4 != r4")
+		return false, nil
 	}
 	return true, nil
+}
+
+func verifySwapParams(proof *SwapProof) (res bool, err error) {
+	C_uA_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_A_Delta)), proof.R_DeltaA, proof.Pk_u)
+	if err != nil {
+		return false, err
+	}
+	C_uB_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_B_Delta)), proof.R_DeltaB, proof.Pk_u)
+	if err != nil {
+		return false, err
+	}
+	LC_DaoA_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_A_Delta)), proof.R_DeltaA, proof.Pk_Dao)
+	if err != nil {
+		return false, err
+	}
+	LC_DaoB_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_B_Delta)), proof.R_DeltaB, proof.Pk_Dao)
+	if err != nil {
+		return false, err
+	}
+	if !equalEnc(C_uA_Delta, proof.C_uA_Delta) || !equalEnc(C_uB_Delta, proof.C_uB_Delta) ||
+		!equalEnc(LC_DaoA_Delta, proof.LC_DaoA_Delta) || !equalEnc(LC_DaoB_Delta, proof.LC_DaoB_Delta) {
+		return false, nil
+	}
+	// TODO verify AMM info & DAO balance info
+	if proof.B_DaoB < proof.B_B_Delta {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (proof *SwapProof) addDaoInfo(b_Dao_A, b_Dao_B uint64) {
+	// set params
+	proof.B_DaoA = b_Dao_A
+	proof.B_DaoB = b_Dao_B
+	proof.Alpha = uint64(float64(proof.B_A_Delta) / float64(proof.B_DaoA) * OneMillion)
+	proof.Beta = uint64(float64(proof.B_B_Delta) / float64(proof.B_DaoB) * OneMillion)
 }

@@ -64,7 +64,7 @@ func prepareTransferTx() *TransferTx {
 	b3 := big.NewInt(4)
 	fee := big.NewInt(1)
 	tokenId := uint32(1)
-	relation, err := zecrey.NewPTransferProofRelation(tokenId, fee)
+	relation, err := zecrey.NewTransferProofRelation(tokenId, fee)
 	if err != nil {
 		panic(err)
 	}
@@ -72,7 +72,7 @@ func prepareTransferTx() *TransferTx {
 	relation.AddStatement(accountBeforeTransfer1.Balance, accountBeforeTransfer1.PubKey, balances[pos1], b1, sk1)
 	relation.AddStatement(accountBeforeTransfer2.Balance, accountBeforeTransfer2.PubKey, nil, b2, nil)
 	relation.AddStatement(accountBeforeTransfer3.Balance, accountBeforeTransfer3.PubKey, nil, b3, nil)
-	proof, err := zecrey.ProvePTransfer(relation)
+	proof, err := zecrey.ProveTransfer(relation)
 	if err != nil {
 		panic(err)
 	}

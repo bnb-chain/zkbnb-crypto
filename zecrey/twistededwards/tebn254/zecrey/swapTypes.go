@@ -19,24 +19,149 @@ package zecrey
 
 import (
 	"encoding/base64"
+	"encoding/binary"
+	"errors"
+	"log"
 	"math/big"
-	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/ffmath"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
-type SwapProof struct {
-	ProofPart1 *SwapProofPart
-	ProofPart2 *SwapProofPart
-}
+const (
+	swapRangeProofCount = 2
+)
 
 func (proof *SwapProof) Bytes() []byte {
-	proofBytes := make([]byte, SwapProofSize)
-	copy(proofBytes[:SwapProofPartSize], proof.ProofPart1.Bytes())
-	copy(proofBytes[SwapProofPartSize:], proof.ProofPart2.Bytes())
+	proofBytes := make([]byte, SwapProofSize2)
+	// valid Enc
+	copy(proofBytes[:PointSize], proof.A_C_ufeeL_Delta.Marshal())
+	copy(proofBytes[PointSize:PointSize*2], proof.A_CufeeR_DeltaHExpb_fee_DeltaInv.Marshal())
+	copy(proofBytes[PointSize*2:PointSize*3], proof.Z_r_Deltafee.FillBytes(make([]byte, PointSize)))
+	// Ownership
+	copy(proofBytes[PointSize*3:PointSize*4], proof.A_pk_u.Marshal())
+	copy(proofBytes[PointSize*4:PointSize*5], proof.A_T_uAC_uARPrimeInv.Marshal())
+	copy(proofBytes[PointSize*5:PointSize*6], proof.A_T_ufeeC_ufeeRPrimeInv.Marshal())
+	copy(proofBytes[PointSize*6:PointSize*7], proof.Z_sk_u.FillBytes(make([]byte, PointSize)))
+	copy(proofBytes[PointSize*7:PointSize*8], proof.Z_bar_r_A.FillBytes(make([]byte, PointSize)))
+	copy(proofBytes[PointSize*8:PointSize*9], proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
+	copy(proofBytes[PointSize*9:PointSize*10], proof.Z_sk_uInv.FillBytes(make([]byte, PointSize)))
+	// common inputs
+	// user asset A balance enc
+	C_uABytes := proof.C_uA.Bytes()
+	copy(proofBytes[PointSize*10:PointSize*12], C_uABytes[:])
+	// user asset fee balance enc
+	C_ufeeBytes := proof.C_ufee.Bytes()
+	copy(proofBytes[PointSize*12:PointSize*14], C_ufeeBytes[:])
+	// user asset fee Delta enc
+	C_ufee_DeltaBytes := proof.C_ufee_Delta.Bytes()
+	copy(proofBytes[PointSize*14:PointSize*16], C_ufee_DeltaBytes[:])
+	// user asset A,B Delta enc
+	C_uA_DeltaBytes := proof.C_uA_Delta.Bytes()
+	C_uB_DeltaBytes := proof.C_uB_Delta.Bytes()
+	copy(proofBytes[PointSize*16:PointSize*18], C_uA_DeltaBytes[:])
+	copy(proofBytes[PointSize*18:PointSize*20], C_uB_DeltaBytes[:])
+	// liquidity pool asset A,B Delta enc
+	LC_DaoA_DeltaBytes := proof.LC_DaoA_Delta.Bytes()
+	LC_DaoB_DeltaBytes := proof.LC_DaoB_Delta.Bytes()
+	copy(proofBytes[PointSize*20:PointSize*22], LC_DaoA_DeltaBytes[:])
+	copy(proofBytes[PointSize*22:PointSize*24], LC_DaoB_DeltaBytes[:])
+	// public keys
+	copy(proofBytes[PointSize*24:PointSize*25], proof.Pk_Dao.Marshal())
+	copy(proofBytes[PointSize*25:PointSize*26], proof.Pk_u.Marshal())
+	// random value for Delta A & B
+	copy(proofBytes[PointSize*26:PointSize*27], proof.R_DeltaA.FillBytes(make([]byte, PointSize)))
+	copy(proofBytes[PointSize*27:PointSize*28], proof.R_DeltaB.FillBytes(make([]byte, PointSize)))
+	// commitment for user asset A & fee
+	copy(proofBytes[PointSize*28:PointSize*29], proof.T_uA.Marshal())
+	copy(proofBytes[PointSize*29:PointSize*30], proof.T_ufee.Marshal())
+	// liquidity pool asset B balance
+	LC_DaoBBytes := proof.LC_DaoB.Bytes()
+	copy(proofBytes[PointSize*30:PointSize*32], LC_DaoBBytes[:])
+	// random value for dao liquidity asset B
+	copy(proofBytes[PointSize*32:PointSize*33], proof.R_DaoB.FillBytes(make([]byte, PointSize)))
+	// generators
+	copy(proofBytes[PointSize*33:PointSize*34], proof.G.Marshal())
+	copy(proofBytes[PointSize*34:PointSize*35], proof.H.Marshal())
+	// asset A,B,fee Delta & dao liquidity asset B balance
+	B_A_DeltaBytes := make([]byte, EightBytes)
+	B_B_DeltaBytes := make([]byte, EightBytes)
+	B_fee_DeltaBytes := make([]byte, EightBytes)
+	B_DaoABytes := make([]byte, EightBytes)
+	B_DaoBBytes := make([]byte, EightBytes)
+	binary.BigEndian.PutUint64(B_A_DeltaBytes, proof.B_A_Delta)
+	binary.BigEndian.PutUint64(B_B_DeltaBytes, proof.B_B_Delta)
+	binary.BigEndian.PutUint64(B_fee_DeltaBytes, proof.B_fee_Delta)
+	binary.BigEndian.PutUint64(B_DaoABytes, proof.B_DaoA)
+	binary.BigEndian.PutUint64(B_DaoBBytes, proof.B_DaoB)
+	copy(proofBytes[PointSize*35:PointSize*35+EightBytes], B_A_DeltaBytes)
+	copy(proofBytes[PointSize*35+EightBytes:PointSize*35+EightBytes*2], B_B_DeltaBytes)
+	copy(proofBytes[PointSize*35+EightBytes*2:PointSize*35+EightBytes*3], B_fee_DeltaBytes)
+	copy(proofBytes[PointSize*35+EightBytes*3:PointSize*35+EightBytes*4], B_DaoABytes)
+	copy(proofBytes[PointSize*35+EightBytes*4:PointSize*35+EightBytes*5], B_DaoBBytes)
+	// alpha = \delta{x} / x
+	// beta = \delta{y} / y
+	AlphaBytes := make([]byte, EightBytes)
+	BetaBytes := make([]byte, EightBytes)
+	binary.BigEndian.PutUint64(AlphaBytes, proof.Alpha)
+	binary.BigEndian.PutUint64(BetaBytes, proof.Beta)
+	copy(proofBytes[PointSize*35+EightBytes*5:PointSize*35+EightBytes*6], AlphaBytes)
+	copy(proofBytes[PointSize*35+EightBytes*6:PointSize*35+EightBytes*7], BetaBytes)
+	// gamma = 1 - fee %
+	GammaBytes := make([]byte, FourBytes)
+	binary.BigEndian.PutUint32(GammaBytes, proof.Gamma)
+	copy(proofBytes[PointSize*35+EightBytes*7:PointSize*35+EightBytes*7+FourBytes], GammaBytes)
+	// range proofs
+	copy(proofBytes[PointSize*35+EightBytes*7+FourBytes:PointSize*35+EightBytes*7+FourBytes+RangeProofSize], proof.ARangeProof.Bytes())
+	copy(proofBytes[PointSize*35+EightBytes*7+FourBytes+RangeProofSize:PointSize*35+EightBytes*7+FourBytes+RangeProofSize*2], proof.FeeRangeProof.Bytes())
 	return proofBytes
+}
+
+/*
+	SwapProof: swap proof
+*/
+type SwapProof struct {
+	// commitments
+	// valid Enc
+	A_C_ufeeL_Delta, A_CufeeR_DeltaHExpb_fee_DeltaInv *Point
+	Z_r_Deltafee                                      *big.Int
+	// Ownership
+	A_pk_u, A_T_uAC_uARPrimeInv, A_T_ufeeC_ufeeRPrimeInv *Point
+	Z_sk_u, Z_bar_r_A, Z_bar_r_fee, Z_sk_uInv            *big.Int
+	// range proofs
+	ARangeProof   *RangeProof
+	FeeRangeProof *RangeProof
+	// common inputs
+	// user asset A balance enc
+	C_uA *ElGamalEnc
+	// user asset fee balance enc
+	C_ufee *ElGamalEnc
+	// user asset fee Delta enc
+	C_ufee_Delta *ElGamalEnc
+	// user asset A,B Delta enc
+	C_uA_Delta, C_uB_Delta *ElGamalEnc
+	// liquidity pool asset A,B Delta enc
+	LC_DaoA_Delta, LC_DaoB_Delta *ElGamalEnc
+	// public keys
+	Pk_Dao, Pk_u *Point
+	// random value for Delta A & B
+	R_DeltaA, R_DeltaB *big.Int
+	// commitment for user asset A & fee
+	T_uA, T_ufee *Point
+	// liquidity pool asset B balance
+	LC_DaoB *ElGamalEnc
+	// random value for dao liquidity asset B
+	R_DaoB *big.Int
+	// asset A,B,fee Delta & dao liquidity asset B balance
+	B_A_Delta, B_B_Delta, B_fee_Delta uint64
+	B_DaoA, B_DaoB                    uint64
+	// alpha = \delta{x} / x
+	// beta = \delta{y} / y
+	// gamma = 1 - fee %
+	Alpha, Beta uint64
+	Gamma       uint32
+	// generators
+	G, H *Point
 }
 
 func (proof *SwapProof) String() string {
@@ -44,15 +169,127 @@ func (proof *SwapProof) String() string {
 }
 
 func ParseSwapProofBytes(proofBytes []byte) (proof *SwapProof, err error) {
-	if len(proofBytes) != SwapProofSize {
-		return nil, ErrInvalidSwapProofSize
+	if len(proofBytes) != SwapProofSize2 {
+		return nil, errors.New("[ParseSwapProofBytes] invalid swap proof size")
 	}
+	// construct new proof
 	proof = new(SwapProof)
-	proof.ProofPart1, err = ParseSwapProofPartBytes(proofBytes[:SwapProofPartSize])
+	// valid Enc
+	proof.A_C_ufeeL_Delta, err = curve.FromBytes(proofBytes[:PointSize])
 	if err != nil {
 		return nil, err
 	}
-	proof.ProofPart2, err = ParseSwapProofPartBytes(proofBytes[SwapProofPartSize:])
+	proof.A_CufeeR_DeltaHExpb_fee_DeltaInv, err = curve.FromBytes(proofBytes[PointSize : PointSize*2])
+	if err != nil {
+		return nil, err
+	}
+	proof.Z_r_Deltafee = new(big.Int).SetBytes(proofBytes[PointSize*2 : PointSize*3])
+	// Ownership
+	proof.A_pk_u, err = curve.FromBytes(proofBytes[PointSize*3 : PointSize*4])
+	if err != nil {
+		return nil, err
+	}
+	proof.A_T_uAC_uARPrimeInv, err = curve.FromBytes(proofBytes[PointSize*4 : PointSize*5])
+	if err != nil {
+		return nil, err
+	}
+	proof.A_T_ufeeC_ufeeRPrimeInv, err = curve.FromBytes(proofBytes[PointSize*5 : PointSize*6])
+	if err != nil {
+		return nil, err
+	}
+	proof.Z_sk_u = new(big.Int).SetBytes(proofBytes[PointSize*6 : PointSize*7])
+	proof.Z_bar_r_A = new(big.Int).SetBytes(proofBytes[PointSize*7 : PointSize*8])
+	proof.Z_bar_r_fee = new(big.Int).SetBytes(proofBytes[PointSize*8 : PointSize*9])
+	proof.Z_sk_uInv = new(big.Int).SetBytes(proofBytes[PointSize*9 : PointSize*10])
+	// common inputs
+	// user asset A balance enc
+	proof.C_uA, err = twistedElgamal.FromBytes(proofBytes[PointSize*10 : PointSize*12])
+	if err != nil {
+		return nil, err
+	}
+	// user asset fee balance enc
+	proof.C_ufee, err = twistedElgamal.FromBytes(proofBytes[PointSize*12 : PointSize*14])
+	if err != nil {
+		return nil, err
+	}
+	// user asset fee Delta enc
+	proof.C_ufee_Delta, err = twistedElgamal.FromBytes(proofBytes[PointSize*14 : PointSize*16])
+	if err != nil {
+		return nil, err
+	}
+	// user asset A,B Delta enc
+	proof.C_uA_Delta, err = twistedElgamal.FromBytes(proofBytes[PointSize*16 : PointSize*18])
+	if err != nil {
+		return nil, err
+	}
+	proof.C_uB_Delta, err = twistedElgamal.FromBytes(proofBytes[PointSize*18 : PointSize*20])
+	if err != nil {
+		return nil, err
+	}
+	// liquidity pool asset A,B Delta enc
+	proof.LC_DaoA_Delta, err = twistedElgamal.FromBytes(proofBytes[PointSize*20 : PointSize*22])
+	if err != nil {
+		return nil, err
+	}
+	proof.LC_DaoB_Delta, err = twistedElgamal.FromBytes(proofBytes[PointSize*22 : PointSize*24])
+	if err != nil {
+		return nil, err
+	}
+	// public keys
+	proof.Pk_Dao, err = curve.FromBytes(proofBytes[PointSize*24 : PointSize*25])
+	if err != nil {
+		return nil, err
+	}
+	proof.Pk_u, err = curve.FromBytes(proofBytes[PointSize*25 : PointSize*26])
+	if err != nil {
+		return nil, err
+	}
+	// random value for Delta A & B
+	proof.R_DeltaA = new(big.Int).SetBytes(proofBytes[PointSize*26 : PointSize*27])
+	proof.R_DeltaB = new(big.Int).SetBytes(proofBytes[PointSize*27 : PointSize*28])
+	// commitment for user asset A & fee
+	proof.T_uA, err = curve.FromBytes(proofBytes[PointSize*28 : PointSize*29])
+	if err != nil {
+		return nil, err
+	}
+	proof.T_ufee, err = curve.FromBytes(proofBytes[PointSize*29 : PointSize*30])
+	if err != nil {
+		return nil, err
+	}
+	// liquidity pool asset B balance
+	proof.LC_DaoB, err = twistedElgamal.FromBytes(proofBytes[PointSize*30 : PointSize*32])
+	if err != nil {
+		return nil, err
+	}
+	// random value for dao liquidity asset B
+	proof.R_DaoB = new(big.Int).SetBytes(proofBytes[PointSize*32 : PointSize*33])
+	// generators
+	proof.G, err = curve.FromBytes(proofBytes[PointSize*33 : PointSize*34])
+	if err != nil {
+		return nil, err
+	}
+	proof.H, err = curve.FromBytes(proofBytes[PointSize*34 : PointSize*35])
+	if err != nil {
+		return nil, err
+	}
+	// asset A,B,fee Delta & dao liquidity asset B balance
+	proof.B_A_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*35 : PointSize*35+EightBytes])
+	proof.B_B_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes : PointSize*35+EightBytes*2])
+	proof.B_fee_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*2 : PointSize*35+EightBytes*3])
+	proof.B_DaoA = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*3 : PointSize*35+EightBytes*4])
+	proof.B_DaoB = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*4 : PointSize*35+EightBytes*5])
+	// alpha = \delta{x} / x
+	// beta = \delta{y} / y
+	proof.Alpha = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*5 : PointSize*35+EightBytes*6])
+	proof.Beta = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*6 : PointSize*35+EightBytes*7])
+	// gamma = 1 - fee %
+	proof.Gamma = binary.BigEndian.Uint32(proofBytes[PointSize*35+EightBytes*7 : PointSize*35+EightBytes*7+FourBytes])
+	// range proofs
+	proof.ARangeProof, err = ctrange.FromBytes(proofBytes[PointSize*35+EightBytes*7+FourBytes : PointSize*35+EightBytes*7+FourBytes+RangeProofSize])
+	if err != nil {
+		return nil, err
+	}
+	proof.FeeRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*35+EightBytes*7+FourBytes+RangeProofSize : PointSize*35+EightBytes*7+FourBytes+RangeProofSize*2])
 	if err != nil {
 		return nil, err
 	}
@@ -67,436 +304,226 @@ func ParseSwapProofStr(proofStr string) (*SwapProof, error) {
 	return ParseSwapProofBytes(proofBytes)
 }
 
-type SwapProofPart struct {
-	// commitments
-	Pt1                               *Point
-	Pt2                               *Point
-	A_pk, A_TDivCRprime, A_Pt1, A_Pt2 *Point
-	// response
-	Z_rbar, Z_sk, Z_skInv *big.Int
-	// Commitment Range Proofs
-	RangeProof *commitRange.ComRangeProof
-	// common inputs
-	BStar1                                         *big.Int
-	BStar2                                         *big.Int
-	Fee                                            *big.Int
-	RStar                                          *big.Int
-	CStar                                          *ElGamalEnc
-	C                                              *ElGamalEnc
-	ReceiverCStar                                  *ElGamalEnc
-	ReceiverC                                      *ElGamalEnc
-	ReceiverPk                                     *Point
-	G, H, Ht1, Ht2, TDivCRprime, CLprimeInv, T, Pk *Point
-	Challenge                                      *big.Int
+/*
+	SwapProofRelation: used to generate swap proof
+*/
+type SwapProofRelation struct {
+	// public inputs
+	// user asset A balance enc
+	C_uA *ElGamalEnc
+	// user asset fee balance enc
+	C_ufee *ElGamalEnc
+	// user asset fee Delta enc
+	C_ufee_Delta *ElGamalEnc
+	// user asset A,B Delta enc
+	C_uA_Delta, C_uB_Delta *ElGamalEnc
+	// liquidity pool asset A,B Delta enc
+	LC_DaoA_Delta, LC_DaoB_Delta *ElGamalEnc
+	// public keys
+	Pk_Dao, Pk_u *Point
+	// random value for Delta A & B
+	R_DeltaA, R_DeltaB *big.Int
+	// commitment for user asset A & fee
+	T_uA, T_ufee *Point
+	// liquidity pool asset B balance
+	LC_DaoB *ElGamalEnc
+	// random value for dao liquidity asset B
+	R_DaoB *big.Int
+	// asset A,B,fee Delta & dao liquidity asset B balance
+	B_A_Delta, B_B_Delta, B_fee_Delta uint64
+	B_DaoA, B_DaoB                    uint64
+	// alpha = \delta{x} / x
+	// beta = \delta{y} / y
+	// gamma = 1 - fee %
+	Alpha, Beta uint64
+	Gamma       uint32
+	// generators
+	G, H *Point
+	// private inputs
+	// user's private key
+	Sk_u *big.Int
+	// random value for delta fee
+	R_Deltafee *big.Int
+	// random value for commitment, will be used for range proof
+	Bar_r_A, Bar_r_fee *big.Int
+	// user asset A & fee new balance
+	B_uA_prime, B_ufee_prime uint64
+	// asset a id
+	AssetAId uint32
+	// asset b id
+	AssetBId uint32
+	// asset fee id
+	AssetFeeId uint32
+	// range proofs
+	ARangeProof, FeeRangeProof *RangeProof
 }
 
-func (proof *SwapProofPart) Bytes() []byte {
-	proofBytes := make([]byte, SwapProofPartSize)
-	copy(proofBytes[:PointSize], proof.Pt1.Marshal())
-	copy(proofBytes[PointSize:PointSize*2], proof.Pt2.Marshal())
-	copy(proofBytes[PointSize*2:PointSize*3], proof.A_pk.Marshal())
-	copy(proofBytes[PointSize*3:PointSize*4], proof.A_TDivCRprime.Marshal())
-	copy(proofBytes[PointSize*4:PointSize*5], proof.A_Pt1.Marshal())
-	copy(proofBytes[PointSize*5:PointSize*6], proof.A_Pt2.Marshal())
-	copy(proofBytes[PointSize*6:PointSize*7], proof.Z_rbar.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*7:PointSize*8], proof.Z_sk.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*8:PointSize*9], proof.Z_skInv.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*9:PointSize*10], proof.RStar.FillBytes(make([]byte, PointSize)))
-	C := proof.C.Bytes()
-	CStar := proof.CStar.Bytes()
-	RecevierC := proof.ReceiverC.Bytes()
-	ReceiverCStar := proof.ReceiverCStar.Bytes()
-	copy(proofBytes[PointSize*10:PointSize*12], C[:])
-	copy(proofBytes[PointSize*12:PointSize*14], CStar[:])
-	copy(proofBytes[PointSize*14:PointSize*16], RecevierC[:])
-	copy(proofBytes[PointSize*16:PointSize*18], ReceiverCStar[:])
-	copy(proofBytes[PointSize*18:PointSize*19], proof.ReceiverPk.Marshal())
-	// G, H, Ht1, Ht2, TDivCRprime, CLprimeInv, T, Pk
-	copy(proofBytes[PointSize*19:PointSize*20], proof.G.Marshal())
-	copy(proofBytes[PointSize*20:PointSize*21], proof.H.Marshal())
-	copy(proofBytes[PointSize*21:PointSize*22], proof.Ht1.Marshal())
-	copy(proofBytes[PointSize*22:PointSize*23], proof.Ht2.Marshal())
-	copy(proofBytes[PointSize*23:PointSize*24], proof.TDivCRprime.Marshal())
-	copy(proofBytes[PointSize*24:PointSize*25], proof.CLprimeInv.Marshal())
-	copy(proofBytes[PointSize*25:PointSize*26], proof.T.Marshal())
-	copy(proofBytes[PointSize*26:PointSize*27], proof.Pk.Marshal())
-	copy(proofBytes[PointSize*27:PointSize*28], proof.Challenge.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*28:PointSize*28+8], proof.BStar1.FillBytes(make([]byte, 8)))
-	copy(proofBytes[PointSize*28+8:PointSize*28+8*2], proof.BStar2.FillBytes(make([]byte, 8)))
-	copy(proofBytes[PointSize*28+8*2:PointSize*28+8*3], proof.Fee.FillBytes(make([]byte, 8)))
-	copy(proofBytes[PointSize*28+8*3:], proof.RangeProof.Bytes())
-	return proofBytes
-}
-
-func (proof *SwapProofPart) String() string {
-	return base64.StdEncoding.EncodeToString(proof.Bytes())
-}
-
-func ParseSwapProofPartBytes(proofBytes []byte) (proof *SwapProofPart, err error) {
-	if len(proofBytes) != SwapProofPartSize {
-		return nil, ErrInvalidSwapProofPartSize
+func NewSwapRelation(
+	C_uA, C_ufee *ElGamalEnc,
+	Pk_Dao, Pk_u *Point,
+	assetAId, assetBId, assetFeeId uint32,
+	B_A_Delta, B_B_Delta, B_fee_Delta, B_u_A, B_u_fee uint64,
+	feeRate uint32,
+	Sk_u *big.Int,
+) (relation *SwapProofRelation, err error) {
+	// check params
+	if !notNullElGamal(C_uA) || !notNullElGamal(C_ufee) || Sk_u == nil ||
+		Pk_Dao == nil || !curve.IsInSubGroup(Pk_Dao) || Pk_u == nil || !curve.IsInSubGroup(Pk_u) ||
+		assetAId == assetBId ||
+		B_u_A < B_A_Delta || B_u_fee < B_fee_Delta {
+		log.Println("[NewSwapRelation] err: invalid params")
+		if assetAId == assetFeeId && (!equalEnc(C_uA, C_ufee) || B_A_Delta+B_fee_Delta > B_u_A) {
+			log.Println("[NewSwapRelation] not enough balance")
+			return nil, errors.New("[NewSwapRelation] not enough balance")
+		}
+		return nil, errors.New("[NewSwapRelation] err: invalid params")
 	}
-	proof = new(SwapProofPart)
-	proof.Pt1, err = curve.FromBytes(proofBytes[:PointSize])
+	// check original balance
+	hb_A, err := twistedElgamal.RawDec(C_uA, Sk_u)
 	if err != nil {
+		log.Println("[NewSwapRelation] err info:", err)
 		return nil, err
 	}
-	proof.Pt2, err = curve.FromBytes(proofBytes[PointSize : PointSize*2])
+	hb_ACheck := curve.ScalarMul(H, big.NewInt(int64(B_u_A)))
+	if !hb_A.Equal(hb_ACheck) {
+		log.Println("[NewSwapRelation] invalid hb_A")
+		return nil, errors.New("[NewSwapRelation] invalid hb_A")
+	}
+	hb_fee, err := twistedElgamal.RawDec(C_ufee, Sk_u)
 	if err != nil {
+		log.Println("[NewSwapRelation] err info:", err)
 		return nil, err
 	}
-	proof.A_pk, err = curve.FromBytes(proofBytes[PointSize*2 : PointSize*3])
-	if err != nil {
-		return nil, err
+	hb_feeCheck := curve.ScalarMul(H, big.NewInt(int64(B_u_fee)))
+	if !hb_fee.Equal(hb_feeCheck) {
+		log.Println("[NewSwapRelation] invalid hb_fee")
+		return nil, errors.New("[NewSwapRelation] invalid hb_fee")
 	}
-	proof.A_TDivCRprime, err = curve.FromBytes(proofBytes[PointSize*3 : PointSize*4])
-	if err != nil {
-		return nil, err
-	}
-	proof.A_Pt1, err = curve.FromBytes(proofBytes[PointSize*4 : PointSize*5])
-	if err != nil {
-		return nil, err
-	}
-	proof.A_Pt2, err = curve.FromBytes(proofBytes[PointSize*5 : PointSize*6])
-	if err != nil {
-		return nil, err
-	}
-	proof.Z_rbar = new(big.Int).SetBytes(proofBytes[PointSize*6 : PointSize*7])
-	proof.Z_sk = new(big.Int).SetBytes(proofBytes[PointSize*7 : PointSize*8])
-	proof.Z_skInv = new(big.Int).SetBytes(proofBytes[PointSize*8 : PointSize*9])
-	proof.RStar = new(big.Int).SetBytes(proofBytes[PointSize*9 : PointSize*10])
-	proof.C, err = twistedElgamal.FromBytes(proofBytes[PointSize*10 : PointSize*12])
-	if err != nil {
-		return nil, err
-	}
-	proof.CStar, err = twistedElgamal.FromBytes(proofBytes[PointSize*12 : PointSize*14])
-	if err != nil {
-		return nil, err
-	}
-	proof.ReceiverC, err = twistedElgamal.FromBytes(proofBytes[PointSize*14 : PointSize*16])
-	if err != nil {
-		return nil, err
-	}
-	proof.ReceiverCStar, err = twistedElgamal.FromBytes(proofBytes[PointSize*16 : PointSize*18])
-	if err != nil {
-		return nil, err
-	}
-	proof.ReceiverPk, err = curve.FromBytes(proofBytes[PointSize*18 : PointSize*19])
-	if err != nil {
-		return nil, err
-	}
-	proof.G, err = curve.FromBytes(proofBytes[PointSize*19 : PointSize*20])
-	if err != nil {
-		return nil, err
-	}
-	proof.H, err = curve.FromBytes(proofBytes[PointSize*20 : PointSize*21])
-	if err != nil {
-		return nil, err
-	}
-	proof.Ht1, err = curve.FromBytes(proofBytes[PointSize*21 : PointSize*22])
-	if err != nil {
-		return nil, err
-	}
-	proof.Ht2, err = curve.FromBytes(proofBytes[PointSize*22 : PointSize*23])
-	if err != nil {
-		return nil, err
-	}
-	proof.TDivCRprime, err = curve.FromBytes(proofBytes[PointSize*23 : PointSize*24])
-	if err != nil {
-		return nil, err
-	}
-	proof.CLprimeInv, err = curve.FromBytes(proofBytes[PointSize*24 : PointSize*25])
-	if err != nil {
-		return nil, err
-	}
-	proof.T, err = curve.FromBytes(proofBytes[PointSize*25 : PointSize*26])
-	if err != nil {
-		return nil, err
-	}
-	proof.Pk, err = curve.FromBytes(proofBytes[PointSize*26 : PointSize*27])
-	if err != nil {
-		return nil, err
-	}
-	proof.Challenge = new(big.Int).SetBytes(proofBytes[PointSize*27 : PointSize*28])
-	proof.BStar1 = new(big.Int).SetBytes(proofBytes[PointSize*28 : PointSize*28+8])
-	proof.BStar2 = new(big.Int).SetBytes(proofBytes[PointSize*28+8 : PointSize*28+8*2])
-	proof.Fee = new(big.Int).SetBytes(proofBytes[PointSize*28+8*2 : PointSize*28+8*3])
-	proof.RangeProof, err = commitRange.FromBytes(proofBytes[PointSize*28+8*3:])
-	if err != nil {
-		return nil, err
-	}
-	return proof, nil
-}
-
-func ParseSwapProofPartStr(proofStr string) (*SwapProofPart, error) {
-	proofBytes, err := base64.StdEncoding.DecodeString(proofStr)
-	if err != nil {
-		return nil, err
-	}
-	return ParseSwapProofPartBytes(proofBytes)
-}
-
-type SwapProofRelationPart struct {
-	// ------------- public ---------------------
-	// from original balance enc
-	C *ElGamalEnc
-	// from delta balance enc
-	CStar *ElGamalEnc
-	// to original balance enc
-	ReceiverC *ElGamalEnc
-	// to delta balance enc
-	ReceiverCStar *ElGamalEnc
-	// to public key
-	ReceiverPk *Point
-	// from: new pedersen commitment for new balance
-	T *Point
-	// from: public key
-	Pk *Point
-	// HtFrom = h^{tid}
-	Ht1 *Point
-	// HtTo = h^{tid}
-	Ht2 *Point
-	// PtFrom1 = HtFrom^{sk_a}
-	Pt1 *Point
-	// PtFrom2 = HtTo^{sk_a}
-	Pt2 *Point
-	// generator 1
-	G *Point
-	// generator 2
-	H *Point
-	// from token Id
-	FromTokenId uint32
-	// to token Id
-	ToTokenId uint32
-	// T(C_R - C_R^{\Delta})^{-1}
-	TDivCRprime *Point
-	// (C_L - C_L^{\Delta})^{-1}
-	CLprimeInv *Point
-	// b^{\star}
-	BStarFrom *big.Int
-	BStarTo   *big.Int
-	Fee       *big.Int
-	// r^{\star}
-	RStar *big.Int
-	// ----------- private ---------------------
-	Sk     *big.Int
-	BPrime *big.Int
-	RBar   *big.Int
-	Rs     [RangeMaxBits]*big.Int
-}
-
-func NewSwapRelationPart1(C, receiverC *ElGamalEnc, pk, receiverPk *Point, b, bStarFrom, bStarTo *big.Int, sk *big.Int, fromTokenId, toTokenId uint32, fee *big.Int) (*SwapProofRelationPart, error) {
-	if C == nil || receiverC == nil || pk == nil || receiverPk == nil || bStarFrom == nil || bStarTo == nil || sk == nil || fee == nil || fee.Cmp(Zero) < 0 {
-		return nil, ErrInvalidParams
-	}
-	// check if the public key is valid
-	oriPk := curve.ScalarBaseMul(sk)
-	if !oriPk.Equal(pk) {
-		return nil, ErrInconsistentPublicKey
-	}
+	// define variables
 	var (
-		T      *Point
-		bPrime *big.Int
-		rStar  *big.Int
-		rBar   *big.Int
-		CStar  *ElGamalEnc
-		rs     [RangeMaxBits]*big.Int
+		C_ufee_Delta, C_uA_Delta, C_uB_Delta *ElGamalEnc
+		LC_DaoA_Delta, LC_DaoB_Delta         *ElGamalEnc
+		R_DeltaA, R_DeltaB                   *big.Int
+		Gamma                                uint32
+		Bar_r_A                              = new(big.Int)
+		Bar_r_fee                            = new(big.Int)
+		R_Deltafee                           *big.Int
+		B_uA_prime, B_ufee_prime             uint64
+		ARangeProof                          = new(RangeProof)
+		FeeRangeProof                        = new(RangeProof)
+		swapRangeChan                        = make(chan int, swapRangeProofCount)
 	)
-	// check if the b is correct
-	hb := curve.Add(C.CR, curve.Neg(curve.ScalarMul(C.CL, ffmath.ModInverse(sk, Order))))
-	hbCheck := curve.ScalarMul(H, b)
-	if !hb.Equal(hbCheck) {
-		return nil, ErrIncorrectBalance
-	}
-	// check balance
-	if b.Cmp(Zero) <= 0 {
-		return nil, ErrInsufficientBalance
-	}
-	if bStarFrom.Cmp(Zero) <= 0 {
-		return nil, ErrPostiveBStar
-	}
-	// b' = b - b^{\star} - fee
-	bPrime = ffmath.Sub(b, bStarFrom)
-	bPrime.Sub(bPrime, fee)
-	// bPrime should bigger than zero
-	if bPrime.Cmp(Zero) < 0 {
-		return nil, ErrInsufficientBalance
-	}
-	// C^{\star} = (pk^rStar,G^rStar h^{b^{\star}})
-	deltaBalance := ffmath.Add(bStarFrom, fee)
-	rStar = curve.RandomValue()
-	CStar, err := twistedElgamal.Enc(ffmath.Neg(deltaBalance), rStar, pk)
+	// generate random values
+	R_Deltafee = curve.RandomValue()
+	R_DeltaA = curve.RandomValue()
+	R_DeltaB = curve.RandomValue()
+	// compute C_ufee_Delta
+	C_ufee_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_fee_Delta)), R_Deltafee, Pk_u)
 	if err != nil {
+		log.Println("[NewSwapRelation] err info:", err)
 		return nil, err
 	}
-	receiverCStar, err := twistedElgamal.Enc(deltaBalance, rStar, receiverPk)
+	// compute C_uA_Delta,C_uB_Delta
+	C_uA_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_A_Delta)), R_DeltaA, Pk_u)
 	if err != nil {
+		log.Println("[NewSwapRelation] err info:", err)
 		return nil, err
 	}
-	// \bar{rStar} \gets_R Z_p
-	rBar = big.NewInt(0)
-	for i := 0; i < RangeMaxBits; i++ {
-		rs[i] = curve.RandomValue()
-		rBar.Add(rBar, rs[i])
-	}
-	rBar.Mod(rBar, Order)
-	// T = g^{\bar{rStar}} h^{b'}
-	T, err = pedersen.Commit(rBar, bPrime, G, H)
+	C_uB_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_B_Delta)), R_DeltaB, Pk_u)
 	if err != nil {
+		log.Println("[NewSwapRelation] err info:", err)
 		return nil, err
 	}
-	relation := &SwapProofRelationPart{
-		// ------------- public ---------------------
-		C:             C,
-		CStar:         CStar,
-		ReceiverC:     receiverC,
-		ReceiverCStar: receiverCStar,
-		ReceiverPk:    receiverPk,
-		T:             T,
-		Pk:            pk,
-		G:             G,
-		H:             H,
-		Ht1:           curve.ScalarMul(H, big.NewInt(int64(fromTokenId))),
-		Ht2:           curve.ScalarMul(H, big.NewInt(int64(toTokenId))),
-		FromTokenId:   fromTokenId,
-		ToTokenId:     toTokenId,
-		TDivCRprime:   curve.Add(T, curve.Neg(curve.Add(C.CR, CStar.CR))),
-		CLprimeInv:    curve.Neg(curve.Add(C.CL, CStar.CL)),
-		BStarFrom:     bStarFrom,
-		BStarTo:       bStarTo,
-		Fee:           fee,
-		RStar:         rStar,
-		// ----------- private ---------------------
-		Sk:     sk,
-		BPrime: bPrime,
-		RBar:   rBar,
-		Rs:     rs,
+	// compute LC_DaoA_Delta,LC_DaoB_Delta
+	LC_DaoA_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_A_Delta)), R_DeltaA, Pk_Dao)
+	if err != nil {
+		log.Println("[NewSwapRelation] err info:", err)
+		return nil, err
 	}
-	relation.Pt1 = curve.ScalarMul(relation.Ht1, sk)
-	relation.Pt2 = curve.ScalarMul(relation.Ht2, sk)
-
+	LC_DaoB_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_B_Delta)), R_DeltaB, Pk_Dao)
+	if err != nil {
+		log.Println("[NewSwapRelation] err info:", err)
+		return nil, err
+	}
+	// compute T_uA & T_ufee
+	if assetFeeId == assetAId {
+		B_uA_prime = B_u_A - B_A_Delta - B_fee_Delta
+		B_ufee_prime = B_uA_prime
+	} else {
+		B_uA_prime = B_u_A - B_A_Delta
+		B_ufee_prime = B_u_fee - B_fee_Delta
+	}
+	go proveCtRangeRoutine(int64(B_uA_prime), G, H, Bar_r_A, ARangeProof, swapRangeChan)
+	go proveCtRangeRoutine(int64(B_ufee_prime), G, H, Bar_r_fee, FeeRangeProof, swapRangeChan)
+	// compute Alpha, Beta, Gamma
+	Gamma = OneThousand - feeRate
+	for i := 0; i < swapRangeProofCount; i++ {
+		val := <-swapRangeChan
+		if val == ErrCode {
+			return nil, errors.New("[NewSwapRelation] range proof works error")
+		}
+	}
+	// construct swap proof relation
+	relation = &SwapProofRelation{
+		// public inputs
+		// user asset A balance enc
+		C_uA: C_uA,
+		// user asset fee balance enc
+		C_ufee: C_ufee,
+		// user asset fee Delta enc
+		C_ufee_Delta: C_ufee_Delta,
+		// user asset A,B Delta enc
+		C_uA_Delta: C_uA_Delta,
+		C_uB_Delta: C_uB_Delta,
+		// liquidity pool asset A,B Delta enc
+		LC_DaoA_Delta: LC_DaoA_Delta,
+		LC_DaoB_Delta: LC_DaoB_Delta,
+		// public keys
+		Pk_Dao: Pk_Dao,
+		Pk_u:   Pk_u,
+		// random value for Delta A & B
+		R_DeltaA: R_DeltaA,
+		R_DeltaB: R_DeltaB,
+		// commitment for user asset A & fee
+		T_uA:   new(Point).Set(ARangeProof.A),
+		T_ufee: new(Point).Set(FeeRangeProof.A),
+		// liquidity pool asset B balance, this will be added when operator received
+		LC_DaoB: &ElGamalEnc{CL: curve.ZeroPoint(), CR: curve.ZeroPoint()},
+		// R_Dao_B will be computed until operator received
+		R_DaoB: big.NewInt(0),
+		// asset A,B,fee Delta & dao liquidity asset B balance
+		B_A_Delta:   B_A_Delta,
+		B_B_Delta:   B_B_Delta,
+		B_fee_Delta: B_fee_Delta,
+		// alpha = \delta{x} / x
+		// beta = \delta{y} / y
+		// gamma = 1 - fee %
+		Alpha: 0,
+		Beta:  0,
+		Gamma: Gamma,
+		// generators
+		G: G,
+		H: H,
+		// private inputs
+		// user's private key
+		Sk_u: Sk_u,
+		// random value for delta fee
+		R_Deltafee: R_Deltafee,
+		// random value for commitment, will be used for range proof
+		Bar_r_A:   Bar_r_A,
+		Bar_r_fee: Bar_r_fee,
+		// user asset A & fee new balance
+		B_uA_prime:   B_uA_prime,
+		B_ufee_prime: B_ufee_prime,
+		// asset a id
+		AssetAId: assetAId,
+		// asset b id
+		AssetBId: assetBId,
+		// asset fee id
+		AssetFeeId: assetFeeId,
+		// range proofs
+		ARangeProof:   ARangeProof,
+		FeeRangeProof: FeeRangeProof,
+	}
 	return relation, nil
-}
-
-func NewSwapRelationPart2(C, receiverC *ElGamalEnc, pk, receiverPk *Point, b, sk *big.Int, fromTokenId, toTokenId uint32, proof *SwapProofPart) (*SwapProofRelationPart, error) {
-	if C == nil || receiverC == nil || pk == nil || receiverPk == nil || sk == nil || proof == nil || proof.Ht1 == nil ||
-		proof.Ht2 == nil || proof.BStar1.Cmp(big.NewInt(0)) < 0 || proof.BStar2.Cmp(big.NewInt(0)) < 0 {
-		return nil, ErrInvalidParams
-	}
-	// check if the public key is valid
-	oriPk := curve.ScalarBaseMul(sk)
-	if !oriPk.Equal(pk) {
-		return nil, ErrInconsistentPublicKey
-	}
-	Ht1 := curve.ScalarMul(H, big.NewInt(int64(fromTokenId)))
-	Ht2 := curve.ScalarMul(H, big.NewInt(int64(toTokenId)))
-	if !Ht1.Equal(proof.Ht1) || !Ht2.Equal(proof.Ht2) {
-		return nil, ErrInvalidSwapProof
-	}
-	var (
-		T      *Point
-		bPrime *big.Int
-		rStar  *big.Int
-		rBar   *big.Int
-		CStar  *ElGamalEnc
-		rs     [RangeMaxBits]*big.Int
-	)
-	// check if the b is correct
-	hb := curve.Add(C.CR, curve.Neg(curve.ScalarMul(C.CL, ffmath.ModInverse(sk, Order))))
-	hbCheck := curve.ScalarMul(H, b)
-	if !hb.Equal(hbCheck) {
-		return nil, ErrIncorrectBalance
-	}
-	// check balance
-	if b.Cmp(Zero) <= 0 {
-		return nil, ErrInsufficientBalance
-	}
-	if proof.BStar2.Cmp(Zero) <= 0 {
-		return nil, ErrPostiveBStar
-	}
-	// b' = b - b^{\star}
-	bPrime = ffmath.Sub(b, proof.BStar2)
-	// bPrime should bigger than zero
-	if bPrime.Cmp(Zero) < 0 {
-		return nil, ErrInsufficientBalance
-	}
-	// C^{\Delta} = (pk^rStar,G^rStar h^{b^{\Delta}})
-	rStar = curve.RandomValue()
-	CStar, err := twistedElgamal.Enc(new(big.Int).Neg(proof.BStar2), rStar, pk)
-	if err != nil {
-		return nil, err
-	}
-	receiverCStar, err := twistedElgamal.Enc(proof.BStar2, rStar, receiverPk)
-	if err != nil {
-		return nil, err
-	}
-	// \bar{rStar} \gets_R Z_p
-	rBar = big.NewInt(0)
-	for i := 0; i < RangeMaxBits; i++ {
-		rs[i] = curve.RandomValue()
-		rBar.Add(rBar, rs[i])
-	}
-	rBar.Mod(rBar, Order)
-	// T = g^{\bar{rStar}} h^{b'}
-	T, err = pedersen.Commit(rBar, bPrime, G, H)
-	if err != nil {
-		return nil, err
-	}
-	relation := &SwapProofRelationPart{
-		// ------------- public ---------------------
-		C:             C,
-		CStar:         CStar,
-		ReceiverC:     receiverC,
-		ReceiverCStar: receiverCStar,
-		ReceiverPk:    receiverPk,
-		T:             T,
-		Pk:            pk,
-		G:             G,
-		H:             H,
-		Ht1:           Ht1,
-		Ht2:           Ht2,
-		FromTokenId:   fromTokenId,
-		ToTokenId:     toTokenId,
-		TDivCRprime:   curve.Add(T, curve.Neg(curve.Add(C.CR, CStar.CR))),
-		CLprimeInv:    curve.Neg(curve.Add(C.CL, CStar.CL)),
-		BStarFrom:     proof.BStar1,
-		BStarTo:       proof.BStar2,
-		Fee:           proof.Fee,
-		RStar:         rStar,
-		// ----------- private ---------------------
-		Sk:     sk,
-		BPrime: bPrime,
-		RBar:   rBar,
-		Rs:     rs,
-	}
-	relation.Pt1 = curve.ScalarMul(relation.Ht1, sk)
-	relation.Pt2 = curve.ScalarMul(relation.Ht2, sk)
-
-	return relation, nil
-}
-
-func FakeSwapProof() *SwapProof {
-	sk1, pk1 := twistedElgamal.GenKeyPair()
-	b1 := big.NewInt(8)
-	r1 := curve.RandomValue()
-	bEnc1, _ := twistedElgamal.Enc(b1, r1, pk1)
-	sk2, pk2 := twistedElgamal.GenKeyPair()
-	b2 := big.NewInt(3)
-	r2 := curve.RandomValue()
-	bEnc2, _ := twistedElgamal.Enc(b2, r2, pk2)
-	bStarFrom := big.NewInt(1)
-	bStarTo := big.NewInt(8)
-	fromTokenId := uint32(1)
-	toTokenId := uint32(2)
-	relationPart1, _ := NewSwapRelationPart1(bEnc1, bEnc2, pk1, pk2, b1, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId, big.NewInt(0))
-	swapProofPart1, _ := ProveSwapPart1(relationPart1, true)
-	b3 := big.NewInt(8)
-	r3 := curve.RandomValue()
-	bEnc3, _ := twistedElgamal.Enc(b3, r3, pk2)
-	b4 := big.NewInt(8)
-	r4 := curve.RandomValue()
-	bEnc4, _ := twistedElgamal.Enc(b4, r4, pk1)
-	relationPart2, _ := NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, b3, sk2, fromTokenId, toTokenId, swapProofPart1)
-	swapProof, _ := ProveSwapPart2(relationPart2, swapProofPart1)
-	return swapProof
 }

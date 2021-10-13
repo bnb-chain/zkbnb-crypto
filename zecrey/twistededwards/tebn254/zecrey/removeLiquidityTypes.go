@@ -282,7 +282,8 @@ func NewRemoveLiquidityRelation(
 	assetAId, assetBId uint32,
 	Sk_u *big.Int,
 ) (relation *RemoveLiquidityRelation, err error) {
-	if !notNullElGamal(C_u_LP) || Sk_u == nil ||
+	if !validUint64(B_LP) || !validUint64(Delta_LP) || !validUint64(B_A_Delta) || !validUint64(B_B_Delta) ||
+		!notNullElGamal(C_u_LP) || Sk_u == nil ||
 		!curve.IsInSubGroup(Pk_u) || !curve.IsInSubGroup(Pk_Dao) ||
 		assetAId == assetBId ||
 		B_LP < Delta_LP {

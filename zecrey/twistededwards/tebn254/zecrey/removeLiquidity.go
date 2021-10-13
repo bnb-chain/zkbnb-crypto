@@ -211,6 +211,11 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 }
 
 func verifyRemoveLiquidityParams(proof *RemoveLiquidityProof) (res bool, err error) {
+	// check uint64 & int64
+	if !validUint64(proof.B_A_Delta) || !validUint64(proof.B_B_Delta) || !validUint64(proof.Delta_LP) {
+		log.Println("[verifyRemoveLiquidityParams] invalid params")
+		return false, errors.New("[verifyRemoveLiquidityParams] invalid params")
+	}
 	C_uA_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_A_Delta)), proof.R_DeltaA, proof.Pk_u)
 	if err != nil {
 		return false, err
@@ -252,6 +257,10 @@ func (proof *RemoveLiquidityProof) addDaoInfo(b_Dao_A, b_Dao_B uint64, r_Dao_A, 
 	var (
 		err error
 	)
+	if !validUint64(b_Dao_A) || !validUint64(b_Dao_B) {
+		log.Println("[addDaoInfo] invalid params")
+		return
+	}
 	proof.B_Dao_A = b_Dao_A
 	proof.B_Dao_B = b_Dao_B
 	proof.R_DaoA = r_Dao_A

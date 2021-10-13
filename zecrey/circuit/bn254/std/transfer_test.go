@@ -54,7 +54,7 @@ func TestVerifyPTransferProofCircuit(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		relation, err := zecrey.NewPTransferProofRelation(1, big.NewInt(1))
+		relation, err := zecrey.NewTransferProofRelation(1, big.NewInt(1))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -70,7 +70,7 @@ func TestVerifyPTransferProofCircuit(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		transferProof, err := zecrey.ProvePTransfer(relation)
+		transferProof, err := zecrey.ProveTransfer(relation)
 		if err != nil {
 			t.Fatal(err)
 		}

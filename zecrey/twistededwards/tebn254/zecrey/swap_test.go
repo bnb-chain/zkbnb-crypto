@@ -18,94 +18,58 @@
 package zecrey
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"math/big"
 	"testing"
+	"time"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
-func TestProveSwap(t *testing.T) {
-	sk1, pk1 := twistedElgamal.GenKeyPair()
-	b1 := big.NewInt(8)
-	r1 := curve.RandomValue()
-	bEnc1, err := twistedElgamal.Enc(b1, r1, pk1)
-	if err != nil {
-		t.Error(err)
-	}
-	sk2, pk2 := twistedElgamal.GenKeyPair()
-	b2 := big.NewInt(3)
-	r2 := curve.RandomValue()
-	bEnc2, err := twistedElgamal.Enc(b2, r2, pk2)
-	if err != nil {
-		t.Error(err)
-	}
-	bStarFrom := big.NewInt(1)
-	bStarTo := big.NewInt(8)
-	fromTokenId := uint32(1)
-	toTokenId := uint32(2)
-	fmt.Println("sk1:", sk1.String())
-	fmt.Println("pk1:", curve.ToString(pk1))
-	fmt.Println("pk2:", curve.ToString(pk2))
-	fmt.Println("benc:", bEnc1.String())
-	fmt.Println("receiver enc:", bEnc2.String())
-	fee := big.NewInt(1)
-	relationPart1, err := NewSwapRelationPart1(bEnc1, bEnc2, pk1, pk2, b1, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId, fee)
-	if err != nil {
-		t.Error(err)
-	}
-	swapProofPart1, err := ProveSwapPart1(relationPart1, true)
-	if err != nil {
-		t.Error(err)
-	}
-	proofBytes := swapProofPart1.Bytes()
-	proof, err := ParseSwapProofPartBytes(proofBytes)
+func TestSwapProof2_Verify(t *testing.T) {
+	b_u_A := uint64(8)
+	b_u_fee := uint64(4)
+	assetAId := uint32(1)
+	assetBId := uint32(2)
+	assetFeeId := uint32(3)
+	b_A_Delta := uint64(1)
+	b_B_Delta := uint64(2)
+	b_fee_Delta := uint64(1)
+	b_Dao_A := uint64(10)
+	b_Dao_B := uint64(10)
+	feeRate := uint32(3)
+	sk_u, Pk_u := twistedElgamal.GenKeyPair()
+	_, Pk_Dao := twistedElgamal.GenKeyPair()
+	C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_A)), curve.RandomValue(), Pk_u)
+	C_ufee, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_fee)), curve.RandomValue(), Pk_u)
+	relation, err := NewSwapRelation(
+		C_uA, C_ufee,
+		Pk_Dao, Pk_u,
+		assetAId, assetBId, assetFeeId,
+		b_A_Delta, b_B_Delta, b_fee_Delta, b_u_A, b_u_fee,
+		feeRate,
+		sk_u,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	res, err := proof.Verify()
+	elapse := time.Now()
+	proof, err := ProveSwap(relation)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("bytes res:", res)
-	fmt.Println("proof:", proof.String())
-	part1Res, err := swapProofPart1.Verify()
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal(t, part1Res, true, "prove swap part works correctly")
-	b3 := big.NewInt(8)
-	r3 := curve.RandomValue()
-	bEnc3, err := twistedElgamal.Enc(b3, r3, pk2)
-	if err != nil {
-		t.Error(err)
-	}
-	b4 := big.NewInt(8)
-	r4 := curve.RandomValue()
-	bEnc4, err := twistedElgamal.Enc(b4, r4, pk1)
-	if err != nil {
-		t.Error(err)
-	}
-	fmt.Println("sk2:", sk2.String())
-	fmt.Println("bEnc3:", bEnc3.String())
-	fmt.Println("bEnc4:", bEnc4.String())
-	relationPart2, err := NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, b3, sk2, fromTokenId, toTokenId, swapProofPart1)
-	if err != nil {
-		t.Error(err)
-	}
-	swapProof, err := ProveSwapPart2(relationPart2, swapProofPart1)
-	if err != nil {
-		t.Error(err)
-	}
-	proofBytes = swapProof.Bytes()
-	swapProof, err = ParseSwapProofBytes(proofBytes)
+	// set params
+	proof.addDaoInfo(b_Dao_A, b_Dao_B)
+	log.Println("prove time:", time.Since(elapse))
+	proofStr := proof.String()
+	proof2, err := ParseSwapProofStr(proofStr)
 	if err != nil {
 		t.Fatal(err)
 	}
-	swapProofRes, err := swapProof.Verify()
+	res, err := proof2.Verify()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	assert.Equal(t, swapProofRes, true, "swap proof works correctly")
+	assert.Equal(t, true, res, "invalid proof")
 }

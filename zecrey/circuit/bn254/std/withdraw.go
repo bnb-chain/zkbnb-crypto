@@ -221,7 +221,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	witness.Z_sk.Assign(proof.Z_sk.String())
 	witness.Z_skInv.Assign(proof.Z_skInv.String())
 	// Commitment Range Proofs
-	witness.CRangeProof, err = setComRangeProofWitness(proof.CRangeProof, true)
+	witness.CRangeProof, err = setComRangeProofWitness(proof.BPrimeRangeProof, true)
 	if err != nil {
 		return witness, err
 	}

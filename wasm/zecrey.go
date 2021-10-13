@@ -137,7 +137,7 @@ func ProveTransfer() js.Func {
 		if errStr != Success {
 			return errStr
 		}
-		relation, err := zecrey.NewPTransferProofRelation(tId, big.NewInt(int64(fee)))
+		relation, err := zecrey.NewTransferProofRelation(tId, big.NewInt(int64(fee)))
 		if err != nil {
 			return ErrInvalidTransferRelationParams
 		}
@@ -147,7 +147,7 @@ func ProveTransfer() js.Func {
 				return ErrInvalidTransferRelationParams
 			}
 		}
-		transferProof, err := zecrey.ProvePTransfer(relation)
+		transferProof, err := zecrey.ProveTransfer(relation)
 		if err != nil {
 			return ErrProveTransfer
 		}
@@ -312,7 +312,7 @@ func ProveL1PrivacyTransfer() js.Func {
 		if errStr != Success {
 			return errStr
 		}
-		relation, err := zecrey.NewPTransferProofRelation(aId, big.NewInt(int64(fee)))
+		relation, err := zecrey.NewTransferProofRelation(aId, big.NewInt(int64(fee)))
 		if err != nil {
 			return ErrInvalidTransferRelationParams
 		}
@@ -322,7 +322,7 @@ func ProveL1PrivacyTransfer() js.Func {
 				return err.Error()
 			}
 		}
-		transferProof, err := zecrey.ProvePTransfer(relation)
+		transferProof, err := zecrey.ProveTransfer(relation)
 		if err != nil {
 			return err.Error()
 		}
