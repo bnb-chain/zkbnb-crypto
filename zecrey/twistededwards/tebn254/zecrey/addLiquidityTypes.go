@@ -288,7 +288,8 @@ func NewAddLiquidityRelation(
 ) (
 	relation *AddLiquidityRelation, err error,
 ) {
-	if !notNullElGamal(C_uA) || !notNullElGamal(C_uB) || Sk_u == nil ||
+	if !validUint64(B_uA) || !validUint64(B_uB) || !validUint64(B_A_Delta) || !validUint64(B_B_Delta) ||
+		!notNullElGamal(C_uA) || !notNullElGamal(C_uB) || Sk_u == nil ||
 		!curve.IsInSubGroup(Pk_u) || !curve.IsInSubGroup(Pk_Dao) ||
 		assetAId == assetBId ||
 		B_uA < B_A_Delta || B_uB < B_B_Delta {

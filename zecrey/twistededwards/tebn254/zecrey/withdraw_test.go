@@ -18,78 +18,49 @@
 package zecrey
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
+	"time"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
 func TestProveWithdraw(t *testing.T) {
 	sk, pk := twistedElgamal.GenKeyPair()
-	b := big.NewInt(8)
+	b := uint64(8)
 	r := curve.RandomValue()
-	bEnc, err := twistedElgamal.Enc(b, r, pk)
+	bEnc, err := twistedElgamal.Enc(big.NewInt(int64(b)), r, pk)
 	if err != nil {
 		t.Error(err)
 	}
 	bEnc2, _ := twistedElgamal.Enc(big.NewInt(10), r, pk)
-	bStar := big.NewInt(2)
-	fee := big.NewInt(1)
+	bStar := uint64(2)
+	fee := uint64(1)
 	fmt.Println("sk:", sk.String())
 	fmt.Println("pk:", curve.ToString(pk))
 	fmt.Println("benc:", bEnc.String())
 	fmt.Println("benc2:", bEnc2.String())
-	addr := "0x99AC8881834797ebC32f185ee27c2e96842e1a47"
+	addr := "0xE9b15a2D396B349ABF60e53ec66Bcf9af262D449"
 	relation, err := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1, addr, fee)
 	if err != nil {
 		t.Error(err)
 	}
+	elapse := time.Now()
 	withdrawProof, err := ProveWithdraw(relation)
 	if err != nil {
 		t.Error(err)
 	}
-	proofBytes, err := json.Marshal(withdrawProof)
+	proofStr := withdrawProof.String()
+	proof, err := ParseWithdrawProofStr(proofStr)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	var proof *WithdrawProof
-	err = json.Unmarshal(proofBytes, &proof)
-	if err != nil {
-		t.Error(err)
-	}
+	fmt.Println("prove time:", time.Since(elapse))
 	res, err := proof.Verify()
 	if err != nil {
 		t.Fatal(err)
 	}
-	proofBytes = proof.Bytes()
-	proof, err = ParseWithdrawProofBytes(proofBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
-	res, err = proof.Verify()
-	if err != nil {
-		t.Fatal(err)
-	}
-	proofStr := proof.String()
-	proof, err = ParseWithdrawProofStr(proofStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	res, err = proof.Verify()
-	if err != nil {
-		t.Error(err)
-	}
 	assert.Equal(t, res, true, "withdraw proof works correctly")
-	if res {
-		bEnc.CR.Add(bEnc.CR, relation.CRStar)
-		decVal, err := twistedElgamal.Dec(bEnc, sk, 100)
-		if err != nil {
-			t.Error(err)
-		}
-		assert.Equal(t, decVal.String(), "5", "withdraw works correctly")
-		fmt.Println(decVal)
-	}
 }

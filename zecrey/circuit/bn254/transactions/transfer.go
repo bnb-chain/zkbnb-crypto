@@ -130,7 +130,7 @@ type TransferTx struct {
 	// is enabled
 	IsEnabled bool
 	// withdraw proof
-	Proof *zecrey.PTransferProof
+	Proof *zecrey.TransferProof
 	// before transfer merkle proof
 	AccountMerkleProofsBefore       [NbTransferCountAndFee][AccountMerkleLevels][]byte
 	AccountHelperMerkleProofsBefore [NbTransferCountAndFee][AccountMerkleLevels - 1]int

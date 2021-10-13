@@ -230,14 +230,14 @@ func mockTransfer(hashState []byte, accounts []*Account, sks []*big.Int, balance
 	var acc2 [NbTransferCount]*Account
 	sk1 := sks[poses[0]]
 	tokenId := uint32(1)
-	relation, err := zecrey.NewPTransferProofRelation(tokenId, fee)
+	relation, err := zecrey.NewTransferProofRelation(tokenId, fee)
 	if err != nil {
 		panic(err)
 	}
 	relation.AddStatement(accountBeforeTransfer1.Balance, accountBeforeTransfer1.PubKey, balances[poses[0]], bs[0], sk1)
 	relation.AddStatement(accountBeforeTransfer2.Balance, accountBeforeTransfer2.PubKey, nil, bs[1], nil)
 	relation.AddStatement(accountBeforeTransfer3.Balance, accountBeforeTransfer3.PubKey, nil, bs[2], nil)
-	proof, err := zecrey.ProvePTransfer(relation)
+	proof, err := zecrey.ProveTransfer(relation)
 	if err != nil {
 		panic(err)
 	}
@@ -491,7 +491,7 @@ func mockSwapTx(isEnabled, isFirstProof bool, proof *zecrey.SwapProof, accounts 
 	return tx, accounts, hashState
 }
 
-func mockTransferTx(isEnabled bool, proof *zecrey.PTransferProof, accounts []*Account, hashState []byte, acc1, acc2 [NbTransferCount]*Account, poses [NbTransferCount]uint64, feeAccountBefore, feeAccountAfter *Account, feePos uint64, fee *big.Int) (*TransferTx, []*Account, []byte) {
+func mockTransferTx(isEnabled bool, proof *zecrey.TransferProof, accounts []*Account, hashState []byte, acc1, acc2 [NbTransferCount]*Account, poses [NbTransferCount]uint64, feeAccountBefore, feeAccountAfter *Account, feePos uint64, fee *big.Int) (*TransferTx, []*Account, []byte) {
 	tx := &TransferTx{
 		IsEnabled: isEnabled,
 		Proof:     proof,

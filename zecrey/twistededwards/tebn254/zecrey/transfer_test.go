@@ -18,7 +18,6 @@
 package zecrey
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"math/big"
@@ -30,7 +29,7 @@ import (
 
 func TestCorrectInfoProve(t *testing.T) {
 	sk1, pk1 := twistedElgamal.GenKeyPair()
-	b1 := big.NewInt(8)
+	b1 := uint64(8)
 	r1 := curve.RandomValue()
 	_, pk2 := twistedElgamal.GenKeyPair()
 	b2 := big.NewInt(2)
@@ -38,7 +37,7 @@ func TestCorrectInfoProve(t *testing.T) {
 	_, pk3 := twistedElgamal.GenKeyPair()
 	b3 := big.NewInt(3)
 	r3 := curve.RandomValue()
-	b1Enc, err := twistedElgamal.Enc(b1, r1, pk1)
+	b1Enc, err := twistedElgamal.Enc(big.NewInt(int64(b1)), r1, pk1)
 	b2Enc, err := twistedElgamal.Enc(b2, r2, pk2)
 	b3Enc, err := twistedElgamal.Enc(b3, r3, pk3)
 	if err != nil {
@@ -52,64 +51,38 @@ func TestCorrectInfoProve(t *testing.T) {
 	fmt.Println("b2Enc:", b2Enc.String())
 	fmt.Println("b3Enc:", b3Enc.String())
 	elapse := time.Now()
-	fee := big.NewInt(1)
-	relation, err := NewPTransferProofRelation(1, fee)
+	fee := uint64(1)
+	relation, err := NewTransferProofRelation(1, fee)
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b2Enc, pk2, nil, big.NewInt(2), nil)
+	err = relation.AddStatement(b2Enc, pk2, 0, 2, nil)
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b1Enc, pk1, b1, big.NewInt(-5), sk1)
+	err = relation.AddStatement(b1Enc, pk1, b1, -5, sk1)
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b3Enc, pk3, nil, big.NewInt(2), nil)
+	err = relation.AddStatement(b3Enc, pk3, 0, 2, nil)
 	if err != nil {
 		t.Error(err)
 	}
-	transferProof, err := ProvePTransfer(relation)
+	proof, err := ProveTransfer(relation)
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Println("prove time:", time.Since(elapse))
 	elapse = time.Now()
-	var proof *PTransferProof
-	proofBytes, err := json.Marshal(transferProof)
+	proofStr := proof.String()
+	proof2, err := ParseTransferProofStr(proofStr)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	err = json.Unmarshal(proofBytes, &proof)
-	if err != nil {
-		t.Error(err)
-	}
-	res, err := proof.Verify()
+	res, err := proof2.Verify()
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Println("verify time:", time.Since(elapse))
-	proofBytes = proof.Bytes()
-	proof, err = ParseTransferProofBytes(proofBytes)
-	if err != nil {
-		t.Fatal(err)
-	}
-	res, err = proof.Verify()
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("bytes res:", res)
-	proofStr := proof.String()
-	fmt.Println(len(proofStr))
-	proof, err = ParseTransferProofStr(proofStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	res, err = proof.Verify()
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("str res:", res)
-	fmt.Println("Verify time:", time.Since(elapse))
-	assert.Equal(t, res, true, "privacy proof works correctly")
+	assert.Equal(t, true, res, "invalid proof")
 }

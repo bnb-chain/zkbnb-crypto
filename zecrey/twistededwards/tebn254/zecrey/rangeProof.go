@@ -46,3 +46,16 @@ func proveCtRangeRoutine(b int64, g, h *Point, r *big.Int, proof *RangeProof, ra
 	*r = *bar_r
 	rangeChan <- 1
 }
+
+func verifyCtRangeRoutine(proof *RangeProof, rangeChan chan int) {
+	res, err := proof.Verify()
+	if err != nil {
+		rangeChan <- ErrCode
+		return
+	}
+	if !res {
+		rangeChan <- ErrCode
+		return
+	}
+	rangeChan <- 1
+}

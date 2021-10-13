@@ -203,7 +203,7 @@ func verifyValidEnc(
 	verifyValidDelta verifys the delta proof
 	@cs: the constraint system
 	@YDivCRDelta: public inputs
-	@A_YDivCRDelta: the random commitment
+	@A_Y1: the random commitment
 	@c: the challenge
 	@z_rstarSubr: response values for valid delta proof
 	@params: params for the curve tebn254
@@ -276,7 +276,7 @@ func verifyOwnership(
 /*
 	SetPTransferProofWitness set witness for the privacy transfer proof
 */
-func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (witness PTransferProofConstraints, err error) {
+func SetPTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witness PTransferProofConstraints, err error) {
 	if proof == nil {
 		return witness, ErrInvalidSetParams
 	}
@@ -337,7 +337,7 @@ func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 			return witness, err
 		}
 		// A_{Y/C_R^{\Delta}}
-		subProofWitness.A_YDivCRDelta, err = SetPointWitness(subProof.A_YDivCRDelta)
+		subProofWitness.A_YDivCRDelta, err = SetPointWitness(subProof.A_Y1)
 		if err != nil {
 			return witness, err
 		}
@@ -366,7 +366,7 @@ func SetPTransferProofWitness(proof *zecrey.PTransferProof, isEnabled bool) (wit
 		// z_{b^{\Delta}}
 		subProofWitness.Z_bDelta.Assign(subProof.Z_bDelta)
 		// z_{r^{\star} - r}
-		subProofWitness.Z_rstarSubr.Assign(subProof.Z_rstarSubr)
+		subProofWitness.Z_rstarSubr.Assign(subProof.Z_rstar1)
 		// z_{r^{\star} - \bar{r}}
 		subProofWitness.Z_rstarSubrbar.Assign(subProof.Z_rstarSubrbar)
 		// z_{\bar{r}}

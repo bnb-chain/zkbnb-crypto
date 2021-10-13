@@ -19,138 +19,138 @@ package zecrey
 
 import (
 	"bytes"
+	"errors"
+	"log"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
 	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 	"zecrey-crypto/util"
 )
 
 func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err error) {
 	if relation == nil {
+		log.Println("[ProveWithdraw] invalid params")
 		return nil, ErrInvalidParams
 	}
+	var (
+		alpha_rbar, alpha_sk, alpha_skInv *big.Int
+		A_pk, A_TDivCRprime               *Point
+		A_Pa                              *Point
+		CLPrimeInv                        *Point
+		buf                               bytes.Buffer
+	)
+	CLPrimeInv = curve.Neg(relation.C.CL)
 	alpha_rbar, alpha_sk, alpha_skInv,
-	A_pk, A_TDivCRprime := commitBalance(relation.G, relation.CLprimeInv)
+		A_pk, A_TDivCRprime = commitBalance(relation.G, CLPrimeInv)
+	A_Pa = curve.ScalarMul(relation.Ha, alpha_sk)
 	// write common inputs into buf
 	// then generate the challenge c
-	var buf bytes.Buffer
-	buf.Write(relation.G.Marshal())
-	buf.Write(relation.H.Marshal())
-	buf.Write(relation.Ht.Marshal())
-	buf.Write(relation.Fee.Bytes())
-	buf.Write(relation.Pt.Marshal())
-	buf.Write(relation.Ha.Marshal())
-	buf.Write(relation.Pa.Marshal())
-	buf.Write(relation.C.CL.Marshal())
-	buf.Write(relation.C.CR.Marshal())
-	buf.Write(relation.CRStar.Marshal())
-	buf.Write(relation.T.Marshal())
-	buf.Write(relation.Pk.Marshal())
-	buf.Write(A_pk.Marshal())
-	buf.Write(A_TDivCRprime.Marshal())
+	writePointIntoBuf(&buf, relation.G)
+	writePointIntoBuf(&buf, relation.H)
+	writePointIntoBuf(&buf, relation.Ha)
+	writePointIntoBuf(&buf, relation.Pa)
+	writeEncIntoBuf(&buf, relation.C)
+	writePointIntoBuf(&buf, relation.CRStar)
+	writePointIntoBuf(&buf, relation.T)
+	writePointIntoBuf(&buf, relation.Pk)
+	writePointIntoBuf(&buf, A_pk)
+	writePointIntoBuf(&buf, A_TDivCRprime)
+	writePointIntoBuf(&buf, A_Pa)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
 		return nil, err
 	}
 	z_rbar, z_sk, z_skInv := respondBalance(relation.RBar, relation.Sk, alpha_rbar, alpha_sk, alpha_skInv, c)
-	A_Pt, _ := provePt(alpha_sk, relation.Sk, relation.Ht, c)
-	A_Pa, _ := provePt(alpha_sk, relation.Sk, relation.Ha, c)
-	// range proof
-	// make range proofs
-	rangeProof, err := commitRange.Prove(relation.BPrime, relation.RBar, relation.T, relation.Rs, H, G)
-	if err != nil {
-		return nil, err
-	}
-
 	proof = &WithdrawProof{
 		// commitments
 		A_pk:          A_pk,
 		A_TDivCRprime: A_TDivCRprime,
-		A_Pt:          A_Pt,
 		A_Pa:          A_Pa,
 		// response
 		Z_rbar:  z_rbar,
 		Z_sk:    z_sk,
 		Z_skInv: z_skInv,
 		// BP Proof
-		CRangeProof: rangeProof,
+		BPrimeRangeProof: relation.BPrimeRangeProof,
 		// common inputs
 		BStar:       relation.Bstar,
 		Fee:         relation.Fee,
 		G:           relation.G,
 		H:           relation.H,
-		Ht:          relation.Ht,
-		Pt:          relation.Pt,
 		Ha:          relation.Ha,
 		Pa:          relation.Pa,
-		TDivCRprime: relation.TDivCRprime,
-		CLprimeInv:  relation.CLprimeInv,
 		C:           relation.C,
 		CRStar:      relation.CRStar,
 		T:           relation.T,
 		Pk:          relation.Pk,
-		Challenge:   c,
+		ReceiveAddr: relation.ReceiveAddr,
 	}
 	return proof, nil
 }
 
 func (proof *WithdrawProof) Verify() (bool, error) {
-	if proof.BStar.Cmp(Zero) < 0 {
-		return false, ErrPostiveBStar
+	if !validUint64(proof.BStar) || !validUint64(proof.Fee) {
+		log.Println("[Verify WithdrawProof] invalid params")
+		return false, errors.New("[Verify WithdrawProof] invalid params")
 	}
-	if proof.Fee.Cmp(Zero) < 0 {
+	// check Ha
+	HaCheck := curve.ScalarMul(proof.H, proof.ReceiveAddr)
+	if !proof.Ha.Equal(HaCheck) {
+		log.Println("[Verify WithdrawProof] invalid params")
 		return false, ErrInvalidParams
 	}
 	// verify if the CRStar is correct
 	hNeg := curve.Neg(proof.H)
-	CRCheck := curve.ScalarMul(hNeg, ffmath.Add(proof.BStar, proof.Fee))
+	CRCheck := curve.ScalarMul(hNeg, big.NewInt(int64(proof.BStar+proof.Fee)))
 	if !proof.CRStar.Equal(CRCheck) {
+		log.Println("[Verify WithdrawProof] invalid params")
 		return false, ErrInvalidParams
 	}
 	// Verify range proof first
-	rangeRes, err := proof.CRangeProof.Verify()
-	if err != nil || !rangeRes {
+	rangeRes, err := proof.BPrimeRangeProof.Verify()
+	if err != nil {
+		log.Println("[Verify WithdrawProof] err info:", err)
 		return false, err
+	}
+	if !rangeRes {
+		log.Println("[Verify WithdrawProof] invalid range proof")
+		return false, errors.New("[Verify WithdrawProof] invalid range proof")
 	}
 	// generate the challenge
-	var buf bytes.Buffer
-	buf.Write(proof.G.Marshal())
-	buf.Write(proof.H.Marshal())
-	buf.Write(proof.Ht.Marshal())
-	buf.Write(proof.Fee.Bytes())
-	buf.Write(proof.Pt.Marshal())
-	buf.Write(proof.Ha.Marshal())
-	buf.Write(proof.Pa.Marshal())
-	buf.Write(proof.C.CL.Marshal())
-	buf.Write(proof.C.CR.Marshal())
-	buf.Write(proof.CRStar.Marshal())
-	buf.Write(proof.T.Marshal())
-	buf.Write(proof.Pk.Marshal())
-	buf.Write(proof.A_pk.Marshal())
-	buf.Write(proof.A_TDivCRprime.Marshal())
+	var (
+		CLprimeInv, TDivCRprime *Point
+		buf                     bytes.Buffer
+	)
+	CLprimeInv = curve.Neg(proof.C.CL)
+	TDivCRprime = curve.Add(proof.T, curve.Neg(curve.Add(proof.C.CR, proof.CRStar)))
+	writePointIntoBuf(&buf, proof.G)
+	writePointIntoBuf(&buf, proof.H)
+	writePointIntoBuf(&buf, proof.Ha)
+	writePointIntoBuf(&buf, proof.Pa)
+	writeEncIntoBuf(&buf, proof.C)
+	writePointIntoBuf(&buf, proof.CRStar)
+	writePointIntoBuf(&buf, proof.T)
+	writePointIntoBuf(&buf, proof.Pk)
+	writePointIntoBuf(&buf, proof.A_pk)
+	writePointIntoBuf(&buf, proof.A_TDivCRprime)
+	writePointIntoBuf(&buf, proof.A_Pa)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
+		log.Println("[Verify WithdrawProof] err: unable to compute hash:", err)
 		return false, err
 	}
-	// Verify challenge
-	if !ffmath.Equal(c, proof.Challenge) {
-		return false, ErrInvalidChallenge
-	}
-	// Verify Ht
-	ptRes, err := verifyPt(proof.Ht, proof.Pt, proof.A_Pt, c, proof.Z_sk)
-	if err != nil || !ptRes {
-		return false, err
-	}
-	paRes, err := verifyPt(proof.Ha, proof.Pa, proof.A_Pa, c, proof.Z_sk)
-	if err != nil || !paRes {
-		return false, err
+	// Verify Pa
+	l1 := curve.ScalarMul(proof.Ha, proof.Z_sk)
+	r1 := curve.Add(proof.A_Pa, curve.ScalarMul(proof.Pa, c))
+	if !l1.Equal(r1) {
+		log.Println("[Verify WithdrawProof] l1 != r1")
+		return false, nil
 	}
 	// Verify balance
-	balanceRes, err := verifyBalance(proof.G, proof.Pk, proof.A_pk, proof.CLprimeInv, proof.TDivCRprime, proof.A_TDivCRprime, c, proof.Z_sk, proof.Z_skInv, proof.Z_rbar)
+	balanceRes, err := verifyBalance(proof.G, proof.Pk, proof.A_pk, CLprimeInv, TDivCRprime, proof.A_TDivCRprime, c, proof.Z_sk, proof.Z_skInv, proof.Z_rbar)
 	if err != nil {
+		log.Println("err info:", err)
 		return false, err
 	}
 	return balanceRes, nil
@@ -188,30 +188,19 @@ func verifyBalance(
 	c *big.Int,
 	z_sk, z_skInv, z_rbar *big.Int,
 ) (bool, error) {
-	if g == nil || pk == nil || A_pk == nil || CLprimeInv == nil || TDivCRprime == nil || A_TDivCRprime == nil || c == nil ||
-		z_sk == nil || z_skInv == nil || z_rbar == nil {
-		return false, ErrInvalidParams
-	}
 	// Verify pk = g^{sk}
 	l1 := curve.ScalarMul(g, z_sk)
 	r1 := curve.Add(A_pk, curve.ScalarMul(pk, c))
 	if !l1.Equal(r1) {
+		log.Println("[verifyBalance] l1!=r1")
 		return false, nil
 	}
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
 	l2 := curve.Add(curve.ScalarMul(g, z_rbar), curve.ScalarMul(CLprimeInv, z_skInv))
 	r2 := curve.Add(A_TDivCRprime, curve.ScalarMul(TDivCRprime, c))
-	return l2.Equal(r2), nil
-}
-
-func TryOnceWithdraw() WithdrawProof {
-	sk, pk := twistedElgamal.GenKeyPair()
-	b := big.NewInt(8)
-	r := curve.RandomValue()
-	bEnc, _ := twistedElgamal.Enc(b, r, pk)
-	//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
-	bStar := big.NewInt(-2)
-	relation, _ := NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1, "0x99AC8881834797ebC32f185ee27c2e96842e1a47", big.NewInt(0))
-	withdrawProof, _ := ProveWithdraw(relation)
-	return *withdrawProof
+	if !l2.Equal(r2) {
+		log.Println("[verifyBalance] l2!=r2")
+		return false, nil
+	}
+	return true, nil
 }

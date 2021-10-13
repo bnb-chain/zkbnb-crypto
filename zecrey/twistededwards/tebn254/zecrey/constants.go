@@ -34,29 +34,33 @@ const (
 	RangeMaxBits          = ctrange.RangeMaxBits // max bits
 	PointSize             = curve.PointSize
 	RangeProofSize        = ctrange.RangeProofSize
-	WithdrawProofSize     = 21*PointSize + RangeProofSize + 2*8
+	WithdrawProofSize     = 15*PointSize + RangeProofSize + 2*EightBytes + AddressSize
 	OneMillion            = 1000000
 	OneThousand           = 1000
 	FourBytes             = 4
 	EightBytes            = 8
 	TransferSubProofCount = 3
 	TransferSubProofSize  = 24*PointSize + RangeProofSize
-	TransferProofSize     = 3*TransferSubProofSize + 9*PointSize + 8
+	TransferProofSize     = TransferSubProofCount*TransferSubProofSize + 6*PointSize + 1*EightBytes
 	SwapProofPartSize     = 28*PointSize + RangeProofSize + 3*8
 
 	SwapProofSize2 = 35*PointSize + 2*RangeProofSize + 7*EightBytes + 1*FourBytes
 	SwapProofSize  = 2 * SwapProofPartSize
 
-	AddLiquidityProofSize = 32*PointSize + 5*EightBytes + 2*RangeProofSize
+	AddLiquidityProofSize    = 32*PointSize + 5*EightBytes + 2*RangeProofSize
 	RemoveLiquidityProofSize = 33*PointSize + 6*EightBytes + 1*RangeProofSize
+
+	AddressSize = 20
 
 	ErrCode = -1
 )
 
 var (
-	G         = curve.G
-	H         = curve.H
-	Order     = curve.Order
-	Zero      = big.NewInt(0)
-	PadSecret = big.NewInt(0)
+	G           = curve.G
+	H           = curve.H
+	Order       = curve.Order
+	MaxRange    = 1099511627775 // 2^{40} - 1
+	MaxRangeNeg = -1099511627776
+	Zero        = big.NewInt(0)
+	PadSecret   = big.NewInt(0)
 )
