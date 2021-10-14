@@ -60,7 +60,7 @@ func TestSwapProof2_Verify(t *testing.T) {
 		t.Fatal(err)
 	}
 	// set params
-	proof.addDaoInfo(b_Dao_A, b_Dao_B)
+	proof.AddDaoInfo(b_Dao_A, b_Dao_B)
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
 	proof2, err := ParseSwapProofStr(proofStr)

@@ -35,13 +35,13 @@ func TestVerifyRangeProof(t *testing.T) {
 	}
 
 	assert := groth16.NewAssert(t)
-	var circuit, witness RangeProofConstraints
+	var circuit, witness CtRangeProofConstraints
 	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println("constraints:", r1cs.GetNbConstraints())
-	witness, err = setRangeProofWitness(proof, true)
+	witness, err = setCtRangeProofWitness(proof, true)
 	if err != nil {
 		t.Fatal(err)
 	}

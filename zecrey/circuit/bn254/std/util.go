@@ -17,11 +17,15 @@
 
 package std
 
-import "errors"
+func writePointIntoBuf(hFunc *MiMC, p Point) {
+	hFunc.Write(p.X, p.Y)
+}
 
-var (
-	ErrInvalidSetParams = errors.New("err: invalid params to generate circuit")
-	ErrInvalidChallenge = errors.New("err: invalid challenge")
-	ErrInvalidProof     = errors.New("err: invalid proof")
-	ErrInvalidBStar     = errors.New("err: bstar should bigger than zero")
-)
+func writeEncIntoBuf(hFunc *MiMC, enc ElGamalEncConstraints) {
+	writePointIntoBuf(hFunc, enc.CL)
+	writePointIntoBuf(hFunc, enc.CR)
+}
+
+func zeroPoint(cs *ConstraintSystem) Point {
+	return Point{X: cs.Constant(0), Y: cs.Constant(1)}
+}

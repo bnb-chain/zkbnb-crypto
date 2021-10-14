@@ -21,7 +21,6 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
-	"math/big"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
 )
 
@@ -37,8 +36,4 @@ const (
 	AccountMerkleLevels = 18
 	NbTransferCount     = 3
 	RangeMaxBits        = commitRange.RangeMaxBits
-)
-
-var (
-	Zero      = big.NewInt(0)
 )

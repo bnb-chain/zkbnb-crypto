@@ -253,12 +253,12 @@ func verifyRemoveLiquidityParams(proof *RemoveLiquidityProof) (res bool, err err
 	return true, nil
 }
 
-func (proof *RemoveLiquidityProof) addDaoInfo(b_Dao_A, b_Dao_B uint64, r_Dao_A, r_Dao_B *big.Int) {
+func (proof *RemoveLiquidityProof) AddDaoInfo(b_Dao_A, b_Dao_B uint64, r_Dao_A, r_Dao_B *big.Int) {
 	var (
 		err error
 	)
 	if !validUint64(b_Dao_A) || !validUint64(b_Dao_B) {
-		log.Println("[addDaoInfo] invalid params")
+		log.Println("[AddDaoInfo] invalid params")
 		return
 	}
 	proof.B_Dao_A = b_Dao_A
@@ -267,12 +267,12 @@ func (proof *RemoveLiquidityProof) addDaoInfo(b_Dao_A, b_Dao_B uint64, r_Dao_A, 
 	proof.R_DaoB = r_Dao_B
 	proof.LC_Dao_A, err = twistedElgamal.Enc(big.NewInt(int64(b_Dao_A)), r_Dao_A, proof.Pk_Dao)
 	if err != nil {
-		log.Println("[RemoveLiquidityProof addDaoInfo] unable to encrypt:", err)
+		log.Println("[RemoveLiquidityProof AddDaoInfo] unable to encrypt:", err)
 		return
 	}
 	proof.LC_Dao_B, err = twistedElgamal.Enc(big.NewInt(int64(b_Dao_B)), r_Dao_B, proof.Pk_Dao)
 	if err != nil {
-		log.Println("[RemoveLiquidityProof addDaoInfo] unable to encrypt:", err)
+		log.Println("[RemoveLiquidityProof AddDaoInfo] unable to encrypt:", err)
 		return
 	}
 	// TODO re-implement P = \sqrt{x}/\sqrt{y}

@@ -161,7 +161,8 @@ type SwapProof struct {
 	Alpha, Beta uint64
 	Gamma       uint32
 	// generators
-	G, H *Point
+	G, H                           *Point
+	AssetAId, AssetBId, AssetFeeId uint32
 }
 
 func (proof *SwapProof) String() string {

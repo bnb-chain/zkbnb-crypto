@@ -143,8 +143,8 @@ func VerifySwapTx(cs *ConstraintSystem, tx SwapTxConstraints, params twistededwa
 	// select CStar
 	CStar, ReceiverCStar := selectCStar(cs, tx.IsFirstProof, tx.Proof)
 	// update balance
-	tx.AccountBefore[0].Balance = std.EncAdd(cs, tx.AccountBefore[0].Balance, CStar, params)
-	tx.AccountBefore[1].Balance = std.EncAdd(cs, tx.AccountBefore[1].Balance, ReceiverCStar, params)
+	tx.AccountBefore[0].Balance = std.encAdd(cs, tx.AccountBefore[0].Balance, CStar, params)
+	tx.AccountBefore[1].Balance = std.encAdd(cs, tx.AccountBefore[1].Balance, ReceiverCStar, params)
 	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBefore[0].Balance, tx.AccountAfter[0].Balance)
 	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBefore[1].Balance, tx.AccountAfter[1].Balance)
 	// verify swap proof

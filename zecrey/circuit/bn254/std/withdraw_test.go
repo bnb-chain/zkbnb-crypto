@@ -32,40 +32,41 @@ import (
 
 func TestWithdrawProofCircuit_Define(t *testing.T) {
 	assert := groth16.NewAssert(t)
-
 	var circuit, witness WithdrawProofConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, backend.PLONK, &circuit)
+	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(r1cs.GetNbConstraints())
+	fmt.Println("constraints:", r1cs.GetNbConstraints())
 	for i := 0; i < 1; i++ {
-		// generate withdraw proof
 		sk, pk := twistedElgamal.GenKeyPair()
-		b := big.NewInt(8)
+		b := uint64(8)
 		r := curve.RandomValue()
-		bEnc, err := twistedElgamal.Enc(b, r, pk)
-		//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
+		bEnc, err := twistedElgamal.Enc(big.NewInt(int64(b)), r, pk)
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
-		bStar := big.NewInt(3)
-		addr := "0x99AC8881834797ebC32f185ee27c2e96842e1a47"
-		relation, err := zecrey.NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1, addr, big.NewInt(1))
+		bEnc2, _ := twistedElgamal.Enc(big.NewInt(10), r, pk)
+		bStar := uint64(2)
+		fee := uint64(1)
+		fmt.Println("sk:", sk.String())
+		fmt.Println("pk:", curve.ToString(pk))
+		fmt.Println("benc:", bEnc.String())
+		fmt.Println("benc2:", bEnc2.String())
+		addr := "0xE9b15a2D396B349ABF60e53ec66Bcf9af262D449"
+		relation, err := zecrey.NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1, addr, fee)
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 		withdrawProof, err := zecrey.ProveWithdraw(relation)
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 		witness, err = SetWithdrawProofWitness(withdrawProof, true)
 		if err != nil {
 			t.Fatal(err)
 		}
-
 		fmt.Println("constraints:", r1cs.GetNbConstraints())
-
 		assert.SolvingSucceeded(r1cs, &witness)
 	}
 }

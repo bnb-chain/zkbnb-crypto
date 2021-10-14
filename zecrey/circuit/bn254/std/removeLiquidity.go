@@ -16,12 +16,3 @@
  */
 
 package std
-
-import "errors"
-
-var (
-	ErrInvalidSetParams = errors.New("err: invalid params to generate circuit")
-	ErrInvalidChallenge = errors.New("err: invalid challenge")
-	ErrInvalidProof     = errors.New("err: invalid proof")
-	ErrInvalidBStar     = errors.New("err: bstar should bigger than zero")
-)

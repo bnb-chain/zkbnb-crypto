@@ -289,9 +289,9 @@ func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
 	return true, nil
 }
 
-func (proof *AddLiquidityProof) addDaoInfo(b_Dao_A, b_Dao_B uint64) {
+func (proof *AddLiquidityProof) AddDaoInfo(b_Dao_A, b_Dao_B uint64) {
 	if !validUint64(b_Dao_A) || !validUint64(b_Dao_B) {
-		log.Println("[addDaoInfo] invalid params")
+		log.Println("[AddDaoInfo] invalid params")
 		return
 	}
 	proof.B_DaoA = b_Dao_A

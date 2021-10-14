@@ -25,7 +25,7 @@ import (
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
-type RangeProofConstraints struct {
+type CtRangeProofConstraints struct {
 	// challenge
 	C Variable
 	// special commitment for each bit
@@ -38,7 +38,7 @@ type RangeProofConstraints struct {
 }
 
 // define for range proof test
-func (circuit RangeProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit CtRangeProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
 	if err != nil {
@@ -49,11 +49,11 @@ func (circuit RangeProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 	if err != nil {
 		return err
 	}
-	verifyRangeProof(cs, circuit, params, hFunc)
+	verifyCtRangeProof(cs, circuit, params, hFunc)
 	return nil
 }
 
-func verifyRangeProof(cs *ConstraintSystem, proof RangeProofConstraints, params twistededwards.EdCurve, hFunc MiMC) {
+func verifyCtRangeProof(cs *ConstraintSystem, proof CtRangeProofConstraints, params twistededwards.EdCurve, hFunc MiMC) {
 	A := Point{
 		X: cs.Constant(0),
 		Y: cs.Constant(1),
@@ -89,7 +89,7 @@ func verifyRangeProof(cs *ConstraintSystem, proof RangeProofConstraints, params 
 	setComRangeProofWitness set witness for the range proof
 	@proof: original range proofs
 */
-func setRangeProofWitness(proof *ctrange.RangeProof, isEnabled bool) (witness RangeProofConstraints, err error) {
+func setCtRangeProofWitness(proof *ctrange.RangeProof, isEnabled bool) (witness CtRangeProofConstraints, err error) {
 	if proof == nil {
 		return witness, err
 	}
