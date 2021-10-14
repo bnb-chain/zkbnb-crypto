@@ -19,6 +19,7 @@ package zecrey
 
 import (
 	"bytes"
+	"log"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
@@ -45,4 +46,11 @@ func negElgamal(enc *ElGamalEnc) *ElGamalEnc {
 		CL: curve.Neg(enc.CL),
 		CR: curve.Neg(enc.CR),
 	}
+}
+
+func printElgamal(enc *ElGamalEnc) {
+	log.Println(enc.CL.X.String())
+	log.Println(enc.CL.Y.String())
+	log.Println(enc.CR.X.String())
+	log.Println(enc.CR.Y.String())
 }

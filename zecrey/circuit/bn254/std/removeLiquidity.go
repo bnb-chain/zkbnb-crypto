@@ -16,24 +16,3 @@
  */
 
 package std
-
-import (
-	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/algebra/twistededwards"
-	"github.com/consensys/gnark/std/hash/mimc"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
-)
-
-type (
-	Point            = twistededwards.Point
-	Variable         = frontend.Variable
-	ConstraintSystem = frontend.ConstraintSystem
-	MiMC             = mimc.MiMC
-)
-
-const (
-	// TODO only for test
-	AccountMerkleLevels = 18
-	NbTransferCount     = 3
-	RangeMaxBits        = commitRange.RangeMaxBits
-)

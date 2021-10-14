@@ -169,6 +169,9 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 		Gamma:                            relation.Gamma,
 		G:                                relation.G,
 		H:                                relation.H,
+		AssetAId:                         relation.AssetAId,
+		AssetBId:                         relation.AssetBId,
+		AssetFeeId:                       relation.AssetFeeId,
 	}
 	return proof, nil
 }
@@ -182,7 +185,10 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 		C_uAPrimeNeg, C_ufeePrimeNeg *ElGamalEnc
 		c                            *big.Int
 		buf                          bytes.Buffer
+		rangeChan                    = make(chan int, swapRangeProofCount)
 	)
+	go verifyCtRangeRoutine(proof.ARangeProof, rangeChan)
+	go verifyCtRangeRoutine(proof.FeeRangeProof, rangeChan)
 	// challenge buf
 	writePointIntoBuf(&buf, proof.G)
 	writePointIntoBuf(&buf, proof.H)
@@ -286,6 +292,13 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 		log.Println("[SwapProof Verify] l4 != r4")
 		return false, nil
 	}
+	for i := 0; i < swapRangeProofCount; i++ {
+		val := <-rangeChan
+		if val == ErrCode {
+			log.Println("[Verify SwapProof] invalid range proof")
+			return false, nil
+		}
+	}
 	return true, nil
 }
 
@@ -317,7 +330,7 @@ func verifySwapParams(proof *SwapProof) (res bool, err error) {
 	return true, nil
 }
 
-func (proof *SwapProof) addDaoInfo(b_Dao_A, b_Dao_B uint64) {
+func (proof *SwapProof) AddDaoInfo(b_Dao_A, b_Dao_B uint64) {
 	// set params
 	proof.B_DaoA = b_Dao_A
 	proof.B_DaoB = b_Dao_B

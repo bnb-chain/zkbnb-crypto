@@ -60,7 +60,7 @@ func TestRemoveLiquidityProof_Verify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	proof.addDaoInfo(b_Dao_A, b_Dao_B, curve.RandomValue(), curve.RandomValue())
+	proof.AddDaoInfo(b_Dao_A, b_Dao_B, curve.RandomValue(), curve.RandomValue())
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
 	proof2, err := ParseRemoveLiquidityProofStr(proofStr)
