@@ -45,7 +45,6 @@ func Neg(cs *ConstraintSystem, p Point, params twistededwards.EdCurve) *Point {
 		cs.Constant(0),
 		cs.Constant(1),
 	}
-
 	// f_r
 	r := cs.Constant("21888242871839275222246405745257275088548364400416034343698204186575808495617")
 	xNeg := cs.Sub(r, p.X)

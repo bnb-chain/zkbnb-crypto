@@ -23,11 +23,7 @@ import (
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
-	"math/big"
 	"testing"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 func TestWithdrawProofCircuit_Define(t *testing.T) {
@@ -40,32 +36,6 @@ func TestWithdrawProofCircuit_Define(t *testing.T) {
 	}
 	fmt.Println(r1cs.GetNbConstraints())
 	for i := 0; i < 1; i++ {
-		// generate withdraw proof
-		sk, pk := twistedElgamal.GenKeyPair()
-		b := big.NewInt(8)
-		r := curve.RandomValue()
-		bEnc, err := twistedElgamal.Enc(b, r, pk)
-		//b4Enc, err := twistedElgamal.Enc(b4, r4, pk4)
-		if err != nil {
-			t.Fatal(err)
-		}
-		bStar := big.NewInt(3)
-		addr := "0x99AC8881834797ebC32f185ee27c2e96842e1a47"
-		relation, err := zecrey.NewWithdrawRelation(bEnc, pk, b, bStar, sk, 1, addr, big.NewInt(1))
-		if err != nil {
-			t.Fatal(err)
-		}
-		withdrawProof, err := zecrey.ProveWithdraw(relation)
-		if err != nil {
-			t.Fatal(err)
-		}
-		witness, err = SetWithdrawProofWitness(withdrawProof, true)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		fmt.Println("constraints:", r1cs.GetNbConstraints())
-
 		assert.SolvingSucceeded(r1cs, &witness)
 	}
 }

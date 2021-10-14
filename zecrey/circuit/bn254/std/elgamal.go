@@ -27,8 +27,21 @@ type ElGamalEncConstraints struct {
 	CR Point // g^r Waste^b
 }
 
-func EncAdd(cs *ConstraintSystem, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
+func negElgamal(cs *ConstraintSystem, C ElGamalEncConstraints) ElGamalEncConstraints {
+	return ElGamalEncConstraints{
+		CL: *C.CL.Neg(cs, &C.CL),
+		CR: *C.CR.Neg(cs, &C.CR),
+	}
+}
+
+func encAdd(cs *ConstraintSystem, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
 	C.CL.AddGeneric(cs, &C.CL, &CDelta.CL, params)
 	C.CR.AddGeneric(cs, &C.CR, &CDelta.CR, params)
+	return C
+}
+
+func encSub(cs *ConstraintSystem, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
+	C.CL.AddGeneric(cs, &C.CL, CDelta.CL.Neg(cs, &CDelta.CL), params)
+	C.CL.AddGeneric(cs, &C.CR, CDelta.CR.Neg(cs, &CDelta.CR), params)
 	return C
 }

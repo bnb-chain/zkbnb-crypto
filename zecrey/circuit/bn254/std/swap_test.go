@@ -18,16 +18,11 @@
 package std
 
 import (
-	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
-	"math/big"
 	"testing"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 func TestSwapProofCircuit_Define(t *testing.T) {
@@ -40,69 +35,6 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 	}
 
 	for i := 0; i < 1; i++ {
-		// generate swap proof
-		// sender
-		sk1, pk1 := twistedElgamal.GenKeyPair()
-		b1 := big.NewInt(8)
-		r1 := curve.RandomValue()
-		bEnc, err := twistedElgamal.Enc(b1, r1, pk1)
-		if err != nil {
-			t.Error(err)
-		}
-		// receiver
-		sk2, pk2 := twistedElgamal.GenKeyPair()
-		b2 := big.NewInt(8)
-		r2 := curve.RandomValue()
-		b2Enc, err := twistedElgamal.Enc(b2, r2, pk2)
-		if err != nil {
-			t.Error(err)
-		}
-		bStarFrom := big.NewInt(1)
-		bStarTo := big.NewInt(8)
-		fromTokenId := uint32(1)
-		toTokenId := uint32(2)
-		relationPart1, err := zecrey.NewSwapRelationPart1(bEnc, b2Enc, pk1, pk2, b1, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId, big.NewInt(0))
-		if err != nil {
-			t.Error(err)
-		}
-		swapProofPart1, err := zecrey.ProveSwapPart1(relationPart1, true)
-		if err != nil {
-			t.Error(err)
-		}
-		part1Res, err := swapProofPart1.Verify()
-		if err != nil {
-			t.Error(err)
-		}
-		if !part1Res {
-			t.Error(err)
-		}
-		b3 := big.NewInt(8)
-		r3 := curve.RandomValue()
-		bEnc3, err := twistedElgamal.Enc(b3, r3, pk2)
-		if err != nil {
-			t.Error(err)
-		}
-		b4 := big.NewInt(3)
-		r4 := curve.RandomValue()
-		bEnc4, err := twistedElgamal.Enc(b4, r4, pk1)
-		if err != nil {
-			t.Error(err)
-		}
-		relationPart2, err := zecrey.NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, b3, sk2, fromTokenId, toTokenId, swapProofPart1)
-		if err != nil {
-			t.Error(err)
-		}
-		swapProof, err := zecrey.ProveSwapPart2(relationPart2, swapProofPart1)
-		if err != nil {
-			t.Error(err)
-		}
-		witness, err = SetSwapProofWitness(swapProof, true)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		fmt.Println("constraints:", r1cs.GetNbConstraints())
-
 		assert.SolvingSucceeded(r1cs, &witness)
 	}
 }

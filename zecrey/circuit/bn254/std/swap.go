@@ -20,8 +20,6 @@ package std
 import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
-	"math/big"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 // SwapProof in circuit
@@ -37,8 +35,6 @@ type SwapProofPartConstraints struct {
 	A_pk, A_TDivCRprime, A_Pt1, A_Pt2 Point
 	// response
 	Z_rbar, Z_sk, Z_skInv Variable
-	// Commitment Range Proofs
-	RangeProof ComRangeProofConstraints
 	// common inputs
 	BStar1                                   Variable
 	BStar2                                   Variable
@@ -91,8 +87,6 @@ func VerifySwapProofPart1(
 	proof SwapProofPartConstraints,
 	params twistededwards.EdCurve,
 ) {
-	// verify range proof first
-	verifyComRangeProof(cs, proof.RangeProof, params)
 
 	// verify Ht
 	verifyPt(cs, proof.Ht1, proof.Pt1, proof.A_Pt1, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
@@ -110,8 +104,6 @@ func VerifySwapProofPart2(
 	proof SwapProofPartConstraints,
 	params twistededwards.EdCurve,
 ) {
-	// verify range proof first
-	verifyComRangeProof(cs, proof.RangeProof, params)
 
 	// verify Ht
 	verifyPt(cs, proof.Ht1, proof.Pt1, proof.A_Pt1, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
@@ -202,123 +194,3 @@ func verifyCorrectEnc2(
 	IsElGamalEncEqual(cs, isEnabled, ElGamalEncConstraints{CL: CL, CR: CR}, receiverCStar)
 }
 
-func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapProofConstraints, err error) {
-	part1, err := setSwapProofPartWitness(proof.ProofPart1, isEnabled)
-	if err != nil {
-		return witness, err
-	}
-	part2, err := setSwapProofPartWitness(proof.ProofPart2, isEnabled)
-	if err != nil {
-		return witness, err
-	}
-	witness.ProofPart1 = part1
-	witness.ProofPart2 = part2
-	return witness, nil
-}
-
-// set the witness for withdraw proof
-func setSwapProofPartWitness(proof *zecrey.SwapProofPart, isEnabled bool) (witness SwapProofPartConstraints, err error) {
-	if proof == nil {
-		return witness, err
-	}
-
-	if proof.BStar1.Cmp(big.NewInt(0)) <= 0 || proof.BStar2.Cmp(big.NewInt(0)) <= 0 {
-		return witness, ErrInvalidBStar
-	}
-	// proof must be correct
-	verifyRes, err := proof.Verify()
-	if err != nil {
-		return witness, err
-	}
-	if !verifyRes {
-		return witness, ErrInvalidProof
-	}
-
-	witness.Challenge.Assign(proof.Challenge)
-
-	// commitments
-	witness.Pt1, err = SetPointWitness(proof.Pt1)
-	if err != nil {
-		return witness, err
-	}
-	witness.Pt2, err = SetPointWitness(proof.Pt2)
-	if err != nil {
-		return witness, err
-	}
-	witness.A_pk, err = SetPointWitness(proof.A_pk)
-	if err != nil {
-		return witness, err
-	}
-	witness.A_TDivCRprime, err = SetPointWitness(proof.A_TDivCRprime)
-	if err != nil {
-		return witness, err
-	}
-	witness.A_Pt1, err = SetPointWitness(proof.A_Pt1)
-	if err != nil {
-		return witness, err
-	}
-	witness.A_Pt2, err = SetPointWitness(proof.A_Pt2)
-	if err != nil {
-		return witness, err
-	}
-	// response
-	witness.Z_rbar.Assign(proof.Z_rbar)
-	witness.Z_sk.Assign(proof.Z_sk)
-	witness.Z_skInv.Assign(proof.Z_skInv)
-	// Commitment Range Proofs
-	witness.RangeProof, err = setComRangeProofWitness(proof.RangeProof, true)
-	if err != nil {
-		return witness, err
-	}
-	// common inputs
-	witness.C, err = SetElGamalEncWitness(proof.C)
-	if err != nil {
-		return witness, err
-	}
-	witness.CStar, err = SetElGamalEncWitness(proof.CStar)
-	if err != nil {
-		return witness, err
-	}
-	witness.ReceiverC, err = SetElGamalEncWitness(proof.ReceiverC)
-	if err != nil {
-		return witness, err
-	}
-	witness.ReceiverCStar, err = SetElGamalEncWitness(proof.ReceiverCStar)
-	if err != nil {
-		return witness, err
-	}
-	witness.ReceiverPk, err = SetPointWitness(proof.ReceiverPk)
-	if err != nil {
-		return witness, err
-	}
-	witness.H, err = SetPointWitness(proof.H)
-	if err != nil {
-		return witness, err
-	}
-	witness.Ht1, err = SetPointWitness(proof.Ht1)
-	if err != nil {
-		return witness, err
-	}
-	witness.Ht2, err = SetPointWitness(proof.Ht2)
-	if err != nil {
-		return witness, err
-	}
-	witness.TDivCRprime, err = SetPointWitness(proof.TDivCRprime)
-	if err != nil {
-		return witness, err
-	}
-	witness.CLprimeInv, err = SetPointWitness(proof.CLprimeInv)
-	if err != nil {
-		return witness, err
-	}
-	witness.Pk, err = SetPointWitness(proof.Pk)
-	if err != nil {
-		return witness, err
-	}
-	witness.BStar1.Assign(proof.BStar1)
-	witness.BStar2.Assign(proof.BStar2)
-	witness.Fee.Assign(proof.Fee)
-	witness.RStar.Assign(proof.RStar)
-	witness.IsEnabled = SetBoolWitness(isEnabled)
-	return witness, nil
-}

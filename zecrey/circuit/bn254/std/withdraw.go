@@ -20,7 +20,6 @@ package std
 import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
-	"zecrey-crypto/ffmath"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -31,8 +30,6 @@ type WithdrawProofConstraints struct {
 	A_pk, A_TDivCRprime, A_Pt, A_Pa Point
 	// response
 	Z_rbar, Z_sk, Z_skInv Variable
-	// Commitment Range Proofs
-	CRangeProof ComRangeProofConstraints
 	// common inputs
 	CRStar                                 Point
 	C                                      ElGamalEncConstraints
@@ -68,8 +65,6 @@ func VerifyWithdrawProof(
 	proof WithdrawProofConstraints,
 	params twistededwards.EdCurve,
 ) {
-	// verify range proof first
-	verifyComRangeProof(cs, proof.CRangeProof, params)
 
 	// verify Ht
 	verifyPt(cs, proof.Ht, proof.Pt, proof.A_Pt, proof.Challenge, proof.Z_sk, proof.IsEnabled, params)
@@ -171,9 +166,6 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, err
 	}
 
-	if proof.BStar.Cmp(Zero) < 0 {
-		return witness, ErrInvalidBStar
-	}
 
 	// proof must be correct
 	verifyRes, err := proof.Verify()
@@ -184,15 +176,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, ErrInvalidProof
 	}
 
-	// check challenge
-	if !ffmath.Equal(proof.Challenge, proof.Challenge) {
-		return witness, ErrInvalidChallenge
-	}
 
-	witness.Challenge.Assign(proof.Challenge.String())
-
-	// commitments
-	witness.Pt, err = SetPointWitness(proof.Pt)
 	if err != nil {
 		return witness, err
 	}
@@ -208,10 +192,6 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	if err != nil {
 		return witness, err
 	}
-	witness.A_Pt, err = SetPointWitness(proof.A_Pt)
-	if err != nil {
-		return witness, err
-	}
 	witness.A_Pa, err = SetPointWitness(proof.A_Pa)
 	if err != nil {
 		return witness, err
@@ -220,11 +200,6 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	witness.Z_rbar.Assign(proof.Z_rbar.String())
 	witness.Z_sk.Assign(proof.Z_sk.String())
 	witness.Z_skInv.Assign(proof.Z_skInv.String())
-	// Commitment Range Proofs
-	witness.CRangeProof, err = setComRangeProofWitness(proof.BPrimeRangeProof, true)
-	if err != nil {
-		return witness, err
-	}
 	// common inputs
 	witness.C, err = SetElGamalEncWitness(proof.C)
 	if err != nil {
@@ -238,19 +213,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	if err != nil {
 		return witness, err
 	}
-	witness.Ht, err = SetPointWitness(proof.Ht)
-	if err != nil {
-		return witness, err
-	}
 	witness.Ha, err = SetPointWitness(proof.Ha)
-	if err != nil {
-		return witness, err
-	}
-	witness.TDivCRprime, err = SetPointWitness(proof.TDivCRprime)
-	if err != nil {
-		return witness, err
-	}
-	witness.CLprimeInv, err = SetPointWitness(proof.CLprimeInv)
 	if err != nil {
 		return witness, err
 	}

@@ -31,7 +31,7 @@ type TransferTxConstraints struct {
 	// is enabled
 	IsEnabled Variable
 	// withdraw proof
-	Proof std.PTransferProofConstraints
+	Proof std.TransferProofConstraints
 	// before transfer merkle proof
 	AccountMerkleProofsBefore       [NbTransferCountAndFee][AccountMerkleLevels]Variable
 	AccountHelperMerkleProofsBefore [NbTransferCountAndFee][AccountMerkleLevels - 1]Variable
@@ -93,7 +93,7 @@ func VerifyTransferTx(cs *ConstraintSystem, tx TransferTxConstraints, params twi
 		std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.OldAccountRoot, tx.AccountMerkleProofsBefore[i][:], tx.AccountHelperMerkleProofsBefore[i][:])
 		std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.NewAccountRoot, tx.AccountMerkleProofsAfter[i][:], tx.AccountHelperMerkleProofsAfter[i][:])
 		// update balance first
-		tx.AccountBefore[i].Balance = std.EncAdd(cs, tx.AccountBefore[i].Balance, tx.Proof.SubProofs[i].CDelta, params)
+		tx.AccountBefore[i].Balance = std.encAdd(cs, tx.AccountBefore[i].Balance, tx.Proof.SubProofs[i].CDelta, params)
 		// check updated balance
 		std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBefore[i].Balance, tx.AccountAfter[i].Balance)
 	}
@@ -119,7 +119,7 @@ func VerifyTransferTx(cs *ConstraintSystem, tx TransferTxConstraints, params twi
 	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.FeeAccountBefore.Balance, tx.FeeAccountAfter.Balance)
 
 	// verify transfer proof
-	std.VerifyPTransferProof(cs, tx.Proof, params)
+	std.VerifyTransferProof(cs, tx.Proof, params)
 }
 
 /*
@@ -194,7 +194,7 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints, err er
 	witness.NewAccountRoot.Assign(tx.NewAccountRoot)
 
 	// set proof
-	witness.Proof, err = std.SetPTransferProofWitness(tx.Proof, tx.IsEnabled)
+	witness.Proof, err = std.SetTransferProofWitness(tx.Proof, tx.IsEnabled)
 
 	witness.IsEnabled = std.SetBoolWitness(tx.IsEnabled)
 	return witness, nil
