@@ -18,6 +18,7 @@
 package std
 
 import (
+	"errors"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
@@ -192,100 +193,22 @@ func VerifySwapProof(
 	IsPointEqual(cs, proof.IsEnabled, l4, r4)
 }
 
-/*
-	verifyCorrectEnc verify the encryption
-	@cs: the constraint system
-	@h,pk,CStar: public inputs
-	@bStar: the value
-	@rStar: the random value
-	@params: params for the curve tebn254
-*/
-func verifyCorrectEnc1(
-	cs *ConstraintSystem,
-	h, pk Point,
-	receiverPk Point,
-	CStar ElGamalEncConstraints,
-	receiverCStar ElGamalEncConstraints,
-	bStar Variable,
-	fee Variable,
-	rStar Variable,
-	isEnabled Variable,
-	params twistededwards.EdCurve,
-) {
-	// check sender
-	var CL, CR, gr Point
-	// C_L = pk^r
-	CL.ScalarMulNonFixedBase(cs, &pk, rStar, params)
-	// C_R = g^r h^b
-	gr.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, rStar, params)
-	hNeg := Neg(cs, h, params)
-	deltaBalance := cs.Add(bStar, fee)
-	CR.ScalarMulNonFixedBase(cs, hNeg, deltaBalance, params)
-	CR.AddGeneric(cs, &gr, &CR, params)
-
-	IsElGamalEncEqual(cs, isEnabled, ElGamalEncConstraints{CL: CL, CR: CR}, CStar)
-
-	// check receiver
-	CL.ScalarMulNonFixedBase(cs, &receiverPk, rStar, params)
-	CR.ScalarMulNonFixedBase(cs, &h, deltaBalance, params)
-	CR.AddGeneric(cs, &gr, &CR, params)
-	IsElGamalEncEqual(cs, isEnabled, ElGamalEncConstraints{CL: CL, CR: CR}, receiverCStar)
-}
-
-/*
-	verifyCorrectEnc verify the encryption
-	@cs: the constraint system
-	@h,pk,CStar: public inputs
-	@bStar: the value
-	@rStar: the random value
-	@params: params for the curve tebn254
-*/
-func verifyCorrectEnc2(
-	cs *ConstraintSystem,
-	h, pk Point,
-	receiverPk Point,
-	CStar ElGamalEncConstraints,
-	receiverCStar ElGamalEncConstraints,
-	bStar Variable,
-	rStar Variable,
-	isEnabled Variable,
-	params twistededwards.EdCurve,
-) {
-	// check sender
-	var CL, CR, gr Point
-	// C_L = pk^r
-	CL.ScalarMulNonFixedBase(cs, &pk, rStar, params)
-	// C_R = g^r h^b
-	gr.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, rStar, params)
-	hNeg := Neg(cs, h, params)
-	CR.ScalarMulNonFixedBase(cs, hNeg, bStar, params)
-	CR.AddGeneric(cs, &gr, &CR, params)
-
-	IsElGamalEncEqual(cs, isEnabled, ElGamalEncConstraints{CL: CL, CR: CR}, CStar)
-
-	// check receiver
-	CL.ScalarMulNonFixedBase(cs, &receiverPk, rStar, params)
-	CR.ScalarMulNonFixedBase(cs, &h, bStar, params)
-	CR.AddGeneric(cs, &gr, &CR, params)
-	IsElGamalEncEqual(cs, isEnabled, ElGamalEncConstraints{CL: CL, CR: CR}, receiverCStar)
-}
-
 // set the witness for swap proof
 func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapProofConstraints, err error) {
 	if proof == nil {
-		log.Println("[SetWithdrawProofWitness] invalid params")
+		log.Println("[SetSwapProofWitness] invalid params")
 		return witness, err
 	}
 
 	// proof must be correct
 	verifyRes, err := proof.Verify()
 	if err != nil {
-		log.Println("[SetWithdrawProofWitness] invalid proof:", err)
+		log.Println("[SetSwapProofWitness] invalid proof:", err)
 		return witness, err
 	}
 	if !verifyRes {
-		log.Println("[SetWithdrawProofWitness] invalid proof")
-		return witness, ErrInvalidProof
+		log.Println("[SetSwapProofWitness] invalid proof")
+		return witness, errors.New("[SetSwapProofWitness] invalid proof")
 	}
 
 	witness.A_C_ufeeL_Delta, err = SetPointWitness(proof.A_C_ufeeL_Delta)
@@ -314,11 +237,11 @@ func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapP
 	witness.Z_bar_r_A.Assign(proof.Z_bar_r_A)
 	witness.Z_bar_r_fee.Assign(proof.Z_bar_r_fee)
 	witness.Z_sk_uInv.Assign(proof.Z_sk_uInv)
-	witness.ARangeProof, err = setCtRangeProofWitness(proof.ARangeProof, isEnabled)
+	witness.ARangeProof, err = SetCtRangeProofWitness(proof.ARangeProof, isEnabled)
 	if err != nil {
 		return witness, err
 	}
-	witness.FeeRangeProof, err = setCtRangeProofWitness(proof.FeeRangeProof, isEnabled)
+	witness.FeeRangeProof, err = SetCtRangeProofWitness(proof.FeeRangeProof, isEnabled)
 	if err != nil {
 		return witness, err
 	}

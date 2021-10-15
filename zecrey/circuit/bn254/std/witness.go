@@ -17,14 +17,17 @@
 
 package std
 
-import "zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
+import (
+	"errors"
+	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
+)
 
 /*
 	SetPointWitness set witness for Point
 */
 func SetPointWitness(point *zecrey.Point) (witness Point, err error) {
 	if point == nil {
-		return witness, ErrInvalidSetParams
+		return witness, errors.New("[SetPointWitness] invalid point")
 	}
 	witness.X.Assign(point.X.String())
 	witness.Y.Assign(point.Y.String())
@@ -36,7 +39,7 @@ func SetPointWitness(point *zecrey.Point) (witness Point, err error) {
 */
 func SetElGamalEncWitness(encVal *zecrey.ElGamalEnc) (witness ElGamalEncConstraints, err error) {
 	if encVal == nil {
-		return witness, ErrInvalidSetParams
+		return witness, errors.New("[SetElGamalEncWitness] invalid enc")
 	}
 	witness.CL, err = SetPointWitness(encVal.CL)
 	if err != nil {

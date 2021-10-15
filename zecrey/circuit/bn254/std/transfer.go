@@ -18,6 +18,7 @@
 package std
 
 import (
+	"errors"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
@@ -237,9 +238,6 @@ func verifyValidEnc(
 	SetTransferProofWitness set witness for the privacy transfer proof
 */
 func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witness TransferProofConstraints, err error) {
-	if proof == nil {
-		return witness, ErrInvalidSetParams
-	}
 	// proof must be correct
 	verifyRes, err := proof.Verify()
 	if err != nil {
@@ -248,7 +246,7 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 	}
 	if !verifyRes {
 		log.Println("[SetTransferProofWitness] invalid proof")
-		return witness, ErrInvalidProof
+		return witness, errors.New("[SetTransferProofWitness] invalid proof")
 	}
 	// A_sum
 	witness.A_sum, err = SetPointWitness(proof.A_sum)
@@ -324,7 +322,7 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 		// z_{sk}
 		subProofWitness.Z_skInv.Assign(subProof.Z_skInv)
 		// range proof
-		subProofWitness.BStarRangeProof, err = setCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
+		subProofWitness.BStarRangeProof, err = SetCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
 		if err != nil {
 			return witness, err
 		}

@@ -18,6 +18,7 @@
 package std
 
 import (
+	"errors"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
@@ -167,19 +168,19 @@ func verifyRemoveLiquidityParams(
 // set the witness for RemoveLiquidity proof
 func SetRemoveLiquidityProofWitness(proof *zecrey.RemoveLiquidityProof, isEnabled bool) (witness RemoveLiquidityProofConstraints, err error) {
 	if proof == nil {
-		log.Println("[SetWithdrawProofWitness] invalid params")
+		log.Println("[SetRemoveLiquidityProofWitness] invalid params")
 		return witness, err
 	}
 
 	// proof must be correct
 	verifyRes, err := proof.Verify()
 	if err != nil {
-		log.Println("[SetWithdrawProofWitness] invalid proof:", err)
+		log.Println("[SetRemoveLiquidityProofWitness] invalid proof:", err)
 		return witness, err
 	}
 	if !verifyRes {
-		log.Println("[SetWithdrawProofWitness] invalid proof")
-		return witness, ErrInvalidProof
+		log.Println("[SetRemoveLiquidityProofWitness] invalid proof")
+		return witness, errors.New("[SetRemoveLiquidityProofWitness] invalid proof")
 	}
 
 	witness.A_CLPL_Delta, err = SetPointWitness(proof.A_CLPL_Delta)
@@ -203,7 +204,7 @@ func SetRemoveLiquidityProofWitness(proof *zecrey.RemoveLiquidityProof, isEnable
 	witness.Z_sk_u.Assign(proof.Z_sk_u)
 	witness.Z_bar_r_LP.Assign(proof.Z_bar_r_LP)
 	witness.Z_sk_uInv.Assign(proof.Z_sk_uInv)
-	witness.LPRangeProof, err = setCtRangeProofWitness(proof.LPRangeProof, isEnabled)
+	witness.LPRangeProof, err = SetCtRangeProofWitness(proof.LPRangeProof, isEnabled)
 	if err != nil {
 		return witness, err
 	}

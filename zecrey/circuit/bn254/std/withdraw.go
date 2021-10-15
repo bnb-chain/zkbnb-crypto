@@ -18,6 +18,7 @@
 package std
 
 import (
+	"errors"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
@@ -185,7 +186,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	}
 	if !verifyRes {
 		log.Println("[SetWithdrawProofWitness] invalid proof")
-		return witness, ErrInvalidProof
+		return witness, errors.New("[SetWithdrawProofWitness] invalid proof")
 	}
 
 	witness.Pa, err = SetPointWitness(proof.Pa)
@@ -208,7 +209,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	witness.Z_rbar.Assign(proof.Z_rbar.String())
 	witness.Z_sk.Assign(proof.Z_sk.String())
 	witness.Z_skInv.Assign(proof.Z_skInv.String())
-	witness.BPrimeRangeProof, err = setCtRangeProofWitness(proof.BPrimeRangeProof, isEnabled)
+	witness.BPrimeRangeProof, err = SetCtRangeProofWitness(proof.BPrimeRangeProof, isEnabled)
 	if err != nil {
 		return witness, err
 	}
