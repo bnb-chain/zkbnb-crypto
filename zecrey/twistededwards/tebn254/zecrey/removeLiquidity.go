@@ -130,9 +130,9 @@ func ProveRemoveLiquidity(relation *RemoveLiquidityRelation) (proof *RemoveLiqui
 }
 
 func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
-	if proof == nil {
-		log.Println("[RemoveLiquidityProof Verify] err: invalid proof")
-		return false, errors.New("[RemoveLiquidityProof Verify] err: invalid proof")
+	if !proof.LPRangeProof.A.Equal(proof.T_uLP) {
+		log.Println("[Verify RemoveLiquidity] invalid params")
+		return false, errors.New("[Verify RemoveLiquidity] invalid params")
 	}
 	var (
 		C_uLPPrime    *ElGamalEnc
@@ -140,6 +140,15 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 		c             *big.Int
 		buf           bytes.Buffer
 	)
+	res, err = proof.LPRangeProof.Verify()
+	if err != nil {
+		log.Println("[Verify RemoveLiquidity] err range proof:", err)
+		return false, err
+	}
+	if !res {
+		log.Println("[Verify RemoveLiquidity] invalid range proof")
+		return false, nil
+	}
 	writePointIntoBuf(&buf, proof.G)
 	writePointIntoBuf(&buf, proof.H)
 	writePointIntoBuf(&buf, proof.Pk_u)
@@ -158,7 +167,7 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 	// compute challenge
 	c, err = util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
-		log.Println("[RemoveLiquidityProof Verify] unable to compute challenge")
+		log.Println("[Verify RemoveLiquidityProof] unable to compute challenge")
 		return false, err
 	}
 	// verify params
@@ -168,20 +177,20 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 		return false, err
 	}
 	if !isValidParams {
-		return false, errors.New("[RemoveLiquidityProof Verify] invalid params")
+		return false, errors.New("[Verify RemoveLiquidityProof] invalid params")
 	}
 	// verify enc
 	l1 := curve.ScalarMul(proof.Pk_u, proof.Z_rDelta_LP)
 	r1 := curve.Add(proof.A_CLPL_Delta, curve.ScalarMul(proof.C_u_LP_Delta.CL, c))
 	if !l1.Equal(r1) {
-		log.Println("[RemoveLiquidityProof Verify] l1 != r1")
+		log.Println("[Verify RemoveLiquidityProof] l1 != r1")
 		return false, nil
 	}
 	// verify ownership
 	l2 := curve.ScalarMul(proof.G, proof.Z_sk_u)
 	r2 := curve.Add(proof.A_pk_u, curve.ScalarMul(proof.Pk_u, c))
 	if !l2.Equal(r2) {
-		log.Println("[RemoveLiquidityProof Verify] l2 != r2")
+		log.Println("[Verify RemoveLiquidityProof] l2 != r2")
 		return false, nil
 	}
 	C_uLPPrime, err = twistedElgamal.EncSub(proof.C_u_LP, proof.C_u_LP_Delta)
@@ -204,13 +213,17 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 		),
 	)
 	if !l3.Equal(r3) {
-		log.Println("[RemoveLiquidityProof Verify] l3 != r3")
+		log.Println("[Verify RemoveLiquidityProof] l3 != r3")
 		return false, nil
 	}
 	return true, nil
 }
 
 func verifyRemoveLiquidityParams(proof *RemoveLiquidityProof) (res bool, err error) {
+	if !proof.G.Equal(G) || !proof.H.Equal(H) {
+		log.Println("[verifyRemoveLiquidityParams] invalid params")
+		return false, errors.New("[verifyRemoveLiquidityParams] invalid params")
+	}
 	// check uint64 & int64
 	if !validUint64(proof.B_A_Delta) || !validUint64(proof.B_B_Delta) || !validUint64(proof.Delta_LP) {
 		log.Println("[verifyRemoveLiquidityParams] invalid params")

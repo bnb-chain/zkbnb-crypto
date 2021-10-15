@@ -141,15 +141,20 @@ func ProveAddLiquidity(relation *AddLiquidityRelation) (proof *AddLiquidityProof
 }
 
 func (proof *AddLiquidityProof) Verify() (res bool, err error) {
-	if proof == nil {
-		return false, errors.New("[AddLiquidityProof Verify] err: invalid proof")
+	// verify range proofs
+	if !proof.ARangeProof.A.Equal(proof.T_uA) || !proof.BRangeProof.A.Equal(proof.T_uB) {
+		log.Println("[Verify AddLiquidityProof] invalid params")
+		return false, errors.New("[Verify AddLiquidityProof] invalid params")
 	}
 	var (
 		C_uAPrime, C_uBPrime       *ElGamalEnc
 		C_uAPrimeNeg, C_uBPrimeNeg *ElGamalEnc
 		c                          *big.Int
 		buf                        bytes.Buffer
+		rangeChan                  = make(chan int, addLiquidityRangeProofCount)
 	)
+	go verifyCtRangeRoutine(proof.ARangeProof, rangeChan)
+	go verifyCtRangeRoutine(proof.BRangeProof, rangeChan)
 	// challenge buf
 	writePointIntoBuf(&buf, proof.G)
 	writePointIntoBuf(&buf, proof.H)
@@ -172,7 +177,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 	// compute challenge
 	c, err = util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
-		log.Println("[AddLiquidityProof Verify] unable to compute challenge")
+		log.Println("[Verify AddLiquidityProof] unable to compute challenge")
 		return false, err
 	}
 	// verify params
@@ -181,20 +186,20 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 		return false, err
 	}
 	if !isValidParams {
-		return false, errors.New("[AddLiquidityProof Verify] invalid params")
+		return false, errors.New("[Verify AddLiquidityProof] invalid params")
 	}
 	// verify enc
 	l1 := curve.ScalarMul(proof.Pk_u, proof.Z_rDelta_LP)
 	r1 := curve.Add(proof.A_CLPL_Delta, curve.ScalarMul(proof.C_LP_Delta.CL, c))
 	if !l1.Equal(r1) {
-		log.Println("[AddLiquidityProof Verify] l1 != r1")
+		log.Println("[Verify AddLiquidityProof] l1 != r1")
 		return false, nil
 	}
 	// verify ownership
 	l2 := curve.ScalarMul(proof.G, proof.Z_sk_u)
 	r2 := curve.Add(proof.A_pk_u, curve.ScalarMul(proof.Pk_u, c))
 	if !l2.Equal(r2) {
-		log.Println("[AddLiquidityProof Verify] l2 != r2")
+		log.Println("[Verify AddLiquidityProof] l2 != r2")
 		return false, nil
 	}
 	C_uAPrime, err = twistedElgamal.EncSub(proof.C_uA, proof.C_uA_Delta)
@@ -222,7 +227,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 		),
 	)
 	if !l3.Equal(r3) {
-		log.Println("[AddLiquidityProof Verify] l3 != r3")
+		log.Println("[Verify AddLiquidityProof] l3 != r3")
 		return false, nil
 	}
 	l4 := curve.Add(
@@ -240,13 +245,24 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 		),
 	)
 	if !l4.Equal(r4) {
-		log.Println("[AddLiquidityProof Verify] l4 != r4")
+		log.Println("[Verify AddLiquidityProof] l4 != r4")
 		return false, nil
+	}
+	for i := 0; i < addLiquidityRangeProofCount; i++ {
+		val := <-rangeChan
+		if val == ErrCode {
+			log.Println("[Verify AddLiquidityProof] invalid range proof")
+			return false, nil
+		}
 	}
 	return true, nil
 }
 
 func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
+	if !proof.G.Equal(G) || !proof.H.Equal(H) {
+		log.Println("[verifyAddLiquidityParams] invalid params")
+		return false, errors.New("[verifyAddLiquidityParams] invalid params")
+	}
 	// check uint64 & int64
 	if !validUint64(proof.B_A_Delta) || !validUint64(proof.B_B_Delta) ||
 		!validUint64(proof.B_DaoA) || !validUint64(proof.B_DaoB) {

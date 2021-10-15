@@ -81,6 +81,12 @@ func (circuit *SwapProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 	if err != nil {
 		return err
 	}
+	// verify H
+	H := Point{
+		X: cs.Constant(HX),
+		Y: cs.Constant(HY),
+	}
+	IsPointEqual(cs, circuit.IsEnabled, H, circuit.H)
 	// mimc
 	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
 	if err != nil {
@@ -103,6 +109,8 @@ func VerifySwapProof(
 	params twistededwards.EdCurve,
 	hFunc MiMC,
 ) {
+	IsPointEqual(cs, proof.IsEnabled, proof.ARangeProof.A, proof.T_uA)
+	IsPointEqual(cs, proof.IsEnabled, proof.FeeRangeProof.A, proof.T_ufee)
 	var (
 		C_uAPrime, C_ufeePrime       ElGamalEncConstraints
 		C_uAPrimeNeg, C_ufeePrimeNeg ElGamalEncConstraints

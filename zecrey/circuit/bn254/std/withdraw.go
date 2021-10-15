@@ -53,6 +53,12 @@ func (circuit WithdrawProofConstraints) Define(curveID ecc.ID, cs *ConstraintSys
 	if err != nil {
 		return err
 	}
+	// verify H
+	H := Point{
+		X: cs.Constant(HX),
+		Y: cs.Constant(HY),
+	}
+	IsPointEqual(cs, circuit.IsEnabled, H, circuit.H)
 	// mimc
 	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
 	if err != nil {
@@ -74,6 +80,7 @@ func VerifyWithdrawProof(
 	params twistededwards.EdCurve,
 	hFunc MiMC,
 ) {
+	IsPointEqual(cs, proof.IsEnabled, proof.BPrimeRangeProof.A, proof.T)
 	// check Ha
 	var HaCheck Point
 	HaCheck.ScalarMulNonFixedBase(cs, &proof.H, proof.ReceiveAddr, params)

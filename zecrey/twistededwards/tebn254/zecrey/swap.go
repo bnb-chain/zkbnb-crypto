@@ -177,8 +177,9 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 }
 
 func (proof *SwapProof) Verify() (res bool, err error) {
-	if proof == nil {
-		return false, errors.New("[SwapProof Verify] invalid params")
+	if !proof.ARangeProof.A.Equal(proof.T_uA) || !proof.FeeRangeProof.A.Equal(proof.T_ufee) {
+		log.Println("[Verify SwapProof] invalid params")
+		return false, errors.New("[Verify SwapProof] invalid params")
 	}
 	var (
 		C_uAPrime, C_ufeePrime       *ElGamalEnc
@@ -218,20 +219,20 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 		return false, err
 	}
 	if !isValidParams {
-		return false, errors.New("[SwapProof Verify] invalid params")
+		return false, errors.New("[Verify SwapProof] invalid params")
 	}
 	// verify enc
 	l1 := curve.ScalarMul(proof.Pk_u, proof.Z_r_Deltafee)
 	r1 := curve.Add(proof.A_C_ufeeL_Delta, curve.ScalarMul(proof.C_ufee_Delta.CL, c))
 	if !l1.Equal(r1) {
-		log.Println("[SwapProof Verify] l1 != r1")
+		log.Println("[Verify SwapProof] l1 != r1")
 		return false, nil
 	}
 	// verify ownership
 	l2 := curve.ScalarMul(proof.G, proof.Z_sk_u)
 	r2 := curve.Add(proof.A_pk_u, curve.ScalarMul(proof.Pk_u, c))
 	if !l2.Equal(r2) {
-		log.Println("[SwapProof Verify] l2 != r2")
+		log.Println("[Verify SwapProof] l2 != r2")
 		return false, nil
 	}
 	if equalEnc(proof.C_uA, proof.C_ufee) {
@@ -271,7 +272,7 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 		),
 	)
 	if !l3.Equal(r3) {
-		log.Println("[SwapProof Verify] l3 != r3")
+		log.Println("[Verify SwapProof] l3 != r3")
 		return false, nil
 	}
 	l4 := curve.Add(
@@ -289,7 +290,7 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 		),
 	)
 	if !l4.Equal(r4) {
-		log.Println("[SwapProof Verify] l4 != r4")
+		log.Println("[Verify SwapProof] l4 != r4")
 		return false, nil
 	}
 	for i := 0; i < swapRangeProofCount; i++ {
@@ -303,6 +304,10 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 }
 
 func verifySwapParams(proof *SwapProof) (res bool, err error) {
+	if !proof.G.Equal(G) || !proof.H.Equal(H) {
+		log.Println("[verifySwapParams] invalid params")
+		return false, nil
+	}
 	C_uA_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_A_Delta)), proof.R_DeltaA, proof.Pk_u)
 	if err != nil {
 		return false, err

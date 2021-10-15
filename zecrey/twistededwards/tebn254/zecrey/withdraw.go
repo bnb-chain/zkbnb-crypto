@@ -94,6 +94,11 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 		log.Println("[Verify WithdrawProof] invalid params")
 		return false, errors.New("[Verify WithdrawProof] invalid params")
 	}
+	// check G,H
+	if !proof.G.Equal(G) || !proof.H.Equal(H) {
+		log.Println("[Verify WithdrawProof] invalid params")
+		return false, errors.New("[Verify WithdrawProof] invalid params")
+	}
 	// check Ha
 	HaCheck := curve.ScalarMul(proof.H, proof.ReceiveAddr)
 	if !proof.Ha.Equal(HaCheck) {
@@ -106,6 +111,11 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	if !proof.CRStar.Equal(CRCheck) {
 		log.Println("[Verify WithdrawProof] invalid params")
 		return false, ErrInvalidParams
+	}
+	// check range params
+	if !proof.BPrimeRangeProof.A.Equal(proof.T) {
+		log.Println("[Verify WithdrawProof] invalid range params")
+		return false, errors.New("[Verify WithdrawProof] invalid rage params")
 	}
 	// Verify range proof first
 	rangeRes, err := proof.BPrimeRangeProof.Verify()

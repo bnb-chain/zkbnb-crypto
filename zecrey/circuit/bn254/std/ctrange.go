@@ -44,6 +44,12 @@ func (circuit CtRangeProofConstraints) Define(curveID ecc.ID, cs *ConstraintSyst
 	if err != nil {
 		return err
 	}
+	// verify H
+	H := Point{
+		X: cs.Constant(HX),
+		Y: cs.Constant(HY),
+	}
+	IsPointEqual(cs, circuit.IsEnabled, H, circuit.H)
 	// mimc
 	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
 	if err != nil {
