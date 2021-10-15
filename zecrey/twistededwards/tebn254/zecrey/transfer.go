@@ -284,6 +284,10 @@ func (proof *TransferProof) Verify() (bool, error) {
 		return false, errors.New("[Verify TransferProof] invalid params")
 	}
 	// verify params
+	if !proof.G.Equal(G) || !proof.H.Equal(H) {
+		log.Println("[Verify TransferProof] invalid params")
+		return false, errors.New("[Verify TransferProof] invalid params")
+	}
 	// generate the challenge
 	var (
 		CR_sum    = curve.ZeroPoint()
