@@ -74,7 +74,7 @@ type SwapProofConstraints struct {
 }
 
 // define tests for verifying the swap proof
-func (circuit *SwapProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit SwapProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -92,7 +92,7 @@ func (circuit *SwapProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 	if err != nil {
 		return err
 	}
-	VerifySwapProof(cs, *circuit, params, hFunc)
+	VerifySwapProof(cs, circuit, params, hFunc)
 
 	return nil
 }
