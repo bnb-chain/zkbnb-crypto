@@ -41,7 +41,7 @@ func TestVerifyRangeProof(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("constraints:", r1cs.GetNbConstraints())
-	witness, err = setCtRangeProofWitness(proof, true)
+	witness, err = SetCtRangeProofWitness(proof, true)
 	if err != nil {
 		t.Fatal(err)
 	}

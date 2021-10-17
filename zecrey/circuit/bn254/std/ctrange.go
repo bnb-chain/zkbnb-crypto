@@ -18,9 +18,11 @@
 package std
 
 import (
+	"errors"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"log"
 	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
@@ -55,11 +57,11 @@ func (circuit CtRangeProofConstraints) Define(curveID ecc.ID, cs *ConstraintSyst
 	if err != nil {
 		return err
 	}
-	verifyCtRangeProof(cs, circuit, params, hFunc)
+	VerifyCtRangeProof(cs, circuit, params, hFunc)
 	return nil
 }
 
-func verifyCtRangeProof(cs *ConstraintSystem, proof CtRangeProofConstraints, params twistededwards.EdCurve, hFunc MiMC) {
+func VerifyCtRangeProof(cs *ConstraintSystem, proof CtRangeProofConstraints, params twistededwards.EdCurve, hFunc MiMC) {
 	A := Point{
 		X: cs.Constant(0),
 		Y: cs.Constant(1),
@@ -95,7 +97,7 @@ func verifyCtRangeProof(cs *ConstraintSystem, proof CtRangeProofConstraints, par
 	setComRangeProofWitness set witness for the range proof
 	@proof: original range proofs
 */
-func setCtRangeProofWitness(proof *ctrange.RangeProof, isEnabled bool) (witness CtRangeProofConstraints, err error) {
+func SetCtRangeProofWitness(proof *ctrange.RangeProof, isEnabled bool) (witness CtRangeProofConstraints, err error) {
 	if proof == nil {
 		return witness, err
 	}
@@ -105,7 +107,8 @@ func setCtRangeProofWitness(proof *ctrange.RangeProof, isEnabled bool) (witness 
 		return witness, err
 	}
 	if !verifyRes {
-		return witness, ErrInvalidProof
+		log.Println("[SetCtRangeProofWitness] invalid proof")
+		return witness, errors.New("[SetCtRangeProofWitness] invalid proof")
 	}
 	witness.G, err = SetPointWitness(proof.G)
 	if err != nil {

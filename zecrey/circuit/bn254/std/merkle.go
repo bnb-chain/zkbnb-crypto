@@ -23,7 +23,6 @@ func nodeSum(h MiMC, a, b Variable) Variable {
 	h.Write(a)
 	h.Write(b)
 	res := h.Sum()
-
 	return res
 }
 
@@ -34,9 +33,7 @@ func nodeSum(h MiMC, a, b Variable) Variable {
 	 'numLeaves' equals 0.
 */
 func VerifyMerkleProof(cs *ConstraintSystem, isEnabled Variable, h MiMC, merkleRoot Variable, proofSet, helper []Variable) {
-
 	node := proofSet[0]
-
 	for i := 1; i < len(proofSet); i++ {
 		cs.AssertIsBoolean(helper[i-1])
 		d1 := cs.Select(helper[i-1], proofSet[i], node)
@@ -48,15 +45,17 @@ func VerifyMerkleProof(cs *ConstraintSystem, isEnabled Variable, h MiMC, merkleR
 
 }
 
-func SetMerkleProofsWitness(proofs [AccountMerkleLevels][]byte) (witness [AccountMerkleLevels]Variable) {
-	for i := 0; i < AccountMerkleLevels; i++ {
+func SetMerkleProofsWitness(proofs [][]byte, level int) (witness []Variable) {
+	witness = make([]Variable, level)
+	for i := 0; i < level; i++ {
 		witness[i].Assign(proofs[i])
 	}
 	return witness
 }
 
-func SetMerkleProofsHelperWitness(proofs [AccountMerkleLevels - 1]int) (witness [AccountMerkleLevels - 1]Variable) {
-	for i := 0; i < AccountMerkleLevels-1; i++ {
+func SetMerkleProofsHelperWitness(proofs []int, level int) (witness []Variable) {
+	witness = make([]Variable, level-1)
+	for i := 0; i < level-1; i++ {
 		witness[i].Assign(proofs[i])
 	}
 	return witness

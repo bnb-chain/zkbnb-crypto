@@ -33,7 +33,7 @@ type DepositTxConstraints struct {
 	// enable deposit or not
 	IsEnabled Variable
 	// token id
-	TokenId Variable
+	AssetId Variable
 	// Public key
 	PublicKey Point
 	// deposit amount
@@ -46,12 +46,12 @@ type DepositTxConstraints struct {
 	H Point
 
 	// before deposit merkle proof
-	AccountMerkleProofsBefore       [AccountMerkleLevels]Variable
-	AccountHelperMerkleProofsBefore [AccountMerkleLevels - 1]Variable
+	AccountMerkleProofsBefore       []Variable
+	AccountHelperMerkleProofsBefore []Variable
 
 	// after deposit merkle proof
-	AccountMerkleProofsAfter       [AccountMerkleLevels]Variable
-	AccountHelperMerkleProofsAfter [AccountMerkleLevels - 1]Variable
+	AccountMerkleProofsAfter       []Variable
+	AccountHelperMerkleProofsAfter []Variable
 
 	// old account root
 	OldAccountRoot Variable
@@ -84,8 +84,8 @@ func (circuit *DepositTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 func VerifyDepositTx(cs *ConstraintSystem, tx DepositTxConstraints, params twistededwards.EdCurve, hFunc MiMC) {
 	// universal check
 	// check token id
-	std.IsVariableEqual(cs, tx.IsEnabled, tx.TokenId, tx.AccountBeforeDeposit.TokenId)
-	std.IsVariableEqual(cs, tx.IsEnabled, tx.TokenId, tx.AccountAfterDeposit.TokenId)
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.AssetId, tx.AccountBeforeDeposit.AssetId)
+	std.IsVariableEqual(cs, tx.IsEnabled, tx.AssetId, tx.AccountAfterDeposit.AssetId)
 	// check public key
 	std.IsPointEqual(cs, tx.IsEnabled, tx.PublicKey, tx.AccountBeforeDeposit.PubKey)
 	std.IsPointEqual(cs, tx.IsEnabled, tx.PublicKey, tx.AccountAfterDeposit.PubKey)
@@ -125,12 +125,12 @@ type DepositTx struct {
 	H *zecrey.Point
 
 	// before deposit merkle proof
-	AccountMerkleProofsBefore       [AccountMerkleLevels][]byte
-	AccountHelperMerkleProofsBefore [AccountMerkleLevels - 1]int
+	AccountMerkleProofsBefore       [][]byte
+	AccountHelperMerkleProofsBefore []int
 
 	// after deposit merkle proof
-	AccountMerkleProofsAfter       [AccountMerkleLevels][]byte
-	AccountHelperMerkleProofsAfter [AccountMerkleLevels - 1]int
+	AccountMerkleProofsAfter       [][]byte
+	AccountHelperMerkleProofsAfter []int
 
 	// old account root
 	OldAccountRoot []byte
@@ -139,7 +139,7 @@ type DepositTx struct {
 }
 
 func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints, err error) {
-	witness.TokenId.Assign(int(tx.TokenId))
+	witness.AssetId.Assign(int(tx.TokenId))
 	witness.PublicKey, err = std.SetPointWitness(tx.PublicKey)
 	if err != nil {
 		return witness, err
@@ -159,10 +159,10 @@ func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints, err error
 	}
 
 	// set merkle proofs witness
-	witness.AccountMerkleProofsBefore = std.SetMerkleProofsWitness(tx.AccountMerkleProofsBefore)
-	witness.AccountHelperMerkleProofsBefore = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsBefore)
-	witness.AccountMerkleProofsAfter = std.SetMerkleProofsWitness(tx.AccountMerkleProofsAfter)
-	witness.AccountHelperMerkleProofsAfter = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsAfter)
+	witness.AccountMerkleProofsBefore = std.SetMerkleProofsWitness(tx.AccountMerkleProofsBefore, AccountMerkleLevels)
+	witness.AccountHelperMerkleProofsBefore = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsBefore, AccountMerkleLevels-1)
+	witness.AccountMerkleProofsAfter = std.SetMerkleProofsWitness(tx.AccountMerkleProofsAfter, AccountMerkleLevels)
+	witness.AccountHelperMerkleProofsAfter = std.SetMerkleProofsHelperWitness(tx.AccountHelperMerkleProofsAfter, AccountMerkleLevels-1)
 
 	// set account root witness
 	witness.OldAccountRoot.Assign(tx.OldAccountRoot)

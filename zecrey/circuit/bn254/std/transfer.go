@@ -18,6 +18,7 @@
 package std
 
 import (
+	"errors"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
@@ -48,11 +49,11 @@ type TransferSubProofConstraints struct {
 	// respond values
 	Z_r, Z_bDelta, Z_rstar1, Z_rstar2, Z_bstar1, Z_bstar2, Z_rbar, Z_bprime, Z_sk, Z_skInv Variable
 	// range proof
-	BStarRangeProof CtRangeProofConstraints
+	//BStarRangeProof CtRangeProofConstraints
 	// common inputs
-	// original balance enc
+	// original balance Enc
 	C ElGamalEncConstraints
-	// delta balance enc
+	// delta balance Enc
 	CDelta ElGamalEncConstraints
 	// new pedersen commitment for new balance
 	T Point
@@ -115,14 +116,14 @@ func VerifyTransferProof(
 		writePointIntoBuf(&hFunc, subProof.A_CRDelta)
 		CR_sum.AddGeneric(cs, &CR_sum, &subProof.CDelta.CR, params)
 		// verify range proof params
-		IsPointEqual(cs, proof.IsEnabled, subProof.BStarRangeProof.A, subProof.Y)
+		//IsPointEqual(cs, proof.IsEnabled, subProof.BStarRangeProof.A, subProof.Y)
 		// verify range proof
-		rangeHFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
-		if err != nil {
-			log.Println("[VerifyTransferProof] err hash function:", err)
-			return
-		}
-		verifyCtRangeProof(cs, subProof.BStarRangeProof, params, rangeHFunc)
+		//rangeHFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
+		//if err != nil {
+		//	log.Println("[VerifyTransferProof] err hash function:", err)
+		//	return
+		//}
+		//VerifyCtRangeProof(cs, subProof.BStarRangeProof, params, rangeHFunc)
 	}
 	c := hFunc.Sum()
 	// TODO need to check XOR, cs.XOR bug exists
@@ -138,7 +139,7 @@ func VerifyTransferProof(
 	IsPointEqual(cs, proof.IsEnabled, lSum, rSum)
 	// Verify sub proofs
 	for _, subProof := range proof.SubProofs {
-		// Verify valid enc
+		// Verify valid Enc
 		verifyValidEnc(
 			cs,
 			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, proof.H, subProof.CDelta.CR, subProof.A_CRDelta,
@@ -152,8 +153,8 @@ func VerifyTransferProof(
 			CPrime, CPrimeNeg ElGamalEncConstraints
 		)
 		// set CPrime & CPrimeNeg
-		CPrime = encAdd(cs, subProof.C, subProof.CDelta, params)
-		CPrimeNeg = negElgamal(cs, CPrime)
+		CPrime = EncAdd(cs, subProof.C, subProof.CDelta, params)
+		CPrimeNeg = NegElgamal(cs, CPrime)
 		// verify Y_1 = g^{r_i^{\star}} h^{b_i^{\Delta}}
 		var l1, h_z_bstar1, r1 Point
 		l1.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.Z_rstar1, params)
@@ -205,7 +206,7 @@ func VerifyTransferProof(
 	@A_C_LDelta,A_CRDelta: random commitments
 	@h: the generator
 	@c: the challenge
-	@z_r,z_bDelta: response values for valid enc proof
+	@z_r,z_bDelta: response values for valid Enc proof
 	@params: params for the curve tebn254
 */
 func verifyValidEnc(
@@ -233,13 +234,89 @@ func verifyValidEnc(
 	IsPointEqual(cs, isEnabled, l2, r2)
 }
 
+func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
+	// A_sum
+	witness.A_sum, _ = SetPointWitness(ZeroPoint)
+	// z_tsk
+	witness.Z_sum.Assign(ZeroInt)
+	// generator
+	witness.G, _ = SetPointWitness(ZeroPoint)
+	witness.H, _ = SetPointWitness(ZeroPoint)
+	// C = C1 \oplus C2
+	witness.C1.Assign(ZeroInt)
+	witness.C2.Assign(ZeroInt)
+	// set fee
+	witness.Fee.Assign(ZeroInt)
+	// set sub proofs
+	for i := 0; i < NbTransferCount; i++ {
+		// define var
+		var subProofWitness TransferSubProofConstraints
+		// set values
+		// A_{C_L^{\Delta}}
+		subProofWitness.A_CLDelta, _ = SetPointWitness(ZeroPoint)
+		// A_{C_R^{\Delta}}
+		subProofWitness.A_CRDelta, _ = SetPointWitness(ZeroPoint)
+		subProofWitness.A_Y1, _ = SetPointWitness(ZeroPoint)
+
+		subProofWitness.A_Y2, _ = SetPointWitness(ZeroPoint)
+
+		// A_T
+		subProofWitness.A_T, _ = SetPointWitness(ZeroPoint)
+
+		// A_{pk}
+		subProofWitness.A_pk, _ = SetPointWitness(ZeroPoint)
+
+		// A_{T/C'}
+		subProofWitness.A_TDivCPrime, _ = SetPointWitness(ZeroPoint)
+
+		// Z_r
+		subProofWitness.Z_r.Assign(ZeroInt)
+		// z_{b^{\Delta}}
+		subProofWitness.Z_bDelta.Assign(ZeroInt)
+		// z_{r^{\star} - r}
+		subProofWitness.Z_rstar1.Assign(ZeroInt)
+		subProofWitness.Z_rstar2.Assign(ZeroInt)
+		subProofWitness.Z_bstar1.Assign(ZeroInt)
+		subProofWitness.Z_bstar2.Assign(ZeroInt)
+		// z_{\bar{r}}
+		subProofWitness.Z_rbar.Assign(ZeroInt)
+		// z_{b'}
+		subProofWitness.Z_bprime.Assign(ZeroInt)
+		// z_{sk}
+		subProofWitness.Z_sk.Assign(ZeroInt)
+		// z_{sk}
+		subProofWitness.Z_skInv.Assign(ZeroInt)
+		// range proof
+		//subProofWitness.BStarRangeProof, err = SetCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
+		//if err != nil {
+		//	return witness, err
+		//}
+		// C
+		subProofWitness.C, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+
+		// C^{\Delta}
+		subProofWitness.CDelta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+
+		// T
+		subProofWitness.T, _ = SetPointWitness(ZeroPoint)
+
+		// Y
+		subProofWitness.Y, _ = SetPointWitness(ZeroPoint)
+
+		// Pk
+		subProofWitness.Pk, _ = SetPointWitness(ZeroPoint)
+
+		// set into witness
+		witness.SubProofs[i] = subProofWitness
+	}
+	witness.IsEnabled = SetBoolWitness(false)
+	return witness
+}
+
 /*
 	SetTransferProofWitness set witness for the privacy transfer proof
 */
 func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witness TransferProofConstraints, err error) {
-	if proof == nil {
-		return witness, ErrInvalidSetParams
-	}
 	// proof must be correct
 	verifyRes, err := proof.Verify()
 	if err != nil {
@@ -248,7 +325,7 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 	}
 	if !verifyRes {
 		log.Println("[SetTransferProofWitness] invalid proof")
-		return witness, ErrInvalidProof
+		return witness, errors.New("[SetTransferProofWitness] invalid proof")
 	}
 	// A_sum
 	witness.A_sum, err = SetPointWitness(proof.A_sum)
@@ -324,10 +401,10 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 		// z_{sk}
 		subProofWitness.Z_skInv.Assign(subProof.Z_skInv)
 		// range proof
-		subProofWitness.BStarRangeProof, err = setCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
-		if err != nil {
-			return witness, err
-		}
+		//subProofWitness.BStarRangeProof, err = SetCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
+		//if err != nil {
+		//	return witness, err
+		//}
 		// C
 		subProofWitness.C, err = SetElGamalEncWitness(subProof.C)
 		if err != nil {
