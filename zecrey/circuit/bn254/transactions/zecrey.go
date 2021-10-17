@@ -18,31 +18,29 @@
 package transactions
 
 import (
+	"errors"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"zecrey-crypto/hash/bn254/zmimc"
+	"zecrey-crypto/zecrey/circuit/bn254/std"
 )
 
-type TransactionConstraints struct {
-	// deposit tx
-	DepositTransaction DepositTxConstraints
-	// transfer tx
-	TransferTransaction TransferTxConstraints
-	// swap tx
-	SwapTransaction SwapTxConstraints
-	// withdraw tx
-	WithdrawTransaction WithdrawTxConstraints
-}
-
-type Transaction struct {
-	// deposit tx
-	DepositTransaction *DepositTx
-	// transfer tx
-	TransferTransaction *TransferTx
-	// swap tx
-	SwapTransaction *SwapTx
-	// withdraw tx
-	WithdrawTransaction *WithdrawTx
+type TxConstraints struct {
+	// tx type
+	TxType Variable
+	// transfer proof
+	TransferProof TransferProofConstraints
+	// swap proof
+	SwapProof SwapProofConstraints
+	// add liquidity proof
+	AddLiquidityProof AddLiquidityProofConstraints
+	// remove liquidity proof
+	RemoveLiquidityProof RemoveLiquidityProofConstraints
+	// withdraw proof
+	WithdrawProof WithdrawProofConstraints
+	// range proofs
+	RangeProofs [MaxRangeProofCount]CtRangeProofConstraints
 }
 
 type BlockConstraints struct {
@@ -53,13 +51,13 @@ type BlockConstraints struct {
 	// tx types
 	TxsType [NbTxs]Variable
 	// transactions
-	Transactions [NbTxs]TransactionConstraints
+	Transactions [NbTxs]TxConstraints
 	// account change for each transaction
 	OldAccountRoots [NbTxs]Variable
 	NewAccountRoots [NbTxs]Variable
 }
 
-func (circuit *BlockConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit TxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
 	if err != nil {
@@ -67,95 +65,210 @@ func (circuit *BlockConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) er
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID, cs)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
+	if err != nil {
+		return err
+	}
 
-	VerifyBlock(cs, *circuit, curveID, params, hFunc)
+	// TODO verify H: need to optimize
+	H := Point{
+		X: cs.Constant(std.HX),
+		Y: cs.Constant(std.HY),
+	}
+	circuit.TransferProof.H = H
+	circuit.SwapProof.H = H
+	circuit.AddLiquidityProof.H = H
+	circuit.RemoveLiquidityProof.H = H
+	circuit.WithdrawProof.H = H
+
+	VerifyTransaction(cs, circuit, params, hFunc)
 
 	return nil
 }
 
-func VerifyBlock(cs *ConstraintSystem, block BlockConstraints, curveID ecc.ID, params twistededwards.EdCurve, hFunc MiMC) {
-	// check merkle roots
-	cs.AssertIsEqual(block.OldRoot, block.OldAccountRoots[0])
-	cs.AssertIsEqual(block.NewRoot, block.NewAccountRoots[NbTxs-1])
-	for i := 1; i < NbTxs; i++ {
-		cs.AssertIsEqual(block.OldAccountRoots[i], block.NewAccountRoots[i-1])
+func VerifyTransaction(
+	cs *ConstraintSystem,
+	tx TxConstraints,
+	params twistededwards.EdCurve,
+	hFunc MiMC,
+) {
+	// txType constants
+	txTypeTransfer := cs.Constant(uint64(TxTypeTransfer))
+	txTypeSwap := cs.Constant(uint64(TxTypeSwap))
+	txTypeAddLiquidity := cs.Constant(uint64(TxTypeAddLiquidity))
+	txTypeRemoveLiquidity := cs.Constant(uint64(TxTypeRemoveLiquidity))
+	txTypeWithdraw := cs.Constant(uint64(TxTypeWithdraw))
+	tx.TransferProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeTransfer))
+	tx.SwapProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeSwap))
+	tx.AddLiquidityProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeAddLiquidity))
+	tx.RemoveLiquidityProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeRemoveLiquidity))
+	tx.WithdrawProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeWithdraw))
+	// verify range proofs
+	for i, rangeProof := range tx.RangeProofs {
+		// set range proof is true
+		rangeProof.IsEnabled = cs.Constant(1)
+		std.VerifyCtRangeProof(cs, rangeProof, params, hFunc)
+		hFunc.Reset()
+		tx.TransferProof.SubProofs[i].Y = rangeProof.A
 	}
-	for i := 0; i < NbTxs; i++ {
-		// set transaction type
-		block.Transactions[i].DepositTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(DepositTxType)))
-		block.Transactions[i].TransferTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(TransferTxType)))
-		block.Transactions[i].SwapTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(SwapTxType)))
-		block.Transactions[i].WithdrawTransaction.IsEnabled = cs.IsZero(cs.Sub(block.TxsType[i], cs.Constant(WithdrawTxType)))
+	// set T or Y
+	// swap proof
+	tx.SwapProof.T_uA = tx.RangeProofs[0].A
+	tx.SwapProof.T_ufee = tx.RangeProofs[1].A
+	// add liquidity proof
+	tx.AddLiquidityProof.T_uA = tx.RangeProofs[0].A
+	tx.AddLiquidityProof.T_uB = tx.RangeProofs[1].A
+	// remove liquidity proof
+	tx.RemoveLiquidityProof.T_uLP = tx.RangeProofs[0].A
+	// withdraw proof
+	tx.WithdrawProof.T = tx.RangeProofs[0].A
 
-		// set transaction old root and new root
-		block.Transactions[i].DepositTransaction.OldAccountRoot = block.OldAccountRoots[i]
-		block.Transactions[i].DepositTransaction.NewAccountRoot = block.NewAccountRoots[i]
-
-		block.Transactions[i].TransferTransaction.OldAccountRoot = block.OldAccountRoots[i]
-		block.Transactions[i].TransferTransaction.NewAccountRoot = block.NewAccountRoots[i]
-
-		block.Transactions[i].SwapTransaction.OldAccountRoot = block.OldAccountRoots[i]
-		block.Transactions[i].SwapTransaction.NewAccountRoot = block.NewAccountRoots[i]
-
-		block.Transactions[i].WithdrawTransaction.OldAccountRoot = block.OldAccountRoots[i]
-		block.Transactions[i].WithdrawTransaction.NewAccountRoot = block.NewAccountRoots[i]
-
-		// verify transaction
-		VerifyDepositTx(cs, block.Transactions[i].DepositTransaction, params, hFunc)
-		VerifyTransferTx(cs, block.Transactions[i].TransferTransaction, params, hFunc)
-		VerifySwapTx(cs, block.Transactions[i].SwapTransaction, params, hFunc)
-		VerifyWithdrawTx(cs, block.Transactions[i].WithdrawTransaction, params, hFunc)
-	}
+	// verify transfer proof
+	std.VerifyTransferProof(cs, tx.TransferProof, params, hFunc)
+	hFunc.Reset()
+	// verify swap proof
+	std.VerifySwapProof(cs, tx.SwapProof, params, hFunc)
+	hFunc.Reset()
+	// verify add liquidity proof
+	std.VerifyAddLiquidityProof(cs, tx.AddLiquidityProof, params, hFunc)
+	hFunc.Reset()
+	// verify remove liquidity proof
+	std.VerifyRemoveLiquidityProof(cs, tx.RemoveLiquidityProof, params, hFunc)
+	hFunc.Reset()
+	// verify withdraw proof
+	std.VerifyWithdrawProof(cs, tx.WithdrawProof, params, hFunc)
+	hFunc.Reset()
 
 }
 
-type Block struct {
-	// public inputs
-	OldRoot []byte
-	NewRoot []byte
-	// tx types
-	TxsType [NbTxs]int
-	// transactions
-	Transactions [NbTxs]*Transaction
-	// account change for each transaction
-	OldAccountRoots [NbTxs][]byte
-	NewAccountRoots [NbTxs][]byte
-}
-
-func SetTransactionWitness(tx *Transaction) (witness TransactionConstraints, err error) {
-	witness.DepositTransaction, err = SetDepositTxWitness(tx.DepositTransaction)
-	if err != nil {
-		return witness, err
-	}
-	witness.TransferTransaction, err = SetTransferTxWitness(tx.TransferTransaction)
-	if err != nil {
-		return witness, err
-	}
-	witness.SwapTransaction, err = SetSwapTxWitness(tx.SwapTransaction)
-	if err != nil {
-		return witness, err
-	}
-	witness.WithdrawTransaction, err = SetWithdrawTxWitness(tx.WithdrawTransaction)
-	if err != nil {
-		return witness, err
-	}
-	return witness, nil
-}
-
-func SetBlockWitness(block *Block) (witness BlockConstraints, err error) {
-	// roots
-	witness.OldRoot.Assign(block.OldRoot)
-	witness.NewRoot.Assign(block.NewRoot)
-	for i := 0; i < NbTxs; i++ {
-		witness.TxsType[i].Assign(block.TxsType[i])
-		witness.Transactions[i], err = SetTransactionWitness(block.Transactions[i])
+func SetTxWitness(oproof interface{}, txType uint8, isEnabled bool) (witness TxConstraints, err error) {
+	switch txType {
+	case TxTypeNoop:
+		break
+	case TxTypeDeposit:
+		break
+	case TxTypeLock:
+		break
+	case TxTypeTransfer:
+		proof, b := oproof.(*TransferProof)
+		if !b {
+			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
+		}
+		proofConstraints, err := std.SetTransferProofWitness(proof, isEnabled)
 		if err != nil {
 			return witness, err
 		}
-		witness.OldAccountRoots[i].Assign(block.OldAccountRoots[i])
-		witness.NewAccountRoots[i].Assign(block.NewAccountRoots[i])
+		witness.TxType.Assign(uint64(txType))
+		witness.TransferProof = proofConstraints
+		for i, subProof := range proof.SubProofs {
+			witness.RangeProofs[i], err = std.SetCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
+			if err != nil {
+				return witness, err
+			}
+		}
+		witness.SwapProof = std.SetEmptySwapProofWitness()
+		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
+		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
+		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		break
+	case TxTypeSwap:
+		proof, b := oproof.(*SwapProof)
+		if !b {
+			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
+		}
+		proofConstraints, err := std.SetSwapProofWitness(proof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.TxType.Assign(uint64(txType))
+		witness.TransferProof = std.SetEmptyTransferProofWitness()
+		witness.SwapProof = proofConstraints
+		witness.RangeProofs[0], err = std.SetCtRangeProofWitness(proof.ARangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[1], err = std.SetCtRangeProofWitness(proof.FeeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[2] = witness.RangeProofs[1]
+		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
+		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
+		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		break
+	case TxTypeAddLiquidity:
+		proof, b := oproof.(*AddLiquidityProof)
+		if !b {
+			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
+		}
+		proofConstraints, err := std.SetAddLiquidityProofWitness(proof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.TxType.Assign(uint64(txType))
+		witness.TransferProof = std.SetEmptyTransferProofWitness()
+		witness.SwapProof = std.SetEmptySwapProofWitness()
+		witness.AddLiquidityProof = proofConstraints
+		witness.RangeProofs[0], err = std.SetCtRangeProofWitness(proof.ARangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[1], err = std.SetCtRangeProofWitness(proof.BRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[2] = witness.RangeProofs[1]
+		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
+		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		break
+	case TxTypeRemoveLiquidity:
+		proof, b := oproof.(*RemoveLiquidityProof)
+		if !b {
+			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
+		}
+		proofConstraints, err := std.SetRemoveLiquidityProofWitness(proof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.TxType.Assign(uint64(txType))
+		witness.TransferProof = std.SetEmptyTransferProofWitness()
+		witness.SwapProof = std.SetEmptySwapProofWitness()
+		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
+		witness.RemoveLiquidityProof = proofConstraints
+		witness.RangeProofs[0], err = std.SetCtRangeProofWitness(proof.LPRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[1] = witness.RangeProofs[0]
+		witness.RangeProofs[2] = witness.RangeProofs[0]
+		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		break
+	case TxTypeUnlock:
+		break
+	case TxTypeWithdraw:
+		proof, b := oproof.(*WithdrawProof)
+		if !b {
+			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
+		}
+		proofConstraints, err := std.SetWithdrawProofWitness(proof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.TxType.Assign(uint64(txType))
+		witness.TransferProof = std.SetEmptyTransferProofWitness()
+		witness.SwapProof = std.SetEmptySwapProofWitness()
+		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
+		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
+		witness.WithdrawProof = proofConstraints
+		witness.RangeProofs[0], err = std.SetCtRangeProofWitness(proof.BPrimeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[1] = witness.RangeProofs[0]
+		witness.RangeProofs[2] = witness.RangeProofs[0]
+		break
+	default:
+		return witness, errors.New("[SetTxWitness] invalid tx type")
 	}
-	witness.BlockCommitment.Assign(block.OldRoot)
 	return witness, nil
 }

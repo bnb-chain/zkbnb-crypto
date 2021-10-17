@@ -27,14 +27,14 @@ type ElGamalEncConstraints struct {
 	CR Point // g^r Waste^b
 }
 
-func negElgamal(cs *ConstraintSystem, C ElGamalEncConstraints) ElGamalEncConstraints {
+func NegElgamal(cs *ConstraintSystem, C ElGamalEncConstraints) ElGamalEncConstraints {
 	return ElGamalEncConstraints{
 		CL: *C.CL.Neg(cs, &C.CL),
 		CR: *C.CR.Neg(cs, &C.CR),
 	}
 }
 
-func enc(cs *ConstraintSystem, h Point, b Variable, r Variable, pk Point, params twistededwards.EdCurve) ElGamalEncConstraints {
+func Enc(cs *ConstraintSystem, h Point, b Variable, r Variable, pk Point, params twistededwards.EdCurve) ElGamalEncConstraints {
 	var CL, gr, CR Point
 	CL.ScalarMulNonFixedBase(cs, &pk, r, params)
 	gr.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, r, params)
@@ -43,24 +43,24 @@ func enc(cs *ConstraintSystem, h Point, b Variable, r Variable, pk Point, params
 	return ElGamalEncConstraints{CL: CL, CR: CR}
 }
 
-func encAdd(cs *ConstraintSystem, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
+func EncAdd(cs *ConstraintSystem, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
 	C.CL.AddGeneric(cs, &C.CL, &CDelta.CL, params)
 	C.CR.AddGeneric(cs, &C.CR, &CDelta.CR, params)
 	return C
 }
 
-func encSub(cs *ConstraintSystem, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
+func EncSub(cs *ConstraintSystem, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
 	var CL, CR Point
 	CL.AddGeneric(cs, &C.CL, CDelta.CL.Neg(cs, &CDelta.CL), params)
 	CR.AddGeneric(cs, &C.CR, CDelta.CR.Neg(cs, &CDelta.CR), params)
 	return ElGamalEncConstraints{CL: CL, CR: CR}
 }
 
-func zeroElgamal(cs *ConstraintSystem) ElGamalEncConstraints {
+func ZeroElgamal(cs *ConstraintSystem) ElGamalEncConstraints {
 	return ElGamalEncConstraints{CL: zeroPoint(cs), CR: zeroPoint(cs)}
 }
 
-func selectElgamal(cs *ConstraintSystem, flag Variable, a, b ElGamalEncConstraints) ElGamalEncConstraints {
+func SelectElgamal(cs *ConstraintSystem, flag Variable, a, b ElGamalEncConstraints) ElGamalEncConstraints {
 	CLX := cs.Select(flag, a.CL.X, b.CL.X)
 	CLY := cs.Select(flag, a.CL.Y, b.CL.Y)
 	CRX := cs.Select(flag, a.CR.X, b.CR.X)

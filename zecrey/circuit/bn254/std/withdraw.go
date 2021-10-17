@@ -34,7 +34,7 @@ type WithdrawProofConstraints struct {
 	// response
 	Z_rbar, Z_sk, Z_skInv Variable
 	// Commitment Range Proofs
-	BPrimeRangeProof CtRangeProofConstraints
+	//BPrimeRangeProof CtRangeProofConstraints
 	// common inputs
 	Pa              Point
 	BStar           Variable
@@ -81,7 +81,7 @@ func VerifyWithdrawProof(
 	params twistededwards.EdCurve,
 	hFunc MiMC,
 ) {
-	IsPointEqual(cs, proof.IsEnabled, proof.BPrimeRangeProof.A, proof.T)
+	//IsPointEqual(cs, proof.IsEnabled, proof.BPrimeRangeProof.A, proof.T)
 	// check Ha
 	var HaCheck Point
 	HaCheck.ScalarMulNonFixedBase(cs, &proof.H, proof.ReceiveAddr, params)
@@ -94,12 +94,12 @@ func VerifyWithdrawProof(
 	IsPointEqual(cs, proof.IsEnabled, CRCheck, proof.CRStar)
 	// Verify range proof first
 	// mimc
-	rangeFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
-	if err != nil {
-		log.Println("[VerifyWithdrawProof] invalid range hash func")
-		return
-	}
-	verifyCtRangeProof(cs, proof.BPrimeRangeProof, params, rangeFunc)
+	//rangeFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
+	//if err != nil {
+	//	log.Println("[VerifyWithdrawProof] invalid range hash func")
+	//	return
+	//}
+	//VerifyCtRangeProof(cs, proof.BPrimeRangeProof, params, rangeFunc)
 	// generate the challenge
 	var (
 		c                       Variable
@@ -171,6 +171,45 @@ func verifyBalance(
 	IsPointEqual(cs, isEnabled, l2, r2)
 }
 
+func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
+	witness.Pa, _ = SetPointWitness(ZeroPoint)
+
+	witness.A_pk, _ = SetPointWitness(ZeroPoint)
+
+	witness.A_TDivCRprime, _ = SetPointWitness(ZeroPoint)
+
+	witness.A_Pa, _ = SetPointWitness(ZeroPoint)
+
+	// response
+	witness.Z_rbar.Assign(ZeroInt)
+	witness.Z_sk.Assign(ZeroInt)
+	witness.Z_skInv.Assign(ZeroInt)
+	//witness.BPrimeRangeProof, _ = SetCtRangeProofWitness(BPrimeRangeProof, isEnabled)
+	//if err != nil {
+	//	return witness, _
+	//}
+	// common inputs
+	witness.C, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+
+	witness.CRStar, _ = SetPointWitness(ZeroPoint)
+
+	witness.G, _ = SetPointWitness(ZeroPoint)
+
+	witness.H, _ = SetPointWitness(ZeroPoint)
+
+	witness.Ha, _ = SetPointWitness(ZeroPoint)
+
+	witness.T, _ = SetPointWitness(ZeroPoint)
+
+	witness.Pk, _ = SetPointWitness(ZeroPoint)
+
+	witness.ReceiveAddr.Assign(ZeroInt)
+	witness.BStar.Assign(ZeroInt)
+	witness.Fee.Assign(ZeroInt)
+	witness.IsEnabled = SetBoolWitness(false)
+	return witness
+}
+
 // set the witness for withdraw proof
 func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witness WithdrawProofConstraints, err error) {
 	if proof == nil {
@@ -206,13 +245,13 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, err
 	}
 	// response
-	witness.Z_rbar.Assign(proof.Z_rbar.String())
-	witness.Z_sk.Assign(proof.Z_sk.String())
-	witness.Z_skInv.Assign(proof.Z_skInv.String())
-	witness.BPrimeRangeProof, err = SetCtRangeProofWitness(proof.BPrimeRangeProof, isEnabled)
-	if err != nil {
-		return witness, err
-	}
+	witness.Z_rbar.Assign(proof.Z_rbar)
+	witness.Z_sk.Assign(proof.Z_sk)
+	witness.Z_skInv.Assign(proof.Z_skInv)
+	//witness.BPrimeRangeProof, err = SetCtRangeProofWitness(proof.BPrimeRangeProof, isEnabled)
+	//if err != nil {
+	//	return witness, err
+	//}
 	// common inputs
 	witness.C, err = SetElGamalEncWitness(proof.C)
 	if err != nil {

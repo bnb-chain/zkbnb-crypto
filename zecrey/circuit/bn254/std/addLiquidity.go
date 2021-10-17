@@ -28,7 +28,7 @@ import (
 )
 
 type AddLiquidityProofConstraints struct {
-	// valid enc
+	// valid Enc
 	A_CLPL_Delta                Point
 	A_CLPR_DeltaHExp_DeltaLPNeg Point
 	Z_rDelta_LP                 Variable
@@ -36,7 +36,7 @@ type AddLiquidityProofConstraints struct {
 	A_pk_u, A_T_uAC_uARPrimeInv, A_T_uBC_uBRPrimeInv Point
 	Z_sk_u, Z_bar_r_A, Z_bar_r_B, Z_sk_uInv          Variable
 	// range proofs
-	ARangeProof, BRangeProof CtRangeProofConstraints
+	//ARangeProof, BRangeProof CtRangeProofConstraints
 	// common inputs
 	C_uA, C_uB                   ElGamalEncConstraints
 	C_uA_Delta, C_uB_Delta       ElGamalEncConstraints
@@ -82,24 +82,24 @@ func VerifyAddLiquidityProof(
 	params twistededwards.EdCurve,
 	hFunc MiMC,
 ) {
-	IsPointEqual(cs, proof.IsEnabled, proof.T_uA, proof.ARangeProof.A)
-	IsPointEqual(cs, proof.IsEnabled, proof.T_uB, proof.BRangeProof.A)
+	//IsPointEqual(cs, proof.IsEnabled, proof.T_uA, proof.ARangeProof.A)
+	//IsPointEqual(cs, proof.IsEnabled, proof.T_uB, proof.BRangeProof.A)
 	var (
 		C_uAPrime, C_uBPrime       ElGamalEncConstraints
 		C_uAPrimeNeg, C_uBPrimeNeg ElGamalEncConstraints
 		c                          Variable
 	)
 	// mimc
-	AhFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
-	if err != nil {
-		return
-	}
-	verifyCtRangeProof(cs, proof.ARangeProof, params, AhFunc)
-	BhFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
-	if err != nil {
-		return
-	}
-	verifyCtRangeProof(cs, proof.BRangeProof, params, BhFunc)
+	//AhFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
+	//if err != nil {
+	//	return
+	//}
+	//VerifyCtRangeProof(cs, proof.ARangeProof, params, AhFunc)
+	//BhFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
+	//if err != nil {
+	//	return
+	//}
+	//VerifyCtRangeProof(cs, proof.BRangeProof, params, BhFunc)
 	// challenge buf
 	writePointIntoBuf(&hFunc, proof.G)
 	writePointIntoBuf(&hFunc, proof.H)
@@ -127,7 +127,7 @@ func VerifyAddLiquidityProof(
 		proof,
 		params,
 	)
-	// verify enc
+	// verify Enc
 	var l1, r1 Point
 	l1.ScalarMulNonFixedBase(cs, &proof.Pk_u, proof.Z_rDelta_LP, params)
 	r1.ScalarMulNonFixedBase(cs, &proof.C_LP_Delta.CL, c, params)
@@ -139,10 +139,10 @@ func VerifyAddLiquidityProof(
 	r2.ScalarMulNonFixedBase(cs, &proof.Pk_u, c, params)
 	r2.AddGeneric(cs, &r2, &proof.A_pk_u, params)
 	IsPointEqual(cs, proof.IsEnabled, l2, r2)
-	C_uAPrime = encSub(cs, proof.C_uA, proof.C_uA_Delta, params)
-	C_uBPrime = encSub(cs, proof.C_uB, proof.C_uB_Delta, params)
-	C_uAPrimeNeg = negElgamal(cs, C_uAPrime)
-	C_uBPrimeNeg = negElgamal(cs, C_uBPrime)
+	C_uAPrime = EncSub(cs, proof.C_uA, proof.C_uA_Delta, params)
+	C_uBPrime = EncSub(cs, proof.C_uB, proof.C_uB_Delta, params)
+	C_uAPrimeNeg = NegElgamal(cs, C_uAPrime)
+	C_uBPrimeNeg = NegElgamal(cs, C_uBPrime)
 	var g_z_bar_r_A, l3, r3 Point
 	g_z_bar_r_A.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Z_bar_r_A, params)
 	l3.ScalarMulNonFixedBase(cs, &C_uAPrimeNeg.CL, proof.Z_sk_uInv, params)
@@ -168,10 +168,10 @@ func verifyAddLiquidityParams(
 	params twistededwards.EdCurve,
 ) {
 	var C_uA_Delta, C_uB_Delta, LC_DaoA_Delta, LC_DaoB_Delta ElGamalEncConstraints
-	C_uA_Delta = enc(cs, proof.H, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_u, params)
-	C_uB_Delta = enc(cs, proof.H, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_u, params)
-	LC_DaoA_Delta = enc(cs, proof.H, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_Dao, params)
-	LC_DaoB_Delta = enc(cs, proof.H, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_Dao, params)
+	C_uA_Delta = Enc(cs, proof.H, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_u, params)
+	C_uB_Delta = Enc(cs, proof.H, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_u, params)
+	LC_DaoA_Delta = Enc(cs, proof.H, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_Dao, params)
+	LC_DaoB_Delta = Enc(cs, proof.H, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_Dao, params)
 	IsElGamalEncEqual(cs, proof.IsEnabled, C_uA_Delta, proof.C_uA_Delta)
 	IsElGamalEncEqual(cs, proof.IsEnabled, C_uB_Delta, proof.C_uB_Delta)
 	IsElGamalEncEqual(cs, proof.IsEnabled, LC_DaoA_Delta, proof.LC_DaoA_Delta)
@@ -184,6 +184,69 @@ func verifyAddLiquidityParams(
 	l := cs.Mul(proof.B_DaoB, proof.B_A_Delta)
 	r := cs.Mul(proof.B_DaoA, proof.B_B_Delta)
 	IsVariableEqual(cs, proof.IsEnabled, l, r)
+}
+
+func SetEmptyAddLiquidityProofWitness() (witness AddLiquidityProofConstraints) {
+	witness.A_CLPL_Delta, _ = SetPointWitness(ZeroPoint)
+
+	witness.A_CLPR_DeltaHExp_DeltaLPNeg, _ = SetPointWitness(ZeroPoint)
+
+	// response
+	witness.Z_rDelta_LP.Assign(ZeroInt)
+	witness.A_pk_u, _ = SetPointWitness(ZeroPoint)
+
+	witness.A_T_uAC_uARPrimeInv, _ = SetPointWitness(ZeroPoint)
+
+	witness.A_T_uBC_uBRPrimeInv, _ = SetPointWitness(ZeroPoint)
+
+	witness.Z_sk_u.Assign(ZeroInt)
+	witness.Z_bar_r_A.Assign(ZeroInt)
+	witness.Z_bar_r_B.Assign(ZeroInt)
+	witness.Z_sk_uInv.Assign(ZeroInt)
+	//witness.ARangeProof, _ = SetCtRangeProofWitness(ARangeProof, isEnabled)
+	//if err != nil {
+	//	return witness, _
+	//}
+	//witness.BRangeProof, _ = SetCtRangeProofWitness(BRangeProof, isEnabled)
+	//if err != nil {
+	//	return witness, _
+	//}
+	// common inputs
+	witness.C_uA, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+
+	witness.C_uB, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+
+	witness.C_uA_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+
+	witness.C_uB_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+
+	witness.LC_DaoA_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+
+	witness.LC_DaoB_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+
+	witness.C_LP_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+
+	witness.Pk_Dao, _ = SetPointWitness(ZeroPoint)
+
+	witness.Pk_u, _ = SetPointWitness(ZeroPoint)
+
+	witness.R_DeltaA.Assign(ZeroInt)
+	witness.R_DeltaB.Assign(ZeroInt)
+	witness.T_uA, _ = SetPointWitness(ZeroPoint)
+
+	witness.T_uB, _ = SetPointWitness(ZeroPoint)
+
+	witness.B_DaoA.Assign(ZeroInt)
+	witness.B_DaoB.Assign(ZeroInt)
+	witness.B_A_Delta.Assign(ZeroInt)
+	witness.B_B_Delta.Assign(ZeroInt)
+	witness.Delta_LP.Assign(ZeroInt)
+	witness.G, _ = SetPointWitness(ZeroPoint)
+
+	witness.H, _ = SetPointWitness(ZeroPoint)
+
+	witness.IsEnabled = SetBoolWitness(false)
+	return witness
 }
 
 // set the witness for swap proof
@@ -230,14 +293,14 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	witness.Z_bar_r_A.Assign(proof.Z_bar_r_A)
 	witness.Z_bar_r_B.Assign(proof.Z_bar_r_B)
 	witness.Z_sk_uInv.Assign(proof.Z_sk_uInv)
-	witness.ARangeProof, err = SetCtRangeProofWitness(proof.ARangeProof, isEnabled)
-	if err != nil {
-		return witness, err
-	}
-	witness.BRangeProof, err = SetCtRangeProofWitness(proof.BRangeProof, isEnabled)
-	if err != nil {
-		return witness, err
-	}
+	//witness.ARangeProof, err = SetCtRangeProofWitness(proof.ARangeProof, isEnabled)
+	//if err != nil {
+	//	return witness, err
+	//}
+	//witness.BRangeProof, err = SetCtRangeProofWitness(proof.BRangeProof, isEnabled)
+	//if err != nil {
+	//	return witness, err
+	//}
 	// common inputs
 	witness.C_uA, err = SetElGamalEncWitness(proof.C_uA)
 	if err != nil {

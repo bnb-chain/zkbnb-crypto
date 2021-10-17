@@ -27,7 +27,7 @@ import (
 
 type AccountConstraints struct {
 	Index   Variable // index in the tree
-	TokenId Variable // tokenId
+	AssetId Variable // tokenId
 	Balance ElGamalEncConstraints
 	PubKey  Point
 }
@@ -35,14 +35,14 @@ type AccountConstraints struct {
 // TODO only for test
 type Account struct {
 	Index   uint32
-	TokenId uint32
+	AssetId uint32
 	Balance *zecrey.ElGamalEnc
 	PubKey  *zecrey.Point
 }
 
 func SetAccountWitness(account *Account) (witness AccountConstraints, err error) {
 	witness.Index.Assign(int(account.Index))
-	witness.TokenId.Assign(int(account.TokenId))
+	witness.AssetId.Assign(int(account.AssetId))
 	witness.Balance, err = std.SetElGamalEncWitness(account.Balance)
 	if err != nil {
 		return witness, err
@@ -57,7 +57,7 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 func SerializeAccount(account *Account) [AccountSize]byte {
 	var res [AccountSize]byte
 	binary.BigEndian.PutUint32(res[:PointSize], account.Index)
-	binary.BigEndian.PutUint32(res[PointSize:2*PointSize], account.TokenId)
+	binary.BigEndian.PutUint32(res[PointSize:2*PointSize], account.AssetId)
 	copy(res[2*PointSize:3*PointSize], account.Balance.CL.Marshal())
 	copy(res[3*PointSize:4*PointSize], account.Balance.CR.Marshal())
 	copy(res[4*PointSize:5*PointSize], account.PubKey.Marshal())
@@ -72,7 +72,7 @@ func DeserializeAccount(accBytes [AccountSize]byte) *Account {
 	PubKey, _ := curve.FromBytes(accBytes[4*PointSize : 5*PointSize])
 	return &Account{
 		Index:   index,
-		TokenId: tokenId,
+		AssetId: tokenId,
 		Balance: &zecrey.ElGamalEnc{
 			CL: CL,
 			CR: CR,

@@ -39,7 +39,7 @@ func SetPointWitness(point *zecrey.Point) (witness Point, err error) {
 */
 func SetElGamalEncWitness(encVal *zecrey.ElGamalEnc) (witness ElGamalEncConstraints, err error) {
 	if encVal == nil {
-		return witness, errors.New("[SetElGamalEncWitness] invalid enc")
+		return witness, errors.New("[SetElGamalEncWitness] invalid Enc")
 	}
 	witness.CL, err = SetPointWitness(encVal.CL)
 	if err != nil {

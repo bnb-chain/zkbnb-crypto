@@ -24,6 +24,7 @@ import (
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/zecrey/circuit/bn254/std"
+	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 type (
@@ -32,9 +33,23 @@ type (
 	ConstraintSystem      = frontend.ConstraintSystem
 	ElGamalEncConstraints = std.ElGamalEncConstraints
 	MiMC                  = mimc.MiMC
+
+	TransferProof        = zecrey.TransferProof
+	SwapProof            = zecrey.SwapProof
+	AddLiquidityProof    = zecrey.AddLiquidityProof
+	RemoveLiquidityProof = zecrey.RemoveLiquidityProof
+	WithdrawProof        = zecrey.WithdrawProof
+
+	CtRangeProofConstraints         = std.CtRangeProofConstraints
+	TransferProofConstraints        = std.TransferProofConstraints
+	SwapProofConstraints            = std.SwapProofConstraints
+	AddLiquidityProofConstraints    = std.AddLiquidityProofConstraints
+	RemoveLiquidityProofConstraints = std.RemoveLiquidityProofConstraints
+	WithdrawProofConstraints        = std.WithdrawProofConstraints
 )
 
 const (
+	MaxRangeProofCount    = 3
 	NbTxs                 = 20
 	AccountMerkleLevels   = std.AccountMerkleLevels
 	NbTransferCount       = std.NbTransferCount
@@ -49,9 +64,13 @@ const (
 	EncSize     = twistedElgamal.EncSize
 	AccountSize = 160
 
-	NoopTxType     = 1
-	DepositTxType  = 2
-	TransferTxType = 3
-	SwapTxType     = 4
-	WithdrawTxType = 5
+	TxTypeNoop            = 1
+	TxTypeDeposit         = 2
+	TxTypeLock            = 3
+	TxTypeTransfer        = 4
+	TxTypeSwap            = 5
+	TxTypeAddLiquidity    = 6
+	TxTypeRemoveLiquidity = 7
+	TxTypeUnlock          = 8
+	TxTypeWithdraw        = 9
 )

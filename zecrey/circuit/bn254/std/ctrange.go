@@ -57,11 +57,11 @@ func (circuit CtRangeProofConstraints) Define(curveID ecc.ID, cs *ConstraintSyst
 	if err != nil {
 		return err
 	}
-	verifyCtRangeProof(cs, circuit, params, hFunc)
+	VerifyCtRangeProof(cs, circuit, params, hFunc)
 	return nil
 }
 
-func verifyCtRangeProof(cs *ConstraintSystem, proof CtRangeProofConstraints, params twistededwards.EdCurve, hFunc MiMC) {
+func VerifyCtRangeProof(cs *ConstraintSystem, proof CtRangeProofConstraints, params twistededwards.EdCurve, hFunc MiMC) {
 	A := Point{
 		X: cs.Constant(0),
 		Y: cs.Constant(1),
