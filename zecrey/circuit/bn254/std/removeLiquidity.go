@@ -166,15 +166,15 @@ func verifyRemoveLiquidityParams(
 }
 
 func SetEmptyRemoveLiquidityProofWitness() (witness RemoveLiquidityProofConstraints) {
-	witness.A_CLPL_Delta, _ = SetPointWitness(ZeroPoint)
+	witness.A_CLPL_Delta, _ = SetPointWitness(BasePoint)
 
-	witness.A_CLPR_DeltaHExp_DeltaLPNeg, _ = SetPointWitness(ZeroPoint)
+	witness.A_CLPR_DeltaHExp_DeltaLPNeg, _ = SetPointWitness(BasePoint)
 
 	// response
 	witness.Z_rDelta_LP.Assign(ZeroInt)
-	witness.A_pk_u, _ = SetPointWitness(ZeroPoint)
+	witness.A_pk_u, _ = SetPointWitness(BasePoint)
 
-	witness.A_T_uLPC_uLPRPrimeInv, _ = SetPointWitness(ZeroPoint)
+	witness.A_T_uLPC_uLPRPrimeInv, _ = SetPointWitness(BasePoint)
 
 	witness.Z_sk_u.Assign(ZeroInt)
 	witness.Z_bar_r_LP.Assign(ZeroInt)
@@ -200,11 +200,11 @@ func SetEmptyRemoveLiquidityProofWitness() (witness RemoveLiquidityProofConstrai
 
 	witness.C_u_LP_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 
-	witness.Pk_Dao, _ = SetPointWitness(ZeroPoint)
+	witness.Pk_Dao, _ = SetPointWitness(BasePoint)
 
-	witness.Pk_u, _ = SetPointWitness(ZeroPoint)
+	witness.Pk_u, _ = SetPointWitness(BasePoint)
 
-	witness.T_uLP, _ = SetPointWitness(ZeroPoint)
+	witness.T_uLP, _ = SetPointWitness(BasePoint)
 
 	witness.R_DaoA.Assign(ZeroInt)
 	witness.R_DaoB.Assign(ZeroInt)
@@ -216,9 +216,9 @@ func SetEmptyRemoveLiquidityProofWitness() (witness RemoveLiquidityProofConstrai
 	witness.B_B_Delta.Assign(ZeroInt)
 	witness.Delta_LP.Assign(ZeroInt)
 	witness.P.Assign(ZeroInt)
-	witness.G, _ = SetPointWitness(ZeroPoint)
+	witness.G, _ = SetPointWitness(BasePoint)
 
-	witness.H, _ = SetPointWitness(ZeroPoint)
+	witness.H, _ = SetPointWitness(BasePoint)
 
 	witness.AssetAId.Assign(ZeroInt)
 	witness.AssetBId.Assign(ZeroInt)

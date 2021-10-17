@@ -43,20 +43,6 @@ type TxConstraints struct {
 	RangeProofs [MaxRangeProofCount]CtRangeProofConstraints
 }
 
-type BlockConstraints struct {
-	// public inputs
-	OldRoot         Variable `gnark:",public"`
-	NewRoot         Variable `gnark:",public"`
-	BlockCommitment Variable `gnark:",public"`
-	// tx types
-	TxsType [NbTxs]Variable
-	// transactions
-	Transactions [NbTxs]TxConstraints
-	// account change for each transaction
-	OldAccountRoots [NbTxs]Variable
-	NewAccountRoots [NbTxs]Variable
-}
-
 func (circuit TxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -80,7 +66,6 @@ func (circuit TxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error 
 	circuit.AddLiquidityProof.H = H
 	circuit.RemoveLiquidityProof.H = H
 	circuit.WithdrawProof.H = H
-
 	VerifyTransaction(cs, circuit, params, hFunc)
 
 	return nil
@@ -103,6 +88,7 @@ func VerifyTransaction(
 	tx.AddLiquidityProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeAddLiquidity))
 	tx.RemoveLiquidityProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeRemoveLiquidity))
 	tx.WithdrawProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeWithdraw))
+
 	// verify range proofs
 	for i, rangeProof := range tx.RangeProofs {
 		// set range proof is true

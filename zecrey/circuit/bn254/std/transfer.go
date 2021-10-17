@@ -126,7 +126,9 @@ func VerifyTransferProof(
 		//VerifyCtRangeProof(cs, subProof.BStarRangeProof, params, rangeHFunc)
 	}
 	c := hFunc.Sum()
-	// TODO need to check XOR, cs.XOR bug exists
+	// need to check XOR, cs.XOR bug exists
+	ccheck := Xor(cs, proof.C1, proof.C2, 256)
+	IsVariableEqual(cs, proof.IsEnabled, c, ccheck)
 	//cCheck := cs.Xor(proof.C1, proof.C2)
 	//IsVariableEqual(cs, proof.IsEnabled, c, cCheck)
 	// verify sum proof
@@ -236,12 +238,12 @@ func verifyValidEnc(
 
 func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 	// A_sum
-	witness.A_sum, _ = SetPointWitness(ZeroPoint)
+	witness.A_sum, _ = SetPointWitness(BasePoint)
 	// z_tsk
 	witness.Z_sum.Assign(ZeroInt)
 	// generator
-	witness.G, _ = SetPointWitness(ZeroPoint)
-	witness.H, _ = SetPointWitness(ZeroPoint)
+	witness.G, _ = SetPointWitness(BasePoint)
+	witness.H, _ = SetPointWitness(BasePoint)
 	// C = C1 \oplus C2
 	witness.C1.Assign(ZeroInt)
 	witness.C2.Assign(ZeroInt)
@@ -253,21 +255,21 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 		var subProofWitness TransferSubProofConstraints
 		// set values
 		// A_{C_L^{\Delta}}
-		subProofWitness.A_CLDelta, _ = SetPointWitness(ZeroPoint)
+		subProofWitness.A_CLDelta, _ = SetPointWitness(BasePoint)
 		// A_{C_R^{\Delta}}
-		subProofWitness.A_CRDelta, _ = SetPointWitness(ZeroPoint)
-		subProofWitness.A_Y1, _ = SetPointWitness(ZeroPoint)
+		subProofWitness.A_CRDelta, _ = SetPointWitness(BasePoint)
+		subProofWitness.A_Y1, _ = SetPointWitness(BasePoint)
 
-		subProofWitness.A_Y2, _ = SetPointWitness(ZeroPoint)
+		subProofWitness.A_Y2, _ = SetPointWitness(BasePoint)
 
 		// A_T
-		subProofWitness.A_T, _ = SetPointWitness(ZeroPoint)
+		subProofWitness.A_T, _ = SetPointWitness(BasePoint)
 
 		// A_{pk}
-		subProofWitness.A_pk, _ = SetPointWitness(ZeroPoint)
+		subProofWitness.A_pk, _ = SetPointWitness(BasePoint)
 
 		// A_{T/C'}
-		subProofWitness.A_TDivCPrime, _ = SetPointWitness(ZeroPoint)
+		subProofWitness.A_TDivCPrime, _ = SetPointWitness(BasePoint)
 
 		// Z_r
 		subProofWitness.Z_r.Assign(ZeroInt)
@@ -298,13 +300,13 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 		subProofWitness.CDelta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 
 		// T
-		subProofWitness.T, _ = SetPointWitness(ZeroPoint)
+		subProofWitness.T, _ = SetPointWitness(BasePoint)
 
 		// Y
-		subProofWitness.Y, _ = SetPointWitness(ZeroPoint)
+		subProofWitness.Y, _ = SetPointWitness(BasePoint)
 
 		// Pk
-		subProofWitness.Pk, _ = SetPointWitness(ZeroPoint)
+		subProofWitness.Pk, _ = SetPointWitness(BasePoint)
 
 		// set into witness
 		witness.SubProofs[i] = subProofWitness

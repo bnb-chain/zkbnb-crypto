@@ -15,27 +15,4 @@
  *
  */
 
-package std
-
-func writePointIntoBuf(hFunc *MiMC, p Point) {
-	hFunc.Write(p.X, p.Y)
-}
-
-func writeEncIntoBuf(hFunc *MiMC, enc ElGamalEncConstraints) {
-	writePointIntoBuf(hFunc, enc.CL)
-	writePointIntoBuf(hFunc, enc.CR)
-}
-
-func zeroPoint(cs *ConstraintSystem) Point {
-	return Point{X: cs.Constant(0), Y: cs.Constant(1)}
-}
-
-func Xor(cs *ConstraintSystem, a, b Variable, size int) Variable {
-	aBits := cs.ToBinary(a, size)
-	bBits := cs.ToBinary(b, size)
-	var resBits []Variable
-	for i := 0; i < size; i++ {
-		resBits = append(resBits, cs.Xor(aBits[i], bBits[i]))
-	}
-	return cs.FromBinary(resBits...)
-}
+package transactions
