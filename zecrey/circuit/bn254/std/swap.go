@@ -194,17 +194,17 @@ func VerifySwapProof(
 }
 
 func SetEmptySwapProofWitness() (witness SwapProofConstraints) {
-	witness.A_C_ufeeL_Delta, _ = SetPointWitness(ZeroPoint)
+	witness.A_C_ufeeL_Delta, _ = SetPointWitness(BasePoint)
 
-	witness.A_CufeeR_DeltaHExpb_fee_DeltaInv, _ = SetPointWitness(ZeroPoint)
+	witness.A_CufeeR_DeltaHExpb_fee_DeltaInv, _ = SetPointWitness(BasePoint)
 
 	// response
 	witness.Z_r_Deltafee.Assign(ZeroInt)
-	witness.A_pk_u, _ = SetPointWitness(ZeroPoint)
+	witness.A_pk_u, _ = SetPointWitness(BasePoint)
 
-	witness.A_T_uAC_uARPrimeInv, _ = SetPointWitness(ZeroPoint)
+	witness.A_T_uAC_uARPrimeInv, _ = SetPointWitness(BasePoint)
 
-	witness.A_T_ufeeC_ufeeRPrimeInv, _ = SetPointWitness(ZeroPoint)
+	witness.A_T_ufeeC_ufeeRPrimeInv, _ = SetPointWitness(BasePoint)
 
 	witness.Z_sk_u.Assign(ZeroInt)
 	witness.Z_bar_r_A.Assign(ZeroInt)
@@ -233,15 +233,15 @@ func SetEmptySwapProofWitness() (witness SwapProofConstraints) {
 
 	witness.LC_DaoB_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 
-	witness.Pk_Dao, _ = SetPointWitness(ZeroPoint)
+	witness.Pk_Dao, _ = SetPointWitness(BasePoint)
 
-	witness.Pk_u, _ = SetPointWitness(ZeroPoint)
+	witness.Pk_u, _ = SetPointWitness(BasePoint)
 
 	witness.R_DeltaA.Assign(ZeroInt)
 	witness.R_DeltaB.Assign(ZeroInt)
-	witness.T_uA, _ = SetPointWitness(ZeroPoint)
+	witness.T_uA, _ = SetPointWitness(BasePoint)
 
-	witness.T_ufee, _ = SetPointWitness(ZeroPoint)
+	witness.T_ufee, _ = SetPointWitness(BasePoint)
 
 	witness.LC_DaoB, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 
@@ -254,9 +254,9 @@ func SetEmptySwapProofWitness() (witness SwapProofConstraints) {
 	witness.Alpha.Assign(ZeroInt)
 	witness.Beta.Assign(ZeroInt)
 	witness.Gamma.Assign(ZeroInt)
-	witness.G, _ = SetPointWitness(ZeroPoint)
+	witness.G, _ = SetPointWitness(BasePoint)
 
-	witness.H, _ = SetPointWitness(ZeroPoint)
+	witness.H, _ = SetPointWitness(BasePoint)
 
 	witness.AssetAId.Assign(ZeroInt)
 	witness.AssetBId.Assign(ZeroInt)

@@ -172,13 +172,13 @@ func verifyBalance(
 }
 
 func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
-	witness.Pa, _ = SetPointWitness(ZeroPoint)
+	witness.Pa, _ = SetPointWitness(BasePoint)
 
-	witness.A_pk, _ = SetPointWitness(ZeroPoint)
+	witness.A_pk, _ = SetPointWitness(BasePoint)
 
-	witness.A_TDivCRprime, _ = SetPointWitness(ZeroPoint)
+	witness.A_TDivCRprime, _ = SetPointWitness(BasePoint)
 
-	witness.A_Pa, _ = SetPointWitness(ZeroPoint)
+	witness.A_Pa, _ = SetPointWitness(BasePoint)
 
 	// response
 	witness.Z_rbar.Assign(ZeroInt)
@@ -191,17 +191,17 @@ func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
 	// common inputs
 	witness.C, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 
-	witness.CRStar, _ = SetPointWitness(ZeroPoint)
+	witness.CRStar, _ = SetPointWitness(BasePoint)
 
-	witness.G, _ = SetPointWitness(ZeroPoint)
+	witness.G, _ = SetPointWitness(BasePoint)
 
-	witness.H, _ = SetPointWitness(ZeroPoint)
+	witness.H, _ = SetPointWitness(BasePoint)
 
-	witness.Ha, _ = SetPointWitness(ZeroPoint)
+	witness.Ha, _ = SetPointWitness(BasePoint)
 
-	witness.T, _ = SetPointWitness(ZeroPoint)
+	witness.T, _ = SetPointWitness(BasePoint)
 
-	witness.Pk, _ = SetPointWitness(ZeroPoint)
+	witness.Pk, _ = SetPointWitness(BasePoint)
 
 	witness.ReceiveAddr.Assign(ZeroInt)
 	witness.BStar.Assign(ZeroInt)
