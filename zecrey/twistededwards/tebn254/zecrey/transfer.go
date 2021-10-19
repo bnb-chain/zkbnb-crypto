@@ -63,7 +63,7 @@ func ProveTransfer(relation *TransferProofRelation) (proof *TransferProof, err e
 	}
 	// construct range proofs
 	for i, statement := range relation.Statements {
-		go proveCtRangeRoutine(int64(statement.BStar), relation.G, relation.H, RStars[i], BStarRangeProofs[i], rangechan)
+		go proveCtRangeRoutine(int64(statement.BStar), G, H, RStars[i], BStarRangeProofs[i], rangechan)
 	}
 	// wait for receiving the range proof
 	for i := 0; i < len(relation.Statements); i++ {
@@ -80,15 +80,12 @@ func ProveTransfer(relation *TransferProofRelation) (proof *TransferProof, err e
 	// initialize proof
 	proof = new(TransferProof)
 	// add Pt,G,Waste from relation
-	proof.G = relation.G
-	proof.H = relation.H
 	proof.Fee = relation.Fee
 	// write public statements into buf
-	writePointIntoBuf(&buf, proof.G)
-	writePointIntoBuf(&buf, proof.H)
+	buf.Write(PaddingBigIntBytes(FixedCurve))
 	// construct for A_sum
 	alpha_r_sum = curve.RandomValue()
-	A_sum = curve.ScalarMul(relation.G, alpha_r_sum)
+	A_sum = curve.ScalarMul(G, alpha_r_sum)
 	// write into buf
 	writePointIntoBuf(&buf, A_sum)
 	var (
@@ -121,10 +118,10 @@ func ProveTransfer(relation *TransferProofRelation) (proof *TransferProof, err e
 		writePointIntoBuf(&buf, commitEntities[i].A_CRDelta)
 		// if user does not own the account, then commit bDelta.
 		if sk == nil {
-			commitEntities[i].alpha_rstar, commitEntities[i].A_Y1 = commitValidDelta(commitEntities[i].alpha_bDelta, relation.G, relation.H)
+			commitEntities[i].alpha_rstar, commitEntities[i].A_Y1 = commitValidDelta(commitEntities[i].alpha_bDelta, G, H)
 		} else { // Otherwise, commit ownership
 			// commit to ownership
-			go commitOwnershipRoutine(relation.G, relation.H, curve.Neg(curve.Add(C.CL, CDelta.CL)), commitEntities, i, ownershipChan)
+			go commitOwnershipRoutine(G, H, curve.Neg(curve.Add(C.CL, CDelta.CL)), commitEntities, i, ownershipChan)
 		}
 		// generate sub proofs
 		commitValues := commitEntities[i]
@@ -212,7 +209,7 @@ func ProveTransfer(relation *TransferProofRelation) (proof *TransferProof, err e
 			CPrimeNeg = negElgamal(CPrime)
 			TCRprimeInv = curve.Add(statement.T, CPrimeNeg.CR)
 			go simOwnershipRoutine(
-				relation.G, relation.H, Y, statement.T, statement.Pk,
+				G, H, Y, statement.T, statement.Pk,
 				TCRprimeInv, CPrimeNeg.CL,
 				c2,
 				proof, i,
@@ -232,7 +229,7 @@ func ProveTransfer(relation *TransferProofRelation) (proof *TransferProof, err e
 				z_rstar1, z_bstar1 *big.Int
 			)
 			z_rstar1, z_bstar1, A_Y1 = simValidDelta(
-				relation.G, relation.H,
+				G, H,
 				Y, c1,
 			)
 			z_rstar2, z_bstar2, z_rbar, z_bprime, z_sk, z_skInv := respondOwnership(
@@ -283,11 +280,6 @@ func (proof *TransferProof) Verify() (bool, error) {
 		log.Println("[Verify TransferProof] invalid params")
 		return false, errors.New("[Verify TransferProof] invalid params")
 	}
-	// verify params
-	if !proof.G.Equal(G) || !proof.H.Equal(H) {
-		log.Println("[Verify TransferProof] invalid params")
-		return false, errors.New("[Verify TransferProof] invalid params")
-	}
 	// generate the challenge
 	var (
 		CR_sum    = curve.ZeroPoint()
@@ -297,8 +289,7 @@ func (proof *TransferProof) Verify() (bool, error) {
 		rangeChan = make(chan int, TransferSubProofCount)
 	)
 	// write public statements into buf
-	writePointIntoBuf(&buf, proof.G)
-	writePointIntoBuf(&buf, proof.H)
+	buf.Write(PaddingBigIntBytes(FixedCurve))
 	// write into buf
 	writePointIntoBuf(&buf, proof.A_sum)
 	for _, subProof := range proof.SubProofs {
@@ -333,11 +324,11 @@ func (proof *TransferProof) Verify() (bool, error) {
 		return false, ErrInvalidChallenge
 	}
 	// verify sum proof
-	lSum := curve.ScalarMul(proof.G, proof.Z_sum)
+	lSum := curve.ScalarMul(G, proof.Z_sum)
 	rSum := curve.Add(
 		proof.A_sum,
 		curve.ScalarMul(
-			curve.Add(CR_sum, curve.ScalarMul(proof.H, big.NewInt(int64(proof.Fee)))),
+			curve.Add(CR_sum, curve.ScalarMul(H, big.NewInt(int64(proof.Fee)))),
 			c,
 		),
 	)
@@ -349,7 +340,7 @@ func (proof *TransferProof) Verify() (bool, error) {
 	for _, subProof := range proof.SubProofs {
 		// Verify valid enc
 		validEncRes, err := verifyValidEnc(
-			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, proof.G, proof.H, subProof.CDelta.CR, subProof.A_CRDelta,
+			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, G, H, subProof.CDelta.CR, subProof.A_CRDelta,
 			c,
 			subProof.Z_r, subProof.Z_bDelta,
 		)
@@ -375,8 +366,8 @@ func (proof *TransferProof) Verify() (bool, error) {
 		CPrimeNeg = negElgamal(CPrime)
 		// verify Y_1 = g^{r_i^{\star}} h^{b_i^{\Delta}}
 		l1 := curve.Add(
-			curve.ScalarMul(proof.G, subProof.Z_rstar1),
-			curve.ScalarMul(proof.H, subProof.Z_bstar1),
+			curve.ScalarMul(G, subProof.Z_rstar1),
+			curve.ScalarMul(H, subProof.Z_bstar1),
 		)
 		r1 := curve.Add(subProof.A_Y1, curve.ScalarMul(subProof.Y, proof.C1))
 		if !l1.Equal(r1) {
@@ -384,11 +375,11 @@ func (proof *TransferProof) Verify() (bool, error) {
 			return false, nil
 		}
 		// Verify ownership
-		h_z_bprime = curve.ScalarMul(proof.H, subProof.Z_bprime)
+		h_z_bprime = curve.ScalarMul(H, subProof.Z_bprime)
 		// Y_2 = g^{r_{i}^{\star}} h^{b_i'}
 		l2 := curve.Add(
-			curve.ScalarMul(proof.G, subProof.Z_rstar2),
-			curve.ScalarMul(proof.H, subProof.Z_bstar2),
+			curve.ScalarMul(G, subProof.Z_rstar2),
+			curve.ScalarMul(H, subProof.Z_bstar2),
 		)
 		r2 := curve.Add(
 			subProof.A_Y2,
@@ -399,7 +390,7 @@ func (proof *TransferProof) Verify() (bool, error) {
 			return false, nil
 		}
 		// T = g^{\bar{r}_i} h^{b'}
-		g_z_rbar = curve.ScalarMul(proof.G, subProof.Z_rbar)
+		g_z_rbar = curve.ScalarMul(G, subProof.Z_rbar)
 		l3 := curve.Add(
 			g_z_rbar,
 			h_z_bprime,
@@ -413,7 +404,7 @@ func (proof *TransferProof) Verify() (bool, error) {
 			return false, nil
 		}
 		// pk = g^{sk}
-		l4 := curve.ScalarMul(proof.G, subProof.Z_sk)
+		l4 := curve.ScalarMul(G, subProof.Z_sk)
 		r4 := curve.Add(
 			subProof.A_pk,
 			curve.ScalarMul(subProof.Pk, proof.C2),
@@ -543,4 +534,55 @@ func simOwnershipRoutine(
 		curve.ScalarMul(curve.Neg(TCRprimeInv), cSim),
 	)
 	simChan <- i
+}
+
+/**
+commit phase for R_{ValidEnc} = {C_L = pk^r \wedge C_R = g^r h^{b}}
+@pk: public key
+@g: generator
+@h: generator
+*/
+func commitValidEnc(pk, g, h *Point) (
+	alpha_r, alpha_bDelta *big.Int, A_CLDelta, A_CRDelta *Point,
+) {
+	alpha_r = curve.RandomValue()
+	alpha_bDelta = curve.RandomValue()
+	A_CLDelta = curve.ScalarMul(pk, alpha_r)
+	A_CRDelta = curve.Add(curve.ScalarMul(g, alpha_r), curve.ScalarMul(h, alpha_bDelta))
+	return
+}
+
+func respondValidEnc(r, bDelta, alpha_r, alpha_bDelta, c *big.Int) (
+	z_r, z_bDelta *big.Int,
+) {
+	z_r = ffmath.AddMod(alpha_r, ffmath.Multiply(c, r), Order)
+	z_bDelta = ffmath.AddMod(alpha_bDelta, ffmath.Multiply(c, bDelta), Order)
+	return
+}
+
+/*
+	verifyValidEnc verifys the encryption
+	@pk: the public key for the encryption
+	@C_LDelta,C_RDelta: parts for the encryption
+	@A_C_LDelta,A_CRDelta: random commitments
+	@h: the generator
+	@c: the challenge
+	@z_r,z_bDelta: response values for valid enc proof
+*/
+func verifyValidEnc(
+	pk, C_LDelta, A_CLDelta, g, h, C_RDelta, A_CRDelta *Point,
+	c *big.Int,
+	z_r, z_bDelta *big.Int,
+) (bool, error) {
+	// pk^{z_r} == A_{C_L^{\Delta}} (C_L^{\Delta})^c
+	l1 := curve.ScalarMul(pk, z_r)
+	r1 := curve.Add(A_CLDelta, curve.ScalarMul(C_LDelta, c))
+	if !l1.Equal(r1) {
+		return false, nil
+	}
+
+	// g^{z_r} h^{z_b^{\Delta}} == A_{C_R^{\Delta}} (C_R^{\Delta})^c
+	l2 := curve.Add(curve.ScalarMul(g, z_r), curve.ScalarMul(h, z_bDelta))
+	r2 := curve.Add(A_CRDelta, curve.ScalarMul(C_RDelta, c))
+	return l2.Equal(r2), nil
 }

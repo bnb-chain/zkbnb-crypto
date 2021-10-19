@@ -44,8 +44,7 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 		buf                                                       bytes.Buffer
 	)
 	// challenge buf
-	writePointIntoBuf(&buf, relation.G)
-	writePointIntoBuf(&buf, relation.H)
+	buf.Write(PaddingBigIntBytes(FixedCurve))
 	writePointIntoBuf(&buf, relation.Pk_u)
 	writePointIntoBuf(&buf, relation.Pk_Dao)
 	writeEncIntoBuf(&buf, relation.C_uA)
@@ -57,7 +56,7 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 	// valid enc
 	alpha_r_Deltafee = curve.RandomValue()
 	A_C_ufeeL_Delta = curve.ScalarMul(relation.Pk_u, alpha_r_Deltafee)
-	A_CufeeR_DeltaHb_fee_DeltaInv = curve.ScalarMul(relation.G, alpha_r_Deltafee)
+	A_CufeeR_DeltaHb_fee_DeltaInv = curve.ScalarMul(G, alpha_r_Deltafee)
 	// write into buf
 	writePointIntoBuf(&buf, A_C_ufeeL_Delta)
 	writePointIntoBuf(&buf, A_CufeeR_DeltaHb_fee_DeltaInv)
@@ -66,7 +65,7 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 	alpha_sk_uInv = ffmath.ModInverse(alpha_sk_u, Order)
 	alpha_bar_r_A = curve.RandomValue()
 	alpha_bar_r_fee = curve.RandomValue()
-	A_Pk_u = curve.ScalarMul(relation.G, alpha_sk_u)
+	A_Pk_u = curve.ScalarMul(G, alpha_sk_u)
 	// if asset fee id == asset A id, construct two same value proofs
 	if relation.AssetFeeId == relation.AssetAId {
 		CLDelta := curve.Add(
@@ -80,7 +79,7 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 		)
 		A_T_uAC_uARPrimeInv = curve.Neg(A_T_uAC_uARPrimeInv)
 		A_T_uAC_uARPrimeInv = curve.ScalarMul(A_T_uAC_uARPrimeInv, alpha_sk_uInv)
-		A_T_uAC_uARPrimeInv = curve.Add(A_T_uAC_uARPrimeInv, curve.ScalarMul(relation.G, alpha_bar_r_A))
+		A_T_uAC_uARPrimeInv = curve.Add(A_T_uAC_uARPrimeInv, curve.ScalarMul(G, alpha_bar_r_A))
 		// user asset fee part
 		A_T_ufeeC_ufeeRPrimeInv = curve.Add(
 			relation.C_ufee.CL,
@@ -88,7 +87,7 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 		)
 		A_T_ufeeC_ufeeRPrimeInv = curve.Neg(A_T_ufeeC_ufeeRPrimeInv)
 		A_T_ufeeC_ufeeRPrimeInv = curve.ScalarMul(A_T_ufeeC_ufeeRPrimeInv, alpha_sk_uInv)
-		A_T_ufeeC_ufeeRPrimeInv = curve.Add(A_T_ufeeC_ufeeRPrimeInv, curve.ScalarMul(relation.G, alpha_bar_r_fee))
+		A_T_ufeeC_ufeeRPrimeInv = curve.Add(A_T_ufeeC_ufeeRPrimeInv, curve.ScalarMul(G, alpha_bar_r_fee))
 	} else {
 		// user asset A part
 		A_T_uAC_uARPrimeInv = curve.Add(
@@ -97,7 +96,7 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 		)
 		A_T_uAC_uARPrimeInv = curve.Neg(A_T_uAC_uARPrimeInv)
 		A_T_uAC_uARPrimeInv = curve.ScalarMul(A_T_uAC_uARPrimeInv, alpha_sk_uInv)
-		A_T_uAC_uARPrimeInv = curve.Add(A_T_uAC_uARPrimeInv, curve.ScalarMul(relation.G, alpha_bar_r_A))
+		A_T_uAC_uARPrimeInv = curve.Add(A_T_uAC_uARPrimeInv, curve.ScalarMul(G, alpha_bar_r_A))
 		// user asset fee part
 		A_T_ufeeC_ufeeRPrimeInv = curve.Add(
 			relation.C_ufee.CL,
@@ -105,7 +104,7 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 		)
 		A_T_ufeeC_ufeeRPrimeInv = curve.Neg(A_T_ufeeC_ufeeRPrimeInv)
 		A_T_ufeeC_ufeeRPrimeInv = curve.ScalarMul(A_T_ufeeC_ufeeRPrimeInv, alpha_sk_uInv)
-		A_T_ufeeC_ufeeRPrimeInv = curve.Add(A_T_ufeeC_ufeeRPrimeInv, curve.ScalarMul(relation.G, alpha_bar_r_fee))
+		A_T_ufeeC_ufeeRPrimeInv = curve.Add(A_T_ufeeC_ufeeRPrimeInv, curve.ScalarMul(G, alpha_bar_r_fee))
 	}
 	// write into buf
 	writePointIntoBuf(&buf, A_Pk_u)
@@ -167,8 +166,6 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 		Alpha:                            relation.Alpha,
 		Beta:                             relation.Beta,
 		Gamma:                            relation.Gamma,
-		G:                                relation.G,
-		H:                                relation.H,
 		AssetAId:                         relation.AssetAId,
 		AssetBId:                         relation.AssetBId,
 		AssetFeeId:                       relation.AssetFeeId,
@@ -191,8 +188,7 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 	go verifyCtRangeRoutine(proof.ARangeProof, rangeChan)
 	go verifyCtRangeRoutine(proof.FeeRangeProof, rangeChan)
 	// challenge buf
-	writePointIntoBuf(&buf, proof.G)
-	writePointIntoBuf(&buf, proof.H)
+	buf.Write(PaddingBigIntBytes(FixedCurve))
 	writePointIntoBuf(&buf, proof.Pk_u)
 	writePointIntoBuf(&buf, proof.Pk_Dao)
 	writeEncIntoBuf(&buf, proof.C_uA)
@@ -229,7 +225,7 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 		return false, nil
 	}
 	// verify ownership
-	l2 := curve.ScalarMul(proof.G, proof.Z_sk_u)
+	l2 := curve.ScalarMul(G, proof.Z_sk_u)
 	r2 := curve.Add(proof.A_pk_u, curve.ScalarMul(proof.Pk_u, c))
 	if !l2.Equal(r2) {
 		log.Println("[Verify SwapProof] l2 != r2")
@@ -258,7 +254,7 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 	C_uAPrimeNeg = negElgamal(C_uAPrime)
 	C_ufeePrimeNeg = negElgamal(C_ufeePrime)
 	l3 := curve.Add(
-		curve.ScalarMul(proof.G, proof.Z_bar_r_A),
+		curve.ScalarMul(G, proof.Z_bar_r_A),
 		curve.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r3 := curve.Add(
@@ -276,7 +272,7 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 		return false, nil
 	}
 	l4 := curve.Add(
-		curve.ScalarMul(proof.G, proof.Z_bar_r_fee),
+		curve.ScalarMul(G, proof.Z_bar_r_fee),
 		curve.ScalarMul(C_ufeePrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r4 := curve.Add(
@@ -304,10 +300,6 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 }
 
 func verifySwapParams(proof *SwapProof) (res bool, err error) {
-	if !proof.G.Equal(G) || !proof.H.Equal(H) {
-		log.Println("[verifySwapParams] invalid params")
-		return false, nil
-	}
 	C_uA_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_A_Delta)), proof.R_DeltaA, proof.Pk_u)
 	if err != nil {
 		return false, err
@@ -316,13 +308,13 @@ func verifySwapParams(proof *SwapProof) (res bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	LC_DaoA_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_A_Delta)), proof.R_DeltaA, proof.Pk_Dao)
-	if err != nil {
-		return false, err
+	LC_DaoA_Delta := &ElGamalEnc{
+		CL: curve.ScalarMul(proof.Pk_Dao, proof.R_DeltaA),
+		CR: C_uA_Delta.CR,
 	}
-	LC_DaoB_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_B_Delta)), proof.R_DeltaB, proof.Pk_Dao)
-	if err != nil {
-		return false, err
+	LC_DaoB_Delta := &ElGamalEnc{
+		CL: curve.ScalarMul(proof.Pk_Dao, proof.R_DeltaB),
+		CR: C_uB_Delta.CR,
 	}
 	if !equalEnc(C_uA_Delta, proof.C_uA_Delta) || !equalEnc(C_uB_Delta, proof.C_uB_Delta) ||
 		!equalEnc(LC_DaoA_Delta, proof.LC_DaoA_Delta) || !equalEnc(LC_DaoB_Delta, proof.LC_DaoB_Delta) {

@@ -106,16 +106,16 @@ func VerifyTransaction(
 	tx.WithdrawProof.T = tx.RangeProofs[0].A
 
 	// verify transfer proof
-	std.VerifyTransferProof(cs, tx.TransferProof, params, hFunc)
+	std.VerifyTransferProof(cs, tx.TransferProof, params, hFunc, h)
 	hFunc.Reset()
 	// verify swap proof
-	std.VerifySwapProof(cs, tx.SwapProof, params, hFunc)
+	std.VerifySwapProof(cs, tx.SwapProof, params, hFunc, h)
 	hFunc.Reset()
 	// verify add liquidity proof
-	std.VerifyAddLiquidityProof(cs, tx.AddLiquidityProof, params, hFunc)
+	std.VerifyAddLiquidityProof(cs, tx.AddLiquidityProof, params, hFunc, h)
 	hFunc.Reset()
 	// verify remove liquidity proof
-	std.VerifyRemoveLiquidityProof(cs, tx.RemoveLiquidityProof, params, hFunc)
+	std.VerifyRemoveLiquidityProof(cs, tx.RemoveLiquidityProof, params, hFunc, h)
 	hFunc.Reset()
 	// verify withdraw proof
 	std.VerifyWithdrawProof(cs, tx.WithdrawProof, params, hFunc, h)

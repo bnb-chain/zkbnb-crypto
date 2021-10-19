@@ -51,7 +51,6 @@ type RemoveLiquidityProofConstraints struct {
 	B_A_Delta, B_B_Delta         Variable
 	Delta_LP                     Variable
 	P                            Variable
-	G, H                         Point
 	AssetAId, AssetBId           Variable
 	IsEnabled                    Variable
 }
@@ -69,13 +68,12 @@ func (circuit RemoveLiquidityProofConstraints) Define(curveID ecc.ID, cs *Constr
 		X: cs.Constant(HX),
 		Y: cs.Constant(HY),
 	}
-	IsPointEqual(cs, circuit.IsEnabled, H, circuit.H)
 	// mimc
 	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
 	if err != nil {
 		return err
 	}
-	VerifyRemoveLiquidityProof(cs, circuit, params, hFunc)
+	VerifyRemoveLiquidityProof(cs, circuit, params, hFunc, H)
 
 	return nil
 }
@@ -85,6 +83,7 @@ func VerifyRemoveLiquidityProof(
 	proof RemoveLiquidityProofConstraints,
 	params twistededwards.EdCurve,
 	hFunc MiMC,
+	h Point,
 ) {
 	//IsPointEqual(cs, proof.IsEnabled, proof.T_uLP, proof.LPRangeProof.A)
 	var (
@@ -98,8 +97,7 @@ func VerifyRemoveLiquidityProof(
 	//	return
 	//}
 	//VerifyCtRangeProof(cs, proof.LPRangeProof, params, LPhFunc)
-	writePointIntoBuf(&hFunc, proof.G)
-	writePointIntoBuf(&hFunc, proof.H)
+	hFunc.Write(FixedCurveParam(cs))
 	writePointIntoBuf(&hFunc, proof.Pk_u)
 	writePointIntoBuf(&hFunc, proof.Pk_Dao)
 	writeEncIntoBuf(&hFunc, proof.C_u_LP)
@@ -116,7 +114,7 @@ func VerifyRemoveLiquidityProof(
 	// compute challenge
 	c = hFunc.Sum()
 	// verify params
-	verifyRemoveLiquidityParams(cs, proof, params)
+	verifyRemoveLiquidityParams(cs, proof, params, h)
 	// verify Enc
 	var l1, r1 Point
 	l1.ScalarMulNonFixedBase(cs, &proof.Pk_u, proof.Z_rDelta_LP, params)
@@ -146,12 +144,15 @@ func verifyRemoveLiquidityParams(
 	cs *ConstraintSystem,
 	proof RemoveLiquidityProofConstraints,
 	params twistededwards.EdCurve,
+	h Point,
 ) {
 	var C_uA_Delta, C_uB_Delta, LC_DaoA_Delta, LC_DaoB_Delta ElGamalEncConstraints
-	C_uA_Delta = Enc(cs, proof.H, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_u, params)
-	C_uB_Delta = Enc(cs, proof.H, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_u, params)
-	LC_DaoA_Delta = Enc(cs, proof.H, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_Dao, params)
-	LC_DaoB_Delta = Enc(cs, proof.H, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_Dao, params)
+	C_uA_Delta = Enc(cs, h, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_u, params)
+	C_uB_Delta = Enc(cs, h, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_u, params)
+	LC_DaoA_Delta.CL.ScalarMulNonFixedBase(cs, &proof.Pk_Dao, proof.R_DeltaA, params)
+	LC_DaoA_Delta.CR = C_uA_Delta.CR
+	LC_DaoB_Delta.CL.ScalarMulNonFixedBase(cs, &proof.Pk_Dao, proof.R_DeltaB, params)
+	LC_DaoB_Delta.CR = C_uB_Delta.CR
 	IsElGamalEncEqual(cs, proof.IsEnabled, C_uA_Delta, proof.C_uA_Delta)
 	IsElGamalEncEqual(cs, proof.IsEnabled, C_uB_Delta, proof.C_uB_Delta)
 	IsElGamalEncEqual(cs, proof.IsEnabled, LC_DaoA_Delta, proof.LC_DaoA_Delta)
@@ -216,9 +217,6 @@ func SetEmptyRemoveLiquidityProofWitness() (witness RemoveLiquidityProofConstrai
 	witness.B_B_Delta.Assign(ZeroInt)
 	witness.Delta_LP.Assign(ZeroInt)
 	witness.P.Assign(ZeroInt)
-	witness.G, _ = SetPointWitness(BasePoint)
-
-	witness.H, _ = SetPointWitness(BasePoint)
 
 	witness.AssetAId.Assign(ZeroInt)
 	witness.AssetBId.Assign(ZeroInt)
@@ -324,14 +322,6 @@ func SetRemoveLiquidityProofWitness(proof *zecrey.RemoveLiquidityProof, isEnable
 	witness.B_B_Delta.Assign(proof.B_B_Delta)
 	witness.Delta_LP.Assign(proof.Delta_LP)
 	witness.P.Assign(proof.P)
-	witness.G, err = SetPointWitness(proof.G)
-	if err != nil {
-		return witness, err
-	}
-	witness.H, err = SetPointWitness(proof.H)
-	if err != nil {
-		return witness, err
-	}
 	witness.AssetAId.Assign(uint64(proof.AssetAId))
 	witness.AssetBId.Assign(uint64(proof.AssetBId))
 	witness.IsEnabled = SetBoolWitness(isEnabled)

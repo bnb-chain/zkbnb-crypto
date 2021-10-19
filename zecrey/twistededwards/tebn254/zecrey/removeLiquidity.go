@@ -45,8 +45,7 @@ func ProveRemoveLiquidity(relation *RemoveLiquidityRelation) (proof *RemoveLiqui
 		Z_sk_u, Z_bar_r_LP, Z_sk_uInv             *big.Int
 		buf                                       bytes.Buffer
 	)
-	writePointIntoBuf(&buf, relation.G)
-	writePointIntoBuf(&buf, relation.H)
+	buf.Write(PaddingBigIntBytes(FixedCurve))
 	writePointIntoBuf(&buf, relation.Pk_u)
 	writePointIntoBuf(&buf, relation.Pk_Dao)
 	writeEncIntoBuf(&buf, relation.C_u_LP)
@@ -57,7 +56,7 @@ func ProveRemoveLiquidity(relation *RemoveLiquidityRelation) (proof *RemoveLiqui
 	// valid enc
 	alpha_r_DeltaLP = curve.RandomValue()
 	A_CLPL_Delta = curve.ScalarMul(relation.Pk_u, alpha_r_DeltaLP)
-	A_CLPR_DeltaHExp_DeltaLPNeg = curve.ScalarMul(relation.G, alpha_r_DeltaLP)
+	A_CLPR_DeltaHExp_DeltaLPNeg = curve.ScalarMul(G, alpha_r_DeltaLP)
 	// write into buf
 	writePointIntoBuf(&buf, A_CLPL_Delta)
 	writePointIntoBuf(&buf, A_CLPR_DeltaHExp_DeltaLPNeg)
@@ -65,7 +64,7 @@ func ProveRemoveLiquidity(relation *RemoveLiquidityRelation) (proof *RemoveLiqui
 	alpha_sk_u = curve.RandomValue()
 	alpha_sk_uInv = ffmath.ModInverse(alpha_sk_u, Order)
 	alpha_bar_r_LP = curve.RandomValue()
-	A_pk_u = curve.ScalarMul(relation.G, alpha_sk_u)
+	A_pk_u = curve.ScalarMul(G, alpha_sk_u)
 	// user asset A part
 	A_T_uLPC_uLPRPrimeInv = curve.Add(
 		relation.C_u_LP.CL,
@@ -75,7 +74,7 @@ func ProveRemoveLiquidity(relation *RemoveLiquidityRelation) (proof *RemoveLiqui
 	A_T_uLPC_uLPRPrimeInv = curve.ScalarMul(A_T_uLPC_uLPRPrimeInv, alpha_sk_uInv)
 	A_T_uLPC_uLPRPrimeInv = curve.Add(
 		A_T_uLPC_uLPRPrimeInv,
-		curve.ScalarMul(relation.G, alpha_bar_r_LP))
+		curve.ScalarMul(G, alpha_bar_r_LP))
 	// write into buf
 	writePointIntoBuf(&buf, A_pk_u)
 	writePointIntoBuf(&buf, A_T_uLPC_uLPRPrimeInv)
@@ -120,8 +119,6 @@ func ProveRemoveLiquidity(relation *RemoveLiquidityRelation) (proof *RemoveLiqui
 		C_u_LP:                      relation.C_u_LP,
 		C_u_LP_Delta:                relation.C_u_LP_Delta,
 		P:                           relation.P,
-		G:                           relation.G,
-		H:                           relation.H,
 		AssetAId:                    relation.AssetAId,
 		AssetBId:                    relation.AssetBId,
 		T_uLP:                       relation.T_uLP,
@@ -149,8 +146,7 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 		log.Println("[Verify RemoveLiquidity] invalid range proof")
 		return false, nil
 	}
-	writePointIntoBuf(&buf, proof.G)
-	writePointIntoBuf(&buf, proof.H)
+	buf.Write(PaddingBigIntBytes(FixedCurve))
 	writePointIntoBuf(&buf, proof.Pk_u)
 	writePointIntoBuf(&buf, proof.Pk_Dao)
 	writeEncIntoBuf(&buf, proof.C_u_LP)
@@ -187,7 +183,7 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 		return false, nil
 	}
 	// verify ownership
-	l2 := curve.ScalarMul(proof.G, proof.Z_sk_u)
+	l2 := curve.ScalarMul(G, proof.Z_sk_u)
 	r2 := curve.Add(proof.A_pk_u, curve.ScalarMul(proof.Pk_u, c))
 	if !l2.Equal(r2) {
 		log.Println("[Verify RemoveLiquidityProof] l2 != r2")
@@ -199,7 +195,7 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 	}
 	C_uLPPrimeNeg = negElgamal(C_uLPPrime)
 	l3 := curve.Add(
-		curve.ScalarMul(proof.G, proof.Z_bar_r_LP),
+		curve.ScalarMul(G, proof.Z_bar_r_LP),
 		curve.ScalarMul(C_uLPPrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r3 := curve.Add(
@@ -220,10 +216,6 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 }
 
 func verifyRemoveLiquidityParams(proof *RemoveLiquidityProof) (res bool, err error) {
-	if !proof.G.Equal(G) || !proof.H.Equal(H) {
-		log.Println("[verifyRemoveLiquidityParams] invalid params")
-		return false, errors.New("[verifyRemoveLiquidityParams] invalid params")
-	}
 	// check uint64 & int64
 	if !validUint64(proof.B_A_Delta) || !validUint64(proof.B_B_Delta) || !validUint64(proof.Delta_LP) {
 		log.Println("[verifyRemoveLiquidityParams] invalid params")
@@ -237,13 +229,13 @@ func verifyRemoveLiquidityParams(proof *RemoveLiquidityProof) (res bool, err err
 	if err != nil {
 		return false, err
 	}
-	LC_DaoA_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_A_Delta)), proof.R_DeltaA, proof.Pk_Dao)
-	if err != nil {
-		return false, err
+	LC_DaoA_Delta := &ElGamalEnc{
+		CL: curve.ScalarMul(proof.Pk_Dao, proof.R_DeltaA),
+		CR: C_uA_Delta.CR,
 	}
-	LC_DaoB_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_B_Delta)), proof.R_DeltaB, proof.Pk_Dao)
-	if err != nil {
-		return false, err
+	LC_DaoB_Delta := &ElGamalEnc{
+		CL: curve.ScalarMul(proof.Pk_Dao, proof.R_DeltaB),
+		CR: C_uB_Delta.CR,
 	}
 	if !equalEnc(C_uA_Delta, proof.C_uA_Delta) || !equalEnc(C_uB_Delta, proof.C_uB_Delta) ||
 		!equalEnc(LC_DaoA_Delta, proof.LC_DaoA_Delta) || !equalEnc(LC_DaoB_Delta, proof.LC_DaoB_Delta) {

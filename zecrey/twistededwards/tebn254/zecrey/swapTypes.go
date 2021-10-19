@@ -80,9 +80,6 @@ func (proof *SwapProof) Bytes() []byte {
 	copy(proofBytes[PointSize*30:PointSize*32], LC_DaoBBytes[:])
 	// random value for dao liquidity asset B
 	copy(proofBytes[PointSize*32:PointSize*33], proof.R_DaoB.FillBytes(make([]byte, PointSize)))
-	// generators
-	copy(proofBytes[PointSize*33:PointSize*34], proof.G.Marshal())
-	copy(proofBytes[PointSize*34:PointSize*35], proof.H.Marshal())
 	// asset A,B,fee Delta & dao liquidity asset B balance
 	B_A_DeltaBytes := make([]byte, EightBytes)
 	B_B_DeltaBytes := make([]byte, EightBytes)
@@ -94,26 +91,26 @@ func (proof *SwapProof) Bytes() []byte {
 	binary.BigEndian.PutUint64(B_fee_DeltaBytes, proof.B_fee_Delta)
 	binary.BigEndian.PutUint64(B_DaoABytes, proof.B_DaoA)
 	binary.BigEndian.PutUint64(B_DaoBBytes, proof.B_DaoB)
-	copy(proofBytes[PointSize*35:PointSize*35+EightBytes], B_A_DeltaBytes)
-	copy(proofBytes[PointSize*35+EightBytes:PointSize*35+EightBytes*2], B_B_DeltaBytes)
-	copy(proofBytes[PointSize*35+EightBytes*2:PointSize*35+EightBytes*3], B_fee_DeltaBytes)
-	copy(proofBytes[PointSize*35+EightBytes*3:PointSize*35+EightBytes*4], B_DaoABytes)
-	copy(proofBytes[PointSize*35+EightBytes*4:PointSize*35+EightBytes*5], B_DaoBBytes)
+	copy(proofBytes[PointSize*33:PointSize*33+EightBytes], B_A_DeltaBytes)
+	copy(proofBytes[PointSize*33+EightBytes:PointSize*33+EightBytes*2], B_B_DeltaBytes)
+	copy(proofBytes[PointSize*33+EightBytes*2:PointSize*33+EightBytes*3], B_fee_DeltaBytes)
+	copy(proofBytes[PointSize*33+EightBytes*3:PointSize*33+EightBytes*4], B_DaoABytes)
+	copy(proofBytes[PointSize*33+EightBytes*4:PointSize*33+EightBytes*5], B_DaoBBytes)
 	// alpha = \delta{x} / x
 	// beta = \delta{y} / y
 	AlphaBytes := make([]byte, EightBytes)
 	BetaBytes := make([]byte, EightBytes)
 	binary.BigEndian.PutUint64(AlphaBytes, proof.Alpha)
 	binary.BigEndian.PutUint64(BetaBytes, proof.Beta)
-	copy(proofBytes[PointSize*35+EightBytes*5:PointSize*35+EightBytes*6], AlphaBytes)
-	copy(proofBytes[PointSize*35+EightBytes*6:PointSize*35+EightBytes*7], BetaBytes)
+	copy(proofBytes[PointSize*33+EightBytes*5:PointSize*33+EightBytes*6], AlphaBytes)
+	copy(proofBytes[PointSize*33+EightBytes*6:PointSize*33+EightBytes*7], BetaBytes)
 	// gamma = 1 - fee %
 	GammaBytes := make([]byte, FourBytes)
 	binary.BigEndian.PutUint32(GammaBytes, proof.Gamma)
-	copy(proofBytes[PointSize*35+EightBytes*7:PointSize*35+EightBytes*7+FourBytes], GammaBytes)
+	copy(proofBytes[PointSize*33+EightBytes*7:PointSize*33+EightBytes*7+FourBytes], GammaBytes)
 	// range proofs
-	copy(proofBytes[PointSize*35+EightBytes*7+FourBytes:PointSize*35+EightBytes*7+FourBytes+RangeProofSize], proof.ARangeProof.Bytes())
-	copy(proofBytes[PointSize*35+EightBytes*7+FourBytes+RangeProofSize:PointSize*35+EightBytes*7+FourBytes+RangeProofSize*2], proof.FeeRangeProof.Bytes())
+	copy(proofBytes[PointSize*33+EightBytes*7+FourBytes:PointSize*33+EightBytes*7+FourBytes+RangeProofSize], proof.ARangeProof.Bytes())
+	copy(proofBytes[PointSize*33+EightBytes*7+FourBytes+RangeProofSize:PointSize*33+EightBytes*7+FourBytes+RangeProofSize*2], proof.FeeRangeProof.Bytes())
 	return proofBytes
 }
 
@@ -161,7 +158,6 @@ type SwapProof struct {
 	Alpha, Beta uint64
 	Gamma       uint32
 	// generators
-	G, H                           *Point
 	AssetAId, AssetBId, AssetFeeId uint32
 }
 
@@ -264,33 +260,24 @@ func ParseSwapProofBytes(proofBytes []byte) (proof *SwapProof, err error) {
 	}
 	// random value for dao liquidity asset B
 	proof.R_DaoB = new(big.Int).SetBytes(proofBytes[PointSize*32 : PointSize*33])
-	// generators
-	proof.G, err = curve.FromBytes(proofBytes[PointSize*33 : PointSize*34])
-	if err != nil {
-		return nil, err
-	}
-	proof.H, err = curve.FromBytes(proofBytes[PointSize*34 : PointSize*35])
-	if err != nil {
-		return nil, err
-	}
 	// asset A,B,fee Delta & dao liquidity asset B balance
-	proof.B_A_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*35 : PointSize*35+EightBytes])
-	proof.B_B_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes : PointSize*35+EightBytes*2])
-	proof.B_fee_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*2 : PointSize*35+EightBytes*3])
-	proof.B_DaoA = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*3 : PointSize*35+EightBytes*4])
-	proof.B_DaoB = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*4 : PointSize*35+EightBytes*5])
+	proof.B_A_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*33 : PointSize*33+EightBytes])
+	proof.B_B_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*33+EightBytes : PointSize*33+EightBytes*2])
+	proof.B_fee_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*33+EightBytes*2 : PointSize*33+EightBytes*3])
+	proof.B_DaoA = binary.BigEndian.Uint64(proofBytes[PointSize*33+EightBytes*3 : PointSize*33+EightBytes*4])
+	proof.B_DaoB = binary.BigEndian.Uint64(proofBytes[PointSize*33+EightBytes*4 : PointSize*33+EightBytes*5])
 	// alpha = \delta{x} / x
 	// beta = \delta{y} / y
-	proof.Alpha = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*5 : PointSize*35+EightBytes*6])
-	proof.Beta = binary.BigEndian.Uint64(proofBytes[PointSize*35+EightBytes*6 : PointSize*35+EightBytes*7])
+	proof.Alpha = binary.BigEndian.Uint64(proofBytes[PointSize*33+EightBytes*5 : PointSize*33+EightBytes*6])
+	proof.Beta = binary.BigEndian.Uint64(proofBytes[PointSize*33+EightBytes*6 : PointSize*33+EightBytes*7])
 	// gamma = 1 - fee %
-	proof.Gamma = binary.BigEndian.Uint32(proofBytes[PointSize*35+EightBytes*7 : PointSize*35+EightBytes*7+FourBytes])
+	proof.Gamma = binary.BigEndian.Uint32(proofBytes[PointSize*33+EightBytes*7 : PointSize*33+EightBytes*7+FourBytes])
 	// range proofs
-	proof.ARangeProof, err = ctrange.FromBytes(proofBytes[PointSize*35+EightBytes*7+FourBytes : PointSize*35+EightBytes*7+FourBytes+RangeProofSize])
+	proof.ARangeProof, err = ctrange.FromBytes(proofBytes[PointSize*33+EightBytes*7+FourBytes : PointSize*33+EightBytes*7+FourBytes+RangeProofSize])
 	if err != nil {
 		return nil, err
 	}
-	proof.FeeRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*35+EightBytes*7+FourBytes+RangeProofSize : PointSize*35+EightBytes*7+FourBytes+RangeProofSize*2])
+	proof.FeeRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*33+EightBytes*7+FourBytes+RangeProofSize : PointSize*33+EightBytes*7+FourBytes+RangeProofSize*2])
 	if err != nil {
 		return nil, err
 	}
@@ -338,8 +325,6 @@ type SwapProofRelation struct {
 	// gamma = 1 - fee %
 	Alpha, Beta uint64
 	Gamma       uint32
-	// generators
-	G, H *Point
 	// private inputs
 	// user's private key
 	Sk_u *big.Int
@@ -502,9 +487,6 @@ func NewSwapRelation(
 		Alpha: 0,
 		Beta:  0,
 		Gamma: Gamma,
-		// generators
-		G: G,
-		H: H,
 		// private inputs
 		// user's private key
 		Sk_u: Sk_u,
