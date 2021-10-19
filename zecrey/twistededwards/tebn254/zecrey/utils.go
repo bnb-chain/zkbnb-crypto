@@ -20,6 +20,7 @@ package zecrey
 import (
 	"bytes"
 	"log"
+	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
@@ -35,6 +36,10 @@ func writePointIntoBuf(buf *bytes.Buffer, p *Point) {
 func writeEncIntoBuf(buf *bytes.Buffer, enc *ElGamalEnc) {
 	writePointIntoBuf(buf, enc.CL)
 	writePointIntoBuf(buf, enc.CR)
+}
+
+func writeUint64IntoBuf(buf *bytes.Buffer, a uint64) {
+	buf.Write(new(big.Int).SetUint64(a).FillBytes(make([]byte, PointSize)))
 }
 
 func equalEnc(a, b *ElGamalEnc) bool {
@@ -53,4 +58,8 @@ func printElgamal(enc *ElGamalEnc) {
 	log.Println(enc.CL.Y.String())
 	log.Println(enc.CR.X.String())
 	log.Println(enc.CR.Y.String())
+}
+
+func PaddingBigIntBytes(a *big.Int) []byte {
+	return a.FillBytes(make([]byte, PointSize))
 }

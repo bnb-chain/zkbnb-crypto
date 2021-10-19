@@ -33,7 +33,7 @@ const (
 )
 
 func (proof *SwapProof) Bytes() []byte {
-	proofBytes := make([]byte, SwapProofSize2)
+	proofBytes := make([]byte, SwapProofSize)
 	// valid Enc
 	copy(proofBytes[:PointSize], proof.A_C_ufeeL_Delta.Marshal())
 	copy(proofBytes[PointSize:PointSize*2], proof.A_CufeeR_DeltaHExpb_fee_DeltaInv.Marshal())
@@ -170,7 +170,7 @@ func (proof *SwapProof) String() string {
 }
 
 func ParseSwapProofBytes(proofBytes []byte) (proof *SwapProof, err error) {
-	if len(proofBytes) != SwapProofSize2 {
+	if len(proofBytes) != SwapProofSize {
 		return nil, errors.New("[ParseSwapProofBytes] invalid swap proof size")
 	}
 	// construct new proof

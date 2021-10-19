@@ -30,20 +30,19 @@ import (
 // WithdrawProof in circuit
 type WithdrawProofConstraints struct {
 	// commitments
-	A_pk, A_TDivCRprime, A_Pa Point
+	A_pk, A_TDivCRprime Point
 	// response
 	Z_rbar, Z_sk, Z_skInv Variable
 	// Commitment Range Proofs
 	//BPrimeRangeProof CtRangeProofConstraints
 	// common inputs
-	Pa              Point
-	BStar           Variable
-	Fee             Variable
-	CRStar          Point
-	C               ElGamalEncConstraints
-	G, H, Ha, T, Pk Point
-	ReceiveAddr     Variable
-	IsEnabled       Variable
+	BStar       Variable
+	Fee         Variable
+	CRStar      Point
+	C           ElGamalEncConstraints
+	T, Pk       Point
+	ReceiveAddr Variable
+	IsEnabled   Variable
 }
 
 // define tests for verifying the withdraw proof
@@ -59,13 +58,12 @@ func (circuit WithdrawProofConstraints) Define(curveID ecc.ID, cs *ConstraintSys
 		X: cs.Constant(HX),
 		Y: cs.Constant(HY),
 	}
-	IsPointEqual(cs, circuit.IsEnabled, H, circuit.H)
 	// mimc
 	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
 	if err != nil {
 		return err
 	}
-	VerifyWithdrawProof(cs, circuit, params, hFunc)
+	VerifyWithdrawProof(cs, circuit, params, hFunc, H)
 	return nil
 }
 
@@ -80,16 +78,13 @@ func VerifyWithdrawProof(
 	proof WithdrawProofConstraints,
 	params twistededwards.EdCurve,
 	hFunc MiMC,
+	h Point,
 ) {
 	//IsPointEqual(cs, proof.IsEnabled, proof.BPrimeRangeProof.A, proof.T)
-	// check Ha
-	var HaCheck Point
-	HaCheck.ScalarMulNonFixedBase(cs, &proof.H, proof.ReceiveAddr, params)
-	IsPointEqual(cs, proof.IsEnabled, HaCheck, proof.Ha)
 	// verify if the CRStar is correct
 	var hNeg, CRCheck Point
 	delta := cs.Add(proof.BStar, proof.Fee)
-	hNeg.Neg(cs, &proof.H)
+	hNeg.Neg(cs, &h)
 	CRCheck.ScalarMulNonFixedBase(cs, &hNeg, delta, params)
 	IsPointEqual(cs, proof.IsEnabled, CRCheck, proof.CRStar)
 	// Verify range proof first
@@ -109,24 +104,15 @@ func VerifyWithdrawProof(
 	TDivCRprime.AddGeneric(cs, &proof.C.CR, &proof.CRStar, params)
 	TDivCRprime.Neg(cs, &TDivCRprime)
 	TDivCRprime.AddGeneric(cs, &TDivCRprime, &proof.T, params)
-	writePointIntoBuf(&hFunc, proof.G)
-	writePointIntoBuf(&hFunc, proof.H)
-	writePointIntoBuf(&hFunc, proof.Ha)
-	writePointIntoBuf(&hFunc, proof.Pa)
+	hFunc.Write(FixedCurveParam(cs))
+	hFunc.Write(proof.ReceiveAddr)
 	writeEncIntoBuf(&hFunc, proof.C)
 	writePointIntoBuf(&hFunc, proof.CRStar)
 	writePointIntoBuf(&hFunc, proof.T)
 	writePointIntoBuf(&hFunc, proof.Pk)
 	writePointIntoBuf(&hFunc, proof.A_pk)
 	writePointIntoBuf(&hFunc, proof.A_TDivCRprime)
-	writePointIntoBuf(&hFunc, proof.A_Pa)
 	c = hFunc.Sum()
-	// Verify Pa
-	var l1, r1 Point
-	l1.ScalarMulNonFixedBase(cs, &proof.Ha, proof.Z_sk, params)
-	r1.ScalarMulNonFixedBase(cs, &proof.Pa, c, params)
-	r1.AddGeneric(cs, &r1, &proof.A_Pa, params)
-	IsPointEqual(cs, proof.IsEnabled, l1, r1)
 	// Verify balance
 	verifyBalance(
 		cs,
@@ -172,13 +158,11 @@ func verifyBalance(
 }
 
 func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
-	witness.Pa, _ = SetPointWitness(BasePoint)
 
 	witness.A_pk, _ = SetPointWitness(BasePoint)
 
 	witness.A_TDivCRprime, _ = SetPointWitness(BasePoint)
 
-	witness.A_Pa, _ = SetPointWitness(BasePoint)
 
 	// response
 	witness.Z_rbar.Assign(ZeroInt)
@@ -192,12 +176,6 @@ func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
 	witness.C, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 
 	witness.CRStar, _ = SetPointWitness(BasePoint)
-
-	witness.G, _ = SetPointWitness(BasePoint)
-
-	witness.H, _ = SetPointWitness(BasePoint)
-
-	witness.Ha, _ = SetPointWitness(BasePoint)
 
 	witness.T, _ = SetPointWitness(BasePoint)
 
@@ -228,19 +206,11 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, errors.New("[SetWithdrawProofWitness] invalid proof")
 	}
 
-	witness.Pa, err = SetPointWitness(proof.Pa)
-	if err != nil {
-		return witness, err
-	}
 	witness.A_pk, err = SetPointWitness(proof.A_pk)
 	if err != nil {
 		return witness, err
 	}
 	witness.A_TDivCRprime, err = SetPointWitness(proof.A_TDivCRprime)
-	if err != nil {
-		return witness, err
-	}
-	witness.A_Pa, err = SetPointWitness(proof.A_Pa)
 	if err != nil {
 		return witness, err
 	}
@@ -258,18 +228,6 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, err
 	}
 	witness.CRStar, err = SetPointWitness(proof.CRStar)
-	if err != nil {
-		return witness, err
-	}
-	witness.G, err = SetPointWitness(proof.G)
-	if err != nil {
-		return witness, err
-	}
-	witness.H, err = SetPointWitness(proof.H)
-	if err != nil {
-		return witness, err
-	}
-	witness.Ha, err = SetPointWitness(proof.Ha)
 	if err != nil {
 		return witness, err
 	}

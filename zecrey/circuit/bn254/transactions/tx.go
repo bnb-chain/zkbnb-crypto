@@ -61,12 +61,7 @@ func (circuit TxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error 
 		X: cs.Constant(std.HX),
 		Y: cs.Constant(std.HY),
 	}
-	circuit.TransferProof.H = H
-	circuit.SwapProof.H = H
-	circuit.AddLiquidityProof.H = H
-	circuit.RemoveLiquidityProof.H = H
-	circuit.WithdrawProof.H = H
-	VerifyTransaction(cs, circuit, params, hFunc)
+	VerifyTransaction(cs, circuit, params, hFunc, H)
 
 	return nil
 }
@@ -76,6 +71,7 @@ func VerifyTransaction(
 	tx TxConstraints,
 	params twistededwards.EdCurve,
 	hFunc MiMC,
+	h Point,
 ) {
 	// txType constants
 	txTypeTransfer := cs.Constant(uint64(TxTypeTransfer))
@@ -122,7 +118,7 @@ func VerifyTransaction(
 	std.VerifyRemoveLiquidityProof(cs, tx.RemoveLiquidityProof, params, hFunc)
 	hFunc.Reset()
 	// verify withdraw proof
-	std.VerifyWithdrawProof(cs, tx.WithdrawProof, params, hFunc)
+	std.VerifyWithdrawProof(cs, tx.WithdrawProof, params, hFunc, h)
 	hFunc.Reset()
 
 }
