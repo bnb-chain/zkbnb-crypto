@@ -269,13 +269,13 @@ func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	LC_DaoA_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_A_Delta)), proof.R_DeltaA, proof.Pk_Dao)
-	if err != nil {
-		return false, err
+	LC_DaoA_Delta := &ElGamalEnc{
+		CL: curve.ScalarMul(proof.Pk_Dao, proof.R_DeltaA),
+		CR: C_uA_Delta.CR,
 	}
-	LC_DaoB_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_B_Delta)), proof.R_DeltaB, proof.Pk_Dao)
-	if err != nil {
-		return false, err
+	LC_DaoB_Delta := &ElGamalEnc{
+		CL: curve.ScalarMul(proof.Pk_Dao, proof.R_DeltaB),
+		CR: C_uB_Delta.CR,
 	}
 	if !equalEnc(C_uA_Delta, proof.C_uA_Delta) || !equalEnc(C_uB_Delta, proof.C_uB_Delta) ||
 		!equalEnc(LC_DaoA_Delta, proof.LC_DaoA_Delta) || !equalEnc(LC_DaoB_Delta, proof.LC_DaoB_Delta) {

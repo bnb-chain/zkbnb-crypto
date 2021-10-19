@@ -149,8 +149,10 @@ func verifyRemoveLiquidityParams(
 	var C_uA_Delta, C_uB_Delta, LC_DaoA_Delta, LC_DaoB_Delta ElGamalEncConstraints
 	C_uA_Delta = Enc(cs, h, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_u, params)
 	C_uB_Delta = Enc(cs, h, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_u, params)
-	LC_DaoA_Delta = Enc(cs, h, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_Dao, params)
-	LC_DaoB_Delta = Enc(cs, h, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_Dao, params)
+	LC_DaoA_Delta.CL.ScalarMulNonFixedBase(cs, &proof.Pk_Dao, proof.R_DeltaA, params)
+	LC_DaoA_Delta.CR = C_uA_Delta.CR
+	LC_DaoB_Delta.CL.ScalarMulNonFixedBase(cs, &proof.Pk_Dao, proof.R_DeltaB, params)
+	LC_DaoB_Delta.CR = C_uB_Delta.CR
 	IsElGamalEncEqual(cs, proof.IsEnabled, C_uA_Delta, proof.C_uA_Delta)
 	IsElGamalEncEqual(cs, proof.IsEnabled, C_uB_Delta, proof.C_uB_Delta)
 	IsElGamalEncEqual(cs, proof.IsEnabled, LC_DaoA_Delta, proof.LC_DaoA_Delta)
