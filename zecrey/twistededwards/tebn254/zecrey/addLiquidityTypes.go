@@ -54,7 +54,6 @@ type AddLiquidityProof struct {
 	B_DaoA, B_DaoB               uint64
 	B_A_Delta, B_B_Delta         uint64
 	Delta_LP                     uint64
-	G, H                         *Point
 }
 
 func (proof *AddLiquidityProof) Bytes() []byte {
@@ -99,9 +98,6 @@ func (proof *AddLiquidityProof) Bytes() []byte {
 	// commitment for user asset A & fee
 	copy(proofBytes[PointSize*28:PointSize*29], proof.T_uA.Marshal())
 	copy(proofBytes[PointSize*29:PointSize*30], proof.T_uB.Marshal())
-	// generators
-	copy(proofBytes[PointSize*30:PointSize*31], proof.G.Marshal())
-	copy(proofBytes[PointSize*31:PointSize*32], proof.H.Marshal())
 	// user asset A,B,LP & DAO assets A,B
 	B_DaoABytes := make([]byte, EightBytes)
 	B_DaoBBytes := make([]byte, EightBytes)
@@ -113,14 +109,14 @@ func (proof *AddLiquidityProof) Bytes() []byte {
 	binary.BigEndian.PutUint64(B_A_DeltaBytes, proof.B_A_Delta)
 	binary.BigEndian.PutUint64(B_B_DeltaBytes, proof.B_B_Delta)
 	binary.BigEndian.PutUint64(Delta_LPBytes, proof.Delta_LP)
-	copy(proofBytes[PointSize*32:PointSize*32+EightBytes], B_DaoABytes)
-	copy(proofBytes[PointSize*32+EightBytes:PointSize*32+EightBytes*2], B_DaoBBytes)
-	copy(proofBytes[PointSize*32+EightBytes*2:PointSize*32+EightBytes*3], B_A_DeltaBytes)
-	copy(proofBytes[PointSize*32+EightBytes*3:PointSize*32+EightBytes*4], B_B_DeltaBytes)
-	copy(proofBytes[PointSize*32+EightBytes*4:PointSize*32+EightBytes*5], Delta_LPBytes)
+	copy(proofBytes[PointSize*30:PointSize*30+EightBytes], B_DaoABytes)
+	copy(proofBytes[PointSize*30+EightBytes:PointSize*30+EightBytes*2], B_DaoBBytes)
+	copy(proofBytes[PointSize*30+EightBytes*2:PointSize*30+EightBytes*3], B_A_DeltaBytes)
+	copy(proofBytes[PointSize*30+EightBytes*3:PointSize*30+EightBytes*4], B_B_DeltaBytes)
+	copy(proofBytes[PointSize*30+EightBytes*4:PointSize*30+EightBytes*5], Delta_LPBytes)
 	// range proofs
-	copy(proofBytes[PointSize*32+EightBytes*5:PointSize*32+EightBytes*5+RangeProofSize], proof.ARangeProof.Bytes())
-	copy(proofBytes[PointSize*32+EightBytes*5+RangeProofSize:PointSize*32+EightBytes*5+RangeProofSize*2], proof.BRangeProof.Bytes())
+	copy(proofBytes[PointSize*30+EightBytes*5:PointSize*30+EightBytes*5+RangeProofSize], proof.ARangeProof.Bytes())
+	copy(proofBytes[PointSize*30+EightBytes*5+RangeProofSize:PointSize*30+EightBytes*5+RangeProofSize*2], proof.BRangeProof.Bytes())
 	return proofBytes
 }
 
@@ -217,27 +213,18 @@ func ParseAddLiquidityProofBytes(proofBytes []byte) (proof *AddLiquidityProof, e
 	if err != nil {
 		return nil, err
 	}
-	// generators
-	proof.G, err = curve.FromBytes(proofBytes[PointSize*30 : PointSize*31])
-	if err != nil {
-		return nil, err
-	}
-	proof.H, err = curve.FromBytes(proofBytes[PointSize*31 : PointSize*32])
-	if err != nil {
-		return nil, err
-	}
 	// asset a,b,lp
-	proof.B_DaoA = binary.BigEndian.Uint64(proofBytes[PointSize*32 : PointSize*32+EightBytes])
-	proof.B_DaoB = binary.BigEndian.Uint64(proofBytes[PointSize*32+EightBytes : PointSize*32+EightBytes*2])
-	proof.B_A_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*32+EightBytes*2 : PointSize*32+EightBytes*3])
-	proof.B_B_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*32+EightBytes*3 : PointSize*32+EightBytes*4])
-	proof.Delta_LP = binary.BigEndian.Uint64(proofBytes[PointSize*32+EightBytes*4 : PointSize*32+EightBytes*5])
+	proof.B_DaoA = binary.BigEndian.Uint64(proofBytes[PointSize*30 : PointSize*30+EightBytes])
+	proof.B_DaoB = binary.BigEndian.Uint64(proofBytes[PointSize*30+EightBytes : PointSize*30+EightBytes*2])
+	proof.B_A_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*30+EightBytes*2 : PointSize*30+EightBytes*3])
+	proof.B_B_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*30+EightBytes*3 : PointSize*30+EightBytes*4])
+	proof.Delta_LP = binary.BigEndian.Uint64(proofBytes[PointSize*30+EightBytes*4 : PointSize*30+EightBytes*5])
 	// range proofs
-	proof.ARangeProof, err = ctrange.FromBytes(proofBytes[PointSize*32+EightBytes*5 : PointSize*32+EightBytes*5+RangeProofSize])
+	proof.ARangeProof, err = ctrange.FromBytes(proofBytes[PointSize*30+EightBytes*5 : PointSize*30+EightBytes*5+RangeProofSize])
 	if err != nil {
 		return nil, err
 	}
-	proof.BRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*32+EightBytes*5+RangeProofSize : PointSize*32+EightBytes*5+RangeProofSize*2])
+	proof.BRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*30+EightBytes*5+RangeProofSize : PointSize*30+EightBytes*5+RangeProofSize*2])
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +254,6 @@ type AddLiquidityRelation struct {
 	B_DaoA, B_DaoB               uint64
 	B_A_Delta, B_B_Delta         uint64
 	Delta_LP                     uint64
-	G, H                         *Point
 	AssetAId, AssetBId           uint32
 	// private inputs
 	Sk_u                   *big.Int
@@ -395,8 +381,6 @@ func NewAddLiquidityRelation(
 		B_A_Delta:     B_A_Delta,
 		B_B_Delta:     B_B_Delta,
 		Delta_LP:      Delta_LP,
-		G:             G,
-		H:             H,
 		AssetAId:      assetAId,
 		AssetBId:      assetBId,
 		Sk_u:          Sk_u,

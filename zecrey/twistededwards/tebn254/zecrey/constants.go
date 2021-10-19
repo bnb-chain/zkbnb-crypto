@@ -41,11 +41,11 @@ const (
 	EightBytes            = 8
 	TransferSubProofCount = 3
 	TransferSubProofSize  = 24*PointSize + RangeProofSize
-	TransferProofSize     = TransferSubProofCount*TransferSubProofSize + 6*PointSize + 1*EightBytes
+	TransferProofSize     = TransferSubProofCount*TransferSubProofSize + 4*PointSize + 1*EightBytes
 
-	SwapProofSize            = 35*PointSize + 2*RangeProofSize + 7*EightBytes + 1*FourBytes
-	AddLiquidityProofSize    = 32*PointSize + 5*EightBytes + 2*RangeProofSize
-	RemoveLiquidityProofSize = 33*PointSize + 6*EightBytes + 1*RangeProofSize
+	SwapProofSize            = 33*PointSize + 2*RangeProofSize + 7*EightBytes + 1*FourBytes
+	AddLiquidityProofSize    = 30*PointSize + 5*EightBytes + 2*RangeProofSize
+	RemoveLiquidityProofSize = 31*PointSize + 6*EightBytes + 1*RangeProofSize
 	UnlockProofSize          = 3*PointSize + 2*FourBytes + 2*EightBytes
 
 	AddressSize = 20
@@ -59,5 +59,6 @@ var (
 	Order       = curve.Order
 	MaxRange    = 1099511627775 // 2^{40} - 1
 	MaxRangeNeg = -1099511627776
-	FixedCurve  = new(big.Int).SetBytes([]byte("ZecreyBN254"))
+	curveId     = "ZecreyBN254"
+	FixedCurve  = new(big.Int).SetBytes([]byte(curveId))
 )

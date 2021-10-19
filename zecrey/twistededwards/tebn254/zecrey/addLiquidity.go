@@ -45,8 +45,7 @@ func ProveAddLiquidity(relation *AddLiquidityRelation) (proof *AddLiquidityProof
 		Z_sk_u, Z_bar_r_A, Z_bar_r_B, Z_sk_uInv                 *big.Int
 		buf                                                     bytes.Buffer
 	)
-	writePointIntoBuf(&buf, relation.G)
-	writePointIntoBuf(&buf, relation.H)
+	buf.Write(PaddingBigIntBytes(FixedCurve))
 	writePointIntoBuf(&buf, relation.Pk_u)
 	writePointIntoBuf(&buf, relation.Pk_Dao)
 	writeEncIntoBuf(&buf, relation.C_uA)
@@ -59,7 +58,7 @@ func ProveAddLiquidity(relation *AddLiquidityRelation) (proof *AddLiquidityProof
 	// valid enc
 	alpha_r_DeltaLP = curve.RandomValue()
 	A_CLPL_Delta = curve.ScalarMul(relation.Pk_u, alpha_r_DeltaLP)
-	A_CLPR_DeltaHExp_DeltaLPNeg = curve.ScalarMul(relation.G, alpha_r_DeltaLP)
+	A_CLPR_DeltaHExp_DeltaLPNeg = curve.ScalarMul(G, alpha_r_DeltaLP)
 	// write into buf
 	writePointIntoBuf(&buf, A_CLPL_Delta)
 	writePointIntoBuf(&buf, A_CLPR_DeltaHExp_DeltaLPNeg)
@@ -68,7 +67,7 @@ func ProveAddLiquidity(relation *AddLiquidityRelation) (proof *AddLiquidityProof
 	alpha_sk_uInv = ffmath.ModInverse(alpha_sk_u, Order)
 	alpha_bar_r_A = curve.RandomValue()
 	alpha_bar_r_B = curve.RandomValue()
-	A_pk_u = curve.ScalarMul(relation.G, alpha_sk_u)
+	A_pk_u = curve.ScalarMul(G, alpha_sk_u)
 	// user asset A part
 	A_T_uAC_uARPrimeInv = curve.Add(
 		relation.C_uA.CL,
@@ -78,7 +77,7 @@ func ProveAddLiquidity(relation *AddLiquidityRelation) (proof *AddLiquidityProof
 	A_T_uAC_uARPrimeInv = curve.ScalarMul(A_T_uAC_uARPrimeInv, alpha_sk_uInv)
 	A_T_uAC_uARPrimeInv = curve.Add(
 		A_T_uAC_uARPrimeInv,
-		curve.ScalarMul(relation.G, alpha_bar_r_A))
+		curve.ScalarMul(G, alpha_bar_r_A))
 	// user asset B part
 	A_T_uBC_uBRPrimeInv = curve.Add(
 		relation.C_uB.CL,
@@ -86,7 +85,7 @@ func ProveAddLiquidity(relation *AddLiquidityRelation) (proof *AddLiquidityProof
 	)
 	A_T_uBC_uBRPrimeInv = curve.Neg(A_T_uBC_uBRPrimeInv)
 	A_T_uBC_uBRPrimeInv = curve.ScalarMul(A_T_uBC_uBRPrimeInv, alpha_sk_uInv)
-	A_T_uBC_uBRPrimeInv = curve.Add(A_T_uBC_uBRPrimeInv, curve.ScalarMul(relation.G, alpha_bar_r_B))
+	A_T_uBC_uBRPrimeInv = curve.Add(A_T_uBC_uBRPrimeInv, curve.ScalarMul(G, alpha_bar_r_B))
 	// write into buf
 	writePointIntoBuf(&buf, A_pk_u)
 	writePointIntoBuf(&buf, A_T_uAC_uARPrimeInv)
@@ -134,8 +133,6 @@ func ProveAddLiquidity(relation *AddLiquidityRelation) (proof *AddLiquidityProof
 		B_A_Delta:                   relation.B_A_Delta,
 		B_B_Delta:                   relation.B_B_Delta,
 		Delta_LP:                    relation.Delta_LP,
-		G:                           relation.G,
-		H:                           relation.H,
 	}
 	return proof, nil
 }
@@ -156,8 +153,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 	go verifyCtRangeRoutine(proof.ARangeProof, rangeChan)
 	go verifyCtRangeRoutine(proof.BRangeProof, rangeChan)
 	// challenge buf
-	writePointIntoBuf(&buf, proof.G)
-	writePointIntoBuf(&buf, proof.H)
+	buf.Write(PaddingBigIntBytes(FixedCurve))
 	writePointIntoBuf(&buf, proof.Pk_u)
 	writePointIntoBuf(&buf, proof.Pk_Dao)
 	writeEncIntoBuf(&buf, proof.C_uA)
@@ -196,7 +192,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 		return false, nil
 	}
 	// verify ownership
-	l2 := curve.ScalarMul(proof.G, proof.Z_sk_u)
+	l2 := curve.ScalarMul(G, proof.Z_sk_u)
 	r2 := curve.Add(proof.A_pk_u, curve.ScalarMul(proof.Pk_u, c))
 	if !l2.Equal(r2) {
 		log.Println("[Verify AddLiquidityProof] l2 != r2")
@@ -213,7 +209,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 	C_uAPrimeNeg = negElgamal(C_uAPrime)
 	C_uBPrimeNeg = negElgamal(C_uBPrime)
 	l3 := curve.Add(
-		curve.ScalarMul(proof.G, proof.Z_bar_r_A),
+		curve.ScalarMul(G, proof.Z_bar_r_A),
 		curve.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r3 := curve.Add(
@@ -231,7 +227,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 		return false, nil
 	}
 	l4 := curve.Add(
-		curve.ScalarMul(proof.G, proof.Z_bar_r_B),
+		curve.ScalarMul(G, proof.Z_bar_r_B),
 		curve.ScalarMul(C_uBPrimeNeg.CL, proof.Z_sk_uInv),
 	)
 	r4 := curve.Add(
@@ -259,10 +255,6 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 }
 
 func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
-	if !proof.G.Equal(G) || !proof.H.Equal(H) {
-		log.Println("[verifyAddLiquidityParams] invalid params")
-		return false, errors.New("[verifyAddLiquidityParams] invalid params")
-	}
 	// check uint64 & int64
 	if !validUint64(proof.B_A_Delta) || !validUint64(proof.B_B_Delta) ||
 		!validUint64(proof.B_DaoA) || !validUint64(proof.B_DaoB) {

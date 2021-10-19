@@ -21,7 +21,6 @@ type TransferProof struct {
 	Z_sum *big.Int
 	// challenges
 	C1, C2 *big.Int
-	G, H   *Point
 	Fee    uint64
 }
 
@@ -34,11 +33,9 @@ func (proof *TransferProof) Bytes() []byte {
 	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize:TransferSubProofCount*TransferSubProofSize+PointSize*2], proof.Z_sum.FillBytes(make([]byte, PointSize)))
 	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*2:TransferSubProofCount*TransferSubProofSize+PointSize*3], proof.C1.FillBytes(make([]byte, PointSize)))
 	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*3:TransferSubProofCount*TransferSubProofSize+PointSize*4], proof.C2.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*4:TransferSubProofCount*TransferSubProofSize+PointSize*5], proof.G.Marshal())
-	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*5:TransferSubProofCount*TransferSubProofSize+PointSize*6], proof.H.Marshal())
 	FeeBytes := make([]byte, EightBytes)
 	binary.BigEndian.PutUint64(FeeBytes, proof.Fee)
-	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*6:TransferSubProofCount*TransferSubProofSize+PointSize*6+EightBytes], FeeBytes)
+	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*4:TransferSubProofCount*TransferSubProofSize+PointSize*4+EightBytes], FeeBytes)
 	return proofBytes
 }
 
@@ -64,15 +61,7 @@ func ParseTransferProofBytes(proofBytes []byte) (proof *TransferProof, err error
 	proof.Z_sum = new(big.Int).SetBytes(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize : TransferSubProofCount*TransferSubProofSize+PointSize*2])
 	proof.C1 = new(big.Int).SetBytes(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*2 : TransferSubProofCount*TransferSubProofSize+PointSize*3])
 	proof.C2 = new(big.Int).SetBytes(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*3 : TransferSubProofCount*TransferSubProofSize+PointSize*4])
-	proof.G, err = curve.FromBytes(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*4 : TransferSubProofCount*TransferSubProofSize+PointSize*5])
-	if err != nil {
-		return nil, err
-	}
-	proof.H, err = curve.FromBytes(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*5 : TransferSubProofCount*TransferSubProofSize+PointSize*6])
-	if err != nil {
-		return nil, err
-	}
-	proof.Fee = binary.BigEndian.Uint64(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*6 : TransferSubProofCount*TransferSubProofSize+PointSize*6+EightBytes])
+	proof.Fee = binary.BigEndian.Uint64(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*4 : TransferSubProofCount*TransferSubProofSize+PointSize*4+EightBytes])
 	return proof, nil
 }
 
@@ -211,8 +200,6 @@ type TransferProofRelation struct {
 	Statements []*TransferProofStatement
 	R_sum      *big.Int
 	Fee        uint64
-	G          *Point
-	H          *Point
 	AssetId    uint32
 }
 
@@ -221,7 +208,7 @@ func NewTransferProofRelation(assetId uint32, fee uint64) (*TransferProofRelatio
 		log.Println("[NewTransferProofRelation] err: invalid fee")
 		return nil, errors.New("[NewTransferProofRelation] err: invalid fee")
 	}
-	return &TransferProofRelation{G: G, H: H, AssetId: assetId, Fee: fee, R_sum: big.NewInt(0)}, nil
+	return &TransferProofRelation{AssetId: assetId, Fee: fee, R_sum: big.NewInt(0)}, nil
 }
 
 func (relation *TransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b uint64, bDelta int64, sk *big.Int) (err error) {
@@ -351,23 +338,3 @@ type transferCommitValues struct {
 	A_T, A_pk, A_TDivCPrime *Point
 }
 
-func FakeTransferProof() *TransferProof {
-	sk1, pk1 := twistedElgamal.GenKeyPair()
-	b1 := uint64(8)
-	r1 := curve.RandomValue()
-	_, pk2 := twistedElgamal.GenKeyPair()
-	b2 := big.NewInt(2)
-	r2 := curve.RandomValue()
-	_, pk3 := twistedElgamal.GenKeyPair()
-	b3 := uint64(3)
-	r3 := curve.RandomValue()
-	b1Enc, _ := twistedElgamal.Enc(big.NewInt(int64(b1)), r1, pk1)
-	b2Enc, _ := twistedElgamal.Enc(b2, r2, pk2)
-	b3Enc, _ := twistedElgamal.Enc(big.NewInt(int64(b3)), r3, pk3)
-	relation, _ := NewTransferProofRelation(1, 0)
-	relation.AddStatement(b2Enc, pk2, 0, 2, nil)
-	relation.AddStatement(b1Enc, pk1, b1, -4, sk1)
-	relation.AddStatement(b3Enc, pk3, b3, 2, nil)
-	transferProof, _ := ProveTransfer(relation)
-	return transferProof
-}

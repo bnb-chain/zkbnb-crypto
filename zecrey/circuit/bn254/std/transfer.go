@@ -35,7 +35,6 @@ type TransferProofConstraints struct {
 	Z_sum Variable
 	// challenges
 	C1, C2    Variable
-	G, H      Point
 	Fee       Variable
 	IsEnabled Variable
 }
@@ -76,13 +75,12 @@ func (circuit TransferProofConstraints) Define(curveID ecc.ID, cs *ConstraintSys
 		X: cs.Constant(HX),
 		Y: cs.Constant(HY),
 	}
-	IsPointEqual(cs, circuit.IsEnabled, H, circuit.H)
 	// mimc
 	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
 	if err != nil {
 		return err
 	}
-	VerifyTransferProof(cs, circuit, params, hFunc)
+	VerifyTransferProof(cs, circuit, params, hFunc, H)
 	return nil
 }
 
@@ -97,11 +95,11 @@ func VerifyTransferProof(
 	proof TransferProofConstraints,
 	params twistededwards.EdCurve,
 	hFunc MiMC,
+	h Point,
 ) {
 	CR_sum := zeroPoint(cs)
 	// write public statements into buf
-	writePointIntoBuf(&hFunc, proof.G)
-	writePointIntoBuf(&hFunc, proof.H)
+	hFunc.Write(FixedCurveParam(cs))
 	// write into buf
 	writePointIntoBuf(&hFunc, proof.A_sum)
 	for _, subProof := range proof.SubProofs {
@@ -134,7 +132,7 @@ func VerifyTransferProof(
 	// verify sum proof
 	var lSum, rSum Point
 	lSum.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Z_sum, params)
-	rSum.ScalarMulNonFixedBase(cs, &proof.H, proof.Fee, params)
+	rSum.ScalarMulNonFixedBase(cs, &h, proof.Fee, params)
 	rSum.AddGeneric(cs, &CR_sum, &rSum, params)
 	rSum.ScalarMulNonFixedBase(cs, &rSum, c, params)
 	rSum.AddGeneric(cs, &proof.A_sum, &rSum, params)
@@ -144,7 +142,7 @@ func VerifyTransferProof(
 		// Verify valid Enc
 		verifyValidEnc(
 			cs,
-			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, proof.H, subProof.CDelta.CR, subProof.A_CRDelta,
+			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, h, subProof.CDelta.CR, subProof.A_CRDelta,
 			c,
 			subProof.Z_r, subProof.Z_bDelta,
 			proof.IsEnabled,
@@ -160,17 +158,17 @@ func VerifyTransferProof(
 		// verify Y_1 = g^{r_i^{\star}} h^{b_i^{\Delta}}
 		var l1, h_z_bstar1, r1 Point
 		l1.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.Z_rstar1, params)
-		h_z_bstar1.ScalarMulNonFixedBase(cs, &proof.H, subProof.Z_bstar1, params)
+		h_z_bstar1.ScalarMulNonFixedBase(cs, &h, subProof.Z_bstar1, params)
 		l1.AddGeneric(cs, &l1, &h_z_bstar1, params)
 		r1.ScalarMulNonFixedBase(cs, &subProof.Y, proof.C1, params)
 		r1.AddGeneric(cs, &r1, &subProof.A_Y1, params)
 		IsPointEqual(cs, proof.IsEnabled, l1, r1)
 		// Verify ownership
 		var h_z_bprime, l2, h_z_bstar2, r2 Point
-		h_z_bprime.ScalarMulNonFixedBase(cs, &proof.H, subProof.Z_bprime, params)
+		h_z_bprime.ScalarMulNonFixedBase(cs, &h, subProof.Z_bprime, params)
 		// Y_2 = g^{r_{i}^{\star}} h^{b_i'}
 		l2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.Z_rstar2, params)
-		h_z_bstar2.ScalarMulNonFixedBase(cs, &proof.H, subProof.Z_bstar2, params)
+		h_z_bstar2.ScalarMulNonFixedBase(cs, &h, subProof.Z_bstar2, params)
 		l2.AddGeneric(cs, &l2, &h_z_bstar2, params)
 		r2.ScalarMulNonFixedBase(cs, &subProof.Y, proof.C2, params)
 		r2.AddGeneric(cs, &r2, &subProof.A_Y2, params)
@@ -241,9 +239,6 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 	witness.A_sum, _ = SetPointWitness(BasePoint)
 	// z_tsk
 	witness.Z_sum.Assign(ZeroInt)
-	// generator
-	witness.G, _ = SetPointWitness(BasePoint)
-	witness.H, _ = SetPointWitness(BasePoint)
 	// C = C1 \oplus C2
 	witness.C1.Assign(ZeroInt)
 	witness.C2.Assign(ZeroInt)
@@ -336,9 +331,6 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 	}
 	// z_tsk
 	witness.Z_sum.Assign(proof.Z_sum)
-	// generator
-	witness.G, err = SetPointWitness(proof.G)
-	witness.H, err = SetPointWitness(proof.H)
 	if err != nil {
 		return witness, err
 	}
