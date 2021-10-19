@@ -36,27 +36,22 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 	var (
 		alpha_rbar, alpha_sk, alpha_skInv *big.Int
 		A_pk, A_TDivCRprime               *Point
-		A_Pa                              *Point
 		CLPrimeInv                        *Point
 		buf                               bytes.Buffer
 	)
 	CLPrimeInv = curve.Neg(relation.C.CL)
 	alpha_rbar, alpha_sk, alpha_skInv,
-		A_pk, A_TDivCRprime = commitBalance(relation.G, CLPrimeInv)
-	A_Pa = curve.ScalarMul(relation.Ha, alpha_sk)
+		A_pk, A_TDivCRprime = commitBalance(G, CLPrimeInv)
 	// write common inputs into buf
 	// then generate the challenge c
-	writePointIntoBuf(&buf, relation.G)
-	writePointIntoBuf(&buf, relation.H)
-	writePointIntoBuf(&buf, relation.Ha)
-	writePointIntoBuf(&buf, relation.Pa)
+	buf.Write(PaddingBigIntBytes(FixedCurve))
+	buf.Write(PaddingBigIntBytes(relation.ReceiveAddr))
 	writeEncIntoBuf(&buf, relation.C)
 	writePointIntoBuf(&buf, relation.CRStar)
 	writePointIntoBuf(&buf, relation.T)
 	writePointIntoBuf(&buf, relation.Pk)
 	writePointIntoBuf(&buf, A_pk)
 	writePointIntoBuf(&buf, A_TDivCRprime)
-	writePointIntoBuf(&buf, A_Pa)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
 		return nil, err
@@ -66,7 +61,6 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 		// commitments
 		A_pk:          A_pk,
 		A_TDivCRprime: A_TDivCRprime,
-		A_Pa:          A_Pa,
 		// response
 		Z_rbar:  z_rbar,
 		Z_sk:    z_sk,
@@ -76,10 +70,6 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 		// common inputs
 		BStar:       relation.Bstar,
 		Fee:         relation.Fee,
-		G:           relation.G,
-		H:           relation.H,
-		Ha:          relation.Ha,
-		Pa:          relation.Pa,
 		C:           relation.C,
 		CRStar:      relation.CRStar,
 		T:           relation.T,
@@ -94,19 +84,8 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 		log.Println("[Verify WithdrawProof] invalid params")
 		return false, errors.New("[Verify WithdrawProof] invalid params")
 	}
-	// check G,H
-	if !proof.G.Equal(G) || !proof.H.Equal(H) {
-		log.Println("[Verify WithdrawProof] invalid params")
-		return false, errors.New("[Verify WithdrawProof] invalid params")
-	}
-	// check Ha
-	HaCheck := curve.ScalarMul(proof.H, proof.ReceiveAddr)
-	if !proof.Ha.Equal(HaCheck) {
-		log.Println("[Verify WithdrawProof] invalid params")
-		return false, ErrInvalidParams
-	}
 	// verify if the CRStar is correct
-	hNeg := curve.Neg(proof.H)
+	hNeg := curve.Neg(H)
 	CRCheck := curve.ScalarMul(hNeg, big.NewInt(int64(proof.BStar+proof.Fee)))
 	if !proof.CRStar.Equal(CRCheck) {
 		log.Println("[Verify WithdrawProof] invalid params")
@@ -134,31 +113,21 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	)
 	CLprimeInv = curve.Neg(proof.C.CL)
 	TDivCRprime = curve.Add(proof.T, curve.Neg(curve.Add(proof.C.CR, proof.CRStar)))
-	writePointIntoBuf(&buf, proof.G)
-	writePointIntoBuf(&buf, proof.H)
-	writePointIntoBuf(&buf, proof.Ha)
-	writePointIntoBuf(&buf, proof.Pa)
+	buf.Write(PaddingBigIntBytes(FixedCurve))
+	buf.Write(PaddingBigIntBytes(proof.ReceiveAddr))
 	writeEncIntoBuf(&buf, proof.C)
 	writePointIntoBuf(&buf, proof.CRStar)
 	writePointIntoBuf(&buf, proof.T)
 	writePointIntoBuf(&buf, proof.Pk)
 	writePointIntoBuf(&buf, proof.A_pk)
 	writePointIntoBuf(&buf, proof.A_TDivCRprime)
-	writePointIntoBuf(&buf, proof.A_Pa)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
 		log.Println("[Verify WithdrawProof] err: unable to compute hash:", err)
 		return false, err
 	}
-	// Verify Pa
-	l1 := curve.ScalarMul(proof.Ha, proof.Z_sk)
-	r1 := curve.Add(proof.A_Pa, curve.ScalarMul(proof.Pa, c))
-	if !l1.Equal(r1) {
-		log.Println("[Verify WithdrawProof] l1 != r1")
-		return false, nil
-	}
 	// Verify balance
-	balanceRes, err := verifyBalance(proof.G, proof.Pk, proof.A_pk, CLprimeInv, TDivCRprime, proof.A_TDivCRprime, c, proof.Z_sk, proof.Z_skInv, proof.Z_rbar)
+	balanceRes, err := verifyBalance(G, proof.Pk, proof.A_pk, CLprimeInv, TDivCRprime, proof.A_TDivCRprime, c, proof.Z_sk, proof.Z_skInv, proof.Z_rbar)
 	if err != nil {
 		log.Println("err info:", err)
 		return false, err

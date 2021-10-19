@@ -39,3 +39,7 @@ func Xor(cs *ConstraintSystem, a, b Variable, size int) Variable {
 	}
 	return cs.FromBinary(resBits...)
 }
+
+func FixedCurveParam(cs *ConstraintSystem) Variable {
+	return cs.Constant(FixedCurve)
+}

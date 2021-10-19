@@ -34,7 +34,7 @@ const (
 	RangeMaxBits          = ctrange.RangeMaxBits // max bits
 	PointSize             = curve.PointSize
 	RangeProofSize        = ctrange.RangeProofSize
-	WithdrawProofSize     = 15*PointSize + RangeProofSize + 2*EightBytes + AddressSize
+	WithdrawProofSize     = 10*PointSize + RangeProofSize + 2*EightBytes + AddressSize
 	OneMillion            = 1000000
 	OneThousand           = 1000
 	FourBytes             = 4
@@ -42,13 +42,11 @@ const (
 	TransferSubProofCount = 3
 	TransferSubProofSize  = 24*PointSize + RangeProofSize
 	TransferProofSize     = TransferSubProofCount*TransferSubProofSize + 6*PointSize + 1*EightBytes
-	SwapProofPartSize     = 28*PointSize + RangeProofSize + 3*8
 
-	SwapProofSize2 = 35*PointSize + 2*RangeProofSize + 7*EightBytes + 1*FourBytes
-	SwapProofSize  = 2 * SwapProofPartSize
-
+	SwapProofSize            = 35*PointSize + 2*RangeProofSize + 7*EightBytes + 1*FourBytes
 	AddLiquidityProofSize    = 32*PointSize + 5*EightBytes + 2*RangeProofSize
 	RemoveLiquidityProofSize = 33*PointSize + 6*EightBytes + 1*RangeProofSize
+	UnlockProofSize          = 3*PointSize + 2*FourBytes + 2*EightBytes
 
 	AddressSize = 20
 
@@ -61,6 +59,5 @@ var (
 	Order       = curve.Order
 	MaxRange    = 1099511627775 // 2^{40} - 1
 	MaxRangeNeg = -1099511627776
-	Zero        = big.NewInt(0)
-	PadSecret   = big.NewInt(0)
+	FixedCurve  = new(big.Int).SetBytes([]byte("ZecreyBN254"))
 )

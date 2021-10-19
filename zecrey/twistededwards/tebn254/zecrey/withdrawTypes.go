@@ -32,46 +32,40 @@ import (
 
 type WithdrawProof struct {
 	// commitments
-	A_pk, A_TDivCRprime, A_Pa *Point
+	A_pk, A_TDivCRprime *Point
 	// response
 	Z_rbar, Z_sk, Z_skInv *big.Int
 	// Commitment Range Proofs
 	BPrimeRangeProof *RangeProof
 	// common inputs
-	Pa              *Point
-	BStar           uint64
-	Fee             uint64
-	CRStar          *Point
-	C               *ElGamalEnc
-	G, H, Ha, T, Pk *Point
-	ReceiveAddr     *big.Int
+	BStar       uint64
+	Fee         uint64
+	CRStar      *Point
+	C           *ElGamalEnc
+	T, Pk       *Point
+	ReceiveAddr *big.Int
 }
 
 func (proof *WithdrawProof) Bytes() []byte {
 	res := make([]byte, WithdrawProofSize)
-	copy(res[:PointSize], proof.Pa.Marshal())
-	copy(res[PointSize:PointSize*2], proof.A_pk.Marshal())
-	copy(res[PointSize*2:PointSize*3], proof.A_TDivCRprime.Marshal())
-	copy(res[PointSize*3:PointSize*4], proof.A_Pa.Marshal())
-	copy(res[PointSize*4:PointSize*5], proof.Z_rbar.FillBytes(make([]byte, PointSize)))
-	copy(res[PointSize*5:PointSize*6], proof.Z_sk.FillBytes(make([]byte, PointSize)))
-	copy(res[PointSize*6:PointSize*7], proof.Z_skInv.FillBytes(make([]byte, PointSize)))
-	copy(res[PointSize*7:PointSize*8], proof.CRStar.Marshal())
+	copy(res[:PointSize], proof.A_pk.Marshal())
+	copy(res[PointSize:PointSize*2], proof.A_TDivCRprime.Marshal())
+	copy(res[PointSize*2:PointSize*3], proof.Z_rbar.FillBytes(make([]byte, PointSize)))
+	copy(res[PointSize*3:PointSize*4], proof.Z_sk.FillBytes(make([]byte, PointSize)))
+	copy(res[PointSize*4:PointSize*5], proof.Z_skInv.FillBytes(make([]byte, PointSize)))
+	copy(res[PointSize*5:PointSize*6], proof.CRStar.Marshal())
 	C := proof.C.Bytes()
-	copy(res[PointSize*8:PointSize*10], C[:])
-	copy(res[PointSize*10:PointSize*11], proof.G.Marshal())
-	copy(res[PointSize*11:PointSize*12], proof.H.Marshal())
-	copy(res[PointSize*12:PointSize*13], proof.Ha.Marshal())
-	copy(res[PointSize*13:PointSize*14], proof.T.Marshal())
-	copy(res[PointSize*14:PointSize*15], proof.Pk.Marshal())
+	copy(res[PointSize*6:PointSize*8], C[:])
+	copy(res[PointSize*8:PointSize*9], proof.T.Marshal())
+	copy(res[PointSize*9:PointSize*10], proof.Pk.Marshal())
 	BStarBytes := make([]byte, EightBytes)
 	FeeBytes := make([]byte, EightBytes)
 	binary.BigEndian.PutUint64(BStarBytes, proof.BStar)
 	binary.BigEndian.PutUint64(FeeBytes, proof.Fee)
-	copy(res[PointSize*15:PointSize*15+EightBytes], BStarBytes)
-	copy(res[PointSize*15+EightBytes:PointSize*15+EightBytes*2], FeeBytes)
-	copy(res[PointSize*15+EightBytes*2:PointSize*15+EightBytes*2+AddressSize], proof.ReceiveAddr.FillBytes(make([]byte, AddressSize)))
-	copy(res[PointSize*15+EightBytes*2+AddressSize:PointSize*15+EightBytes*2+AddressSize+RangeProofSize], proof.BPrimeRangeProof.Bytes())
+	copy(res[PointSize*10:PointSize*10+EightBytes], BStarBytes)
+	copy(res[PointSize*10+EightBytes:PointSize*10+EightBytes*2], FeeBytes)
+	copy(res[PointSize*10+EightBytes*2:PointSize*10+EightBytes*2+AddressSize], proof.ReceiveAddr.FillBytes(make([]byte, AddressSize)))
+	copy(res[PointSize*10+EightBytes*2+AddressSize:PointSize*10+EightBytes*2+AddressSize+RangeProofSize], proof.BPrimeRangeProof.Bytes())
 	return res
 }
 
@@ -85,57 +79,37 @@ func ParseWithdrawProofBytes(proofBytes []byte) (proof *WithdrawProof, err error
 		return nil, ErrInvalidWithdrawProofSize
 	}
 	proof = new(WithdrawProof)
-	proof.Pa, err = curve.FromBytes(proofBytes[:PointSize])
+	proof.A_pk, err = curve.FromBytes(proofBytes[:PointSize])
 	if err != nil {
 		return nil, err
 	}
-	proof.A_pk, err = curve.FromBytes(proofBytes[PointSize : PointSize*2])
+	proof.A_TDivCRprime, err = curve.FromBytes(proofBytes[PointSize : PointSize*2])
 	if err != nil {
 		return nil, err
 	}
-	proof.A_TDivCRprime, err = curve.FromBytes(proofBytes[PointSize*2 : PointSize*3])
+	proof.Z_rbar = new(big.Int).SetBytes(proofBytes[PointSize*2 : PointSize*3])
+	proof.Z_sk = new(big.Int).SetBytes(proofBytes[PointSize*3 : PointSize*4])
+	proof.Z_skInv = new(big.Int).SetBytes(proofBytes[PointSize*4 : PointSize*5])
+	proof.CRStar, err = curve.FromBytes(proofBytes[PointSize*5 : PointSize*6])
 	if err != nil {
 		return nil, err
 	}
-	proof.A_Pa, err = curve.FromBytes(proofBytes[PointSize*3 : PointSize*4])
+	proof.C, err = twistedElgamal.FromBytes(proofBytes[PointSize*6 : PointSize*8])
 	if err != nil {
 		return nil, err
 	}
-	proof.Z_rbar = new(big.Int).SetBytes(proofBytes[PointSize*4 : PointSize*5])
-	proof.Z_sk = new(big.Int).SetBytes(proofBytes[PointSize*5 : PointSize*6])
-	proof.Z_skInv = new(big.Int).SetBytes(proofBytes[PointSize*6 : PointSize*7])
-	proof.CRStar, err = curve.FromBytes(proofBytes[PointSize*7 : PointSize*8])
+	proof.T, err = curve.FromBytes(proofBytes[PointSize*8 : PointSize*9])
 	if err != nil {
 		return nil, err
 	}
-	proof.C, err = twistedElgamal.FromBytes(proofBytes[PointSize*8 : PointSize*10])
+	proof.Pk, err = curve.FromBytes(proofBytes[PointSize*9 : PointSize*10])
 	if err != nil {
 		return nil, err
 	}
-	proof.G, err = curve.FromBytes(proofBytes[PointSize*10 : PointSize*11])
-	if err != nil {
-		return nil, err
-	}
-	proof.H, err = curve.FromBytes(proofBytes[PointSize*11 : PointSize*12])
-	if err != nil {
-		return nil, err
-	}
-	proof.Ha, err = curve.FromBytes(proofBytes[PointSize*12 : PointSize*13])
-	if err != nil {
-		return nil, err
-	}
-	proof.T, err = curve.FromBytes(proofBytes[PointSize*13 : PointSize*14])
-	if err != nil {
-		return nil, err
-	}
-	proof.Pk, err = curve.FromBytes(proofBytes[PointSize*14 : PointSize*15])
-	if err != nil {
-		return nil, err
-	}
-	proof.BStar = binary.BigEndian.Uint64(proofBytes[PointSize*15 : PointSize*15+EightBytes])
-	proof.Fee = binary.BigEndian.Uint64(proofBytes[PointSize*15+EightBytes : PointSize*15+EightBytes*2])
-	proof.ReceiveAddr = new(big.Int).SetBytes(proofBytes[PointSize*15+EightBytes*2 : PointSize*15+EightBytes*2+AddressSize])
-	proof.BPrimeRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*15+EightBytes*2+AddressSize:])
+	proof.BStar = binary.BigEndian.Uint64(proofBytes[PointSize*10 : PointSize*10+EightBytes])
+	proof.Fee = binary.BigEndian.Uint64(proofBytes[PointSize*10+EightBytes : PointSize*10+EightBytes*2])
+	proof.ReceiveAddr = new(big.Int).SetBytes(proofBytes[PointSize*10+EightBytes*2 : PointSize*10+EightBytes*2+AddressSize])
+	proof.BPrimeRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*10+EightBytes*2+AddressSize:])
 	if err != nil {
 		return nil, err
 	}
@@ -161,14 +135,6 @@ type WithdrawProofRelation struct {
 	BPrimeRangeProof *RangeProof
 	// public key
 	Pk *Point
-	// Ha = h^{addr}
-	Ha *Point
-	// Pa = Ha^{sk}
-	Pa *Point
-	// generator 1
-	G *Point
-	// generator 2
-	H *Point
 	// token Id
 	TokenId uint32
 	// b^{\star}
@@ -230,16 +196,12 @@ func NewWithdrawRelation(
 	}
 	// compute Ha
 	addrInt = new(big.Int).SetBytes(addrBytes)
-	Ha := curve.ScalarMul(H, addrInt)
 	relation := &WithdrawProofRelation{
 		// ------------- public ---------------------
 		C:                C,
 		CRStar:           CRStar,
 		T:                new(Point).Set(BPrimeRangeProof.A),
 		Pk:               pk,
-		G:                G,
-		H:                H,
-		Ha:               Ha,
 		TokenId:          assetId,
 		Bstar:            bStar,
 		Fee:              fee,
@@ -250,7 +212,6 @@ func NewWithdrawRelation(
 		RBar:        rBar,
 		ReceiveAddr: addrInt,
 	}
-	relation.Pa = curve.ScalarMul(relation.Ha, sk)
 	return relation, nil
 }
 

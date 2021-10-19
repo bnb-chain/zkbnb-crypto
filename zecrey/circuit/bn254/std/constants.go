@@ -25,6 +25,7 @@ import (
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
+	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 type (
@@ -48,4 +49,5 @@ var (
 	BasePoint      = curve.G
 	ZeroInt        = uint64(0)
 	ZeroElgamalEnc = &ElgamalEnc{CL: BasePoint, CR: BasePoint}
+	FixedCurve     = zecrey.FixedCurve
 )
