@@ -35,12 +35,12 @@ type CtRangeProofConstraints struct {
 	Zs [RangeMaxBits]Variable
 	// commitment for b
 	A         Point
-	G, H      Point
+	H      Point
 	IsEnabled Variable
 }
 
 // define for range proof test
-func (circuit CtRangeProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit CtRangeProofConstraints) Define(curveID ecc.ID, api API) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
 	if err != nil {
@@ -48,49 +48,49 @@ func (circuit CtRangeProofConstraints) Define(curveID ecc.ID, cs *ConstraintSyst
 	}
 	// verify H
 	H := Point{
-		X: cs.Constant(HX),
-		Y: cs.Constant(HY),
+		X: api.Constant(HX),
+		Y: api.Constant(HY),
 	}
-	IsPointEqual(cs, circuit.IsEnabled, H, circuit.H)
+	IsPointEqual(api, circuit.IsEnabled, H, circuit.H)
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
 	if err != nil {
 		return err
 	}
-	VerifyCtRangeProof(cs, circuit, params, hFunc)
+	VerifyCtRangeProof(api, circuit, params, hFunc)
 	return nil
 }
 
-func VerifyCtRangeProof(cs *ConstraintSystem, proof CtRangeProofConstraints, params twistededwards.EdCurve, hFunc MiMC) {
+func VerifyCtRangeProof(api API, proof CtRangeProofConstraints, params twistededwards.EdCurve, hFunc MiMC) {
 	A := Point{
-		X: cs.Constant(0),
-		Y: cs.Constant(1),
+		X: api.Constant(0),
+		Y: api.Constant(1),
 	}
 	var current Point
-	current.Neg(cs, &proof.H)
+	current.Neg(api, &proof.H)
 	var A_As [RangeMaxBits]Point
 	for i := 0; i < RangeMaxBits; i++ {
 		var com, AihNegNeg Point
-		AihNegNeg.AddGeneric(cs, &proof.As[i], &current, params)
-		AihNegNeg.Neg(cs, &AihNegNeg)
-		AihNegNeg.ScalarMulNonFixedBase(cs, &AihNegNeg, proof.C, params)
-		com.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Zs[i], params)
-		com.AddGeneric(cs, &com, &AihNegNeg, params)
+		AihNegNeg.AddGeneric(api, &proof.As[i], &current, params)
+		AihNegNeg.Neg(api, &AihNegNeg)
+		AihNegNeg.ScalarMulNonFixedBase(api, &AihNegNeg, proof.C, params)
+		com.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Zs[i], params)
+		com.AddGeneric(api, &com, &AihNegNeg, params)
 		hFunc.Write(com.X, com.Y)
 		ci := hFunc.Sum()
-		A_As[i].ScalarMulNonFixedBase(cs, &proof.As[i], ci, params)
-		current.Double(cs, &current, params)
+		A_As[i].ScalarMulNonFixedBase(api, &proof.As[i], ci, params)
+		current.Double(api, &current, params)
 		hFunc.Reset()
 	}
 	for _, A_Ai := range A_As {
 		hFunc.Write(A_Ai.X, A_Ai.Y)
 	}
 	hatc := hFunc.Sum()
-	IsVariableEqual(cs, proof.IsEnabled, hatc, proof.C)
+	IsVariableEqual(api, proof.IsEnabled, hatc, proof.C)
 	for _, Ai := range proof.As {
-		A.AddGeneric(cs, &A, &Ai, params)
+		A.AddGeneric(api, &A, &Ai, params)
 	}
-	IsPointEqual(cs, proof.IsEnabled, A, proof.A)
+	IsPointEqual(api, proof.IsEnabled, A, proof.A)
 }
 
 /*
@@ -110,10 +110,10 @@ func SetCtRangeProofWitness(proof *ctrange.RangeProof, isEnabled bool) (witness 
 		log.Println("[SetCtRangeProofWitness] invalid proof")
 		return witness, errors.New("[SetCtRangeProofWitness] invalid proof")
 	}
-	witness.G, err = SetPointWitness(proof.G)
-	if err != nil {
-		return witness, err
-	}
+	//witness.G, err = SetPointWitness(proof.G)
+	//if err != nil {
+	//	return witness, err
+	//}
 	witness.H, err = SetPointWitness(proof.H)
 	if err != nil {
 		return witness, err

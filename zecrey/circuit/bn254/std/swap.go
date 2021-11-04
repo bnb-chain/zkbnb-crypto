@@ -73,7 +73,7 @@ type SwapProofConstraints struct {
 }
 
 // define tests for verifying the swap proof
-func (circuit SwapProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit SwapProofConstraints) Define(curveID ecc.ID, api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -82,52 +82,52 @@ func (circuit SwapProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem)
 	}
 	// verify H
 	H := Point{
-		X: cs.Constant(HX),
-		Y: cs.Constant(HY),
+		X: api.Constant(HX),
+		Y: api.Constant(HY),
 	}
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
 	if err != nil {
 		return err
 	}
-	VerifySwapProof(cs, circuit, params, hFunc, H)
+	VerifySwapProof(api, circuit, params, hFunc, H)
 
 	return nil
 }
 
 /*
 	VerifyWithdrawProof verify the withdraw proof in circuit
-	@cs: the constraint system
+	@api: the constraint system
 	@proof: withdraw proof circuit
 	@params: params for the curve tebn254
 */
 func VerifySwapProof(
-	cs *ConstraintSystem,
+	api API,
 	proof SwapProofConstraints,
 	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
 ) {
-	//IsPointEqual(cs, proof.IsEnabled, proof.ARangeProof.A, proof.T_uA)
-	//IsPointEqual(cs, proof.IsEnabled, proof.FeeRangeProof.A, proof.T_ufee)
+	//IsPointEqual(api, proof.IsEnabled, proof.ARangeProof.A, proof.T_uA)
+	//IsPointEqual(api, proof.IsEnabled, proof.FeeRangeProof.A, proof.T_ufee)
 	var (
 		C_uAPrime, C_ufeePrime       ElGamalEncConstraints
 		C_uAPrimeNeg, C_ufeePrimeNeg ElGamalEncConstraints
 		c                            Variable
 	)
 	// mimc
-	//ARangeFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
+	//ARangeFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, api)
 	//if err != nil {
 	//	return
 	//}
-	//feeRangeFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
+	//feeRangeFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, api)
 	//if err != nil {
 	//	return
 	//}
-	//VerifyCtRangeProof(cs, proof.ARangeProof, params, ARangeFunc)
-	//VerifyCtRangeProof(cs, proof.FeeRangeProof, params, feeRangeFunc)
+	//VerifyCtRangeProof(api, proof.ARangeProof, params, ARangeFunc)
+	//VerifyCtRangeProof(api, proof.FeeRangeProof, params, feeRangeFunc)
 	// challenge buf
-	hFunc.Write(FixedCurveParam(cs))
+	hFunc.Write(FixedCurveParam(api))
 	writePointIntoBuf(&hFunc, proof.Pk_u)
 	writePointIntoBuf(&hFunc, proof.Pk_Dao)
 	writeEncIntoBuf(&hFunc, proof.C_uA)
@@ -146,48 +146,48 @@ func VerifySwapProof(
 	// compute challenge
 	c = hFunc.Sum()
 	// TODO verify params
-	verifySwapParams(cs, proof, proof.IsEnabled, params, h)
+	verifySwapParams(api, proof, proof.IsEnabled, params, h)
 	// verify Enc
 	var l1, r1 Point
-	l1.ScalarMulNonFixedBase(cs, &proof.Pk_u, proof.Z_r_Deltafee, params)
-	r1.ScalarMulNonFixedBase(cs, &proof.C_ufee_Delta.CL, c, params)
-	r1.AddGeneric(cs, &r1, &proof.A_C_ufeeL_Delta, params)
-	IsPointEqual(cs, proof.IsEnabled, l1, r1)
+	l1.ScalarMulNonFixedBase(api, &proof.Pk_u, proof.Z_r_Deltafee, params)
+	r1.ScalarMulNonFixedBase(api, &proof.C_ufee_Delta.CL, c, params)
+	r1.AddGeneric(api, &r1, &proof.A_C_ufeeL_Delta, params)
+	IsPointEqual(api, proof.IsEnabled, l1, r1)
 	// verify ownership
 	// l2,r2
 	var l2, r2 Point
-	l2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Z_sk_u, params)
-	r2.ScalarMulNonFixedBase(cs, &proof.Pk_u, c, params)
-	r2.AddGeneric(cs, &r2, &proof.A_pk_u, params)
-	IsPointEqual(cs, proof.IsEnabled, l2, r2)
-	C_uAPrime = EncSub(cs, proof.C_uA, proof.C_uA_Delta, params)
-	assetDelta := cs.Sub(proof.AssetAId, proof.AssetFeeId)
-	isSameAsset := cs.IsZero(assetDelta)
-	C_uAPrime2 := EncSub(cs, C_uAPrime, proof.C_ufee_Delta, params)
-	C_uAPrime = SelectElgamal(cs, isSameAsset, C_uAPrime2, C_uAPrime)
-	C_ufeePrime = EncSub(cs, proof.C_ufee, proof.C_ufee_Delta, params)
-	C_ufeePrime = SelectElgamal(cs, isSameAsset, C_uAPrime, C_ufeePrime)
-	C_uAPrimeNeg = NegElgamal(cs, C_uAPrime)
-	C_ufeePrimeNeg = NegElgamal(cs, C_ufeePrime)
+	l2.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_sk_u, params)
+	r2.ScalarMulNonFixedBase(api, &proof.Pk_u, c, params)
+	r2.AddGeneric(api, &r2, &proof.A_pk_u, params)
+	IsPointEqual(api, proof.IsEnabled, l2, r2)
+	C_uAPrime = EncSub(api, proof.C_uA, proof.C_uA_Delta, params)
+	assetDelta := api.Sub(proof.AssetAId, proof.AssetFeeId)
+	isSameAsset := api.IsZero(assetDelta)
+	C_uAPrime2 := EncSub(api, C_uAPrime, proof.C_ufee_Delta, params)
+	C_uAPrime = SelectElgamal(api, isSameAsset, C_uAPrime2, C_uAPrime)
+	C_ufeePrime = EncSub(api, proof.C_ufee, proof.C_ufee_Delta, params)
+	C_ufeePrime = SelectElgamal(api, isSameAsset, C_uAPrime, C_ufeePrime)
+	C_uAPrimeNeg = NegElgamal(api, C_uAPrime)
+	C_ufeePrimeNeg = NegElgamal(api, C_ufeePrime)
 	// l3,r3
 	var g_z_bar_r_A, l3, r3 Point
-	g_z_bar_r_A.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Z_bar_r_A, params)
-	l3.ScalarMulNonFixedBase(cs, &C_uAPrimeNeg.CL, proof.Z_sk_uInv, params)
-	l3.AddGeneric(cs, &l3, &g_z_bar_r_A, params)
-	r3.AddGeneric(cs, &proof.T_uA, &C_uAPrimeNeg.CR, params)
-	r3.ScalarMulNonFixedBase(cs, &r3, c, params)
-	r3.AddGeneric(cs, &r3, &proof.A_T_uAC_uARPrimeInv, params)
-	IsPointEqual(cs, proof.IsEnabled, l3, r3)
+	g_z_bar_r_A.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_bar_r_A, params)
+	l3.ScalarMulNonFixedBase(api, &C_uAPrimeNeg.CL, proof.Z_sk_uInv, params)
+	l3.AddGeneric(api, &l3, &g_z_bar_r_A, params)
+	r3.AddGeneric(api, &proof.T_uA, &C_uAPrimeNeg.CR, params)
+	r3.ScalarMulNonFixedBase(api, &r3, c, params)
+	r3.AddGeneric(api, &r3, &proof.A_T_uAC_uARPrimeInv, params)
+	IsPointEqual(api, proof.IsEnabled, l3, r3)
 
 	// l4,r4
 	var g_z_bar_r_fee, l4, r4 Point
-	g_z_bar_r_fee.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Z_bar_r_fee, params)
-	l4.ScalarMulNonFixedBase(cs, &C_ufeePrimeNeg.CL, proof.Z_sk_uInv, params)
-	l4.AddGeneric(cs, &l4, &g_z_bar_r_fee, params)
-	r4.AddGeneric(cs, &proof.T_ufee, &C_ufeePrimeNeg.CR, params)
-	r4.ScalarMulNonFixedBase(cs, &r4, c, params)
-	r4.AddGeneric(cs, &r4, &proof.A_T_ufeeC_ufeeRPrimeInv, params)
-	IsPointEqual(cs, proof.IsEnabled, l4, r4)
+	g_z_bar_r_fee.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_bar_r_fee, params)
+	l4.ScalarMulNonFixedBase(api, &C_ufeePrimeNeg.CL, proof.Z_sk_uInv, params)
+	l4.AddGeneric(api, &l4, &g_z_bar_r_fee, params)
+	r4.AddGeneric(api, &proof.T_ufee, &C_ufeePrimeNeg.CR, params)
+	r4.ScalarMulNonFixedBase(api, &r4, c, params)
+	r4.AddGeneric(api, &r4, &proof.A_T_ufeeC_ufeeRPrimeInv, params)
+	IsPointEqual(api, proof.IsEnabled, l4, r4)
 }
 
 func SetEmptySwapProofWitness() (witness SwapProofConstraints) {
@@ -379,23 +379,23 @@ func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapP
 }
 
 func verifySwapParams(
-	cs *ConstraintSystem,
+	api API,
 	proof SwapProofConstraints,
 	isEnabled Variable,
 	params twistededwards.EdCurve,
 	h Point,
 ) {
 	var C_uA_Delta, C_uB_Delta, LC_DaoA_Delta, LC_DaoB_Delta ElGamalEncConstraints
-	C_uA_Delta = Enc(cs, h, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_u, params)
-	C_uB_Delta = Enc(cs, h, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_u, params)
-	LC_DaoA_Delta.CL.ScalarMulNonFixedBase(cs, &proof.Pk_Dao, proof.R_DeltaA, params)
+	C_uA_Delta = Enc(api, h, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_u, params)
+	C_uB_Delta = Enc(api, h, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_u, params)
+	LC_DaoA_Delta.CL.ScalarMulNonFixedBase(api, &proof.Pk_Dao, proof.R_DeltaA, params)
 	LC_DaoA_Delta.CR = C_uA_Delta.CR
-	LC_DaoB_Delta.CL.ScalarMulNonFixedBase(cs, &proof.Pk_Dao, proof.R_DeltaB, params)
+	LC_DaoB_Delta.CL.ScalarMulNonFixedBase(api, &proof.Pk_Dao, proof.R_DeltaB, params)
 	LC_DaoB_Delta.CR = C_uB_Delta.CR
-	IsElGamalEncEqual(cs, isEnabled, C_uA_Delta, proof.C_uA_Delta)
-	IsElGamalEncEqual(cs, isEnabled, C_uB_Delta, proof.C_uB_Delta)
-	IsElGamalEncEqual(cs, isEnabled, LC_DaoA_Delta, proof.LC_DaoA_Delta)
-	IsElGamalEncEqual(cs, isEnabled, LC_DaoB_Delta, proof.LC_DaoB_Delta)
+	IsElGamalEncEqual(api, isEnabled, C_uA_Delta, proof.C_uA_Delta)
+	IsElGamalEncEqual(api, isEnabled, C_uB_Delta, proof.C_uB_Delta)
+	IsElGamalEncEqual(api, isEnabled, LC_DaoA_Delta, proof.LC_DaoA_Delta)
+	IsElGamalEncEqual(api, isEnabled, LC_DaoB_Delta, proof.LC_DaoB_Delta)
 	// TODO verify AMM info & DAO balance info
-	cs.AssertIsLessOrEqual(proof.B_B_Delta, proof.B_DaoB)
+	api.AssertIsLessOrEqual(proof.B_B_Delta, proof.B_DaoB)
 }

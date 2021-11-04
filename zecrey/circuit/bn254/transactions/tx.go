@@ -20,6 +20,7 @@ package transactions
 import (
 	"errors"
 	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
 	"zecrey-crypto/hash/bn254/zmimc"
@@ -43,7 +44,7 @@ type TxConstraints struct {
 	RangeProofs [MaxRangeProofCount]CtRangeProofConstraints
 }
 
-func (circuit TxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit TxConstraints) Define(curveID ecc.ID, api frontend.API) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
 	if err != nil {
@@ -51,45 +52,45 @@ func (circuit TxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error 
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
 	if err != nil {
 		return err
 	}
 
 	// TODO verify H: need to optimize
 	H := Point{
-		X: cs.Constant(std.HX),
-		Y: cs.Constant(std.HY),
+		X: api.Constant(std.HX),
+		Y: api.Constant(std.HY),
 	}
-	VerifyTransaction(cs, circuit, params, hFunc, H)
+	VerifyTransaction(api, circuit, params, hFunc, H)
 
 	return nil
 }
 
 func VerifyTransaction(
-	cs *ConstraintSystem,
+	api API,
 	tx TxConstraints,
 	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
 ) {
 	// txType constants
-	txTypeTransfer := cs.Constant(uint64(TxTypeTransfer))
-	txTypeSwap := cs.Constant(uint64(TxTypeSwap))
-	txTypeAddLiquidity := cs.Constant(uint64(TxTypeAddLiquidity))
-	txTypeRemoveLiquidity := cs.Constant(uint64(TxTypeRemoveLiquidity))
-	txTypeWithdraw := cs.Constant(uint64(TxTypeWithdraw))
-	tx.TransferProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeTransfer))
-	tx.SwapProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeSwap))
-	tx.AddLiquidityProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeAddLiquidity))
-	tx.RemoveLiquidityProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeRemoveLiquidity))
-	tx.WithdrawProof.IsEnabled = cs.IsZero(cs.Sub(tx.TxType, txTypeWithdraw))
+	txTypeTransfer := api.Constant(uint64(TxTypeTransfer))
+	txTypeSwap := api.Constant(uint64(TxTypeSwap))
+	txTypeAddLiquidity := api.Constant(uint64(TxTypeAddLiquidity))
+	txTypeRemoveLiquidity := api.Constant(uint64(TxTypeRemoveLiquidity))
+	txTypeWithdraw := api.Constant(uint64(TxTypeWithdraw))
+	tx.TransferProof.IsEnabled = api.IsZero(api.Sub(tx.TxType, txTypeTransfer))
+	tx.SwapProof.IsEnabled = api.IsZero(api.Sub(tx.TxType, txTypeSwap))
+	tx.AddLiquidityProof.IsEnabled = api.IsZero(api.Sub(tx.TxType, txTypeAddLiquidity))
+	tx.RemoveLiquidityProof.IsEnabled = api.IsZero(api.Sub(tx.TxType, txTypeRemoveLiquidity))
+	tx.WithdrawProof.IsEnabled = api.IsZero(api.Sub(tx.TxType, txTypeWithdraw))
 
 	// verify range proofs
 	for i, rangeProof := range tx.RangeProofs {
 		// set range proof is true
-		rangeProof.IsEnabled = cs.Constant(1)
-		std.VerifyCtRangeProof(cs, rangeProof, params, hFunc)
+		rangeProof.IsEnabled = api.Constant(1)
+		std.VerifyCtRangeProof(api, rangeProof, params, hFunc)
 		hFunc.Reset()
 		tx.TransferProof.SubProofs[i].Y = rangeProof.A
 	}
@@ -104,21 +105,20 @@ func VerifyTransaction(
 	tx.RemoveLiquidityProof.T_uLP = tx.RangeProofs[0].A
 	// withdraw proof
 	tx.WithdrawProof.T = tx.RangeProofs[0].A
-
 	// verify transfer proof
-	std.VerifyTransferProof(cs, tx.TransferProof, params, hFunc, h)
+	std.VerifyTransferProof(api, tx.TransferProof, params, hFunc, h)
 	hFunc.Reset()
 	// verify swap proof
-	std.VerifySwapProof(cs, tx.SwapProof, params, hFunc, h)
+	std.VerifySwapProof(api, tx.SwapProof, params, hFunc, h)
 	hFunc.Reset()
 	// verify add liquidity proof
-	std.VerifyAddLiquidityProof(cs, tx.AddLiquidityProof, params, hFunc, h)
+	std.VerifyAddLiquidityProof(api, tx.AddLiquidityProof, params, hFunc, h)
 	hFunc.Reset()
 	// verify remove liquidity proof
-	std.VerifyRemoveLiquidityProof(cs, tx.RemoveLiquidityProof, params, hFunc, h)
+	std.VerifyRemoveLiquidityProof(api, tx.RemoveLiquidityProof, params, hFunc, h)
 	hFunc.Reset()
 	// verify withdraw proof
-	std.VerifyWithdrawProof(cs, tx.WithdrawProof, params, hFunc, h)
+	std.VerifyWithdrawProof(api, tx.WithdrawProof, params, hFunc, h)
 	hFunc.Reset()
 
 }

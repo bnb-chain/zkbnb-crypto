@@ -32,7 +32,7 @@ import (
 func TestVerify(t *testing.T) {
 	b := int64(5)
 	elapse := time.Now()
-	_,proof, err := Prove(b, curve.G, curve.H)
+	_, proof, err := Prove(b, curve.G, curve.H)
 	if err != nil {
 		t.Fatal(err)
 	}

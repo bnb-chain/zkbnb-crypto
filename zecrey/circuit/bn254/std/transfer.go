@@ -63,7 +63,7 @@ type TransferSubProofConstraints struct {
 }
 
 // define for testing transfer proof
-func (circuit TransferProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit TransferProofConstraints) Define(curveID ecc.ID, api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -72,34 +72,34 @@ func (circuit TransferProofConstraints) Define(curveID ecc.ID, cs *ConstraintSys
 	}
 	// verify H
 	H := Point{
-		X: cs.Constant(HX),
-		Y: cs.Constant(HY),
+		X: api.Constant(HX),
+		Y: api.Constant(HY),
 	}
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
 	if err != nil {
 		return err
 	}
-	VerifyTransferProof(cs, circuit, params, hFunc, H)
+	VerifyTransferProof(api, circuit, params, hFunc, H)
 	return nil
 }
 
 /*
 	VerifyTransferProof verifys the privacy transfer proof
-	@cs: the constraint system
+	@api: the constraint system
 	@proof: the transfer proof
 	@params: params for the curve tebn254
 */
 func VerifyTransferProof(
-	cs *ConstraintSystem,
+	api API,
 	proof TransferProofConstraints,
 	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
 ) {
-	CR_sum := zeroPoint(cs)
+	CR_sum := zeroPoint(api)
 	// write public statements into buf
-	hFunc.Write(FixedCurveParam(cs))
+	hFunc.Write(FixedCurveParam(api))
 	// write into buf
 	writePointIntoBuf(&hFunc, proof.A_sum)
 	for _, subProof := range proof.SubProofs {
@@ -112,36 +112,36 @@ func VerifyTransferProof(
 		// write into buf
 		writePointIntoBuf(&hFunc, subProof.A_CLDelta)
 		writePointIntoBuf(&hFunc, subProof.A_CRDelta)
-		CR_sum.AddGeneric(cs, &CR_sum, &subProof.CDelta.CR, params)
+		CR_sum.AddGeneric(api, &CR_sum, &subProof.CDelta.CR, params)
 		// verify range proof params
-		//IsPointEqual(cs, proof.IsEnabled, subProof.BStarRangeProof.A, subProof.Y)
+		//IsPointEqual(api, proof.IsEnabled, subProof.BStarRangeProof.A, subProof.Y)
 		// verify range proof
-		//rangeHFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
+		//rangeHFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, api)
 		//if err != nil {
 		//	log.Println("[VerifyTransferProof] err hash function:", err)
 		//	return
 		//}
-		//VerifyCtRangeProof(cs, subProof.BStarRangeProof, params, rangeHFunc)
+		//VerifyCtRangeProof(api, subProof.BStarRangeProof, params, rangeHFunc)
 	}
 	c := hFunc.Sum()
-	// need to check XOR, cs.XOR bug exists
-	ccheck := Xor(cs, proof.C1, proof.C2, 256)
-	IsVariableEqual(cs, proof.IsEnabled, c, ccheck)
-	//cCheck := cs.Xor(proof.C1, proof.C2)
-	//IsVariableEqual(cs, proof.IsEnabled, c, cCheck)
+	// need to check XOR, api.XOR bug exists
+	ccheck := Xor(api, proof.C1, proof.C2, 256)
+	IsVariableEqual(api, proof.IsEnabled, c, ccheck)
+	//cCheck := api.Xor(proof.C1, proof.C2)
+	//IsVariableEqual(api, proof.IsEnabled, c, cCheck)
 	// verify sum proof
 	var lSum, rSum Point
-	lSum.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Z_sum, params)
-	rSum.ScalarMulNonFixedBase(cs, &h, proof.Fee, params)
-	rSum.AddGeneric(cs, &CR_sum, &rSum, params)
-	rSum.ScalarMulNonFixedBase(cs, &rSum, c, params)
-	rSum.AddGeneric(cs, &proof.A_sum, &rSum, params)
-	IsPointEqual(cs, proof.IsEnabled, lSum, rSum)
+	lSum.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_sum, params)
+	rSum.ScalarMulNonFixedBase(api, &h, proof.Fee, params)
+	rSum.AddGeneric(api, &CR_sum, &rSum, params)
+	rSum.ScalarMulNonFixedBase(api, &rSum, c, params)
+	rSum.AddGeneric(api, &proof.A_sum, &rSum, params)
+	IsPointEqual(api, proof.IsEnabled, lSum, rSum)
 	// Verify sub proofs
 	for _, subProof := range proof.SubProofs {
 		// Verify valid Enc
 		verifyValidEnc(
-			cs,
+			api,
 			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, h, subProof.CDelta.CR, subProof.A_CRDelta,
 			c,
 			subProof.Z_r, subProof.Z_bDelta,
@@ -153,54 +153,54 @@ func VerifyTransferProof(
 			CPrime, CPrimeNeg ElGamalEncConstraints
 		)
 		// set CPrime & CPrimeNeg
-		CPrime = EncAdd(cs, subProof.C, subProof.CDelta, params)
-		CPrimeNeg = NegElgamal(cs, CPrime)
+		CPrime = EncAdd(api, subProof.C, subProof.CDelta, params)
+		CPrimeNeg = NegElgamal(api, CPrime)
 		// verify Y_1 = g^{r_i^{\star}} h^{b_i^{\Delta}}
 		var l1, h_z_bstar1, r1 Point
-		l1.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.Z_rstar1, params)
-		h_z_bstar1.ScalarMulNonFixedBase(cs, &h, subProof.Z_bstar1, params)
-		l1.AddGeneric(cs, &l1, &h_z_bstar1, params)
-		r1.ScalarMulNonFixedBase(cs, &subProof.Y, proof.C1, params)
-		r1.AddGeneric(cs, &r1, &subProof.A_Y1, params)
-		IsPointEqual(cs, proof.IsEnabled, l1, r1)
+		l1.ScalarMulFixedBase(api, params.BaseX, params.BaseY, subProof.Z_rstar1, params)
+		h_z_bstar1.ScalarMulNonFixedBase(api, &h, subProof.Z_bstar1, params)
+		l1.AddGeneric(api, &l1, &h_z_bstar1, params)
+		r1.ScalarMulNonFixedBase(api, &subProof.Y, proof.C1, params)
+		r1.AddGeneric(api, &r1, &subProof.A_Y1, params)
+		IsPointEqual(api, proof.IsEnabled, l1, r1)
 		// Verify ownership
 		var h_z_bprime, l2, h_z_bstar2, r2 Point
-		h_z_bprime.ScalarMulNonFixedBase(cs, &h, subProof.Z_bprime, params)
+		h_z_bprime.ScalarMulNonFixedBase(api, &h, subProof.Z_bprime, params)
 		// Y_2 = g^{r_{i}^{\star}} h^{b_i'}
-		l2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.Z_rstar2, params)
-		h_z_bstar2.ScalarMulNonFixedBase(cs, &h, subProof.Z_bstar2, params)
-		l2.AddGeneric(cs, &l2, &h_z_bstar2, params)
-		r2.ScalarMulNonFixedBase(cs, &subProof.Y, proof.C2, params)
-		r2.AddGeneric(cs, &r2, &subProof.A_Y2, params)
-		IsPointEqual(cs, proof.IsEnabled, l2, r2)
+		l2.ScalarMulFixedBase(api, params.BaseX, params.BaseY, subProof.Z_rstar2, params)
+		h_z_bstar2.ScalarMulNonFixedBase(api, &h, subProof.Z_bstar2, params)
+		l2.AddGeneric(api, &l2, &h_z_bstar2, params)
+		r2.ScalarMulNonFixedBase(api, &subProof.Y, proof.C2, params)
+		r2.AddGeneric(api, &r2, &subProof.A_Y2, params)
+		IsPointEqual(api, proof.IsEnabled, l2, r2)
 		// T = g^{\bar{r}_i} h^{b'}
 		var g_z_rbar, l3, r3 Point
-		g_z_rbar.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.Z_rbar, params)
-		l3.AddGeneric(cs, &g_z_rbar, &h_z_bprime, params)
-		r3.ScalarMulNonFixedBase(cs, &subProof.T, proof.C2, params)
-		r3.AddGeneric(cs, &r3, &subProof.A_T, params)
-		IsPointEqual(cs, proof.IsEnabled, l3, r3)
+		g_z_rbar.ScalarMulFixedBase(api, params.BaseX, params.BaseY, subProof.Z_rbar, params)
+		l3.AddGeneric(api, &g_z_rbar, &h_z_bprime, params)
+		r3.ScalarMulNonFixedBase(api, &subProof.T, proof.C2, params)
+		r3.AddGeneric(api, &r3, &subProof.A_T, params)
+		IsPointEqual(api, proof.IsEnabled, l3, r3)
 		// pk = g^{sk}
 		var l4, r4 Point
-		l4.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, subProof.Z_sk, params)
-		r4.ScalarMulNonFixedBase(cs, &subProof.Pk, proof.C2, params)
-		r4.AddGeneric(cs, &r4, &subProof.A_pk, params)
-		IsPointEqual(cs, proof.IsEnabled, l4, r4)
+		l4.ScalarMulFixedBase(api, params.BaseX, params.BaseY, subProof.Z_sk, params)
+		r4.ScalarMulNonFixedBase(api, &subProof.Pk, proof.C2, params)
+		r4.AddGeneric(api, &r4, &subProof.A_pk, params)
+		IsPointEqual(api, proof.IsEnabled, l4, r4)
 		// T_i = (C_R')/(C_L')^{sk^{-1}} g^{\bar{r}_i}
 		var l5, r5 Point
-		l5.ScalarMulNonFixedBase(cs, &CPrimeNeg.CL, subProof.Z_skInv, params)
-		l5.AddGeneric(cs, &l5, &g_z_rbar, params)
-		r5.AddGeneric(cs, &subProof.T, &CPrimeNeg.CR, params)
-		r5.ScalarMulNonFixedBase(cs, &r5, proof.C2, params)
-		r5.AddGeneric(cs, &r5, &subProof.A_TDivCPrime, params)
-		IsPointEqual(cs, proof.IsEnabled, l5, r5)
+		l5.ScalarMulNonFixedBase(api, &CPrimeNeg.CL, subProof.Z_skInv, params)
+		l5.AddGeneric(api, &l5, &g_z_rbar, params)
+		r5.AddGeneric(api, &subProof.T, &CPrimeNeg.CR, params)
+		r5.ScalarMulNonFixedBase(api, &r5, proof.C2, params)
+		r5.AddGeneric(api, &r5, &subProof.A_TDivCPrime, params)
+		IsPointEqual(api, proof.IsEnabled, l5, r5)
 	}
 	return
 }
 
 /*
 	verifyValidEnc verifys the encryption
-	@cs: the constraint system
+	@api: the constraint system
 	@pk: the public key for the encryption
 	@C_LDelta,C_RDelta: parts for the encryption
 	@A_C_LDelta,A_CRDelta: random commitments
@@ -210,7 +210,7 @@ func VerifyTransferProof(
 	@params: params for the curve tebn254
 */
 func verifyValidEnc(
-	cs *ConstraintSystem,
+	api API,
 	pk, C_LDelta, A_CLDelta, h, C_RDelta, A_CRDelta Point,
 	c Variable,
 	z_r, z_bDelta Variable,
@@ -219,19 +219,19 @@ func verifyValidEnc(
 ) {
 	// pk^{z_r} == A_{C_L^{\Delta}} (C_L^{\Delta})^c
 	var l1, r1 Point
-	l1.ScalarMulNonFixedBase(cs, &pk, z_r, params)
-	r1.ScalarMulNonFixedBase(cs, &C_LDelta, c, params)
-	r1.AddGeneric(cs, &A_CLDelta, &r1, params)
-	IsPointEqual(cs, isEnabled, l1, r1)
+	l1.ScalarMulNonFixedBase(api, &pk, z_r, params)
+	r1.ScalarMulNonFixedBase(api, &C_LDelta, c, params)
+	r1.AddGeneric(api, &A_CLDelta, &r1, params)
+	IsPointEqual(api, isEnabled, l1, r1)
 
 	// g^{z_r} h^{z_b^{\Delta}} == A_{C_R^{\Delta}} (C_R^{\Delta})^c
 	var gzr, l2, r2 Point
-	gzr.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, z_r, params)
-	l2.ScalarMulNonFixedBase(cs, &h, z_bDelta, params)
-	l2.AddGeneric(cs, &gzr, &l2, params)
-	r2.ScalarMulNonFixedBase(cs, &C_RDelta, c, params)
-	r2.AddGeneric(cs, &A_CRDelta, &r2, params)
-	IsPointEqual(cs, isEnabled, l2, r2)
+	gzr.ScalarMulFixedBase(api, params.BaseX, params.BaseY, z_r, params)
+	l2.ScalarMulNonFixedBase(api, &h, z_bDelta, params)
+	l2.AddGeneric(api, &gzr, &l2, params)
+	r2.ScalarMulNonFixedBase(api, &C_RDelta, c, params)
+	r2.AddGeneric(api, &A_CRDelta, &r2, params)
+	IsPointEqual(api, isEnabled, l2, r2)
 }
 
 func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {

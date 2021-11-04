@@ -56,7 +56,7 @@ type RemoveLiquidityProofConstraints struct {
 }
 
 // define tests for verifying the swap proof
-func (circuit RemoveLiquidityProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit RemoveLiquidityProofConstraints) Define(curveID ecc.ID, api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -65,39 +65,39 @@ func (circuit RemoveLiquidityProofConstraints) Define(curveID ecc.ID, cs *Constr
 	}
 	// verify H
 	H := Point{
-		X: cs.Constant(HX),
-		Y: cs.Constant(HY),
+		X: api.Constant(HX),
+		Y: api.Constant(HY),
 	}
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
 	if err != nil {
 		return err
 	}
-	VerifyRemoveLiquidityProof(cs, circuit, params, hFunc, H)
+	VerifyRemoveLiquidityProof(api, circuit, params, hFunc, H)
 
 	return nil
 }
 
 func VerifyRemoveLiquidityProof(
-	cs *ConstraintSystem,
+	api API,
 	proof RemoveLiquidityProofConstraints,
 	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
 ) {
-	//IsPointEqual(cs, proof.IsEnabled, proof.T_uLP, proof.LPRangeProof.A)
+	//IsPointEqual(api, proof.IsEnabled, proof.T_uLP, proof.LPRangeProof.A)
 	var (
 		C_uLPPrime    ElGamalEncConstraints
 		C_uLPPrimeNeg ElGamalEncConstraints
 		c             Variable
 	)
 	// mimc
-	//LPhFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
+	//LPhFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, api)
 	//if err != nil {
 	//	return
 	//}
-	//VerifyCtRangeProof(cs, proof.LPRangeProof, params, LPhFunc)
-	hFunc.Write(FixedCurveParam(cs))
+	//VerifyCtRangeProof(api, proof.LPRangeProof, params, LPhFunc)
+	hFunc.Write(FixedCurveParam(api))
 	writePointIntoBuf(&hFunc, proof.Pk_u)
 	writePointIntoBuf(&hFunc, proof.Pk_Dao)
 	writeEncIntoBuf(&hFunc, proof.C_u_LP)
@@ -114,56 +114,56 @@ func VerifyRemoveLiquidityProof(
 	// compute challenge
 	c = hFunc.Sum()
 	// verify params
-	verifyRemoveLiquidityParams(cs, proof, params, h)
+	verifyRemoveLiquidityParams(api, proof, params, h)
 	// verify Enc
 	var l1, r1 Point
-	l1.ScalarMulNonFixedBase(cs, &proof.Pk_u, proof.Z_rDelta_LP, params)
-	r1.ScalarMulNonFixedBase(cs, &proof.C_u_LP_Delta.CL, c, params)
-	r1.AddGeneric(cs, &r1, &proof.A_CLPL_Delta, params)
-	IsPointEqual(cs, proof.IsEnabled, l1, r1)
+	l1.ScalarMulNonFixedBase(api, &proof.Pk_u, proof.Z_rDelta_LP, params)
+	r1.ScalarMulNonFixedBase(api, &proof.C_u_LP_Delta.CL, c, params)
+	r1.AddGeneric(api, &r1, &proof.A_CLPL_Delta, params)
+	IsPointEqual(api, proof.IsEnabled, l1, r1)
 	// verify ownership
 	var l2, r2 Point
-	l2.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Z_sk_u, params)
-	r2.ScalarMulNonFixedBase(cs, &proof.Pk_u, c, params)
-	r2.AddGeneric(cs, &r2, &proof.A_pk_u, params)
-	IsPointEqual(cs, proof.IsEnabled, l2, r2)
+	l2.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_sk_u, params)
+	r2.ScalarMulNonFixedBase(api, &proof.Pk_u, c, params)
+	r2.AddGeneric(api, &r2, &proof.A_pk_u, params)
+	IsPointEqual(api, proof.IsEnabled, l2, r2)
 
-	C_uLPPrime = EncSub(cs, proof.C_u_LP, proof.C_u_LP_Delta, params)
-	C_uLPPrimeNeg = NegElgamal(cs, C_uLPPrime)
+	C_uLPPrime = EncSub(api, proof.C_u_LP, proof.C_u_LP_Delta, params)
+	C_uLPPrimeNeg = NegElgamal(api, C_uLPPrime)
 	var g_z_bar_r_LP, l3, r3 Point
-	g_z_bar_r_LP.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Z_bar_r_LP, params)
-	l3.ScalarMulNonFixedBase(cs, &C_uLPPrimeNeg.CL, proof.Z_sk_uInv, params)
-	l3.AddGeneric(cs, &l3, &g_z_bar_r_LP, params)
-	r3.AddGeneric(cs, &proof.T_uLP, &C_uLPPrimeNeg.CR, params)
-	r3.ScalarMulNonFixedBase(cs, &r3, c, params)
-	r3.AddGeneric(cs, &r3, &proof.A_T_uLPC_uLPRPrimeInv, params)
-	IsPointEqual(cs, proof.IsEnabled, l3, r3)
+	g_z_bar_r_LP.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_bar_r_LP, params)
+	l3.ScalarMulNonFixedBase(api, &C_uLPPrimeNeg.CL, proof.Z_sk_uInv, params)
+	l3.AddGeneric(api, &l3, &g_z_bar_r_LP, params)
+	r3.AddGeneric(api, &proof.T_uLP, &C_uLPPrimeNeg.CR, params)
+	r3.ScalarMulNonFixedBase(api, &r3, c, params)
+	r3.AddGeneric(api, &r3, &proof.A_T_uLPC_uLPRPrimeInv, params)
+	IsPointEqual(api, proof.IsEnabled, l3, r3)
 }
 
 func verifyRemoveLiquidityParams(
-	cs *ConstraintSystem,
+	api API,
 	proof RemoveLiquidityProofConstraints,
 	params twistededwards.EdCurve,
 	h Point,
 ) {
 	var C_uA_Delta, C_uB_Delta, LC_DaoA_Delta, LC_DaoB_Delta ElGamalEncConstraints
-	C_uA_Delta = Enc(cs, h, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_u, params)
-	C_uB_Delta = Enc(cs, h, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_u, params)
-	LC_DaoA_Delta.CL.ScalarMulNonFixedBase(cs, &proof.Pk_Dao, proof.R_DeltaA, params)
+	C_uA_Delta = Enc(api, h, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_u, params)
+	C_uB_Delta = Enc(api, h, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_u, params)
+	LC_DaoA_Delta.CL.ScalarMulNonFixedBase(api, &proof.Pk_Dao, proof.R_DeltaA, params)
 	LC_DaoA_Delta.CR = C_uA_Delta.CR
-	LC_DaoB_Delta.CL.ScalarMulNonFixedBase(cs, &proof.Pk_Dao, proof.R_DeltaB, params)
+	LC_DaoB_Delta.CL.ScalarMulNonFixedBase(api, &proof.Pk_Dao, proof.R_DeltaB, params)
 	LC_DaoB_Delta.CR = C_uB_Delta.CR
-	IsElGamalEncEqual(cs, proof.IsEnabled, C_uA_Delta, proof.C_uA_Delta)
-	IsElGamalEncEqual(cs, proof.IsEnabled, C_uB_Delta, proof.C_uB_Delta)
-	IsElGamalEncEqual(cs, proof.IsEnabled, LC_DaoA_Delta, proof.LC_DaoA_Delta)
-	IsElGamalEncEqual(cs, proof.IsEnabled, LC_DaoB_Delta, proof.LC_DaoB_Delta)
+	IsElGamalEncEqual(api, proof.IsEnabled, C_uA_Delta, proof.C_uA_Delta)
+	IsElGamalEncEqual(api, proof.IsEnabled, C_uB_Delta, proof.C_uB_Delta)
+	IsElGamalEncEqual(api, proof.IsEnabled, LC_DaoA_Delta, proof.LC_DaoA_Delta)
+	IsElGamalEncEqual(api, proof.IsEnabled, LC_DaoB_Delta, proof.LC_DaoB_Delta)
 	// verify LP
-	deltaLP := cs.Mul(proof.Delta_LP, proof.Delta_LP)
-	deltaLPCheck := cs.Mul(proof.B_A_Delta, proof.B_B_Delta)
-	cs.AssertIsLessOrEqual(deltaLP, deltaLPCheck)
+	deltaLP := api.Mul(proof.Delta_LP, proof.Delta_LP)
+	deltaLPCheck := api.Mul(proof.B_A_Delta, proof.B_B_Delta)
+	api.AssertIsLessOrEqual(deltaLP, deltaLPCheck)
 	// verify AMM info & DAO balance info
-	l := cs.Mul(proof.B_A_Delta, proof.B_B_Delta)
-	cs.AssertIsLessOrEqual(deltaLP, l)
+	l := api.Mul(proof.B_A_Delta, proof.B_B_Delta)
+	api.AssertIsLessOrEqual(deltaLP, l)
 }
 
 func SetEmptyRemoveLiquidityProofWitness() (witness RemoveLiquidityProofConstraints) {

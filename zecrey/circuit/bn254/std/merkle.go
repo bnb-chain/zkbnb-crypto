@@ -32,16 +32,16 @@ func nodeSum(h MiMC, a, b Variable) Variable {
 	 root. False is returned if the proof set or Merkle root is nil, and if
 	 'numLeaves' equals 0.
 */
-func VerifyMerkleProof(cs *ConstraintSystem, isEnabled Variable, h MiMC, merkleRoot Variable, proofSet, helper []Variable) {
+func VerifyMerkleProof(api API, isEnabled Variable, h MiMC, merkleRoot Variable, proofSet, helper []Variable) {
 	node := proofSet[0]
 	for i := 1; i < len(proofSet); i++ {
-		cs.AssertIsBoolean(helper[i-1])
-		d1 := cs.Select(helper[i-1], proofSet[i], node)
-		d2 := cs.Select(helper[i-1], node, proofSet[i])
+		api.AssertIsBoolean(helper[i-1])
+		d1 := api.Select(helper[i-1], proofSet[i], node)
+		d2 := api.Select(helper[i-1], node, proofSet[i])
 		node = nodeSum(h, d1, d2)
 	}
 	// Compare our calculated Merkle root to the desired Merkle root.
-	IsVariableEqual(cs, isEnabled, node, merkleRoot)
+	IsVariableEqual(api, isEnabled, node, merkleRoot)
 
 }
 

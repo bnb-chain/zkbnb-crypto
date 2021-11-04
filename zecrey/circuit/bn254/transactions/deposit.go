@@ -59,7 +59,7 @@ type DepositTxConstraints struct {
 	NewAccountRoot Variable
 }
 
-func (circuit *DepositTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit *DepositTxConstraints) Define(curveID ecc.ID, api API) error {
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
 	if err != nil {
@@ -67,8 +67,8 @@ func (circuit *DepositTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID, cs)
-	VerifyDepositTx(cs, *circuit, params, hFunc)
+	hFunc, err := mimc.NewMiMC("ZecreyMIMCSeed", curveID, api)
+	VerifyDepositTx(api, *circuit, params, hFunc)
 
 	return nil
 }
@@ -81,28 +81,28 @@ func (circuit *DepositTxConstraints) Define(curveID ecc.ID, cs *ConstraintSystem
 	4. update balance
 	5. check new balance
 */
-func VerifyDepositTx(cs *ConstraintSystem, tx DepositTxConstraints, params twistededwards.EdCurve, hFunc MiMC) {
+func VerifyDepositTx(api API, tx DepositTxConstraints, params twistededwards.EdCurve, hFunc MiMC) {
 	// universal check
 	// check token id
-	std.IsVariableEqual(cs, tx.IsEnabled, tx.AssetId, tx.AccountBeforeDeposit.AssetId)
-	std.IsVariableEqual(cs, tx.IsEnabled, tx.AssetId, tx.AccountAfterDeposit.AssetId)
+	std.IsVariableEqual(api, tx.IsEnabled, tx.AssetId, tx.AccountBeforeDeposit.AssetId)
+	std.IsVariableEqual(api, tx.IsEnabled, tx.AssetId, tx.AccountAfterDeposit.AssetId)
 	// check public key
-	std.IsPointEqual(cs, tx.IsEnabled, tx.PublicKey, tx.AccountBeforeDeposit.PubKey)
-	std.IsPointEqual(cs, tx.IsEnabled, tx.PublicKey, tx.AccountAfterDeposit.PubKey)
+	std.IsPointEqual(api, tx.IsEnabled, tx.PublicKey, tx.AccountBeforeDeposit.PubKey)
+	std.IsPointEqual(api, tx.IsEnabled, tx.PublicKey, tx.AccountAfterDeposit.PubKey)
 	// check index
-	std.IsVariableEqual(cs, tx.IsEnabled, tx.AccountBeforeDeposit.Index, tx.AccountAfterDeposit.Index)
+	std.IsVariableEqual(api, tx.IsEnabled, tx.AccountBeforeDeposit.Index, tx.AccountAfterDeposit.Index)
 	// check merkle proof
-	std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.OldAccountRoot, tx.AccountMerkleProofsBefore[:], tx.AccountHelperMerkleProofsBefore[:])
-	std.VerifyMerkleProof(cs, tx.IsEnabled, hFunc, tx.NewAccountRoot, tx.AccountMerkleProofsAfter[:], tx.AccountHelperMerkleProofsAfter[:])
+	std.VerifyMerkleProof(api, tx.IsEnabled, hFunc, tx.OldAccountRoot, tx.AccountMerkleProofsBefore[:], tx.AccountHelperMerkleProofsBefore[:])
+	std.VerifyMerkleProof(api, tx.IsEnabled, hFunc, tx.NewAccountRoot, tx.AccountMerkleProofsAfter[:], tx.AccountHelperMerkleProofsAfter[:])
 
 	// get CRDelta
 	var newCR Point
-	newCR.ScalarMulNonFixedBase(cs, &tx.H, tx.Amount, params)
+	newCR.ScalarMulNonFixedBase(api, &tx.H, tx.Amount, params)
 	// update balance
-	newCR.AddGeneric(cs, &tx.AccountBeforeDeposit.Balance.CR, &newCR, params)
+	newCR.AddGeneric(api, &tx.AccountBeforeDeposit.Balance.CR, &newCR, params)
 	tx.AccountBeforeDeposit.Balance.CR = newCR
 	// check new balance
-	std.IsElGamalEncEqual(cs, tx.IsEnabled, tx.AccountBeforeDeposit.Balance, tx.AccountAfterDeposit.Balance)
+	std.IsElGamalEncEqual(api, tx.IsEnabled, tx.AccountBeforeDeposit.Balance, tx.AccountAfterDeposit.Balance)
 }
 
 /*
