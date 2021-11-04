@@ -30,7 +30,7 @@ import (
 type (
 	Point                 = twistededwards.Point
 	Variable              = frontend.Variable
-	ConstraintSystem      = frontend.ConstraintSystem
+	API                   = frontend.API
 	ElGamalEncConstraints = std.ElGamalEncConstraints
 	MiMC                  = mimc.MiMC
 

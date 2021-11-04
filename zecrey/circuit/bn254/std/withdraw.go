@@ -46,7 +46,7 @@ type WithdrawProofConstraints struct {
 }
 
 // define tests for verifying the withdraw proof
-func (circuit WithdrawProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit WithdrawProofConstraints) Define(curveID ecc.ID, api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -55,56 +55,56 @@ func (circuit WithdrawProofConstraints) Define(curveID ecc.ID, cs *ConstraintSys
 	}
 	// verify H
 	H := Point{
-		X: cs.Constant(HX),
-		Y: cs.Constant(HY),
+		X: api.Constant(HX),
+		Y: api.Constant(HY),
 	}
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
 	if err != nil {
 		return err
 	}
-	VerifyWithdrawProof(cs, circuit, params, hFunc, H)
+	VerifyWithdrawProof(api, circuit, params, hFunc, H)
 	return nil
 }
 
 /*
 	VerifyWithdrawProof verify the withdraw proof in circuit
-	@cs: the constraint system
+	@api: the constraint system
 	@proof: withdraw proof circuit
 	@params: params for the curve tebn254
 */
 func VerifyWithdrawProof(
-	cs *ConstraintSystem,
+	api API,
 	proof WithdrawProofConstraints,
 	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
 ) {
-	//IsPointEqual(cs, proof.IsEnabled, proof.BPrimeRangeProof.A, proof.T)
+	//IsPointEqual(api, proof.IsEnabled, proof.BPrimeRangeProof.A, proof.T)
 	// verify if the CRStar is correct
 	var hNeg, CRCheck Point
-	delta := cs.Add(proof.BStar, proof.Fee)
-	hNeg.Neg(cs, &h)
-	CRCheck.ScalarMulNonFixedBase(cs, &hNeg, delta, params)
-	IsPointEqual(cs, proof.IsEnabled, CRCheck, proof.CRStar)
+	delta := api.Add(proof.BStar, proof.Fee)
+	hNeg.Neg(api, &h)
+	CRCheck.ScalarMulNonFixedBase(api, &hNeg, delta, params)
+	IsPointEqual(api, proof.IsEnabled, CRCheck, proof.CRStar)
 	// Verify range proof first
 	// mimc
-	//rangeFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, cs)
+	//rangeFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, api)
 	//if err != nil {
 	//	log.Println("[VerifyWithdrawProof] invalid range hash func")
 	//	return
 	//}
-	//VerifyCtRangeProof(cs, proof.BPrimeRangeProof, params, rangeFunc)
+	//VerifyCtRangeProof(api, proof.BPrimeRangeProof, params, rangeFunc)
 	// generate the challenge
 	var (
 		c                       Variable
 		CLprimeInv, TDivCRprime Point
 	)
-	CLprimeInv.Neg(cs, &proof.C.CL)
-	TDivCRprime.AddGeneric(cs, &proof.C.CR, &proof.CRStar, params)
-	TDivCRprime.Neg(cs, &TDivCRprime)
-	TDivCRprime.AddGeneric(cs, &TDivCRprime, &proof.T, params)
-	hFunc.Write(FixedCurveParam(cs))
+	CLprimeInv.Neg(api, &proof.C.CL)
+	TDivCRprime.AddGeneric(api, &proof.C.CR, &proof.CRStar, params)
+	TDivCRprime.Neg(api, &TDivCRprime)
+	TDivCRprime.AddGeneric(api, &TDivCRprime, &proof.T, params)
+	hFunc.Write(FixedCurveParam(api))
 	hFunc.Write(proof.ReceiveAddr)
 	writeEncIntoBuf(&hFunc, proof.C)
 	writePointIntoBuf(&hFunc, proof.CRStar)
@@ -115,7 +115,7 @@ func VerifyWithdrawProof(
 	c = hFunc.Sum()
 	// Verify balance
 	verifyBalance(
-		cs,
+		api,
 		proof.Pk, proof.A_pk, CLprimeInv, TDivCRprime, proof.A_TDivCRprime,
 		c,
 		proof.Z_sk, proof.Z_skInv, proof.Z_rbar,
@@ -126,14 +126,14 @@ func VerifyWithdrawProof(
 
 /*
 	verifyBalance verify the remaining balance is positive
-	@cs: the constraint system
+	@api: the constraint system
 	@pk,CLprimeInv,TDivCRprime: public inputs
 	@A_pk,A_TDivCRprime: the random commitment
 	@z_sk, z_skInv, z_rbar: the response value
 	@params: params for the curve tebn254
 */
 func verifyBalance(
-	cs *ConstraintSystem,
+	api API,
 	pk, A_pk, CLprimeInv, TDivCRprime, A_TDivCRprime Point,
 	c Variable,
 	z_sk, z_skInv, z_rbar Variable,
@@ -142,19 +142,19 @@ func verifyBalance(
 ) {
 	var l1, r1 Point
 	// verify pk = g^{sk}
-	l1.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, z_sk, params)
-	r1.ScalarMulNonFixedBase(cs, &pk, c, params)
-	r1.AddGeneric(cs, &A_pk, &r1, params)
-	IsPointEqual(cs, isEnabled, l1, r1)
+	l1.ScalarMulFixedBase(api, params.BaseX, params.BaseY, z_sk, params)
+	r1.ScalarMulNonFixedBase(api, &pk, c, params)
+	r1.AddGeneric(api, &A_pk, &r1, params)
+	IsPointEqual(api, isEnabled, l1, r1)
 
 	var g_zrbar, l2, r2 Point
 	// verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
-	g_zrbar.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, z_rbar, params)
-	l2.ScalarMulNonFixedBase(cs, &CLprimeInv, z_skInv, params)
-	l2.AddGeneric(cs, &g_zrbar, &l2, params)
-	r2.ScalarMulNonFixedBase(cs, &TDivCRprime, c, params)
-	r2.AddGeneric(cs, &A_TDivCRprime, &r2, params)
-	IsPointEqual(cs, isEnabled, l2, r2)
+	g_zrbar.ScalarMulFixedBase(api, params.BaseX, params.BaseY, z_rbar, params)
+	l2.ScalarMulNonFixedBase(api, &CLprimeInv, z_skInv, params)
+	l2.AddGeneric(api, &g_zrbar, &l2, params)
+	r2.ScalarMulNonFixedBase(api, &TDivCRprime, c, params)
+	r2.AddGeneric(api, &A_TDivCRprime, &r2, params)
+	IsPointEqual(api, isEnabled, l2, r2)
 }
 
 func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {

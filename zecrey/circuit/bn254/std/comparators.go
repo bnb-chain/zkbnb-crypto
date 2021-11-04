@@ -20,30 +20,30 @@ package std
 /*
 	IsVariableEqual: check if two variables are equal, will force equal if isEnabled = true
 */
-func IsVariableEqual(cs *ConstraintSystem, isEnabled, i1, i2 Variable) {
-	zero := cs.Constant(0)
-	i1 = cs.Select(isEnabled, i1, zero)
-	i2 = cs.Select(isEnabled, i2, zero)
-	cs.AssertIsEqual(i1, i2)
+func IsVariableEqual(api API, isEnabled, i1, i2 Variable) {
+	zero := api.Constant(0)
+	i1 = api.Select(isEnabled, i1, zero)
+	i2 = api.Select(isEnabled, i2, zero)
+	api.AssertIsEqual(i1, i2)
 }
 
 /*
 	IsPointEqual: check if two points are equal, will force equal if isEnabled = false
 */
-func IsPointEqual(cs *ConstraintSystem, isEnabled Variable, p1, p2 Point) {
-	zero := cs.Constant(0)
-	p1.X = cs.Select(isEnabled, p1.X, zero)
-	p1.Y = cs.Select(isEnabled, p1.Y, zero)
-	p2.X = cs.Select(isEnabled, p2.X, zero)
-	p2.Y = cs.Select(isEnabled, p2.Y, zero)
-	cs.AssertIsEqual(p1.X, p2.X)
-	cs.AssertIsEqual(p1.Y, p2.Y)
+func IsPointEqual(api API, isEnabled Variable, p1, p2 Point) {
+	zero := api.Constant(0)
+	p1.X = api.Select(isEnabled, p1.X, zero)
+	p1.Y = api.Select(isEnabled, p1.Y, zero)
+	p2.X = api.Select(isEnabled, p2.X, zero)
+	p2.Y = api.Select(isEnabled, p2.Y, zero)
+	api.AssertIsEqual(p1.X, p2.X)
+	api.AssertIsEqual(p1.Y, p2.Y)
 }
 
 /*
 	IsElGamalEncEqual: check if two ElGamalEnc are equal, will force equal if isEnabled = false
 */
-func IsElGamalEncEqual(cs *ConstraintSystem, isEnabled Variable, C1, C2 ElGamalEncConstraints) {
-	IsPointEqual(cs, isEnabled, C1.CL, C2.CL)
-	IsPointEqual(cs, isEnabled, C1.CR, C2.CR)
+func IsElGamalEncEqual(api API, isEnabled Variable, C1, C2 ElGamalEncConstraints) {
+	IsPointEqual(api, isEnabled, C1.CL, C2.CL)
+	IsPointEqual(api, isEnabled, C1.CR, C2.CR)
 }

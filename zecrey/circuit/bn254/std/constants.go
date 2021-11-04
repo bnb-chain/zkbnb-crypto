@@ -29,11 +29,11 @@ import (
 )
 
 type (
-	Point            = twistededwards.Point
-	Variable         = frontend.Variable
-	ConstraintSystem = frontend.ConstraintSystem
-	MiMC             = mimc.MiMC
-	ElgamalEnc       = twistedElgamal.ElGamalEnc
+	Point      = twistededwards.Point
+	Variable   = frontend.Variable
+	API        = frontend.API
+	MiMC       = mimc.MiMC
+	ElgamalEnc = twistedElgamal.ElGamalEnc
 )
 
 const (

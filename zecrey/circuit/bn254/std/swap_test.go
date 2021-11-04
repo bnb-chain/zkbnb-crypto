@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
-	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/test"
 	"math/big"
 	"testing"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -31,10 +31,10 @@ import (
 )
 
 func TestSwapProofCircuit_Define(t *testing.T) {
-	assert := groth16.NewAssert(t)
+	assert := test.NewAssert(t)
 
 	var circuit, witness SwapProofConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit)
+	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,6 +77,6 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 			t.Fatal(err)
 		}
 		fmt.Println("constraints:", r1cs.GetNbConstraints())
-		assert.SolvingSucceeded(r1cs, &witness)
+		assert.SolvingSucceeded(&circuit, &witness, test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs))
 	}
 }

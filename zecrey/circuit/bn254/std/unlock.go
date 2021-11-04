@@ -42,7 +42,7 @@ type UnlockProofConstraints struct {
 }
 
 // define for testing transfer proof
-func (circuit UnlockProofConstraints) Define(curveID ecc.ID, cs *ConstraintSystem) error {
+func (circuit UnlockProofConstraints) Define(curveID ecc.ID, api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(curveID)
@@ -50,21 +50,21 @@ func (circuit UnlockProofConstraints) Define(curveID ecc.ID, cs *ConstraintSyste
 		return err
 	}
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, cs)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
 	if err != nil {
 		return err
 	}
-	VerifyUnlockProof(cs, circuit, params, hFunc)
+	VerifyUnlockProof(api, circuit, params, hFunc)
 	return nil
 }
 
 func VerifyUnlockProof(
-	cs *ConstraintSystem,
+	api API,
 	proof UnlockProofConstraints,
 	params twistededwards.EdCurve,
 	hFunc MiMC,
 ) {
-	hFunc.Write(FixedCurveParam(cs))
+	hFunc.Write(FixedCurveParam(api))
 	writePointIntoBuf(&hFunc, proof.Pk)
 	writePointIntoBuf(&hFunc, proof.A_pk)
 	hFunc.Write(proof.ChainId)
@@ -73,10 +73,10 @@ func VerifyUnlockProof(
 	hFunc.Write(proof.DeltaAmount)
 	c := hFunc.Sum()
 	var l, r Point
-	l.ScalarMulFixedBase(cs, params.BaseX, params.BaseY, proof.Z_sk, params)
-	r.ScalarMulNonFixedBase(cs, &proof.Pk, c, params)
-	r.AddGeneric(cs, &r, &proof.A_pk, params)
-	IsPointEqual(cs, proof.IsEnabled, l, r)
+	l.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_sk, params)
+	r.ScalarMulNonFixedBase(api, &proof.Pk, c, params)
+	r.AddGeneric(api, &r, &proof.A_pk, params)
+	IsPointEqual(api, proof.IsEnabled, l, r)
 }
 
 func SetEmptyUnlockProofWitness() (witness UnlockProofConstraints) {

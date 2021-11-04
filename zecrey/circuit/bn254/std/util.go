@@ -26,20 +26,20 @@ func writeEncIntoBuf(hFunc *MiMC, enc ElGamalEncConstraints) {
 	writePointIntoBuf(hFunc, enc.CR)
 }
 
-func zeroPoint(cs *ConstraintSystem) Point {
-	return Point{X: cs.Constant(0), Y: cs.Constant(1)}
+func zeroPoint(api API) Point {
+	return Point{X: api.Constant(0), Y: api.Constant(1)}
 }
 
-func Xor(cs *ConstraintSystem, a, b Variable, size int) Variable {
-	aBits := cs.ToBinary(a, size)
-	bBits := cs.ToBinary(b, size)
+func Xor(api API, a, b Variable, size int) Variable {
+	aBits := api.ToBinary(a, size)
+	bBits := api.ToBinary(b, size)
 	var resBits []Variable
 	for i := 0; i < size; i++ {
-		resBits = append(resBits, cs.Xor(aBits[i], bBits[i]))
+		resBits = append(resBits, api.Xor(aBits[i], bBits[i]))
 	}
-	return cs.FromBinary(resBits...)
+	return api.FromBinary(resBits...)
 }
 
-func FixedCurveParam(cs *ConstraintSystem) Variable {
-	return cs.Constant(FixedCurve)
+func FixedCurveParam(api API) Variable {
+	return api.Constant(FixedCurve)
 }
