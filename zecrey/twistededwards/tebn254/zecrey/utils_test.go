@@ -15,21 +15,16 @@
  *
  */
 
-package zsha256
+package zecrey
 
-func Sha256Hash(api API, data []Variable, nBits int) {
-	nBlocks := ((nBits + 64) / 512) + 1
-	var (
-		paddedIn []Variable
-	)
-	for k := 0; k < nBits; k++ {
-		paddedIn = append(paddedIn, data[k])
-	}
-	paddedIn = append(paddedIn, api.Constant(1))
-	for k := nBits + 1; k < nBlocks*512-64; k++ {
-		paddedIn = append(paddedIn, api.Constant(0))
-	}
-	for k := 0; k < 64; k++ {
-		paddedIn[nBlocks*512-k-1] = api.Constant((nBits >> k) & 1)
-	}
+import (
+	"fmt"
+	"testing"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+)
+
+func TestCopyBuf(t *testing.T) {
+	buf := make([]byte, PointSize)
+	copyBuf(&buf, 0, PointSize, curve.ZeroPoint().Marshal())
+	fmt.Println(buf)
 }

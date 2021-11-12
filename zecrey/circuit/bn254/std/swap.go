@@ -332,15 +332,15 @@ func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapP
 	if err != nil {
 		return witness, err
 	}
-	witness.LC_DaoA_Delta, err = SetElGamalEncWitness(proof.LC_DaoA_Delta)
+	witness.LC_DaoA_Delta, err = SetElGamalEncWitness(proof.LC_poolA_Delta)
 	if err != nil {
 		return witness, err
 	}
-	witness.LC_DaoB_Delta, err = SetElGamalEncWitness(proof.LC_DaoB_Delta)
+	witness.LC_DaoB_Delta, err = SetElGamalEncWitness(proof.LC_poolB_Delta)
 	if err != nil {
 		return witness, err
 	}
-	witness.Pk_Dao, err = SetPointWitness(proof.Pk_Dao)
+	witness.Pk_Dao, err = SetPointWitness(proof.Pk_pool)
 	if err != nil {
 		return witness, err
 	}
@@ -358,11 +358,11 @@ func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapP
 	if err != nil {
 		return witness, err
 	}
-	witness.LC_DaoB, err = SetElGamalEncWitness(proof.LC_DaoB)
+	witness.LC_DaoB, err = SetElGamalEncWitness(proof.LC_poolB)
 	if err != nil {
 		return witness, err
 	}
-	witness.R_DaoB.Assign(proof.R_DaoB)
+	witness.R_DaoB.Assign(proof.R_poolB)
 	witness.B_A_Delta.Assign(proof.B_A_Delta)
 	witness.B_B_Delta.Assign(proof.B_B_Delta)
 	witness.B_fee_Delta.Assign(proof.B_fee_Delta)
@@ -398,4 +398,7 @@ func verifySwapParams(
 	IsElGamalEncEqual(api, isEnabled, LC_DaoB_Delta, proof.LC_DaoB_Delta)
 	// TODO verify AMM info & DAO balance info
 	api.AssertIsLessOrEqual(proof.B_B_Delta, proof.B_DaoB)
+	k := api.Mul(proof.B_DaoA, proof.B_DaoB)
+	kPrime := api.Mul(api.Add(proof.B_DaoA, proof.B_A_Delta), api.Sub(proof.B_DaoB, proof.B_B_Delta))
+	api.AssertIsLessOrEqual(kPrime, k)
 }

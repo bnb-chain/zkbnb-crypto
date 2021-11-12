@@ -28,28 +28,32 @@ import (
 )
 
 func TestSwapProof2_Verify(t *testing.T) {
-	b_u_A := uint64(8)
-	b_u_fee := uint64(4)
+	b_u_A := uint64(2000)
 	assetAId := uint32(1)
 	assetBId := uint32(2)
-	assetFeeId := uint32(3)
-	b_A_Delta := uint64(1)
-	b_B_Delta := uint64(2)
-	b_fee_Delta := uint64(1)
-	b_Dao_A := uint64(10)
-	b_Dao_B := uint64(10)
-	feeRate := uint32(3)
+	b_A_Delta := uint64(1000)
+	b_B_Delta := uint64(970)
+	b_poolA := uint64(40000)
+	b_poolB := uint64(40000)
+	feeRate := uint32(30)
+	treasuryRate := uint32(10)
+	GasFee := uint64(30)
 	sk_u, Pk_u := twistedElgamal.GenKeyPair()
-	_, Pk_Dao := twistedElgamal.GenKeyPair()
+	_, Pk_pool := twistedElgamal.GenKeyPair()
+	_, Pk_treasury := twistedElgamal.GenKeyPair()
 	C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_A)), curve.RandomValue(), Pk_u)
-	C_ufee, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_fee)), curve.RandomValue(), Pk_u)
+	b_fee := uint64(1000)
+	//b_fee := b_u_A
+	C_fee, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), curve.RandomValue(), Pk_u)
 	relation, err := NewSwapRelation(
-		C_uA, C_ufee,
-		Pk_Dao, Pk_u,
-		assetAId, assetBId, assetFeeId,
-		b_A_Delta, b_B_Delta, b_fee_Delta, b_u_A, b_u_fee,
-		feeRate,
+		C_uA,
+		Pk_pool, Pk_u, Pk_treasury,
+		assetAId, assetBId,
+		b_A_Delta, b_B_Delta, b_u_A,
+		feeRate, treasuryRate,
 		sk_u,
+		C_fee,
+		b_fee, uint32(2), GasFee,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -60,7 +64,58 @@ func TestSwapProof2_Verify(t *testing.T) {
 		t.Fatal(err)
 	}
 	// set params
-	proof.AddDaoInfo(b_Dao_A, b_Dao_B)
+	proof.AddDaoInfo(b_poolA, b_poolB)
+	log.Println("prove time:", time.Since(elapse))
+	proofStr := proof.String()
+	proof2, err := ParseSwapProofStr(proofStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := proof2.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, true, res, "invalid proof")
+}
+
+func TestSwapProof2_VerifySameAsset(t *testing.T) {
+	b_u_A := uint64(2000)
+	assetAId := uint32(1)
+	assetBId := uint32(2)
+	b_A_Delta := uint64(1000)
+	b_B_Delta := uint64(970)
+	b_poolA := uint64(40000)
+	b_poolB := uint64(40000)
+	feeRate := uint32(30)
+	treasuryRate := uint32(10)
+	GasFee := uint64(1)
+	sk_u, Pk_u := twistedElgamal.GenKeyPair()
+	_, Pk_pool := twistedElgamal.GenKeyPair()
+	_, Pk_treasury := twistedElgamal.GenKeyPair()
+	C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_A)), curve.RandomValue(), Pk_u)
+	b_fee := uint64(2000)
+	//b_fee := b_u_A
+	C_fee := C_uA
+	relation, err := NewSwapRelation(
+		C_uA,
+		Pk_pool, Pk_u, Pk_treasury,
+		assetAId, assetBId,
+		b_A_Delta, b_B_Delta, b_u_A,
+		feeRate, treasuryRate,
+		sk_u,
+		C_fee,
+		b_fee, assetAId, GasFee,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	elapse := time.Now()
+	proof, err := ProveSwap(relation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// set params
+	proof.AddDaoInfo(b_poolA, b_poolB)
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
 	proof2, err := ParseSwapProofStr(proofStr)

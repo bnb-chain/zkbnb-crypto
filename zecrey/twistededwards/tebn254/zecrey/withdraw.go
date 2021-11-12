@@ -28,109 +28,158 @@ import (
 	"zecrey-crypto/util"
 )
 
+const (
+	withdrawRangeProofCount = 2
+)
+
 func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err error) {
 	if relation == nil {
 		log.Println("[ProveWithdraw] invalid params")
 		return nil, ErrInvalidParams
 	}
 	var (
-		alpha_rbar, alpha_sk, alpha_skInv *big.Int
-		A_pk, A_TDivCRprime               *Point
-		CLPrimeInv                        *Point
-		buf                               bytes.Buffer
+		alpha_rbar, alpha_r_feebar, alpha_sk, alpha_skInv *big.Int
+		A_pk, A_TDivCRprime, A_T_feeDivC_feeRprime        *Point
+		CLPrimeInv, C_feeLPrimeInv                        *Point
+		buf                                               bytes.Buffer
+		z_bar_r, z_bar_r_fee, z_sk, z_skInv               *big.Int
 	)
+	// balance part
 	CLPrimeInv = curve.Neg(relation.C.CL)
 	alpha_rbar, alpha_sk, alpha_skInv,
 		A_pk, A_TDivCRprime = commitBalance(G, CLPrimeInv)
+	// if gas fee asset id == asset id
+	if relation.GasFeeAssetId == relation.AssetId {
+		// fee part same as balance part
+		C_feeLPrimeInv = new(Point).Set(CLPrimeInv)
+		alpha_r_feebar = new(big.Int).Set(alpha_rbar)
+		A_T_feeDivC_feeRprime = new(Point).Set(A_TDivCRprime)
+	} else {
+		// fee part
+		C_feeLPrimeInv = curve.Neg(relation.C_fee.CL)
+		alpha_r_feebar = curve.RandomValue()
+		A_T_feeDivC_feeRprime = curve.Add(curve.ScalarMul(G, alpha_r_feebar), curve.ScalarMul(C_feeLPrimeInv, alpha_skInv))
+	}
 	// write common inputs into buf
 	// then generate the challenge c
 	buf.Write(PaddingBigIntBytes(FixedCurve))
 	buf.Write(PaddingBigIntBytes(relation.ReceiveAddr))
+	writeUint64IntoBuf(&buf, uint64(relation.AssetId))
+	writeUint64IntoBuf(&buf, uint64(relation.GasFeeAssetId))
+	writeUint64IntoBuf(&buf, relation.GasFee)
 	writeEncIntoBuf(&buf, relation.C)
-	writePointIntoBuf(&buf, relation.CRStar)
+	writeEncIntoBuf(&buf, relation.C_fee)
 	writePointIntoBuf(&buf, relation.T)
+	writePointIntoBuf(&buf, relation.T_fee)
 	writePointIntoBuf(&buf, relation.Pk)
 	writePointIntoBuf(&buf, A_pk)
 	writePointIntoBuf(&buf, A_TDivCRprime)
+	writePointIntoBuf(&buf, A_T_feeDivC_feeRprime)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
 		return nil, err
 	}
-	z_rbar, z_sk, z_skInv := respondBalance(relation.RBar, relation.Sk, alpha_rbar, alpha_sk, alpha_skInv, c)
+	z_bar_r, z_sk, z_skInv = respondBalance(relation.Bar_r, relation.Sk, alpha_rbar, alpha_sk, alpha_skInv, c)
+	z_bar_r_fee = ffmath.AddMod(alpha_r_feebar, ffmath.Multiply(c, relation.R_feeBar), Order)
 	proof = &WithdrawProof{
-		// commitments
-		A_pk:          A_pk,
-		A_TDivCRprime: A_TDivCRprime,
-		// response
-		Z_rbar:  z_rbar,
-		Z_sk:    z_sk,
-		Z_skInv: z_skInv,
-		// BP Proof
-		BPrimeRangeProof: relation.BPrimeRangeProof,
-		// common inputs
-		BStar:       relation.Bstar,
-		Fee:         relation.Fee,
-		C:           relation.C,
-		CRStar:      relation.CRStar,
-		T:           relation.T,
-		Pk:          relation.Pk,
-		ReceiveAddr: relation.ReceiveAddr,
+		A_pk:                  A_pk,
+		A_TDivCRprime:         A_TDivCRprime,
+		A_T_feeDivC_feeRprime: A_T_feeDivC_feeRprime,
+		Z_bar_r:               z_bar_r,
+		Z_bar_r_fee:           z_bar_r_fee,
+		Z_sk:                  z_sk,
+		Z_skInv:               z_skInv,
+		BPrimeRangeProof:      relation.BPrimeRangeProof,
+		GasFeePrimeRangeProof: relation.GasFeePrimeRangeProof,
+		BStar:                 relation.Bstar,
+		C:                     relation.C,
+		T:                     relation.T,
+		Pk:                    relation.Pk,
+		ReceiveAddr:           relation.ReceiveAddr,
+		AssetId:               relation.AssetId,
+		C_fee:                 relation.C_fee,
+		T_fee:                 relation.T_fee,
+		GasFeeAssetId:         relation.GasFeeAssetId,
+		GasFee:                relation.GasFee,
 	}
 	return proof, nil
 }
 
 func (proof *WithdrawProof) Verify() (bool, error) {
-	if !validUint64(proof.BStar) || !validUint64(proof.Fee) {
+	if !validUint64(proof.BStar) || !validUint64(proof.GasFee) {
 		log.Println("[Verify WithdrawProof] invalid params")
 		return false, errors.New("[Verify WithdrawProof] invalid params")
 	}
-	// verify if the CRStar is correct
-	hNeg := curve.Neg(H)
-	CRCheck := curve.ScalarMul(hNeg, big.NewInt(int64(proof.BStar+proof.Fee)))
-	if !proof.CRStar.Equal(CRCheck) {
-		log.Println("[Verify WithdrawProof] invalid params")
-		return false, ErrInvalidParams
+	// generate the challenge
+	var (
+		CLprimeInv, C_feeLprimeInv, TDivCRprime, T_feeDivC_feeRprime *Point
+		buf                                                          bytes.Buffer
+		rangeChan                                                    = make(chan int, 2)
+	)
+	// check params
+	if proof.GasFeeAssetId == proof.AssetId {
+		if !equalEnc(proof.C, proof.C_fee) || !proof.A_TDivCRprime.Equal(proof.A_T_feeDivC_feeRprime) {
+			log.Println("[Verify WithdrawProof] invalid params")
+			return false, errors.New("[Verify WithdrawProof] invalid params")
+		}
+		CRDelta := curve.ScalarMul(H, big.NewInt(-int64(proof.BStar+proof.GasFee)))
+		CLprimeInv = curve.Neg(proof.C.CL)
+		TDivCRprime = curve.Add(proof.T, curve.Neg(curve.Add(proof.C.CR, CRDelta)))
+		C_feeLprimeInv = new(Point).Set(CLprimeInv)
+		T_feeDivC_feeRprime = new(Point).Set(TDivCRprime)
+	} else {
+		CRDelta := curve.ScalarMul(H, big.NewInt(-int64(proof.BStar)))
+		C_feeDelta := curve.ScalarMul(H, big.NewInt(-int64(proof.GasFee)))
+		CLprimeInv = curve.Neg(proof.C.CL)
+		TDivCRprime = curve.Add(proof.T, curve.Neg(curve.Add(proof.C.CR, CRDelta)))
+		C_feeLprimeInv = curve.Neg(proof.C_fee.CL)
+		T_feeDivC_feeRprime = curve.Add(proof.T_fee, curve.Neg(curve.Add(proof.C_fee.CR, C_feeDelta)))
 	}
 	// check range params
-	if !proof.BPrimeRangeProof.A.Equal(proof.T) {
+	if !proof.BPrimeRangeProof.A.Equal(proof.T) || !proof.GasFeePrimeRangeProof.A.Equal(proof.T_fee) {
 		log.Println("[Verify WithdrawProof] invalid range params")
 		return false, errors.New("[Verify WithdrawProof] invalid rage params")
 	}
 	// Verify range proof first
-	rangeRes, err := proof.BPrimeRangeProof.Verify()
-	if err != nil {
-		log.Println("[Verify WithdrawProof] err info:", err)
-		return false, err
-	}
-	if !rangeRes {
-		log.Println("[Verify WithdrawProof] invalid range proof")
-		return false, errors.New("[Verify WithdrawProof] invalid range proof")
-	}
-	// generate the challenge
-	var (
-		CLprimeInv, TDivCRprime *Point
-		buf                     bytes.Buffer
-	)
-	CLprimeInv = curve.Neg(proof.C.CL)
-	TDivCRprime = curve.Add(proof.T, curve.Neg(curve.Add(proof.C.CR, proof.CRStar)))
+	go verifyCtRangeRoutine(proof.BPrimeRangeProof, rangeChan)
+	go verifyCtRangeRoutine(proof.GasFeePrimeRangeProof, rangeChan)
 	buf.Write(PaddingBigIntBytes(FixedCurve))
 	buf.Write(PaddingBigIntBytes(proof.ReceiveAddr))
+	writeUint64IntoBuf(&buf, uint64(proof.AssetId))
+	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))
+	writeUint64IntoBuf(&buf, proof.GasFee)
 	writeEncIntoBuf(&buf, proof.C)
-	writePointIntoBuf(&buf, proof.CRStar)
+	writeEncIntoBuf(&buf, proof.C_fee)
 	writePointIntoBuf(&buf, proof.T)
+	writePointIntoBuf(&buf, proof.T_fee)
 	writePointIntoBuf(&buf, proof.Pk)
 	writePointIntoBuf(&buf, proof.A_pk)
 	writePointIntoBuf(&buf, proof.A_TDivCRprime)
+	writePointIntoBuf(&buf, proof.A_T_feeDivC_feeRprime)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
 		log.Println("[Verify WithdrawProof] err: unable to compute hash:", err)
 		return false, err
 	}
 	// Verify balance
-	balanceRes, err := verifyBalance(G, proof.Pk, proof.A_pk, CLprimeInv, TDivCRprime, proof.A_TDivCRprime, c, proof.Z_sk, proof.Z_skInv, proof.Z_rbar)
+	balanceRes, err := verifyBalance(G, proof.Pk, proof.A_pk, CLprimeInv, TDivCRprime, proof.A_TDivCRprime, c, proof.Z_sk, proof.Z_skInv, proof.Z_bar_r)
 	if err != nil {
 		log.Println("err info:", err)
 		return false, err
+	}
+	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
+	l1 := curve.Add(curve.ScalarMul(G, proof.Z_bar_r_fee), curve.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
+	r1 := curve.Add(proof.A_T_feeDivC_feeRprime, curve.ScalarMul(T_feeDivC_feeRprime, c))
+	if !l1.Equal(r1) {
+		log.Println("[Verify WithdrawProof] l1!=r1")
+		return false, nil
+	}
+	for i := 0; i < withdrawRangeProofCount; i++ {
+		val := <-rangeChan
+		if val == ErrCode {
+			log.Println("[Verify AddLiquidityProof] invalid range proof")
+			return false, nil
+		}
 	}
 	return balanceRes, nil
 }

@@ -19,9 +19,12 @@ package zecrey
 
 import (
 	"bytes"
+	"encoding/binary"
 	"log"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
 func notNullElGamal(C *ElGamalEnc) bool {
@@ -62,4 +65,73 @@ func printElgamal(enc *ElGamalEnc) {
 
 func PaddingBigIntBytes(a *big.Int) []byte {
 	return a.FillBytes(make([]byte, PointSize))
+}
+
+func elgamalToBytes(enc *ElGamalEnc) []byte {
+	buf := enc.Bytes()
+	return buf[:]
+}
+
+func uint64ToBytes(a uint64) []byte {
+	buf := make([]byte, EightBytes)
+	binary.BigEndian.PutUint64(buf, a)
+	return buf
+}
+
+func uint32ToBytes(a uint32) []byte {
+	buf := make([]byte, FourBytes)
+	binary.BigEndian.PutUint32(buf, a)
+	return buf
+}
+
+func copyBuf(buf *[]byte, offset int, size int, data []byte) (newOffset int) {
+	copy((*buf)[offset:offset+size], data)
+	newOffset = offset + size
+	return newOffset
+}
+
+func readPointFromBuf(buf []byte, offset int) (newOffset int, p *Point, err error) {
+	newOffset = offset + PointSize
+	p, err = curve.FromBytes(buf[offset : offset+PointSize])
+	return newOffset, p, err
+}
+
+func readBigIntFromBuf(buf []byte, offset int) (newOffset int, a *big.Int) {
+	newOffset = offset + PointSize
+	a = new(big.Int).SetBytes(buf[offset : offset+PointSize])
+	return newOffset, a
+}
+
+func readElGamalEncFromBuf(buf []byte, offset int) (newOffset int, enc *ElGamalEnc, err error) {
+	newOffset = offset + ElGamalEncSize
+	enc, err = twistedElgamal.FromBytes(buf[offset : offset+ElGamalEncSize])
+	return newOffset, enc, err
+}
+
+func readTransferSubProofFromBuf(buf []byte, offset int) (newOffset int, proof *TransferSubProof, err error) {
+	newOffset = offset + TransferSubProofSize
+	proof, err = ParseTransferSubProofBytes(buf[offset : offset+TransferSubProofSize])
+	return newOffset, proof, err
+}
+
+func readRangeProofFromBuf(buf []byte, offset int) (newOffset int, proof *RangeProof, err error) {
+	newOffset = offset + RangeProofSize
+	proof, err = ctrange.FromBytes(buf[offset : offset+RangeProofSize])
+	return newOffset, proof, err
+}
+
+func readUint64FromBuf(buf []byte, offset int) (newOffset int, a uint64) {
+	newOffset = offset + EightBytes
+	return newOffset, binary.BigEndian.Uint64(buf[offset : offset+EightBytes])
+}
+
+func readUint32FromBuf(buf []byte, offset int) (newOffset int, a uint32) {
+	newOffset = offset + FourBytes
+	return newOffset, binary.BigEndian.Uint32(buf[offset : offset+FourBytes])
+}
+
+func readAddressFromBuf(buf []byte, offset int) (newOffset int, a *big.Int) {
+	newOffset = offset + AddressSize
+	a = new(big.Int).SetBytes(buf[offset : offset+AddressSize])
+	return newOffset, a
 }

@@ -19,14 +19,12 @@ package zecrey
 
 import (
 	"encoding/base64"
-	"encoding/binary"
 	"errors"
 	"log"
 	"math"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
 const (
@@ -54,69 +52,54 @@ type AddLiquidityProof struct {
 	B_DaoA, B_DaoB               uint64
 	B_A_Delta, B_B_Delta         uint64
 	Delta_LP                     uint64
+	GasFee                       uint64
 }
 
 func (proof *AddLiquidityProof) Bytes() []byte {
 	proofBytes := make([]byte, AddLiquidityProofSize)
+	offset := 0
 	// valid Enc
-	copy(proofBytes[:PointSize], proof.A_CLPL_Delta.Marshal())
-	copy(proofBytes[PointSize:PointSize*2], proof.A_CLPR_DeltaHExp_DeltaLPNeg.Marshal())
-	copy(proofBytes[PointSize*2:PointSize*3], proof.Z_rDelta_LP.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_CLPL_Delta.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_CLPR_DeltaHExp_DeltaLPNeg.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_rDelta_LP.FillBytes(make([]byte, PointSize)))
 	// Ownership
-	copy(proofBytes[PointSize*3:PointSize*4], proof.A_pk_u.Marshal())
-	copy(proofBytes[PointSize*4:PointSize*5], proof.A_T_uAC_uARPrimeInv.Marshal())
-	copy(proofBytes[PointSize*5:PointSize*6], proof.A_T_uBC_uBRPrimeInv.Marshal())
-	copy(proofBytes[PointSize*6:PointSize*7], proof.Z_sk_u.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*7:PointSize*8], proof.Z_bar_r_A.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*8:PointSize*9], proof.Z_bar_r_B.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*9:PointSize*10], proof.Z_sk_uInv.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_pk_u.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_T_uAC_uARPrimeInv.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_T_uBC_uBRPrimeInv.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_sk_u.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_bar_r_A.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_bar_r_B.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_sk_uInv.FillBytes(make([]byte, PointSize)))
 	// common inputs
 	// user asset A balance enc
-	C_uABytes := proof.C_uA.Bytes()
-	copy(proofBytes[PointSize*10:PointSize*12], C_uABytes[:])
+	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.C_uA))
 	// user asset B balance enc
-	C_uBBytes := proof.C_uB.Bytes()
-	copy(proofBytes[PointSize*12:PointSize*14], C_uBBytes[:])
+	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.C_uB))
 	// user asset A&B Delta enc
-	C_uA_DeltaBytes := proof.C_uA_Delta.Bytes()
-	copy(proofBytes[PointSize*14:PointSize*16], C_uA_DeltaBytes[:])
-	C_uB_DeltaBytes := proof.C_uB_Delta.Bytes()
-	copy(proofBytes[PointSize*16:PointSize*18], C_uB_DeltaBytes[:])
+	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.C_uA_Delta))
+	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.C_uB_Delta))
 	// Dao asset A&B Delta enc
-	LC_DaoA_DeltaBytes := proof.LC_DaoA_Delta.Bytes()
-	copy(proofBytes[PointSize*18:PointSize*20], LC_DaoA_DeltaBytes[:])
-	LC_DaoB_DeltaBytes := proof.LC_DaoB_Delta.Bytes()
-	copy(proofBytes[PointSize*20:PointSize*22], LC_DaoB_DeltaBytes[:])
-	C_LP_DeltaBytes := proof.C_LP_Delta.Bytes()
-	copy(proofBytes[PointSize*22:PointSize*24], C_LP_DeltaBytes[:])
+	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.LC_DaoA_Delta))
+	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.LC_DaoB_Delta))
+	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.C_LP_Delta))
 	// public keys
-	copy(proofBytes[PointSize*24:PointSize*25], proof.Pk_Dao.Marshal())
-	copy(proofBytes[PointSize*25:PointSize*26], proof.Pk_u.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Pk_Dao.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Pk_u.Marshal())
 	// random value for Delta A & B
-	copy(proofBytes[PointSize*26:PointSize*27], proof.R_DeltaA.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*27:PointSize*28], proof.R_DeltaB.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.R_DeltaA.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.R_DeltaB.FillBytes(make([]byte, PointSize)))
 	// commitment for user asset A & fee
-	copy(proofBytes[PointSize*28:PointSize*29], proof.T_uA.Marshal())
-	copy(proofBytes[PointSize*29:PointSize*30], proof.T_uB.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.T_uA.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.T_uB.Marshal())
 	// user asset A,B,LP & DAO assets A,B
-	B_DaoABytes := make([]byte, EightBytes)
-	B_DaoBBytes := make([]byte, EightBytes)
-	B_A_DeltaBytes := make([]byte, EightBytes)
-	B_B_DeltaBytes := make([]byte, EightBytes)
-	Delta_LPBytes := make([]byte, EightBytes)
-	binary.BigEndian.PutUint64(B_DaoABytes, proof.B_DaoA)
-	binary.BigEndian.PutUint64(B_DaoBBytes, proof.B_DaoB)
-	binary.BigEndian.PutUint64(B_A_DeltaBytes, proof.B_A_Delta)
-	binary.BigEndian.PutUint64(B_B_DeltaBytes, proof.B_B_Delta)
-	binary.BigEndian.PutUint64(Delta_LPBytes, proof.Delta_LP)
-	copy(proofBytes[PointSize*30:PointSize*30+EightBytes], B_DaoABytes)
-	copy(proofBytes[PointSize*30+EightBytes:PointSize*30+EightBytes*2], B_DaoBBytes)
-	copy(proofBytes[PointSize*30+EightBytes*2:PointSize*30+EightBytes*3], B_A_DeltaBytes)
-	copy(proofBytes[PointSize*30+EightBytes*3:PointSize*30+EightBytes*4], B_B_DeltaBytes)
-	copy(proofBytes[PointSize*30+EightBytes*4:PointSize*30+EightBytes*5], Delta_LPBytes)
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.B_DaoA))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.B_DaoB))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.B_A_Delta))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.B_B_Delta))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.Delta_LP))
 	// range proofs
-	copy(proofBytes[PointSize*30+EightBytes*5:PointSize*30+EightBytes*5+RangeProofSize], proof.ARangeProof.Bytes())
-	copy(proofBytes[PointSize*30+EightBytes*5+RangeProofSize:PointSize*30+EightBytes*5+RangeProofSize*2], proof.BRangeProof.Bytes())
+	offset = copyBuf(&proofBytes, offset, RangeProofSize, proof.ARangeProof.Bytes())
+	offset = copyBuf(&proofBytes, offset, RangeProofSize, proof.BRangeProof.Bytes())
 	return proofBytes
 }
 
@@ -131,100 +114,101 @@ func ParseAddLiquidityProofBytes(proofBytes []byte) (proof *AddLiquidityProof, e
 	}
 	// construct new proof
 	proof = new(AddLiquidityProof)
+	offset := 0
 	// valid Enc
-	proof.A_CLPL_Delta, err = curve.FromBytes(proofBytes[:PointSize])
+	offset, proof.A_CLPL_Delta, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.A_CLPR_DeltaHExp_DeltaLPNeg, err = curve.FromBytes(proofBytes[PointSize : PointSize*2])
+	offset, proof.A_CLPR_DeltaHExp_DeltaLPNeg, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.Z_rDelta_LP = new(big.Int).SetBytes(proofBytes[PointSize*2 : PointSize*3])
+	offset, proof.Z_rDelta_LP = readBigIntFromBuf(proofBytes, offset)
 	// Ownership
-	proof.A_pk_u, err = curve.FromBytes(proofBytes[PointSize*3 : PointSize*4])
+	offset, proof.A_pk_u, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.A_T_uAC_uARPrimeInv, err = curve.FromBytes(proofBytes[PointSize*4 : PointSize*5])
+	offset, proof.A_T_uAC_uARPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.A_T_uBC_uBRPrimeInv, err = curve.FromBytes(proofBytes[PointSize*5 : PointSize*6])
+	offset, proof.A_T_uBC_uBRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.Z_sk_u = new(big.Int).SetBytes(proofBytes[PointSize*6 : PointSize*7])
-	proof.Z_bar_r_A = new(big.Int).SetBytes(proofBytes[PointSize*7 : PointSize*8])
-	proof.Z_bar_r_B = new(big.Int).SetBytes(proofBytes[PointSize*8 : PointSize*9])
-	proof.Z_sk_uInv = new(big.Int).SetBytes(proofBytes[PointSize*9 : PointSize*10])
+	offset, proof.Z_sk_u = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_bar_r_A = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_bar_r_B = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_sk_uInv = readBigIntFromBuf(proofBytes, offset)
 	// common inputs
 	// user asset A balance enc
-	proof.C_uA, err = twistedElgamal.FromBytes(proofBytes[PointSize*10 : PointSize*12])
+	offset, proof.C_uA, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
 	// user asset fee balance enc
-	proof.C_uB, err = twistedElgamal.FromBytes(proofBytes[PointSize*12 : PointSize*14])
+	offset, proof.C_uB, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
 	// user asset A Delta enc
-	proof.C_uA_Delta, err = twistedElgamal.FromBytes(proofBytes[PointSize*14 : PointSize*16])
+	offset, proof.C_uA_Delta, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
 	// user asset B Delta enc
-	proof.C_uB_Delta, err = twistedElgamal.FromBytes(proofBytes[PointSize*16 : PointSize*18])
+	offset, proof.C_uB_Delta, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
 	// liquidity pool asset A,B Delta enc
-	proof.LC_DaoA_Delta, err = twistedElgamal.FromBytes(proofBytes[PointSize*18 : PointSize*20])
+	offset, proof.LC_DaoA_Delta, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.LC_DaoB_Delta, err = twistedElgamal.FromBytes(proofBytes[PointSize*20 : PointSize*22])
+	offset, proof.LC_DaoB_Delta, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.C_LP_Delta, err = twistedElgamal.FromBytes(proofBytes[PointSize*22 : PointSize*24])
+	offset, proof.C_LP_Delta, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
 	// public keys
-	proof.Pk_Dao, err = curve.FromBytes(proofBytes[PointSize*24 : PointSize*25])
+	offset, proof.Pk_Dao, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.Pk_u, err = curve.FromBytes(proofBytes[PointSize*25 : PointSize*26])
+	offset, proof.Pk_u, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
 	// random value for Delta A & B
-	proof.R_DeltaA = new(big.Int).SetBytes(proofBytes[PointSize*26 : PointSize*27])
-	proof.R_DeltaB = new(big.Int).SetBytes(proofBytes[PointSize*27 : PointSize*28])
+	offset, proof.R_DeltaA = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.R_DeltaB = readBigIntFromBuf(proofBytes, offset)
 	// commitment for user asset A & fee
-	proof.T_uA, err = curve.FromBytes(proofBytes[PointSize*28 : PointSize*29])
+	offset, proof.T_uA, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.T_uB, err = curve.FromBytes(proofBytes[PointSize*29 : PointSize*30])
+	offset, proof.T_uB, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
 	// asset a,b,lp
-	proof.B_DaoA = binary.BigEndian.Uint64(proofBytes[PointSize*30 : PointSize*30+EightBytes])
-	proof.B_DaoB = binary.BigEndian.Uint64(proofBytes[PointSize*30+EightBytes : PointSize*30+EightBytes*2])
-	proof.B_A_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*30+EightBytes*2 : PointSize*30+EightBytes*3])
-	proof.B_B_Delta = binary.BigEndian.Uint64(proofBytes[PointSize*30+EightBytes*3 : PointSize*30+EightBytes*4])
-	proof.Delta_LP = binary.BigEndian.Uint64(proofBytes[PointSize*30+EightBytes*4 : PointSize*30+EightBytes*5])
+	offset, proof.B_DaoA = readUint64FromBuf(proofBytes, offset)
+	offset, proof.B_DaoB = readUint64FromBuf(proofBytes, offset)
+	offset, proof.B_A_Delta = readUint64FromBuf(proofBytes, offset)
+	offset, proof.B_B_Delta = readUint64FromBuf(proofBytes, offset)
+	offset, proof.Delta_LP = readUint64FromBuf(proofBytes, offset)
 	// range proofs
-	proof.ARangeProof, err = ctrange.FromBytes(proofBytes[PointSize*30+EightBytes*5 : PointSize*30+EightBytes*5+RangeProofSize])
+	offset, proof.ARangeProof, err = readRangeProofFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.BRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*30+EightBytes*5+RangeProofSize : PointSize*30+EightBytes*5+RangeProofSize*2])
+	offset, proof.BRangeProof, err = readRangeProofFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -255,6 +239,8 @@ type AddLiquidityRelation struct {
 	B_A_Delta, B_B_Delta         uint64
 	Delta_LP                     uint64
 	AssetAId, AssetBId           uint32
+	// gas fee
+	GasFee uint64
 	// private inputs
 	Sk_u                   *big.Int
 	Bar_r_A, Bar_r_B       *big.Int

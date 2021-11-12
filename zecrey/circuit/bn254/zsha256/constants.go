@@ -20,8 +20,8 @@ package zsha256
 import "github.com/consensys/gnark/frontend"
 
 type (
-	ConstraintSystem = frontend.ConstraintSystem
-	Variable         = frontend.Variable
+	API      = frontend.API
+	Variable = frontend.Variable
 )
 
 func H(x int) (out [32]int) {

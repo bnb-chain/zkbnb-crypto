@@ -215,7 +215,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, err
 	}
 	// response
-	witness.Z_rbar.Assign(proof.Z_rbar)
+	witness.Z_rbar.Assign(proof.Z_bar_r)
 	witness.Z_sk.Assign(proof.Z_sk)
 	witness.Z_skInv.Assign(proof.Z_skInv)
 	//witness.BPrimeRangeProof, err = SetCtRangeProofWitness(proof.BPrimeRangeProof, isEnabled)
@@ -241,7 +241,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	}
 	witness.ReceiveAddr.Assign(proof.ReceiveAddr)
 	witness.BStar.Assign(proof.BStar)
-	witness.Fee.Assign(proof.Fee)
+	witness.Fee.Assign(proof.GasFee)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }
