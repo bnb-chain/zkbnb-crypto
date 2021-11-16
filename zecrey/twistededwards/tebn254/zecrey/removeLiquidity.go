@@ -41,13 +41,18 @@ func ProveRemoveLiquidity(relation *RemoveLiquidityRelation) (proof *RemoveLiqui
 		alpha_sk_u, alpha_sk_uInv, alpha_bar_r_LP *big.Int
 		A_pk_u, A_T_uLPC_uLPRPrimeInv             *Point
 		c                                         *big.Int
-		Z_rDeltaLP                                *big.Int
+		Z_rDelta_LP                               *big.Int
 		Z_sk_u, Z_bar_r_LP, Z_sk_uInv             *big.Int
 		buf                                       bytes.Buffer
+		// gas fee
+		A_T_feeDivC_feeRprime *Point
+		Z_bar_r_fee           *big.Int
+		C_feeLPrimeInv        *Point
+		alpha_bar_r_fee       *big.Int
 	)
 	buf.Write(PaddingBigIntBytes(FixedCurve))
 	writePointIntoBuf(&buf, relation.Pk_u)
-	writePointIntoBuf(&buf, relation.Pk_Dao)
+	writePointIntoBuf(&buf, relation.Pk_pool)
 	writeEncIntoBuf(&buf, relation.C_u_LP)
 	writeEncIntoBuf(&buf, relation.C_uA_Delta)
 	writeEncIntoBuf(&buf, relation.C_uB_Delta)
@@ -78,50 +83,68 @@ func ProveRemoveLiquidity(relation *RemoveLiquidityRelation) (proof *RemoveLiqui
 	// write into buf
 	writePointIntoBuf(&buf, A_pk_u)
 	writePointIntoBuf(&buf, A_T_uLPC_uLPRPrimeInv)
+	// gas fee
+	C_feeLPrimeInv = curve.Neg(relation.C_fee.CL)
+	alpha_bar_r_fee = curve.RandomValue()
+	A_T_feeDivC_feeRprime = curve.Add(curve.ScalarMul(G, alpha_bar_r_fee), curve.ScalarMul(C_feeLPrimeInv, alpha_sk_uInv))
+	// gas fee
+	writePointIntoBuf(&buf, A_T_feeDivC_feeRprime)
+	writeEncIntoBuf(&buf, relation.C_fee)
+	writeUint64IntoBuf(&buf, uint64(relation.GasFeeAssetId))
+	writeUint64IntoBuf(&buf, relation.GasFee)
 	// compute challenge
 	c, err = util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
 		return nil, err
 	}
 	// compute response values
-	Z_rDeltaLP = ffmath.AddMod(alpha_r_DeltaLP, ffmath.Multiply(c, relation.R_DeltaLP), Order)
+	Z_rDelta_LP = ffmath.AddMod(alpha_r_DeltaLP, ffmath.Multiply(c, relation.R_DeltaLP), Order)
 	Z_sk_u = ffmath.AddMod(alpha_sk_u, ffmath.Multiply(c, relation.Sk_u), Order)
 	Z_bar_r_LP = ffmath.AddMod(alpha_bar_r_LP, ffmath.Multiply(c, relation.Bar_r_LP), Order)
 	Z_sk_uInv = ffmath.AddMod(alpha_sk_uInv, ffmath.Multiply(c, ffmath.ModInverse(relation.Sk_u, Order)), Order)
+	// gas fee
+	Z_bar_r_fee = ffmath.AddMod(alpha_bar_r_fee, ffmath.Multiply(c, relation.Bar_r_fee), Order)
 	// construct proof
 	proof = &RemoveLiquidityProof{
 		A_CLPL_Delta:                A_CLPL_Delta,
 		A_CLPR_DeltaHExp_DeltaLPNeg: A_CLPR_DeltaHExp_DeltaLPNeg,
-		Z_rDelta_LP:                 Z_rDeltaLP,
+		Z_rDelta_LP:                 Z_rDelta_LP,
 		A_pk_u:                      A_pk_u,
 		A_T_uLPC_uLPRPrimeInv:       A_T_uLPC_uLPRPrimeInv,
 		Z_sk_u:                      Z_sk_u,
 		Z_bar_r_LP:                  Z_bar_r_LP,
 		Z_sk_uInv:                   Z_sk_uInv,
 		LPRangeProof:                relation.LPRangeProof,
-		LC_Dao_A:                    relation.LC_Dao_A,
-		LC_Dao_B:                    relation.LC_Dao_B,
+		LC_pool_A:                   relation.LC_pool_A,
+		LC_pool_B:                   relation.LC_pool_B,
 		C_uA_Delta:                  relation.C_uA_Delta,
 		C_uB_Delta:                  relation.C_uB_Delta,
-		LC_DaoA_Delta:               relation.LC_DaoA_Delta,
-		LC_DaoB_Delta:               relation.LC_DaoB_Delta,
-		Pk_Dao:                      relation.Pk_Dao,
-		Pk_u:                        relation.Pk_u,
-		R_DaoA:                      relation.R_DaoA,
-		R_DaoB:                      relation.R_DaoB,
-		R_DeltaA:                    relation.R_DeltaA,
-		R_DeltaB:                    relation.R_DeltaB,
-		B_Dao_A:                     relation.B_Dao_A,
-		B_Dao_B:                     relation.B_Dao_B,
-		B_A_Delta:                   relation.B_A_Delta,
-		B_B_Delta:                   relation.B_B_Delta,
-		Delta_LP:                    relation.Delta_LP,
+		LC_poolA_Delta:              relation.LC_poolA_Delta,
+		LC_poolB_Delta:              relation.LC_poolB_Delta,
 		C_u_LP:                      relation.C_u_LP,
 		C_u_LP_Delta:                relation.C_u_LP_Delta,
-		P:                           relation.P,
-		AssetAId:                    relation.AssetAId,
-		AssetBId:                    relation.AssetBId,
+		Pk_pool:                     relation.Pk_pool,
+		Pk_u:                        relation.Pk_u,
 		T_uLP:                       relation.T_uLP,
+		R_poolA:                     relation.R_poolA,
+		R_poolB:                     relation.R_poolB,
+		R_DeltaA:              relation.R_DeltaA,
+		R_DeltaB:              relation.R_DeltaB,
+		B_pool_A:              relation.B_pool_A,
+		B_pool_B:              relation.B_pool_B,
+		B_A_Delta:             relation.B_A_Delta,
+		B_B_Delta:             relation.B_B_Delta,
+		Delta_LP:              relation.Delta_LP,
+		P:                     relation.P,
+		AssetAId:              relation.AssetAId,
+		AssetBId:              relation.AssetBId,
+		A_T_feeC_feeRPrimeInv: A_T_feeDivC_feeRprime,
+		Z_bar_r_fee:           Z_bar_r_fee,
+		C_fee:                 relation.C_fee,
+		T_fee:                 relation.T_fee,
+		GasFeeAssetId:         relation.GasFeeAssetId,
+		GasFee:                relation.GasFee,
+		GasFeePrimeRangeProof: relation.GasFeePrimeRangeProof,
 	}
 	return proof, nil
 }
@@ -148,7 +171,7 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 	}
 	buf.Write(PaddingBigIntBytes(FixedCurve))
 	writePointIntoBuf(&buf, proof.Pk_u)
-	writePointIntoBuf(&buf, proof.Pk_Dao)
+	writePointIntoBuf(&buf, proof.Pk_pool)
 	writeEncIntoBuf(&buf, proof.C_u_LP)
 	writeEncIntoBuf(&buf, proof.C_uA_Delta)
 	writeEncIntoBuf(&buf, proof.C_uB_Delta)
@@ -160,6 +183,11 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 	// write into buf
 	writePointIntoBuf(&buf, proof.A_pk_u)
 	writePointIntoBuf(&buf, proof.A_T_uLPC_uLPRPrimeInv)
+	// gas fee
+	writePointIntoBuf(&buf, proof.A_T_feeC_feeRPrimeInv)
+	writeEncIntoBuf(&buf, proof.C_fee)
+	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))
+	writeUint64IntoBuf(&buf, proof.GasFee)
 	// compute challenge
 	c, err = util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
@@ -212,6 +240,17 @@ func (proof *RemoveLiquidityProof) Verify() (res bool, err error) {
 		log.Println("[Verify RemoveLiquidityProof] l3 != r3")
 		return false, nil
 	}
+	// verify gas fee proof
+	C_feeDelta := curve.ScalarMul(H, big.NewInt(-int64(proof.GasFee)))
+	C_feeLprimeInv := curve.Neg(proof.C_fee.CL)
+	T_feeDivC_feeRprime := curve.Add(proof.T_fee, curve.Neg(curve.Add(proof.C_fee.CR, C_feeDelta)))
+	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
+	l4 := curve.Add(curve.ScalarMul(G, proof.Z_bar_r_fee), curve.ScalarMul(C_feeLprimeInv, proof.Z_sk_uInv))
+	r4 := curve.Add(proof.A_T_feeC_feeRPrimeInv, curve.ScalarMul(T_feeDivC_feeRprime, c))
+	if !l4.Equal(r4) {
+		log.Println("[Verify RemoveLiquidityProof] l4!=r4")
+		return false, nil
+	}
 	return true, nil
 }
 
@@ -229,16 +268,16 @@ func verifyRemoveLiquidityParams(proof *RemoveLiquidityProof) (res bool, err err
 	if err != nil {
 		return false, err
 	}
-	LC_DaoA_Delta := &ElGamalEnc{
-		CL: curve.ScalarMul(proof.Pk_Dao, proof.R_DeltaA),
+	LC_poolA_Delta := &ElGamalEnc{
+		CL: curve.ScalarMul(proof.Pk_pool, proof.R_DeltaA),
 		CR: C_uA_Delta.CR,
 	}
-	LC_DaoB_Delta := &ElGamalEnc{
-		CL: curve.ScalarMul(proof.Pk_Dao, proof.R_DeltaB),
+	LC_poolB_Delta := &ElGamalEnc{
+		CL: curve.ScalarMul(proof.Pk_pool, proof.R_DeltaB),
 		CR: C_uB_Delta.CR,
 	}
 	if !equalEnc(C_uA_Delta, proof.C_uA_Delta) || !equalEnc(C_uB_Delta, proof.C_uB_Delta) ||
-		!equalEnc(LC_DaoA_Delta, proof.LC_DaoA_Delta) || !equalEnc(LC_DaoB_Delta, proof.LC_DaoB_Delta) {
+		!equalEnc(LC_poolA_Delta, proof.LC_poolA_Delta) || !equalEnc(LC_poolB_Delta, proof.LC_poolB_Delta) {
 		log.Println("[verifyRemoveLiquidityParams] invalid balance enc")
 		return false, nil
 	}
@@ -258,28 +297,28 @@ func verifyRemoveLiquidityParams(proof *RemoveLiquidityProof) (res bool, err err
 	return true, nil
 }
 
-func (proof *RemoveLiquidityProof) AddDaoInfo(b_Dao_A, b_Dao_B uint64, r_Dao_A, r_Dao_B *big.Int) {
+func (proof *RemoveLiquidityProof) AddPoolInfo(b_pool_A, b_pool_B uint64, r_pool_A, r_pool_B *big.Int) {
 	var (
 		err error
 	)
-	if !validUint64(b_Dao_A) || !validUint64(b_Dao_B) {
-		log.Println("[AddDaoInfo] invalid params")
+	if !validUint64(b_pool_A) || !validUint64(b_pool_B) {
+		log.Println("[AddPoolInfo] invalid params")
 		return
 	}
-	proof.B_Dao_A = b_Dao_A
-	proof.B_Dao_B = b_Dao_B
-	proof.R_DaoA = r_Dao_A
-	proof.R_DaoB = r_Dao_B
-	proof.LC_Dao_A, err = twistedElgamal.Enc(big.NewInt(int64(b_Dao_A)), r_Dao_A, proof.Pk_Dao)
+	proof.B_pool_A = b_pool_A
+	proof.B_pool_B = b_pool_B
+	proof.R_poolA = r_pool_A
+	proof.R_poolB = r_pool_B
+	proof.LC_pool_A, err = twistedElgamal.Enc(big.NewInt(int64(b_pool_A)), r_pool_A, proof.Pk_pool)
 	if err != nil {
-		log.Println("[RemoveLiquidityProof AddDaoInfo] unable to encrypt:", err)
+		log.Println("[RemoveLiquidityProof AddPoolInfo] unable to encrypt:", err)
 		return
 	}
-	proof.LC_Dao_B, err = twistedElgamal.Enc(big.NewInt(int64(b_Dao_B)), r_Dao_B, proof.Pk_Dao)
+	proof.LC_pool_B, err = twistedElgamal.Enc(big.NewInt(int64(b_pool_B)), r_pool_B, proof.Pk_pool)
 	if err != nil {
-		log.Println("[RemoveLiquidityProof AddDaoInfo] unable to encrypt:", err)
+		log.Println("[RemoveLiquidityProof AddPoolInfo] unable to encrypt:", err)
 		return
 	}
 	// TODO re-implement P = \sqrt{x}/\sqrt{y}
-	proof.P = uint64(math.Sqrt(float64(b_Dao_A)/float64(b_Dao_B)) * OneMillion)
+	proof.P = uint64(math.Sqrt(float64(b_pool_A)/float64(b_pool_B)) * OneMillion)
 }

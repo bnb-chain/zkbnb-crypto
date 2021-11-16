@@ -27,6 +27,10 @@ import (
 	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
+func zeroElGamal() *ElGamalEnc {
+	return &ElGamalEnc{CL: curve.ZeroPoint(), CR: curve.ZeroPoint()}
+}
+
 func notNullElGamal(C *ElGamalEnc) bool {
 	return C != nil && C.CL != nil && C.CR != nil
 }

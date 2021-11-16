@@ -42,7 +42,7 @@ type WithdrawProof struct {
 	ReceiveAddr *big.Int
 	AssetId     uint32
 	// gas fee
-	A_T_feeDivC_feeRprime *Point
+	A_T_feeC_feeRPrimeInv *Point
 	Z_bar_r_fee           *big.Int
 	C_fee                 *ElGamalEnc
 	T_fee                 *Point
@@ -66,7 +66,7 @@ func (proof *WithdrawProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
 	offset = copyBuf(&buf, offset, AddressSize, proof.ReceiveAddr.FillBytes(make([]byte, AddressSize)))
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.AssetId))
-	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeDivC_feeRprime.Marshal())
+	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
 	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C_fee))
 	offset = copyBuf(&buf, offset, PointSize, proof.T_fee.Marshal())
@@ -118,7 +118,7 @@ func ParseWithdrawProofBytes(proofBytes []byte) (proof *WithdrawProof, err error
 	}
 	offset, proof.ReceiveAddr = readAddressFromBuf(proofBytes, offset)
 	offset, proof.AssetId = readUint32FromBuf(proofBytes, offset)
-	offset, proof.A_T_feeDivC_feeRprime, err = readPointFromBuf(proofBytes, offset)
+	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -176,15 +176,16 @@ type WithdrawProofRelation struct {
 }
 
 func NewWithdrawRelation(
-	C *ElGamalEnc, C_fee *ElGamalEnc,
+	C *ElGamalEnc,
 	pk *Point,
-	b uint64, bStar uint64, b_fee uint64,
+	b uint64, bStar uint64,
 	sk *big.Int,
 	assetId uint32, receiveAddr string,
-	GasFeeAssetId uint32, GasFee uint64,
+	// fee part
+	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
 ) (*WithdrawProofRelation, error) {
-	if !notNullElGamal(C) || !notNullElGamal(C_fee) || !curve.IsInSubGroup(pk) || sk == nil || b < bStar || b_fee < GasFee ||
-		(GasFeeAssetId == assetId && (!equalEnc(C, C_fee) || b < bStar+GasFee || b != b_fee)) || receiveAddr == "" ||
+	if !notNullElGamal(C) || !notNullElGamal(C_fee) || !curve.IsInSubGroup(pk) || sk == nil || b < bStar || B_fee < GasFee ||
+		(GasFeeAssetId == assetId && (!equalEnc(C, C_fee) || b < bStar+GasFee || b != B_fee)) || receiveAddr == "" ||
 		!validUint64(b) || !validUint64(bStar) || !validUint64(GasFee) {
 		log.Println("[NewWithdrawRelation] invalid params")
 		return nil, ErrInvalidParams
@@ -236,7 +237,7 @@ func NewWithdrawRelation(
 		)
 		go proveCtRangeRoutine(int64(B_prime), G, H, Bar_r, BPrimeRangeProof, withdrawRangeChan)
 		// prove enough fee
-		b_fee_prime = b_fee - GasFee
+		b_fee_prime = B_fee - GasFee
 		go proveCtRangeRoutine(int64(b_fee_prime), G, H, Bar_r_fee, GasFeePrimeRangeProof, withdrawRangeChan)
 		for i := 0; i < withdrawRangeProofCount; i++ {
 			val := <-withdrawRangeChan

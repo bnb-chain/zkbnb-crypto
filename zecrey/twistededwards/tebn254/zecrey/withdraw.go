@@ -64,11 +64,12 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 	// then generate the challenge c
 	buf.Write(PaddingBigIntBytes(FixedCurve))
 	buf.Write(PaddingBigIntBytes(relation.ReceiveAddr))
-	writeUint64IntoBuf(&buf, uint64(relation.AssetId))
+	// gas fee
+	writeEncIntoBuf(&buf, relation.C_fee)
 	writeUint64IntoBuf(&buf, uint64(relation.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, relation.GasFee)
+	writeUint64IntoBuf(&buf, uint64(relation.AssetId))
 	writeEncIntoBuf(&buf, relation.C)
-	writeEncIntoBuf(&buf, relation.C_fee)
 	writePointIntoBuf(&buf, relation.T)
 	writePointIntoBuf(&buf, relation.T_fee)
 	writePointIntoBuf(&buf, relation.Pk)
@@ -84,7 +85,7 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 	proof = &WithdrawProof{
 		A_pk:                  A_pk,
 		A_TDivCRprime:         A_TDivCRprime,
-		A_T_feeDivC_feeRprime: A_T_feeDivC_feeRprime,
+		A_T_feeC_feeRPrimeInv: A_T_feeDivC_feeRprime,
 		Z_bar_r:               z_bar_r,
 		Z_bar_r_fee:           z_bar_r_fee,
 		Z_sk:                  z_sk,
@@ -118,7 +119,7 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	)
 	// check params
 	if proof.GasFeeAssetId == proof.AssetId {
-		if !equalEnc(proof.C, proof.C_fee) || !proof.A_TDivCRprime.Equal(proof.A_T_feeDivC_feeRprime) {
+		if !equalEnc(proof.C, proof.C_fee) || !proof.A_TDivCRprime.Equal(proof.A_T_feeC_feeRPrimeInv) {
 			log.Println("[Verify WithdrawProof] invalid params")
 			return false, errors.New("[Verify WithdrawProof] invalid params")
 		}
@@ -145,17 +146,18 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	go verifyCtRangeRoutine(proof.GasFeePrimeRangeProof, rangeChan)
 	buf.Write(PaddingBigIntBytes(FixedCurve))
 	buf.Write(PaddingBigIntBytes(proof.ReceiveAddr))
-	writeUint64IntoBuf(&buf, uint64(proof.AssetId))
+	// gas fee
+	writeEncIntoBuf(&buf, proof.C_fee)
 	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, proof.GasFee)
+	writeUint64IntoBuf(&buf, uint64(proof.AssetId))
 	writeEncIntoBuf(&buf, proof.C)
-	writeEncIntoBuf(&buf, proof.C_fee)
 	writePointIntoBuf(&buf, proof.T)
 	writePointIntoBuf(&buf, proof.T_fee)
 	writePointIntoBuf(&buf, proof.Pk)
 	writePointIntoBuf(&buf, proof.A_pk)
 	writePointIntoBuf(&buf, proof.A_TDivCRprime)
-	writePointIntoBuf(&buf, proof.A_T_feeDivC_feeRprime)
+	writePointIntoBuf(&buf, proof.A_T_feeC_feeRPrimeInv)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
 		log.Println("[Verify WithdrawProof] err: unable to compute hash:", err)
@@ -169,7 +171,7 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	}
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
 	l1 := curve.Add(curve.ScalarMul(G, proof.Z_bar_r_fee), curve.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
-	r1 := curve.Add(proof.A_T_feeDivC_feeRprime, curve.ScalarMul(T_feeDivC_feeRprime, c))
+	r1 := curve.Add(proof.A_T_feeC_feeRPrimeInv, curve.ScalarMul(T_feeDivC_feeRprime, c))
 	if !l1.Equal(r1) {
 		log.Println("[Verify WithdrawProof] l1!=r1")
 		return false, nil

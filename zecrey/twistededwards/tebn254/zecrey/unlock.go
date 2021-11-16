@@ -30,10 +30,10 @@ import (
 
 func ProveUnlock(
 	sk *big.Int, chainId, assetId uint32, balance, deltaAmount uint64,
-	C_fee *ElGamalEnc,
-	b_fee uint64, GasFeeAssetId uint32, GasFee uint64,
+	// fee part
+	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
 ) (proof *UnlockProof, err error) {
-	if sk == nil || balance < deltaAmount || !validUint64(balance) || !validUint64(deltaAmount) || b_fee < GasFee {
+	if sk == nil || balance < deltaAmount || !validUint64(balance) || !validUint64(deltaAmount) || B_fee < GasFee {
 		log.Println("[ProveUnlock] invalid params")
 		return nil, errors.New("[ProveUnlock] invalid params")
 	}
@@ -70,6 +70,8 @@ func ProveUnlock(
 	writeUint64IntoBuf(&buf, uint64(assetId))
 	writeUint64IntoBuf(&buf, balance)
 	writeUint64IntoBuf(&buf, deltaAmount)
+	// gas fee
+	writeEncIntoBuf(&buf, C_fee)
 	writeUint64IntoBuf(&buf, uint64(GasFeeAssetId))
 	writeUint64IntoBuf(&buf, GasFee)
 	c, err = util.HashToInt(buf, zmimc.Hmimc)
@@ -78,7 +80,7 @@ func ProveUnlock(
 		return nil, err
 	}
 	// gas fee range proof
-	b_feePrime = b_fee - GasFee
+	b_feePrime = B_fee - GasFee
 	Bar_r_fee, GasFeePrimeRangeProof, err = proveCtRange(int64(b_feePrime), G, H)
 	if err != nil {
 		log.Println("[ProveUnlock] unable to prove range proof")
@@ -89,7 +91,7 @@ func ProveUnlock(
 	Z_skInv = ffmath.AddMod(alpha_skInv, ffmath.Multiply(c, ffmath.ModInverse(sk, Order)), Order)
 	proof = &UnlockProof{
 		A_pk:                  A_pk,
-		A_T_feeDivC_feeRprime: A_T_feeDivC_feeRprime,
+		A_T_feeC_feeRPrimeInv: A_T_feeDivC_feeRprime,
 		Z_bar_r_fee:           Z_bar_r_fee,
 		Z_sk:                  Z_sk,
 		Z_skInv:               Z_skInv,
@@ -125,6 +127,8 @@ func (proof *UnlockProof) Verify() (res bool, err error) {
 	writeUint64IntoBuf(&buf, uint64(proof.AssetId))
 	writeUint64IntoBuf(&buf, proof.Balance)
 	writeUint64IntoBuf(&buf, proof.DeltaAmount)
+	// gas fee
+	writeEncIntoBuf(&buf, proof.C_fee)
 	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, proof.GasFee)
 	c, err = util.HashToInt(buf, zmimc.Hmimc)
@@ -155,7 +159,7 @@ func (proof *UnlockProof) Verify() (res bool, err error) {
 	T_feeDivC_feeRprime = curve.Add(proof.T_fee, curve.Neg(curve.Add(proof.C_fee.CR, C_feeDelta)))
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
 	l2 := curve.Add(curve.ScalarMul(G, proof.Z_bar_r_fee), curve.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
-	r2 := curve.Add(proof.A_T_feeDivC_feeRprime, curve.ScalarMul(T_feeDivC_feeRprime, c))
+	r2 := curve.Add(proof.A_T_feeC_feeRPrimeInv, curve.ScalarMul(T_feeDivC_feeRprime, c))
 	if !l2.Equal(r2) {
 		log.Println("[Verify UnlockProof] l2!=r2")
 		return false, nil

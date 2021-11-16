@@ -56,9 +56,6 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 	writeUint64IntoBuf(&buf, relation.B_A_Delta)
 	writeUint64IntoBuf(&buf, relation.B_B_Delta)
 	writeUint64IntoBuf(&buf, relation.B_treasuryfee_Delta)
-	writeUint64IntoBuf(&buf, uint64(relation.GasFeeAssetId))
-	writeUint64IntoBuf(&buf, relation.GasFee)
-
 	// ownership
 	alpha_sk_u = curve.RandomValue()
 	alpha_sk_uInv = ffmath.ModInverse(alpha_sk_u, Order)
@@ -82,6 +79,11 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 		alpha_bar_r_fee = curve.RandomValue()
 		A_T_feeC_feeRPrimeInv = curve.Add(curve.ScalarMul(G, alpha_bar_r_fee), curve.ScalarMul(C_feeLPrimeInv, alpha_sk_uInv))
 	}
+	// gas fee
+	writePointIntoBuf(&buf, A_T_feeC_feeRPrimeInv)
+	writeEncIntoBuf(&buf, relation.C_fee)
+	writeUint64IntoBuf(&buf, uint64(relation.GasFeeAssetId))
+	writeUint64IntoBuf(&buf, relation.GasFee)
 	// write into buf
 	writePointIntoBuf(&buf, A_pk_u)
 	writePointIntoBuf(&buf, A_T_uAC_uARPrimeInv)
@@ -159,9 +161,12 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 	writeUint64IntoBuf(&buf, proof.B_A_Delta)
 	writeUint64IntoBuf(&buf, proof.B_B_Delta)
 	writeUint64IntoBuf(&buf, proof.B_treasuryfee_Delta)
+	// write into buf
+	// gas fee
+	writePointIntoBuf(&buf, proof.A_T_feeC_feeRPrimeInv)
+	writeEncIntoBuf(&buf, proof.C_fee)
 	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, proof.GasFee)
-	// write into buf
 	writePointIntoBuf(&buf, proof.A_pk_u)
 	writePointIntoBuf(&buf, proof.A_T_uAC_uARPrimeInv)
 	// compute challenge

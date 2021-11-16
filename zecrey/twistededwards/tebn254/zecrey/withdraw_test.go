@@ -47,12 +47,12 @@ func TestProveWithdraw(t *testing.T) {
 	assetId := uint32(1)
 	feeAssetId := uint32(2)
 	relation, err := NewWithdrawRelation(
-		bEnc, bEnc2,
+		bEnc,
 		pk,
-		b, bStar, b_fee,
+		b, bStar,
 		sk,
 		assetId, addr,
-		feeAssetId, fee,
+		bEnc2, b_fee, feeAssetId, fee,
 	)
 	if err != nil {
 		t.Error(err)
@@ -95,12 +95,12 @@ func TestProveWithdrawSameFee(t *testing.T) {
 	assetId := uint32(1)
 	//feeAssetId := uint32(2)
 	relation, err := NewWithdrawRelation(
-		bEnc, bEnc,
+		bEnc,
 		pk,
-		b, bStar, b,
+		b, bStar,
 		sk,
 		assetId, addr,
-		assetId, fee,
+		bEnc, b, assetId, fee,
 	)
 	if err != nil {
 		t.Error(err)

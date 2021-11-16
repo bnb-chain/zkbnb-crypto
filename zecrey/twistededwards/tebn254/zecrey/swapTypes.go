@@ -305,8 +305,8 @@ func NewSwapRelation(
 	B_A_Delta, B_B_Delta, B_u_A uint64,
 	feeRate uint32, treasuryRate uint32,
 	Sk_u *big.Int,
-	C_fee *ElGamalEnc,
-	B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
+	// fee part
+	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
 ) (relation *SwapProofRelation, err error) {
 	// check params
 	if !notNullElGamal(C_uA) || Sk_u == nil ||
