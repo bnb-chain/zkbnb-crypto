@@ -40,7 +40,7 @@ func ProveTransfer(relation *TransferProofRelation) (proof *TransferProof, err e
 	for _, statement := range relation.Statements {
 		sum = sum + statement.BDelta
 	}
-	sum = sum + int64(relation.Fee)
+	sum = sum + int64(relation.GasFee)
 	// statements must be correct
 	if sum != 0 {
 		log.Println("[ProveTransfer] invalid params")
@@ -80,9 +80,11 @@ func ProveTransfer(relation *TransferProofRelation) (proof *TransferProof, err e
 	// initialize proof
 	proof = new(TransferProof)
 	// add Pt,G,Waste from relation
-	proof.Fee = relation.Fee
+	proof.GasFee = relation.GasFee
 	// write public statements into buf
 	buf.Write(PaddingBigIntBytes(FixedCurve))
+	writeUint64IntoBuf(&buf, proof.GasFee)
+	writeUint64IntoBuf(&buf, uint64(proof.AssetId))
 	// construct for A_sum
 	alpha_r_sum = curve.RandomValue()
 	A_sum = curve.ScalarMul(G, alpha_r_sum)
@@ -276,7 +278,7 @@ func commitValidDelta(alpha_bDelta *big.Int, g, h *Point) (alpha_rstar *big.Int,
 }
 
 func (proof *TransferProof) Verify() (bool, error) {
-	if !validUint64(proof.Fee) {
+	if !validUint64(proof.GasFee) {
 		log.Println("[Verify TransferProof] invalid params")
 		return false, errors.New("[Verify TransferProof] invalid params")
 	}
@@ -290,6 +292,8 @@ func (proof *TransferProof) Verify() (bool, error) {
 	)
 	// write public statements into buf
 	buf.Write(PaddingBigIntBytes(FixedCurve))
+	writeUint64IntoBuf(&buf, proof.GasFee)
+	writeUint64IntoBuf(&buf, uint64(proof.AssetId))
 	// write into buf
 	writePointIntoBuf(&buf, proof.A_sum)
 	for _, subProof := range proof.SubProofs {
@@ -328,7 +332,7 @@ func (proof *TransferProof) Verify() (bool, error) {
 	rSum := curve.Add(
 		proof.A_sum,
 		curve.ScalarMul(
-			curve.Add(CR_sum, curve.ScalarMul(H, big.NewInt(int64(proof.Fee)))),
+			curve.Add(CR_sum, curve.ScalarMul(H, big.NewInt(int64(proof.GasFee)))),
 			c,
 		),
 	)

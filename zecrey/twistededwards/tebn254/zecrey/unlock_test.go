@@ -19,17 +19,25 @@ package zecrey
 
 import (
 	"github.com/stretchr/testify/assert"
+	"math/big"
 	"testing"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
 func TestUnlockProof_Verify(t *testing.T) {
-	sk, _ := twistedElgamal.GenKeyPair()
+	sk, pk := twistedElgamal.GenKeyPair()
 	chainId := uint32(0)
 	assetId := uint32(0)
 	balance := uint64(10)
 	deltaAmount := uint64(2)
-	proof, err := ProveUnlock(sk, chainId, assetId, balance, deltaAmount)
+	b_fee := uint64(100)
+	feeEnc, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), curve.RandomValue(), pk)
+	proof, err := ProveUnlock(
+		sk, chainId, assetId, balance, deltaAmount,
+		feeEnc,
+		b_fee, uint32(1), 1,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

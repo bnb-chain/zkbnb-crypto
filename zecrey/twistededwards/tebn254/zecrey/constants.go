@@ -33,20 +33,23 @@ type (
 const (
 	RangeMaxBits          = ctrange.RangeMaxBits // max bits
 	PointSize             = curve.PointSize
+	ElGamalEncSize        = PointSize * 2
 	RangeProofSize        = ctrange.RangeProofSize
-	WithdrawProofSize     = 10*PointSize + RangeProofSize + 2*EightBytes + AddressSize
+	WithdrawProofSize     = 14*PointSize + 2*RangeProofSize + 2*EightBytes + AddressSize + 2*FourBytes
 	OneMillion            = 1000000
-	OneThousand           = 1000
+	TenThousand           = 10000
+	MaxFeeRate            = 40
+	MinFee                = 1
 	FourBytes             = 4
 	EightBytes            = 8
 	TransferSubProofCount = 3
 	TransferSubProofSize  = 24*PointSize + RangeProofSize
-	TransferProofSize     = TransferSubProofCount*TransferSubProofSize + 4*PointSize + 1*EightBytes
+	TransferProofSize     = TransferSubProofCount*TransferSubProofSize + 4*PointSize + 1*EightBytes + 1*FourBytes
 
-	SwapProofSize            = 33*PointSize + 2*RangeProofSize + 7*EightBytes + 1*FourBytes
-	AddLiquidityProofSize    = 30*PointSize + 5*EightBytes + 2*RangeProofSize
-	RemoveLiquidityProofSize = 31*PointSize + 6*EightBytes + 1*RangeProofSize
-	UnlockProofSize          = 3*PointSize + 2*FourBytes + 2*EightBytes
+	SwapProofSize            = 32*PointSize + 2*RangeProofSize + 10*EightBytes + 4*FourBytes
+	AddLiquidityProofSize    = 35*PointSize + 6*EightBytes + 3*FourBytes + 3*RangeProofSize
+	RemoveLiquidityProofSize = 36*PointSize + 9*EightBytes + 1*FourBytes + 2*RangeProofSize
+	UnlockProofSize          = 9*PointSize + 3*FourBytes + 3*EightBytes + 1*RangeProofSize
 
 	AddressSize = 20
 

@@ -30,27 +30,36 @@ import (
 func TestRemoveLiquidityProof_Verify(t *testing.T) {
 	//b_u_A := uint64(8)
 	//b_u_B := uint64(4)
-	b_u_LP := uint64(1)
+	B_LP := uint64(100)
 	assetAId := uint32(1)
 	assetBId := uint32(2)
-	b_A_Delta := uint64(1)
-	b_B_Delta := uint64(1)
-	Delta_LP := uint64(1)
-	b_Dao_A := uint64(100)
-	b_Dao_B := uint64(100)
-	sk_u, Pk_u := twistedElgamal.GenKeyPair()
-	_, Pk_Dao := twistedElgamal.GenKeyPair()
+	B_A_Delta := uint64(10)
+	B_B_Delta := uint64(10)
+	MinB_A_Delta := uint64(1)
+	MinB_B_Delta := uint64(1)
+	Delta_LP := uint64(10)
+	b_pool_A := uint64(1000)
+	b_pool_B := uint64(1000)
+	Sk_u, Pk_u := twistedElgamal.GenKeyPair()
+	_, Pk_pool := twistedElgamal.GenKeyPair()
 	//C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_A)), curve.RandomValue(), Pk_u)
 	//C_uB, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_B)), curve.RandomValue(), Pk_u)
-	C_uLP, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_LP)), curve.RandomValue(), Pk_u)
+	C_u_LP, _ := twistedElgamal.Enc(big.NewInt(int64(B_LP)), curve.RandomValue(), Pk_u)
+	// fee
+	B_fee := uint64(100)
+	C_fee, _ := twistedElgamal.Enc(big.NewInt(int64(B_fee)), curve.RandomValue(), Pk_u)
+	GasFeeAssetId := uint32(1)
+	GasFee := uint64(1)
 	relation, err := NewRemoveLiquidityRelation(
-		C_uLP,
-		Pk_Dao, Pk_u,
-		b_u_LP,
+		C_u_LP,
+		Pk_u,
+		B_LP,
 		Delta_LP,
-		b_A_Delta, b_B_Delta,
+		MinB_A_Delta, MinB_B_Delta,
 		assetAId, assetBId,
-		sk_u,
+		Sk_u,
+		// fee part
+		C_fee, B_fee, GasFeeAssetId, GasFee,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -60,7 +69,10 @@ func TestRemoveLiquidityProof_Verify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	proof.AddDaoInfo(b_Dao_A, b_Dao_B, curve.RandomValue(), curve.RandomValue())
+	err = proof.AddPoolInfo(Pk_pool, B_A_Delta, B_B_Delta, b_pool_A, b_pool_B, curve.RandomValue(), curve.RandomValue())
+	if err != nil {
+		t.Fatal(err)
+	}
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
 	proof2, err := ParseRemoveLiquidityProofStr(proofStr)

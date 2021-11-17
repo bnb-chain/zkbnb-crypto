@@ -19,54 +19,60 @@ package zecrey
 
 import (
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"log"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
 type WithdrawProof struct {
 	// commitments
 	A_pk, A_TDivCRprime *Point
 	// response
-	Z_rbar, Z_sk, Z_skInv *big.Int
+	Z_bar_r, Z_sk, Z_skInv *big.Int
 	// Commitment Range Proofs
-	BPrimeRangeProof *RangeProof
+	BPrimeRangeProof      *RangeProof
+	GasFeePrimeRangeProof *RangeProof
 	// common inputs
 	BStar       uint64
-	Fee         uint64
-	CRStar      *Point
 	C           *ElGamalEnc
 	T, Pk       *Point
 	ReceiveAddr *big.Int
+	AssetId     uint32
+	// gas fee
+	A_T_feeC_feeRPrimeInv *Point
+	Z_bar_r_fee           *big.Int
+	C_fee                 *ElGamalEnc
+	T_fee                 *Point
+	GasFeeAssetId         uint32
+	GasFee                uint64
 }
 
 func (proof *WithdrawProof) Bytes() []byte {
-	res := make([]byte, WithdrawProofSize)
-	copy(res[:PointSize], proof.A_pk.Marshal())
-	copy(res[PointSize:PointSize*2], proof.A_TDivCRprime.Marshal())
-	copy(res[PointSize*2:PointSize*3], proof.Z_rbar.FillBytes(make([]byte, PointSize)))
-	copy(res[PointSize*3:PointSize*4], proof.Z_sk.FillBytes(make([]byte, PointSize)))
-	copy(res[PointSize*4:PointSize*5], proof.Z_skInv.FillBytes(make([]byte, PointSize)))
-	copy(res[PointSize*5:PointSize*6], proof.CRStar.Marshal())
-	C := proof.C.Bytes()
-	copy(res[PointSize*6:PointSize*8], C[:])
-	copy(res[PointSize*8:PointSize*9], proof.T.Marshal())
-	copy(res[PointSize*9:PointSize*10], proof.Pk.Marshal())
-	BStarBytes := make([]byte, EightBytes)
-	FeeBytes := make([]byte, EightBytes)
-	binary.BigEndian.PutUint64(BStarBytes, proof.BStar)
-	binary.BigEndian.PutUint64(FeeBytes, proof.Fee)
-	copy(res[PointSize*10:PointSize*10+EightBytes], BStarBytes)
-	copy(res[PointSize*10+EightBytes:PointSize*10+EightBytes*2], FeeBytes)
-	copy(res[PointSize*10+EightBytes*2:PointSize*10+EightBytes*2+AddressSize], proof.ReceiveAddr.FillBytes(make([]byte, AddressSize)))
-	copy(res[PointSize*10+EightBytes*2+AddressSize:PointSize*10+EightBytes*2+AddressSize+RangeProofSize], proof.BPrimeRangeProof.Bytes())
-	return res
+	buf := make([]byte, WithdrawProofSize)
+	offset := 0
+	offset = copyBuf(&buf, offset, PointSize, proof.A_pk.Marshal())
+	offset = copyBuf(&buf, offset, PointSize, proof.A_TDivCRprime.Marshal())
+	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&buf, offset, PointSize, proof.Z_sk.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&buf, offset, PointSize, proof.Z_skInv.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&buf, offset, RangeProofSize, proof.BPrimeRangeProof.Bytes())
+	offset = copyBuf(&buf, offset, RangeProofSize, proof.GasFeePrimeRangeProof.Bytes())
+	offset = copyBuf(&buf, offset, EightBytes, uint64ToBytes(proof.BStar))
+	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C))
+	offset = copyBuf(&buf, offset, PointSize, proof.T.Marshal())
+	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
+	offset = copyBuf(&buf, offset, AddressSize, proof.ReceiveAddr.FillBytes(make([]byte, AddressSize)))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.AssetId))
+	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
+	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C_fee))
+	offset = copyBuf(&buf, offset, PointSize, proof.T_fee.Marshal())
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.GasFeeAssetId))
+	offset = copyBuf(&buf, offset, EightBytes, uint64ToBytes(proof.GasFee))
+	return buf
 }
 
 func (proof *WithdrawProof) String() string {
@@ -79,40 +85,58 @@ func ParseWithdrawProofBytes(proofBytes []byte) (proof *WithdrawProof, err error
 		return nil, ErrInvalidWithdrawProofSize
 	}
 	proof = new(WithdrawProof)
-	proof.A_pk, err = curve.FromBytes(proofBytes[:PointSize])
+	offset := 0
+
+	offset, proof.A_pk, err = readPointFromBuf(proofBytes, offset)
+	offset, proof.A_TDivCRprime, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.A_TDivCRprime, err = curve.FromBytes(proofBytes[PointSize : PointSize*2])
+	offset, proof.Z_bar_r = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_sk = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_skInv = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.BPrimeRangeProof, err = readRangeProofFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.Z_rbar = new(big.Int).SetBytes(proofBytes[PointSize*2 : PointSize*3])
-	proof.Z_sk = new(big.Int).SetBytes(proofBytes[PointSize*3 : PointSize*4])
-	proof.Z_skInv = new(big.Int).SetBytes(proofBytes[PointSize*4 : PointSize*5])
-	proof.CRStar, err = curve.FromBytes(proofBytes[PointSize*5 : PointSize*6])
+	offset, proof.GasFeePrimeRangeProof, err = readRangeProofFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.C, err = twistedElgamal.FromBytes(proofBytes[PointSize*6 : PointSize*8])
+	offset, proof.BStar = readUint64FromBuf(proofBytes, offset)
+	offset, proof.C, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.T, err = curve.FromBytes(proofBytes[PointSize*8 : PointSize*9])
+	offset, proof.T, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.Pk, err = curve.FromBytes(proofBytes[PointSize*9 : PointSize*10])
+	offset, proof.Pk, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.BStar = binary.BigEndian.Uint64(proofBytes[PointSize*10 : PointSize*10+EightBytes])
-	proof.Fee = binary.BigEndian.Uint64(proofBytes[PointSize*10+EightBytes : PointSize*10+EightBytes*2])
-	proof.ReceiveAddr = new(big.Int).SetBytes(proofBytes[PointSize*10+EightBytes*2 : PointSize*10+EightBytes*2+AddressSize])
-	proof.BPrimeRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*10+EightBytes*2+AddressSize:])
+	offset, proof.ReceiveAddr = readAddressFromBuf(proofBytes, offset)
+	offset, proof.AssetId = readUint32FromBuf(proofBytes, offset)
+	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
+	offset, proof.Z_bar_r_fee = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.C_fee, err = readElGamalEncFromBuf(proofBytes, offset)
+	if err != nil {
+		return nil, err
+	}
+	offset, proof.T_fee, err = readPointFromBuf(proofBytes, offset)
+	if err != nil {
+		return nil, err
+	}
+	offset, proof.GasFeeAssetId = readUint32FromBuf(proofBytes, offset)
+	offset, proof.GasFee = readUint64FromBuf(proofBytes, offset)
+	if err != nil {
+		return nil, err
+	}
+
 	return proof, nil
 }
 
@@ -128,24 +152,27 @@ type WithdrawProofRelation struct {
 	// ------------- public ---------------------
 	// original balance enc
 	C *ElGamalEnc
-	// delta balance enc
-	CRStar *Point
 	// new pedersen commitment for new balance
-	T                *Point
-	BPrimeRangeProof *RangeProof
+	T                     *Point
+	BPrimeRangeProof      *RangeProof
+	GasFeePrimeRangeProof *RangeProof
 	// public key
 	Pk *Point
-	// token Id
-	TokenId uint32
 	// b^{\star}
-	Bstar uint64
-	// fee
-	Fee uint64
-	// ----------- private ---------------------
-	Sk          *big.Int
-	BPrime      uint64
-	RBar        *big.Int
+	Bstar       uint64
 	ReceiveAddr *big.Int
+	AssetId     uint32
+	// ----------- private ---------------------
+	Sk      *big.Int
+	B_prime uint64
+	Bar_r   *big.Int
+	// gas fee
+	C_fee         *ElGamalEnc
+	T_fee         *Point
+	GasFeeAssetId uint32
+	GasFee        uint64
+	B_fee_prime   uint64
+	R_feeBar      *big.Int
 }
 
 func NewWithdrawRelation(
@@ -153,10 +180,13 @@ func NewWithdrawRelation(
 	pk *Point,
 	b uint64, bStar uint64,
 	sk *big.Int,
-	assetId uint32, receiveAddr string, fee uint64,
+	assetId uint32, receiveAddr string,
+	// fee part
+	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
 ) (*WithdrawProofRelation, error) {
-	if !notNullElGamal(C) || !curve.IsInSubGroup(pk) || sk == nil || b < bStar+fee || receiveAddr == "" ||
-		!validUint64(b) || !validUint64(bStar) || !validUint64(fee) {
+	if !notNullElGamal(C) || !notNullElGamal(C_fee) || !curve.IsInSubGroup(pk) || sk == nil || b < bStar || B_fee < GasFee ||
+		(GasFeeAssetId == assetId && (!equalEnc(C, C_fee) || b < bStar+GasFee || b != B_fee)) || receiveAddr == "" ||
+		!validUint64(b) || !validUint64(bStar) || !validUint64(GasFee) {
 		log.Println("[NewWithdrawRelation] invalid params")
 		return nil, ErrInvalidParams
 	}
@@ -170,10 +200,13 @@ func NewWithdrawRelation(
 		return nil, ErrInconsistentPublicKey
 	}
 	var (
-		bPrime           uint64
-		rBar             *big.Int
-		BPrimeRangeProof *RangeProof
-		addrInt          *big.Int
+		B_prime               uint64
+		b_fee_prime           uint64
+		Bar_r                 = new(big.Int)
+		Bar_r_fee             = new(big.Int)
+		BPrimeRangeProof      = new(RangeProof)
+		GasFeePrimeRangeProof = new(RangeProof)
+		addrInt               *big.Int
 	)
 	// check if the b is correct
 	hb := curve.Add(C.CR, curve.Neg(curve.ScalarMul(C.CL, ffmath.ModInverse(sk, Order))))
@@ -183,52 +216,65 @@ func NewWithdrawRelation(
 		return nil, ErrIncorrectBalance
 	}
 	// b' = b - b^{\star} - fee
-	bPrime = b - bStar - fee
-	// C^{\Delta} = (pk^rStar,G^rStar h^{b^{\Delta} - fee})
-	hNeg := curve.Neg(H)
-	CRStar := curve.ScalarMul(hNeg, big.NewInt(int64(bStar+fee)))
-	// compute \bar{r} = \sum_{i=1}^32 r_i
-	// T = g^{\bar{rStar}} h^{b'}
-	rBar, BPrimeRangeProof, err = proveCtRange(int64(bPrime), G, H)
-	if err != nil {
-		log.Println("[NewWithdrawRelation] err range proof:", err)
-		return nil, err
+	if assetId == GasFeeAssetId {
+		B_prime = b - bStar - GasFee
+		// T = g^{\bar{rStar}} h^{b'}
+		Bar_r, BPrimeRangeProof, err = proveCtRange(int64(B_prime), G, H)
+		if err != nil {
+			log.Println("[NewWithdrawRelation] err range proof:", err)
+			return nil, err
+		}
+		b_fee_prime = B_prime
+		Bar_r_fee = new(big.Int)
+		Bar_r_fee.Set(Bar_r)
+		GasFeePrimeRangeProof = BPrimeRangeProof
+	} else {
+		// prove enough balance
+		B_prime = b - bStar
+		// T = g^{\bar{rStar}} h^{b'}
+		var (
+			withdrawRangeChan = make(chan int, withdrawRangeProofCount)
+		)
+		go proveCtRangeRoutine(int64(B_prime), G, H, Bar_r, BPrimeRangeProof, withdrawRangeChan)
+		// prove enough fee
+		b_fee_prime = B_fee - GasFee
+		go proveCtRangeRoutine(int64(b_fee_prime), G, H, Bar_r_fee, GasFeePrimeRangeProof, withdrawRangeChan)
+		for i := 0; i < withdrawRangeProofCount; i++ {
+			val := <-withdrawRangeChan
+			if val == ErrCode {
+				return nil, errors.New("[NewWithdrawRelation] range proof works error")
+			}
+		}
 	}
 	// compute Ha
 	addrInt = new(big.Int).SetBytes(addrBytes)
 	relation := &WithdrawProofRelation{
-		// ------------- public ---------------------
-		C:                C,
-		CRStar:           CRStar,
-		T:                new(Point).Set(BPrimeRangeProof.A),
-		Pk:               pk,
-		TokenId:          assetId,
-		Bstar:            bStar,
-		Fee:              fee,
-		BPrimeRangeProof: BPrimeRangeProof,
-		// ----------- private ---------------------
-		Sk:          sk,
-		BPrime:      bPrime,
-		RBar:        rBar,
-		ReceiveAddr: addrInt,
+		C:                     C,
+		T:                     new(Point).Set(BPrimeRangeProof.A),
+		BPrimeRangeProof:      BPrimeRangeProof,
+		GasFeePrimeRangeProof: GasFeePrimeRangeProof,
+		Pk:                    pk,
+		Bstar:                 bStar,
+		ReceiveAddr:           addrInt,
+		AssetId:               assetId,
+		Sk:                    sk,
+		B_prime:               B_prime,
+		Bar_r:                 Bar_r,
+		C_fee:                 C_fee,
+		T_fee:                 new(Point).Set(GasFeePrimeRangeProof.A),
+		GasFeeAssetId:         GasFeeAssetId,
+		GasFee:                GasFee,
+		B_fee_prime:           b_fee_prime,
+		R_feeBar:              Bar_r_fee,
 	}
 	return relation, nil
 }
 
 func decodeAddress(addr string) ([]byte, error) {
-	if addr[:2] == "0x" {
-		addrBytes, err := hex.DecodeString(addr[2:])
-		if err != nil {
-			log.Println("[decodeAddress] decode error")
-			return nil, err
-		}
-		if len(addrBytes) != AddressSize {
-			log.Println("[decodeAddress] invalid address")
-			return nil, errors.New("[decodeAddress] invalid address")
-		}
-		return addrBytes, nil
+	if len(addr) != 42 {
+		return nil, errors.New("[decodeAddress] invalid address")
 	}
-	addrBytes, err := hex.DecodeString(addr[:])
+	addrBytes, err := hex.DecodeString(addr[2:])
 	if err != nil {
 		return nil, err
 	}

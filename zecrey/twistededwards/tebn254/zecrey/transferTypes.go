@@ -2,7 +2,6 @@ package zecrey
 
 import (
 	"encoding/base64"
-	"encoding/binary"
 	"errors"
 	"log"
 	"math/big"
@@ -10,7 +9,6 @@ import (
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"zecrey-crypto/ffmath"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
 type TransferProof struct {
@@ -20,22 +18,23 @@ type TransferProof struct {
 	A_sum *Point
 	Z_sum *big.Int
 	// challenges
-	C1, C2 *big.Int
-	Fee    uint64
+	C1, C2  *big.Int
+	GasFee  uint64
+	AssetId uint32
 }
 
 func (proof *TransferProof) Bytes() []byte {
 	proofBytes := make([]byte, TransferProofSize)
+	offset := 0
 	for i := 0; i < TransferSubProofCount; i++ {
-		copy(proofBytes[i*TransferSubProofSize:(i+1)*TransferSubProofSize], proof.SubProofs[i].Bytes())
+		offset = copyBuf(&proofBytes, offset, TransferSubProofSize, proof.SubProofs[i].Bytes())
 	}
-	copy(proofBytes[TransferSubProofCount*TransferSubProofSize:TransferSubProofCount*TransferSubProofSize+PointSize], proof.A_sum.Marshal())
-	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize:TransferSubProofCount*TransferSubProofSize+PointSize*2], proof.Z_sum.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*2:TransferSubProofCount*TransferSubProofSize+PointSize*3], proof.C1.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*3:TransferSubProofCount*TransferSubProofSize+PointSize*4], proof.C2.FillBytes(make([]byte, PointSize)))
-	FeeBytes := make([]byte, EightBytes)
-	binary.BigEndian.PutUint64(FeeBytes, proof.Fee)
-	copy(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*4:TransferSubProofCount*TransferSubProofSize+PointSize*4+EightBytes], FeeBytes)
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_sum.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_sum.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.C1.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.C2.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.GasFee))
+	offset = copyBuf(&proofBytes, offset, FourBytes, uint32ToBytes(proof.AssetId))
 	return proofBytes
 }
 
@@ -48,20 +47,22 @@ func ParseTransferProofBytes(proofBytes []byte) (proof *TransferProof, err error
 		return nil, ErrInvalidTransferProofSize
 	}
 	proof = new(TransferProof)
+	offset := 0
 	for i := 0; i < TransferSubProofCount; i++ {
-		proof.SubProofs[i], err = ParseTransferSubProofBytes(proofBytes[i*TransferSubProofSize : (i+1)*TransferSubProofSize])
+		offset, proof.SubProofs[i], err = readTransferSubProofFromBuf(proofBytes, offset)
 		if err != nil {
 			return nil, err
 		}
 	}
-	proof.A_sum, err = curve.FromBytes(proofBytes[TransferSubProofCount*TransferSubProofSize : TransferSubProofCount*TransferSubProofSize+PointSize])
+	offset, proof.A_sum, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.Z_sum = new(big.Int).SetBytes(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize : TransferSubProofCount*TransferSubProofSize+PointSize*2])
-	proof.C1 = new(big.Int).SetBytes(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*2 : TransferSubProofCount*TransferSubProofSize+PointSize*3])
-	proof.C2 = new(big.Int).SetBytes(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*3 : TransferSubProofCount*TransferSubProofSize+PointSize*4])
-	proof.Fee = binary.BigEndian.Uint64(proofBytes[TransferSubProofCount*TransferSubProofSize+PointSize*4 : TransferSubProofCount*TransferSubProofSize+PointSize*4+EightBytes])
+	offset, proof.Z_sum = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.C1 = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.C2 = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.GasFee = readUint64FromBuf(proofBytes, offset)
+	offset, proof.AssetId = readUint32FromBuf(proofBytes, offset)
 	return proof, nil
 }
 
@@ -95,34 +96,33 @@ type TransferSubProof struct {
 
 func (proof *TransferSubProof) Bytes() []byte {
 	proofBytes := make([]byte, TransferSubProofSize)
+	offset := 0
 	// A_CLDelta, A_CRDelta, A_Y1, , A_T, A_pk, A_TDivCPrime
-	copy(proofBytes[:PointSize], proof.A_CLDelta.Marshal())
-	copy(proofBytes[PointSize:PointSize*2], proof.A_CRDelta.Marshal())
-	copy(proofBytes[PointSize*2:PointSize*3], proof.A_Y1.Marshal())
-	copy(proofBytes[PointSize*3:PointSize*4], proof.A_Y2.Marshal())
-	copy(proofBytes[PointSize*4:PointSize*5], proof.A_T.Marshal())
-	copy(proofBytes[PointSize*5:PointSize*6], proof.A_pk.Marshal())
-	copy(proofBytes[PointSize*6:PointSize*7], proof.A_TDivCPrime.Marshal())
-	// Z_r, Z_bDelta, Z_rstar1, Z_rstarSubrbar, Z_rbar, Z_bprime, Z_sk, Z_skInv
-	copy(proofBytes[PointSize*7:PointSize*8], proof.Z_r.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*8:PointSize*9], proof.Z_bDelta.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*9:PointSize*10], proof.Z_rstar1.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*10:PointSize*11], proof.Z_rstar2.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*11:PointSize*12], proof.Z_bstar1.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*12:PointSize*13], proof.Z_bstar2.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*13:PointSize*14], proof.Z_rbar.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*14:PointSize*15], proof.Z_bprime.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*15:PointSize*16], proof.Z_sk.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*16:PointSize*17], proof.Z_skInv.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_CLDelta.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_CRDelta.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_Y1.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_Y2.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_T.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_pk.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_TDivCPrime.Marshal())
+	// Z_r, Z_bDelta, Z_rstar1, Z_rstarSubrbar, Z_bar_r, Z_bprime, Z_sk, Z_skInv
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_r.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_bDelta.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_rstar1.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_rstar2.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_bstar1.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_bstar2.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_rbar.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_bprime.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_sk.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_skInv.FillBytes(make([]byte, PointSize)))
 	// C
-	C := proof.C.Bytes()
-	copy(proofBytes[PointSize*17:PointSize*19], C[:])
-	CDelta := proof.CDelta.Bytes()
-	copy(proofBytes[PointSize*19:PointSize*21], CDelta[:])
-	copy(proofBytes[PointSize*21:PointSize*22], proof.T.Marshal())
-	copy(proofBytes[PointSize*22:PointSize*23], proof.Y.Marshal())
-	copy(proofBytes[PointSize*23:PointSize*24], proof.Pk.Marshal())
-	copy(proofBytes[PointSize*24:PointSize*24+RangeProofSize], proof.BStarRangeProof.Bytes())
+	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.C))
+	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.CDelta))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.T.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Y.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Pk.Marshal())
+	offset = copyBuf(&proofBytes, offset, RangeProofSize, proof.BStarRangeProof.Bytes())
 	return proofBytes
 }
 
@@ -131,65 +131,66 @@ func ParseTransferSubProofBytes(proofBytes []byte) (proof *TransferSubProof, err
 		return nil, ErrInvalidTransferSubProofSize
 	}
 	proof = new(TransferSubProof)
-	proof.A_CLDelta, err = curve.FromBytes(proofBytes[:PointSize])
+	offset := 0
+	offset, proof.A_CLDelta, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.A_CRDelta, err = curve.FromBytes(proofBytes[PointSize : PointSize*2])
+	offset, proof.A_CRDelta, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.A_Y1, err = curve.FromBytes(proofBytes[PointSize*2 : PointSize*3])
+	offset, proof.A_Y1, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.A_Y2, err = curve.FromBytes(proofBytes[PointSize*3 : PointSize*4])
+	offset, proof.A_Y2, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.A_T, err = curve.FromBytes(proofBytes[PointSize*4 : PointSize*5])
+	offset, proof.A_T, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.A_pk, err = curve.FromBytes(proofBytes[PointSize*5 : PointSize*6])
+	offset, proof.A_pk, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.A_TDivCPrime, err = curve.FromBytes(proofBytes[PointSize*6 : PointSize*7])
+	offset, proof.A_TDivCPrime, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.Z_r = new(big.Int).SetBytes(proofBytes[PointSize*7 : PointSize*8])
-	proof.Z_bDelta = new(big.Int).SetBytes(proofBytes[PointSize*8 : PointSize*9])
-	proof.Z_rstar1 = new(big.Int).SetBytes(proofBytes[PointSize*9 : PointSize*10])
-	proof.Z_rstar2 = new(big.Int).SetBytes(proofBytes[PointSize*10 : PointSize*11])
-	proof.Z_bstar1 = new(big.Int).SetBytes(proofBytes[PointSize*11 : PointSize*12])
-	proof.Z_bstar2 = new(big.Int).SetBytes(proofBytes[PointSize*12 : PointSize*13])
-	proof.Z_rbar = new(big.Int).SetBytes(proofBytes[PointSize*13 : PointSize*14])
-	proof.Z_bprime = new(big.Int).SetBytes(proofBytes[PointSize*14 : PointSize*15])
-	proof.Z_sk = new(big.Int).SetBytes(proofBytes[PointSize*15 : PointSize*16])
-	proof.Z_skInv = new(big.Int).SetBytes(proofBytes[PointSize*16 : PointSize*17])
-	proof.C, err = twistedElgamal.FromBytes(proofBytes[PointSize*17 : PointSize*19])
+	offset, proof.Z_r = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_bDelta = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_rstar1 = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_rstar2 = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_bstar1 = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_bstar2 = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_rbar = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_bprime = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_sk = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_skInv = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.C, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.CDelta, err = twistedElgamal.FromBytes(proofBytes[PointSize*19 : PointSize*21])
+	offset, proof.CDelta, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.T, err = curve.FromBytes(proofBytes[PointSize*21 : PointSize*22])
+	offset, proof.T, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.Y, err = curve.FromBytes(proofBytes[PointSize*22 : PointSize*23])
+	offset, proof.Y, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.Pk, err = curve.FromBytes(proofBytes[PointSize*23 : PointSize*24])
+	offset, proof.Pk, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.BStarRangeProof, err = ctrange.FromBytes(proofBytes[PointSize*24 : PointSize*24+RangeProofSize])
+	offset, proof.BStarRangeProof, err = readRangeProofFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +200,7 @@ func ParseTransferSubProofBytes(proofBytes []byte) (proof *TransferSubProof, err
 type TransferProofRelation struct {
 	Statements []*TransferProofStatement
 	R_sum      *big.Int
-	Fee        uint64
+	GasFee     uint64
 	AssetId    uint32
 }
 
@@ -208,7 +209,7 @@ func NewTransferProofRelation(assetId uint32, fee uint64) (*TransferProofRelatio
 		log.Println("[NewTransferProofRelation] err: invalid fee")
 		return nil, errors.New("[NewTransferProofRelation] err: invalid fee")
 	}
-	return &TransferProofRelation{AssetId: assetId, Fee: fee, R_sum: big.NewInt(0)}, nil
+	return &TransferProofRelation{AssetId: assetId, GasFee: fee, R_sum: big.NewInt(0)}, nil
 }
 
 func (relation *TransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b uint64, bDelta int64, sk *big.Int) (err error) {
@@ -235,7 +236,7 @@ func (relation *TransferProofRelation) AddStatement(C *ElGamalEnc, pk *Point, b 
 			log.Println("[TransferProofRelation AddStatement] err: incorrect balance")
 			return ErrIncorrectBalance
 		}
-		if b == 0 && relation.Fee > 0 {
+		if b == 0 && relation.GasFee > 0 {
 			log.Println("[TransferProofRelation AddStatement] err: insufficient balance")
 			return ErrInsufficientBalance
 		}
@@ -337,4 +338,3 @@ type transferCommitValues struct {
 	A_CLDelta, A_CRDelta, A_Y1, A_Y2,
 	A_T, A_pk, A_TDivCPrime *Point
 }
-

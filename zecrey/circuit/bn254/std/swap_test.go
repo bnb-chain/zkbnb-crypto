@@ -71,7 +71,7 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 			t.Fatal(err)
 		}
 		// set params
-		proof.AddDaoInfo(b_Dao_A, b_Dao_B)
+		proof.AddPoolInfo(b_Dao_A, b_Dao_B)
 		witness, err = SetSwapProofWitness(proof, true)
 		if err != nil {
 			t.Fatal(err)

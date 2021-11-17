@@ -338,7 +338,7 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 	witness.C1.Assign(proof.C1)
 	witness.C2.Assign(proof.C2)
 	// set fee
-	witness.Fee.Assign(proof.Fee)
+	witness.Fee.Assign(proof.GasFee)
 	// set sub proofs
 	for i, subProof := range proof.SubProofs {
 		// define var

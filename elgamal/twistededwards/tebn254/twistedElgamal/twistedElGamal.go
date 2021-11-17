@@ -169,6 +169,23 @@ func Enc(b *big.Int, r *big.Int, pk *Point) (*ElGamalEnc, error) {
 }
 
 /**
+Encryption method: C_L = pk^r, C_R = g^r h^(-b)
+@b: the amount needs to be encrypted
+@r: the random value
+@pk: public key
+*/
+func EncNeg(b *big.Int, r *big.Int, pk *Point) (*ElGamalEnc, error) {
+	if b == nil || r == nil || pk == nil || !curve.IsInSubGroup(pk) {
+		return nil, ErrParams
+	}
+	// pk^r
+	CL := curve.ScalarMul(pk, r)
+	// g^r h^(-b)
+	CR, _ := pedersen.Commit(r, ffmath.Neg(b), G, H)
+	return &ElGamalEnc{CL: CL, CR: CR}, nil
+}
+
+/**
 Decrypt Method: h^b = C_R / (C_L)^{sk^{-1}}, then compute b by brute-force
 @enc: encryption entity
 @sk: the private key of the encryption public key

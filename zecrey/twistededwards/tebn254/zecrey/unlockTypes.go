@@ -19,43 +19,50 @@ package zecrey
 
 import (
 	"encoding/base64"
-	"encoding/binary"
 	"errors"
 	"log"
 	"math/big"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
 type UnlockProof struct {
 	// A
 	A_pk *Point
-	// Z
-	Z_sk *big.Int
+	// response
+	Z_sk, Z_skInv         *big.Int
+	GasFeePrimeRangeProof *RangeProof
 	// common inputs
 	Pk          *Point
 	ChainId     uint32
 	AssetId     uint32
 	Balance     uint64
 	DeltaAmount uint64
+	// gas fee
+	A_T_feeC_feeRPrimeInv *Point
+	Z_bar_r_fee           *big.Int
+	C_fee                 *ElGamalEnc
+	T_fee                 *Point
+	GasFeeAssetId         uint32
+	GasFee                uint64
 }
 
 func (proof *UnlockProof) Bytes() []byte {
 	proofBytes := make([]byte, UnlockProofSize)
-	copy(proofBytes[:PointSize], proof.A_pk.Marshal())
-	copy(proofBytes[PointSize:PointSize*2], proof.Z_sk.FillBytes(make([]byte, PointSize)))
-	copy(proofBytes[PointSize*2:PointSize*3], proof.Pk.Marshal())
-	chainIdBytes := make([]byte, FourBytes)
-	assetIdBytes := make([]byte, FourBytes)
-	BalanceBytes := make([]byte, EightBytes)
-	DeltaAmountBytes := make([]byte, EightBytes)
-	binary.BigEndian.PutUint32(chainIdBytes, proof.ChainId)
-	binary.BigEndian.PutUint32(assetIdBytes, proof.AssetId)
-	binary.BigEndian.PutUint64(BalanceBytes, proof.Balance)
-	binary.BigEndian.PutUint64(DeltaAmountBytes, proof.DeltaAmount)
-	copy(proofBytes[PointSize*3:PointSize*3+FourBytes], chainIdBytes)
-	copy(proofBytes[PointSize*3+FourBytes:PointSize*3+FourBytes*2], assetIdBytes)
-	copy(proofBytes[PointSize*3+FourBytes*2:PointSize*3+FourBytes*2+EightBytes], BalanceBytes)
-	copy(proofBytes[PointSize*3+FourBytes*2+EightBytes:PointSize*3+FourBytes*2+EightBytes*2], DeltaAmountBytes)
+	offset := 0
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_pk.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_sk.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_skInv.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Pk.Marshal())
+	offset = copyBuf(&proofBytes, offset, FourBytes, uint32ToBytes(proof.ChainId))
+	offset = copyBuf(&proofBytes, offset, FourBytes, uint32ToBytes(proof.AssetId))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.Balance))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.DeltaAmount))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
+	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.C_fee))
+	offset = copyBuf(&proofBytes, offset, PointSize, proof.T_fee.Marshal())
+	offset = copyBuf(&proofBytes, offset, FourBytes, uint32ToBytes(proof.GasFeeAssetId))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.GasFee))
+	offset = copyBuf(&proofBytes, offset, RangeProofSize, proof.GasFeePrimeRangeProof.Bytes())
 	return proofBytes
 }
 
@@ -69,19 +76,40 @@ func ParseUnlockProofBytes(proofBytes []byte) (proof *UnlockProof, err error) {
 		return nil, errors.New("[ParseUnlockProofBytes] invalid proof size")
 	}
 	proof = new(UnlockProof)
-	proof.A_pk, err = curve.FromBytes(proofBytes[:PointSize])
+	offset := 0
+	offset, proof.A_pk, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.Z_sk = new(big.Int).SetBytes(proofBytes[PointSize : PointSize*2])
-	proof.Pk, err = curve.FromBytes(proofBytes[PointSize*2 : PointSize*3])
+	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
 	}
-	proof.ChainId = binary.BigEndian.Uint32(proofBytes[PointSize*3 : PointSize*3+FourBytes])
-	proof.AssetId = binary.BigEndian.Uint32(proofBytes[PointSize*3+FourBytes : PointSize*3+FourBytes*2])
-	proof.Balance = binary.BigEndian.Uint64(proofBytes[PointSize*3+FourBytes*2 : PointSize*3+FourBytes*2+EightBytes])
-	proof.DeltaAmount = binary.BigEndian.Uint64(proofBytes[PointSize*3+FourBytes*2+EightBytes : PointSize*3+FourBytes*2+EightBytes*2])
+	offset, proof.Z_bar_r_fee = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_sk = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Z_skInv = readBigIntFromBuf(proofBytes, offset)
+	offset, proof.Pk, err = readPointFromBuf(proofBytes, offset)
+	if err != nil {
+		return nil, err
+	}
+	offset, proof.ChainId = readUint32FromBuf(proofBytes, offset)
+	offset, proof.AssetId = readUint32FromBuf(proofBytes, offset)
+	offset, proof.Balance = readUint64FromBuf(proofBytes, offset)
+	offset, proof.DeltaAmount = readUint64FromBuf(proofBytes, offset)
+	offset, proof.C_fee, err = readElGamalEncFromBuf(proofBytes, offset)
+	if err != nil {
+		return nil, err
+	}
+	offset, proof.T_fee, err = readPointFromBuf(proofBytes, offset)
+	if err != nil {
+		return nil, err
+	}
+	offset, proof.GasFeeAssetId = readUint32FromBuf(proofBytes, offset)
+	offset, proof.GasFee = readUint64FromBuf(proofBytes, offset)
+	offset, proof.GasFeePrimeRangeProof, err = readRangeProofFromBuf(proofBytes, offset)
+	if err != nil {
+		return nil, err
+	}
 	return proof, nil
 }
 
