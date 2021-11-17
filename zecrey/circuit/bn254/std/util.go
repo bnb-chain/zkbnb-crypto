@@ -43,3 +43,9 @@ func Xor(api API, a, b Variable, size int) Variable {
 func FixedCurveParam(api API) Variable {
 	return api.Constant(FixedCurve)
 }
+
+func SelectPoint(api API, flag Variable, a, b Point) Point {
+	x := api.Select(flag, a.X, b.X)
+	y := api.Select(flag, a.Y, b.Y)
+	return Point{X: x, Y: y}
+}
