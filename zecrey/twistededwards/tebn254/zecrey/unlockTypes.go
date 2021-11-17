@@ -56,6 +56,7 @@ func (proof *UnlockProof) Bytes() []byte {
 	offset = copyBuf(&proofBytes, offset, FourBytes, uint32ToBytes(proof.AssetId))
 	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.Balance))
 	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.DeltaAmount))
+	// gas fee part
 	offset = copyBuf(&proofBytes, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
 	offset = copyBuf(&proofBytes, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
 	offset = copyBuf(&proofBytes, offset, ElGamalEncSize, elgamalToBytes(proof.C_fee))
@@ -81,11 +82,6 @@ func ParseUnlockProofBytes(proofBytes []byte) (proof *UnlockProof, err error) {
 	if err != nil {
 		return nil, err
 	}
-	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
-	if err != nil {
-		return nil, err
-	}
-	offset, proof.Z_bar_r_fee = readBigIntFromBuf(proofBytes, offset)
 	offset, proof.Z_sk = readBigIntFromBuf(proofBytes, offset)
 	offset, proof.Z_skInv = readBigIntFromBuf(proofBytes, offset)
 	offset, proof.Pk, err = readPointFromBuf(proofBytes, offset)
@@ -96,6 +92,11 @@ func ParseUnlockProofBytes(proofBytes []byte) (proof *UnlockProof, err error) {
 	offset, proof.AssetId = readUint32FromBuf(proofBytes, offset)
 	offset, proof.Balance = readUint64FromBuf(proofBytes, offset)
 	offset, proof.DeltaAmount = readUint64FromBuf(proofBytes, offset)
+	offset, proof.A_T_feeC_feeRPrimeInv,err = readPointFromBuf(proofBytes, offset)
+	if err != nil {
+		return nil, err
+	}
+	offset, proof.Z_bar_r_fee = readBigIntFromBuf(proofBytes, offset)
 	offset, proof.C_fee, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err

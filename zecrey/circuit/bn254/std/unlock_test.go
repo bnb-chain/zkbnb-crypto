@@ -17,37 +17,27 @@
 
 package std
 
-import (
-	"fmt"
-	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/backend"
-	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/test"
-	"testing"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
-)
-
-func TestUnlockProofConstraints_Define(t *testing.T) {
-	assert := test.NewAssert(t)
-	var circuit, witness UnlockProofConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs)
-	if err != nil {
-		t.Fatal(err)
-	}
-	sk, _ := twistedElgamal.GenKeyPair()
-	chainId := uint32(0)
-	assetId := uint32(0)
-	balance := uint64(10)
-	deltaAmount := uint64(2)
-	proof, err := zecrey.ProveUnlock(sk, chainId, assetId, balance, deltaAmount)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("constraints:", r1cs.GetNbConstraints())
-	witness, err = SetUnlockProofWitness(proof, true)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assert.SolvingSucceeded(&circuit, &witness, test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs))
-}
+//
+//func TestUnlockProofConstraints_Define(t *testing.T) {
+//	assert := test.NewAssert(t)
+//	var circuit, witness UnlockProofConstraints
+//	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	sk, _ := twistedElgamal.GenKeyPair()
+//	chainId := uint32(0)
+//	assetId := uint32(0)
+//	balance := uint64(10)
+//	deltaAmount := uint64(2)
+//	proof, err := zecrey.ProveUnlock(sk, chainId, assetId, balance, deltaAmount)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	fmt.Println("constraints:", r1cs.GetNbConstraints())
+//	witness, err = SetUnlockProofWitness(proof, true)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//	assert.SolvingSucceeded(&circuit, &witness, test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs))
+//}

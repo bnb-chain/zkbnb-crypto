@@ -32,17 +32,24 @@ type WithdrawProofConstraints struct {
 	// commitments
 	A_pk, A_TDivCRprime Point
 	// response
-	Z_rbar, Z_sk, Z_skInv Variable
+	Z_bar_r, Z_sk, Z_skInv Variable
 	// Commitment Range Proofs
-	//BPrimeRangeProof CtRangeProofConstraints
+	//BPrimeRangeProof      CtRangeProofConstraints
+	//GasFeePrimeRangeProof CtRangeProofConstraints
 	// common inputs
 	BStar       Variable
-	Fee         Variable
-	CRStar      Point
 	C           ElGamalEncConstraints
 	T, Pk       Point
 	ReceiveAddr Variable
-	IsEnabled   Variable
+	AssetId     Variable
+	// gas fee
+	A_T_feeC_feeRPrimeInv Point
+	Z_bar_r_fee           Variable
+	C_fee                 ElGamalEncConstraints
+	T_fee                 Point
+	GasFeeAssetId         Variable
+	GasFee                Variable
+	IsEnabled             Variable
 }
 
 // define tests for verifying the withdraw proof
@@ -80,48 +87,61 @@ func VerifyWithdrawProof(
 	hFunc MiMC,
 	h Point,
 ) {
-	//IsPointEqual(api, proof.IsEnabled, proof.BPrimeRangeProof.A, proof.T)
-	// verify if the CRStar is correct
-	var hNeg, CRCheck Point
-	delta := api.Add(proof.BStar, proof.Fee)
-	hNeg.Neg(api, &h)
-	CRCheck.ScalarMulNonFixedBase(api, &hNeg, delta, params)
-	IsPointEqual(api, proof.IsEnabled, CRCheck, proof.CRStar)
-	// Verify range proof first
-	// mimc
-	//rangeFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, api)
-	//if err != nil {
-	//	log.Println("[VerifyWithdrawProof] invalid range hash func")
-	//	return
-	//}
-	//VerifyCtRangeProof(api, proof.BPrimeRangeProof, params, rangeFunc)
-	// generate the challenge
+	tool := NewEccTool(api, params)
+	// check params
+	assetIdDiff := api.Sub(proof.GasFeeAssetId, proof.AssetId)
+	isSameAsset := api.IsZero(assetIdDiff)
+	IsElGamalEncEqual(api, isSameAsset, proof.C, proof.C_fee)
+	IsPointEqual(api, isSameAsset, proof.A_TDivCRprime, proof.A_T_feeC_feeRPrimeInv)
+	deltaFee := api.Select(isSameAsset, proof.GasFee, api.Constant(0))
 	var (
-		c                       Variable
-		CLprimeInv, TDivCRprime Point
+		c                                      Variable
+		hNeg, CRDelta, CLprimeInv, TDivCRprime Point
+		C_feeLprimeInv                         Point
+		T_feeDivC_feeRprime                    Point
+		C_feePrimeInv                          Point
 	)
+	hNeg.Neg(api, &h)
+	deltaBalance := api.Add(proof.BStar, deltaFee)
+	CRDelta = tool.ScalarMul(hNeg, deltaBalance)
 	CLprimeInv.Neg(api, &proof.C.CL)
-	TDivCRprime.AddGeneric(api, &proof.C.CR, &proof.CRStar, params)
-	TDivCRprime.Neg(api, &TDivCRprime)
-	TDivCRprime.AddGeneric(api, &TDivCRprime, &proof.T, params)
+	CRPrime := tool.AddPoint(proof.C.CR, CRDelta)
+	TDivCRprime.Neg(api, &CRPrime)
+	TDivCRprime = tool.AddPoint(proof.T, TDivCRprime)
+	C_feeDelta := tool.ScalarMul(hNeg, proof.GasFee)
+	C_feeLprimeInv.Neg(api, &proof.C_fee.CL)
+	C_feePrimeInv = tool.AddPoint(proof.C_fee.CR, C_feeDelta)
+	C_feePrimeInv.Neg(api, &C_feePrimeInv)
+	T_feeDivC_feeRprime = tool.AddPoint(proof.T_fee, C_feePrimeInv)
+	C_feeLprimeInv = SelectPoint(api, isSameAsset, CLprimeInv, C_feeLprimeInv)
+	T_feeDivC_feeRprime = SelectPoint(api, isSameAsset, TDivCRprime, T_feeDivC_feeRprime)
 	hFunc.Write(FixedCurveParam(api))
 	hFunc.Write(proof.ReceiveAddr)
+	writeEncIntoBuf(&hFunc, proof.C_fee)
+	hFunc.Write(proof.GasFeeAssetId)
+	hFunc.Write(proof.GasFee)
+	hFunc.Write(proof.AssetId)
+	// gas fee
 	writeEncIntoBuf(&hFunc, proof.C)
-	writePointIntoBuf(&hFunc, proof.CRStar)
 	writePointIntoBuf(&hFunc, proof.T)
+	writePointIntoBuf(&hFunc, proof.T_fee)
 	writePointIntoBuf(&hFunc, proof.Pk)
 	writePointIntoBuf(&hFunc, proof.A_pk)
 	writePointIntoBuf(&hFunc, proof.A_TDivCRprime)
+	writePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
 	c = hFunc.Sum()
 	// Verify balance
 	verifyBalance(
 		api,
-		proof.Pk, proof.A_pk, CLprimeInv, TDivCRprime, proof.A_TDivCRprime,
+		proof.Pk, proof.A_pk,
+		CLprimeInv, TDivCRprime, proof.A_TDivCRprime,
 		c,
-		proof.Z_sk, proof.Z_skInv, proof.Z_rbar,
-		proof.IsEnabled,
-		params,
-	)
+		proof.Z_sk, proof.Z_skInv, proof.Z_bar_r,
+		proof.IsEnabled, params)
+	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
+	l1 := tool.AddPoint(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
+	r1 := tool.AddPoint(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(T_feeDivC_feeRprime, c))
+	IsPointEqual(api, proof.IsEnabled, l1, r1)
 }
 
 /*
@@ -159,31 +179,27 @@ func verifyBalance(
 
 func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
 
+	// commitments
 	witness.A_pk, _ = SetPointWitness(BasePoint)
-
 	witness.A_TDivCRprime, _ = SetPointWitness(BasePoint)
-
-
 	// response
-	witness.Z_rbar.Assign(ZeroInt)
+	witness.Z_bar_r.Assign(ZeroInt)
 	witness.Z_sk.Assign(ZeroInt)
 	witness.Z_skInv.Assign(ZeroInt)
-	//witness.BPrimeRangeProof, _ = SetCtRangeProofWitness(BPrimeRangeProof, isEnabled)
-	//if err != nil {
-	//	return witness, _
-	//}
 	// common inputs
-	witness.C, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-
-	witness.CRStar, _ = SetPointWitness(BasePoint)
-
-	witness.T, _ = SetPointWitness(BasePoint)
-
-	witness.Pk, _ = SetPointWitness(BasePoint)
-
-	witness.ReceiveAddr.Assign(ZeroInt)
 	witness.BStar.Assign(ZeroInt)
-	witness.Fee.Assign(ZeroInt)
+	witness.C, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.T, _ = SetPointWitness(BasePoint)
+	witness.Pk, _ = SetPointWitness(BasePoint)
+	witness.ReceiveAddr.Assign(ZeroInt)
+	witness.AssetId.Assign(ZeroInt)
+	// gas fee
+	witness.A_T_feeC_feeRPrimeInv, _ = SetPointWitness(BasePoint)
+	witness.Z_bar_r_fee.Assign(ZeroInt)
+	witness.C_fee, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.T_fee, _ = SetPointWitness(BasePoint)
+	witness.GasFeeAssetId.Assign(ZeroInt)
+	witness.GasFee.Assign(ZeroInt)
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
 }
@@ -205,7 +221,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		log.Println("[SetWithdrawProofWitness] invalid proof")
 		return witness, errors.New("[SetWithdrawProofWitness] invalid proof")
 	}
-
+	// commitments
 	witness.A_pk, err = SetPointWitness(proof.A_pk)
 	if err != nil {
 		return witness, err
@@ -215,19 +231,12 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, err
 	}
 	// response
-	witness.Z_rbar.Assign(proof.Z_bar_r)
+	witness.Z_bar_r.Assign(proof.Z_bar_r)
 	witness.Z_sk.Assign(proof.Z_sk)
 	witness.Z_skInv.Assign(proof.Z_skInv)
-	//witness.BPrimeRangeProof, err = SetCtRangeProofWitness(proof.BPrimeRangeProof, isEnabled)
-	//if err != nil {
-	//	return witness, err
-	//}
 	// common inputs
+	witness.BStar.Assign(proof.BStar)
 	witness.C, err = SetElGamalEncWitness(proof.C)
-	if err != nil {
-		return witness, err
-	}
-	witness.CRStar, err = SetPointWitness(proof.CRStar)
 	if err != nil {
 		return witness, err
 	}
@@ -240,8 +249,28 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, err
 	}
 	witness.ReceiveAddr.Assign(proof.ReceiveAddr)
-	witness.BStar.Assign(proof.BStar)
-	witness.Fee.Assign(proof.GasFee)
+	witness.AssetId.Assign(uint64(proof.AssetId))
+	// gas fee
+	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
+	if err != nil {
+		return witness, err
+	}
+	witness.Z_bar_r_fee.Assign(proof.Z_bar_r_fee)
+	witness.C_fee, err = SetElGamalEncWitness(proof.C_fee)
+	if err != nil {
+		return witness, err
+	}
+	witness.T_fee, err = SetPointWitness(proof.T_fee)
+	if err != nil {
+		return witness, err
+	}
+	witness.GasFeeAssetId.Assign(uint64(proof.GasFeeAssetId))
+	witness.GasFee.Assign(proof.GasFee)
+	//witness.BPrimeRangeProof, err = SetCtRangeProofWitness(proof.BPrimeRangeProof, isEnabled)
+	//if err != nil {
+	//	return witness, err
+	//}
+	// common inputs
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

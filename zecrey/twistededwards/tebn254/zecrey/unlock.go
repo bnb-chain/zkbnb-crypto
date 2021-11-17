@@ -71,6 +71,7 @@ func ProveUnlock(
 	writeUint64IntoBuf(&buf, balance)
 	writeUint64IntoBuf(&buf, deltaAmount)
 	// gas fee
+	writePointIntoBuf(&buf, A_T_feeDivC_feeRprime)
 	writeEncIntoBuf(&buf, C_fee)
 	writeUint64IntoBuf(&buf, uint64(GasFeeAssetId))
 	writeUint64IntoBuf(&buf, GasFee)
@@ -128,6 +129,7 @@ func (proof *UnlockProof) Verify() (res bool, err error) {
 	writeUint64IntoBuf(&buf, proof.Balance)
 	writeUint64IntoBuf(&buf, proof.DeltaAmount)
 	// gas fee
+	writePointIntoBuf(&buf, proof.A_T_feeC_feeRPrimeInv)
 	writeEncIntoBuf(&buf, proof.C_fee)
 	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, proof.GasFee)
