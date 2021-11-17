@@ -48,6 +48,7 @@ type RemoveLiquidityProof struct {
 	R_DeltaA, R_DeltaB             *big.Int
 	B_pool_A, B_pool_B             uint64
 	B_A_Delta, B_B_Delta           uint64
+	MinB_A_Delta, MinB_B_Delta     uint64
 	Delta_LP                       uint64
 	P                              uint64
 	AssetAId, AssetBId             uint32
@@ -102,6 +103,8 @@ func (proof *RemoveLiquidityProof) Bytes() []byte {
 	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.B_pool_B))
 	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.B_A_Delta))
 	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.B_B_Delta))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.MinB_A_Delta))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.MinB_B_Delta))
 	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.Delta_LP))
 	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.P))
 	// range proofs
@@ -213,6 +216,8 @@ func ParseRemoveLiquidityProofBytes(proofBytes []byte) (proof *RemoveLiquidityPr
 	offset, proof.B_pool_B = readUint64FromBuf(proofBytes, offset)
 	offset, proof.B_A_Delta = readUint64FromBuf(proofBytes, offset)
 	offset, proof.B_B_Delta = readUint64FromBuf(proofBytes, offset)
+	offset, proof.MinB_A_Delta = readUint64FromBuf(proofBytes, offset)
+	offset, proof.MinB_B_Delta = readUint64FromBuf(proofBytes, offset)
 	offset, proof.Delta_LP = readUint64FromBuf(proofBytes, offset)
 	offset, proof.P = readUint64FromBuf(proofBytes, offset)
 	// range proofs
@@ -261,6 +266,7 @@ type RemoveLiquidityRelation struct {
 	R_DeltaA, R_DeltaB             *big.Int
 	B_pool_A, B_pool_B             uint64
 	B_A_Delta, B_B_Delta           uint64
+	MinB_A_Delta, MinB_B_Delta     uint64
 	Delta_LP                       uint64
 	C_u_LP                         *ElGamalEnc
 	C_u_LP_Delta                   *ElGamalEnc
@@ -285,18 +291,18 @@ type RemoveLiquidityRelation struct {
 
 func NewRemoveLiquidityRelation(
 	C_u_LP *ElGamalEnc,
-	Pk_pool, Pk_u *Point,
+	Pk_u *Point,
 	B_LP uint64,
 	Delta_LP uint64,
-	B_A_Delta, B_B_Delta uint64,
+	MinB_A_Delta, MinB_B_Delta uint64,
 	assetAId, assetBId uint32,
 	Sk_u *big.Int,
 	// fee part
 	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
 ) (relation *RemoveLiquidityRelation, err error) {
-	if !validUint64(B_LP) || !validUint64(Delta_LP) || !validUint64(B_A_Delta) || !validUint64(B_B_Delta) ||
+	if !validUint64(B_LP) || !validUint64(Delta_LP) ||
 		!notNullElGamal(C_u_LP) || Sk_u == nil ||
-		!curve.IsInSubGroup(Pk_u) || !curve.IsInSubGroup(Pk_pool) ||
+		!curve.IsInSubGroup(Pk_u) ||
 		assetAId == assetBId ||
 		B_LP < Delta_LP {
 		log.Println("[NewRemoveLiquidityRelation] err: invalid params")
@@ -320,14 +326,12 @@ func NewRemoveLiquidityRelation(
 	}
 	// define variables
 	var (
-		C_u_LP_Delta                   *ElGamalEnc
-		C_uA_Delta, C_uB_Delta         *ElGamalEnc
-		LC_poolA_Delta, LC_poolB_Delta *ElGamalEnc
-		R_DeltaA, R_DeltaB             *big.Int
-		Bar_r_LP                       = new(big.Int)
-		B_LP_Prime                     uint64
-		R_DeltaLP                      *big.Int
-		LPRangeProof                   = new(RangeProof)
+		C_u_LP_Delta       *ElGamalEnc
+		R_DeltaA, R_DeltaB *big.Int
+		Bar_r_LP           = new(big.Int)
+		B_LP_Prime         uint64
+		R_DeltaLP          *big.Int
+		LPRangeProof       = new(RangeProof)
 		// gas fee part
 		B_fee_prime           uint64
 		Bar_r_fee             = new(big.Int)
@@ -338,28 +342,7 @@ func NewRemoveLiquidityRelation(
 	R_DeltaB = curve.RandomValue()
 	R_DeltaLP = curve.RandomValue()
 	// compute C_uj_Delta
-	C_uA_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_A_Delta)), R_DeltaA, Pk_u)
-	if err != nil {
-		log.Println("[NewAddLiquidityRelation] err info:", err)
-		return nil, err
-	}
-	C_uB_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_B_Delta)), R_DeltaB, Pk_u)
-	if err != nil {
-		log.Println("[NewAddLiquidityRelation] err info:", err)
-		return nil, err
-	}
-	C_u_LP_Delta, err = twistedElgamal.Enc(big.NewInt(int64(Delta_LP)), R_DeltaLP, Pk_u)
-	if err != nil {
-		log.Println("[NewAddLiquidityRelation] err info:", err)
-		return nil, err
-	}
-	// compute LC_poolj_Delta
-	LC_poolA_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_A_Delta)), R_DeltaA, Pk_pool)
-	if err != nil {
-		log.Println("[NewAddLiquidityRelation] err info:", err)
-		return nil, err
-	}
-	LC_poolB_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_B_Delta)), R_DeltaB, Pk_pool)
+	C_u_LP_Delta, err = twistedElgamal.EncNeg(big.NewInt(int64(Delta_LP)), R_DeltaLP, Pk_u)
 	if err != nil {
 		log.Println("[NewAddLiquidityRelation] err info:", err)
 		return nil, err
@@ -385,11 +368,11 @@ func NewRemoveLiquidityRelation(
 	relation = &RemoveLiquidityRelation{
 		LC_pool_A:             zeroElGamal(),
 		LC_pool_B:             zeroElGamal(),
-		C_uA_Delta:            C_uA_Delta,
-		C_uB_Delta:            C_uB_Delta,
-		LC_poolA_Delta:        LC_poolA_Delta,
-		LC_poolB_Delta:        LC_poolB_Delta,
-		Pk_pool:               Pk_pool,
+		C_uA_Delta:            zeroElGamal(),
+		C_uB_Delta:            zeroElGamal(),
+		LC_poolA_Delta:        zeroElGamal(),
+		LC_poolB_Delta:        zeroElGamal(),
+		Pk_pool:               curve.ZeroPoint(),
 		Pk_u:                  Pk_u,
 		R_poolA:               big.NewInt(0),
 		R_poolB:               big.NewInt(0),
@@ -397,14 +380,16 @@ func NewRemoveLiquidityRelation(
 		R_DeltaB:              R_DeltaB,
 		B_pool_A:              0,
 		B_pool_B:              0,
-		B_A_Delta:             B_A_Delta,
-		B_B_Delta:             B_B_Delta,
+		B_A_Delta:             0,
+		B_B_Delta:             0,
 		Delta_LP:              Delta_LP,
 		C_u_LP:                C_u_LP,
 		C_u_LP_Delta:          C_u_LP_Delta,
 		P:                     0,
 		AssetAId:              assetAId,
 		AssetBId:              assetBId,
+		MinB_A_Delta:          MinB_A_Delta,
+		MinB_B_Delta:          MinB_B_Delta,
 		T_uLP:                 new(Point).Set(LPRangeProof.A),
 		Sk_u:                  Sk_u,
 		Bar_r_LP:              Bar_r_LP,

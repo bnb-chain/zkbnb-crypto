@@ -28,8 +28,8 @@ import (
 )
 
 func TestAddLiquidityProof_Verify(t *testing.T) {
-	b_u_A := uint64(8)
-	b_u_B := uint64(4)
+	b_uA := uint64(8)
+	b_uB := uint64(4)
 	assetAId := uint32(1)
 	assetBId := uint32(2)
 	b_A_Delta := uint64(1)
@@ -37,16 +37,22 @@ func TestAddLiquidityProof_Verify(t *testing.T) {
 	b_Dao_A := uint64(10)
 	b_Dao_B := uint64(10)
 	sk_u, Pk_u := twistedElgamal.GenKeyPair()
-	_, Pk_Dao := twistedElgamal.GenKeyPair()
-	C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_A)), curve.RandomValue(), Pk_u)
-	C_uB, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_B)), curve.RandomValue(), Pk_u)
+	_, Pk_pool := twistedElgamal.GenKeyPair()
+	C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_uA)), curve.RandomValue(), Pk_u)
+	C_uB, _ := twistedElgamal.Enc(big.NewInt(int64(b_uB)), curve.RandomValue(), Pk_u)
+	b_fee := uint64(100)
+	C_fee, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), curve.RandomValue(), Pk_u)
+	GasFeeAssetId := uint32(3)
+	GasFee := uint64(10)
 	relation, err := NewAddLiquidityRelation(
 		C_uA, C_uB,
-		Pk_Dao, Pk_u,
+		Pk_pool, Pk_u,
 		assetAId, assetBId,
-		b_u_A, b_u_B,
+		b_uA, b_uB,
 		b_A_Delta, b_B_Delta,
 		sk_u,
+		// fee part
+		C_fee, b_fee, GasFeeAssetId, GasFee,
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -56,7 +62,7 @@ func TestAddLiquidityProof_Verify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	proof.AddDaoInfo(b_Dao_A, b_Dao_B)
+	proof.AddpoolInfo(b_Dao_A, b_Dao_B)
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
 	proof2, err := ParseAddLiquidityProofStr(proofStr)

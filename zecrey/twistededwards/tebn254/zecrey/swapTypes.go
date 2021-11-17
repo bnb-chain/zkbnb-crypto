@@ -65,6 +65,7 @@ func (proof *SwapProof) Bytes() []byte {
 	offset = copyBuf(&proofBytes, offset, FourBytes, uint32ToBytes(proof.Gamma))
 	offset = copyBuf(&proofBytes, offset, FourBytes, uint32ToBytes(proof.AssetAId))
 	offset = copyBuf(&proofBytes, offset, FourBytes, uint32ToBytes(proof.AssetBId))
+	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.MinB_B_Delta))
 	// range proofs
 	offset = copyBuf(&proofBytes, offset, RangeProofSize, proof.ARangeProof.Bytes())
 	// gas fee
@@ -114,7 +115,8 @@ type SwapProof struct {
 	// asset a id
 	AssetAId uint32
 	// asset b id
-	AssetBId uint32
+	AssetBId     uint32
+	MinB_B_Delta uint64
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
 	Z_bar_r_fee           *big.Int
@@ -212,6 +214,7 @@ func ParseSwapProofBytes(proofBytes []byte) (proof *SwapProof, err error) {
 	offset, proof.Gamma = readUint32FromBuf(proofBytes, offset)
 	offset, proof.AssetAId = readUint32FromBuf(proofBytes, offset)
 	offset, proof.AssetBId = readUint32FromBuf(proofBytes, offset)
+	offset, proof.MinB_B_Delta = readUint64FromBuf(proofBytes, offset)
 	// range proofs
 	offset, proof.ARangeProof, err = readRangeProofFromBuf(proofBytes, offset)
 	if err != nil {
@@ -288,6 +291,8 @@ type SwapProofRelation struct {
 	B_uA_prime uint64
 	// range proofs
 	ARangeProof *RangeProof
+	// min
+	MinB_B_Delta uint64
 	// gas fee
 	B_fee_prime           uint64
 	C_fee                 *ElGamalEnc
@@ -300,9 +305,10 @@ type SwapProofRelation struct {
 
 func NewSwapRelation(
 	C_uA *ElGamalEnc,
-	Pk_pool, Pk_u, Pk_treasury *Point,
+	Pk_u, Pk_treasury *Point,
 	assetAId, assetBId uint32,
-	B_A_Delta, B_B_Delta, B_u_A uint64,
+	B_A_Delta, B_u_A uint64,
+	MinB_B_Delta uint64,
 	feeRate uint32, treasuryRate uint32,
 	Sk_u *big.Int,
 	// fee part
@@ -310,7 +316,7 @@ func NewSwapRelation(
 ) (relation *SwapProofRelation, err error) {
 	// check params
 	if !notNullElGamal(C_uA) || Sk_u == nil ||
-		Pk_pool == nil || !curve.IsInSubGroup(Pk_pool) || Pk_treasury == nil || !curve.IsInSubGroup(Pk_treasury) ||
+		Pk_treasury == nil || !curve.IsInSubGroup(Pk_treasury) ||
 		Pk_u == nil || !curve.IsInSubGroup(Pk_u) || treasuryRate > feeRate || treasuryRate > MaxFeeRate || feeRate > MaxFeeRate ||
 		assetAId == assetBId || B_fee < GasFee || (assetAId == GasFeeAssetId && (!equalEnc(C_uA, C_fee) || B_u_A != B_fee || B_u_A < B_A_Delta+GasFee)) {
 		log.Println("[NewSwapRelation] err: invalid params")
@@ -329,17 +335,15 @@ func NewSwapRelation(
 	}
 	// define variables
 	var (
-		C_uA_Delta, C_uB_Delta         *ElGamalEnc
-		C_treasuryfee_Delta            *ElGamalEnc
-		B_poolA_Delta                  uint64
-		B_treasuryfee_Delta            uint64
-		LC_poolA_Delta, LC_poolB_Delta *ElGamalEnc
-		R_DeltaA, R_DeltaB             *big.Int
-		Gamma                          uint32
-		Bar_r_A                        = new(big.Int)
-		R_Deltafee                     *big.Int
-		B_uA_prime                     uint64
-		ARangeProof                    = new(RangeProof)
+		C_uA_Delta          *ElGamalEnc
+		C_treasuryfee_Delta *ElGamalEnc
+		B_treasuryfee_Delta uint64
+		R_DeltaA            *big.Int
+		Gamma               uint32
+		Bar_r_A             = new(big.Int)
+		R_Deltafee          *big.Int
+		B_uA_prime          uint64
+		ARangeProof         = new(RangeProof)
 		// gas fee
 		B_fee_prime           uint64
 		Bar_r_fee             = new(big.Int)
@@ -350,29 +354,11 @@ func NewSwapRelation(
 	if B_treasuryfee_Delta == 0 {
 		B_treasuryfee_Delta = MinFee
 	}
-	B_poolA_Delta = B_A_Delta - B_treasuryfee_Delta
 	// generate random values
 	R_Deltafee = curve.RandomValue()
 	R_DeltaA = curve.RandomValue()
-	R_DeltaB = curve.RandomValue()
 	// compute C_uA_Delta,C_uB_Delta
 	C_uA_Delta, err = twistedElgamal.EncNeg(big.NewInt(int64(B_A_Delta)), R_DeltaA, Pk_u)
-	if err != nil {
-		log.Println("[NewSwapRelation] err info:", err)
-		return nil, err
-	}
-	C_uB_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_B_Delta)), R_DeltaB, Pk_u)
-	if err != nil {
-		log.Println("[NewSwapRelation] err info:", err)
-		return nil, err
-	}
-	// compute LC_poolA_Delta,LC_poolB_Delta
-	LC_poolA_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_poolA_Delta)), R_DeltaA, Pk_pool)
-	if err != nil {
-		log.Println("[NewSwapRelation] err info:", err)
-		return nil, err
-	}
-	LC_poolB_Delta, err = twistedElgamal.EncNeg(big.NewInt(int64(B_B_Delta)), R_DeltaB, Pk_pool)
 	if err != nil {
 		log.Println("[NewSwapRelation] err info:", err)
 		return nil, err
@@ -428,18 +414,18 @@ func NewSwapRelation(
 		C_uA:                C_uA,
 		C_treasuryfee_Delta: C_treasuryfee_Delta,
 		C_uA_Delta:          C_uA_Delta,
-		C_uB_Delta:          C_uB_Delta,
-		LC_poolA_Delta:      LC_poolA_Delta,
-		LC_poolB_Delta:      LC_poolB_Delta,
-		Pk_pool:             Pk_pool,
+		C_uB_Delta:          zeroElGamal(),
+		LC_poolA_Delta:      zeroElGamal(),
+		LC_poolB_Delta:      zeroElGamal(),
+		Pk_pool:             curve.ZeroPoint(),
 		Pk_u:                Pk_u,
 		Pk_treasury:         Pk_treasury,
 		R_DeltaA:            R_DeltaA,
-		R_DeltaB:            R_DeltaB,
+		R_DeltaB:            curve.RandomValue(),
 		R_Deltafee:          R_Deltafee,
 		T_uA:                new(Point).Set(ARangeProof.A),
 		B_A_Delta:           B_A_Delta,
-		B_B_Delta:           B_B_Delta,
+		B_B_Delta:           0,
 		B_treasuryfee_Delta: B_treasuryfee_Delta,
 		//B_poolA:               0,
 		//B_poolB:               0,
@@ -451,6 +437,7 @@ func NewSwapRelation(
 		Bar_r_A:               Bar_r_A,
 		B_uA_prime:            B_uA_prime,
 		ARangeProof:           ARangeProof,
+		MinB_B_Delta:          MinB_B_Delta,
 		B_fee_prime:           B_fee_prime,
 		Bar_r_fee:             Bar_r_fee,
 		C_fee:                 C_fee,

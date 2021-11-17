@@ -79,7 +79,7 @@ func ProveAddLiquidity(relation *AddLiquidityRelation) (proof *AddLiquidityProof
 	// user asset A part
 	A_T_uAC_uARPrimeInv = curve.Add(
 		relation.C_uA.CL,
-		curve.Neg(relation.C_uA_Delta.CL),
+		relation.C_uA_Delta.CL,
 	)
 	A_T_uAC_uARPrimeInv = curve.Neg(A_T_uAC_uARPrimeInv)
 	A_T_uAC_uARPrimeInv = curve.ScalarMul(A_T_uAC_uARPrimeInv, alpha_sk_uInv)
@@ -89,7 +89,7 @@ func ProveAddLiquidity(relation *AddLiquidityRelation) (proof *AddLiquidityProof
 	// user asset B part
 	A_T_uBC_uBRPrimeInv = curve.Add(
 		relation.C_uB.CL,
-		curve.Neg(relation.C_uB_Delta.CL),
+		relation.C_uB_Delta.CL,
 	)
 	A_T_uBC_uBRPrimeInv = curve.Neg(A_T_uBC_uBRPrimeInv)
 	A_T_uBC_uBRPrimeInv = curve.ScalarMul(A_T_uBC_uBRPrimeInv, alpha_sk_uInv)
@@ -210,8 +210,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 	writeEncIntoBuf(&buf, proof.C_fee)
 	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, proof.GasFee)
-	writePointIntoBuf(&buf, proof.A_pk_u)
-	writePointIntoBuf(&buf, proof.A_T_uAC_uARPrimeInv)
+
 	writePointIntoBuf(&buf, proof.A_pk_u)
 	writePointIntoBuf(&buf, proof.A_T_uAC_uARPrimeInv)
 	writePointIntoBuf(&buf, proof.A_T_uBC_uBRPrimeInv)
@@ -243,53 +242,239 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 		log.Println("[Verify AddLiquidityProof] l2 != r2")
 		return false, nil
 	}
-	C_uAPrime, err = twistedElgamal.EncSub(proof.C_uA, proof.C_uA_Delta)
-	if err != nil {
-		return false, err
-	}
-	C_uBPrime, err = twistedElgamal.EncSub(proof.C_uB, proof.C_uB_Delta)
-	if err != nil {
-		return false, err
-	}
-	C_uAPrimeNeg = negElgamal(C_uAPrime)
-	C_uBPrimeNeg = negElgamal(C_uBPrime)
-	l3 := curve.Add(
-		curve.ScalarMul(G, proof.Z_bar_r_A),
-		curve.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
-	)
-	r3 := curve.Add(
-		proof.A_T_uAC_uARPrimeInv,
-		curve.ScalarMul(
-			curve.Add(
-				proof.T_uA,
-				C_uAPrimeNeg.CR,
+	if proof.GasFeeAssetId == proof.AssetAId {
+		if !equalEnc(proof.C_uA, proof.C_fee) || !proof.A_T_uAC_uARPrimeInv.Equal(proof.A_T_feeC_feeRPrimeInv) {
+			log.Println("[Verify AddLiquidityProof] invalid params")
+			return false, errors.New("[Verify AddLiquidityProof] invalid params")
+		}
+		// A part
+		C_uAPrime, err = twistedElgamal.EncAdd(proof.C_uA, proof.C_uA_Delta)
+		if err != nil {
+			return false, err
+		}
+		C_uAPrime.CR = curve.Add(C_uAPrime.CR, curve.ScalarMul(H, big.NewInt(-int64(proof.GasFee))))
+		C_uAPrimeNeg = negElgamal(C_uAPrime)
+		l3 := curve.Add(
+			curve.ScalarMul(G, proof.Z_bar_r_A),
+			curve.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
+		)
+		r3 := curve.Add(
+			proof.A_T_uAC_uARPrimeInv,
+			curve.ScalarMul(
+				curve.Add(
+					proof.T_uA,
+					C_uAPrimeNeg.CR,
+				),
+				c,
 			),
-			c,
-		),
-	)
-	if !l3.Equal(r3) {
-		log.Println("[Verify AddLiquidityProof] l3 != r3")
-		return false, nil
-	}
-	l4 := curve.Add(
-		curve.ScalarMul(G, proof.Z_bar_r_B),
-		curve.ScalarMul(C_uBPrimeNeg.CL, proof.Z_sk_uInv),
-	)
-	r4 := curve.Add(
-		proof.A_T_uBC_uBRPrimeInv,
-		curve.ScalarMul(
-			curve.Add(
-				proof.T_uB,
-				C_uBPrimeNeg.CR,
+		)
+		if !l3.Equal(r3) {
+			log.Println("[Verify AddLiquidityProof] l3 != r3")
+			return false, nil
+		}
+		// B paart
+		C_uBPrime, err = twistedElgamal.EncAdd(proof.C_uB, proof.C_uB_Delta)
+		if err != nil {
+			return false, err
+		}
+		C_uBPrimeNeg = negElgamal(C_uBPrime)
+		l4 := curve.Add(
+			curve.ScalarMul(G, proof.Z_bar_r_B),
+			curve.ScalarMul(C_uBPrimeNeg.CL, proof.Z_sk_uInv),
+		)
+		r4 := curve.Add(
+			proof.A_T_uBC_uBRPrimeInv,
+			curve.ScalarMul(
+				curve.Add(
+					proof.T_uB,
+					C_uBPrimeNeg.CR,
+				),
+				c,
 			),
-			c,
-		),
-	)
-	if !l4.Equal(r4) {
-		log.Println("[Verify AddLiquidityProof] l4 != r4")
-		return false, nil
+		)
+		if !l4.Equal(r4) {
+			log.Println("[Verify AddLiquidityProof] l4 != r4")
+			return false, nil
+		}
+		// fee part
+		C_feePrimeNeg := &ElGamalEnc{
+			CL: new(Point).Set(C_uAPrimeNeg.CL),
+			CR: new(Point).Set(C_uAPrimeNeg.CR),
+		}
+		l5 := curve.Add(
+			curve.ScalarMul(G, proof.Z_bar_r_fee),
+			curve.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv),
+		)
+		r5 := curve.Add(
+			proof.A_T_feeC_feeRPrimeInv,
+			curve.ScalarMul(
+				curve.Add(
+					proof.T_fee,
+					C_feePrimeNeg.CR,
+				),
+				c,
+			),
+		)
+		if !l5.Equal(r5) {
+			log.Println("[Verify AddLiquidityProof] l5 != r5")
+			return false, nil
+		}
+	} else if proof.GasFeeAssetId == proof.AssetBId {
+		if !equalEnc(proof.C_uB, proof.C_fee) || !proof.A_T_uBC_uBRPrimeInv.Equal(proof.A_T_feeC_feeRPrimeInv) {
+			log.Println("[Verify AddLiquidityProof] invalid params")
+			return false, errors.New("[Verify AddLiquidityProof] invalid params")
+		}
+		// A part
+		C_uAPrime, err = twistedElgamal.EncAdd(proof.C_uA, proof.C_uA_Delta)
+		if err != nil {
+			return false, err
+		}
+		C_uAPrimeNeg = negElgamal(C_uAPrime)
+		l3 := curve.Add(
+			curve.ScalarMul(G, proof.Z_bar_r_A),
+			curve.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
+		)
+		r3 := curve.Add(
+			proof.A_T_uAC_uARPrimeInv,
+			curve.ScalarMul(
+				curve.Add(
+					proof.T_uA,
+					C_uAPrimeNeg.CR,
+				),
+				c,
+			),
+		)
+		if !l3.Equal(r3) {
+			log.Println("[Verify AddLiquidityProof] l3 != r3")
+			return false, nil
+		}
+		// B paart
+		C_uBPrime, err = twistedElgamal.EncAdd(proof.C_uB, proof.C_uB_Delta)
+		if err != nil {
+			return false, err
+		}
+		C_uBPrime.CR = curve.Add(C_uBPrime.CR, curve.ScalarMul(H, big.NewInt(-int64(proof.GasFee))))
+		C_uBPrimeNeg = negElgamal(C_uBPrime)
+		l4 := curve.Add(
+			curve.ScalarMul(G, proof.Z_bar_r_B),
+			curve.ScalarMul(C_uBPrimeNeg.CL, proof.Z_sk_uInv),
+		)
+		r4 := curve.Add(
+			proof.A_T_uBC_uBRPrimeInv,
+			curve.ScalarMul(
+				curve.Add(
+					proof.T_uB,
+					C_uBPrimeNeg.CR,
+				),
+				c,
+			),
+		)
+		if !l4.Equal(r4) {
+			log.Println("[Verify AddLiquidityProof] l4 != r4")
+			return false, nil
+		}
+		// fee part
+		C_feePrimeNeg := &ElGamalEnc{
+			CL: new(Point).Set(C_uBPrimeNeg.CL),
+			CR: new(Point).Set(C_uBPrimeNeg.CR),
+		}
+		l5 := curve.Add(
+			curve.ScalarMul(G, proof.Z_bar_r_fee),
+			curve.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv),
+		)
+		r5 := curve.Add(
+			proof.A_T_feeC_feeRPrimeInv,
+			curve.ScalarMul(
+				curve.Add(
+					proof.T_fee,
+					C_feePrimeNeg.CR,
+				),
+				c,
+			),
+		)
+		if !l5.Equal(r5) {
+			log.Println("[Verify AddLiquidityProof] l5 != r5")
+			return false, nil
+		}
+	} else {
+		// A part
+		C_uAPrime, err = twistedElgamal.EncAdd(proof.C_uA, proof.C_uA_Delta)
+		if err != nil {
+			return false, err
+		}
+		C_uAPrimeNeg = negElgamal(C_uAPrime)
+		l3 := curve.Add(
+			curve.ScalarMul(G, proof.Z_bar_r_A),
+			curve.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
+		)
+		r3 := curve.Add(
+			proof.A_T_uAC_uARPrimeInv,
+			curve.ScalarMul(
+				curve.Add(
+					proof.T_uA,
+					C_uAPrimeNeg.CR,
+				),
+				c,
+			),
+		)
+		if !l3.Equal(r3) {
+			log.Println("[Verify AddLiquidityProof] l3 != r3")
+			return false, nil
+		}
+		// B paart
+		C_uBPrime, err = twistedElgamal.EncAdd(proof.C_uB, proof.C_uB_Delta)
+		if err != nil {
+			return false, err
+		}
+		C_uBPrimeNeg = negElgamal(C_uBPrime)
+		l4 := curve.Add(
+			curve.ScalarMul(G, proof.Z_bar_r_B),
+			curve.ScalarMul(C_uBPrimeNeg.CL, proof.Z_sk_uInv),
+		)
+		r4 := curve.Add(
+			proof.A_T_uBC_uBRPrimeInv,
+			curve.ScalarMul(
+				curve.Add(
+					proof.T_uB,
+					C_uBPrimeNeg.CR,
+				),
+				c,
+			),
+		)
+		if !l4.Equal(r4) {
+			log.Println("[Verify AddLiquidityProof] l4 != r4")
+			return false, nil
+		}
+		// fee part
+		C_feeRPrime := curve.Add(proof.C_fee.CR, curve.ScalarMul(H, big.NewInt(-int64(proof.GasFee))))
+		C_feePrime := &ElGamalEnc{
+			CL: proof.C_fee.CL,
+			CR: C_feeRPrime,
+		}
+		if err != nil {
+			return false, err
+		}
+		C_feePrimeNeg := negElgamal(C_feePrime)
+		l5 := curve.Add(
+			curve.ScalarMul(G, proof.Z_bar_r_fee),
+			curve.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv),
+		)
+		r5 := curve.Add(
+			proof.A_T_feeC_feeRPrimeInv,
+			curve.ScalarMul(
+				curve.Add(
+					proof.T_fee,
+					C_feePrimeNeg.CR,
+				),
+				c,
+			),
+		)
+		if !l5.Equal(r5) {
+			log.Println("[Verify AddLiquidityProof] l5 != r5")
+			return false, nil
+		}
 	}
-
+	// verify range proof
 	var (
 		addLiquidityRangeProofCount = 3
 		rangeChan                   = make(chan int, addLiquidityRangeProofCount)
@@ -314,21 +499,31 @@ func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
 		log.Println("[verifyAddLiquidityParams] invalid params")
 		return false, errors.New("[verifyAddLiquidityParams] invalid params")
 	}
-	C_uA_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_A_Delta)), proof.R_DeltaA, proof.Pk_u)
-	if err != nil {
-		return false, err
+	// C_uA_Delta
+	C_uA_DeltaCL := curve.ScalarMul(proof.Pk_u, proof.R_DeltaA)
+	C_uA_DeltaCRL := curve.ScalarBaseMul(proof.R_DeltaA)
+	C_uA_DeltaCRR := curve.ScalarMul(H, big.NewInt(-int64(proof.B_A_Delta)))
+	C_uA_DeltaCR := curve.Add(C_uA_DeltaCRL, C_uA_DeltaCRR)
+	C_uA_Delta := &ElGamalEnc{
+		CL: C_uA_DeltaCL,
+		CR: C_uA_DeltaCR,
 	}
-	C_uB_Delta, err := twistedElgamal.Enc(big.NewInt(int64(proof.B_B_Delta)), proof.R_DeltaB, proof.Pk_u)
-	if err != nil {
-		return false, err
+	// C_uB_Delta
+	C_uB_DeltaCL := curve.ScalarMul(proof.Pk_u, proof.R_DeltaB)
+	C_uB_DeltaCRL := curve.ScalarBaseMul(proof.R_DeltaB)
+	C_uB_DeltaCRR := curve.ScalarMul(H, big.NewInt(-int64(proof.B_B_Delta)))
+	C_uB_DeltaCR := curve.Add(C_uB_DeltaCRL, C_uB_DeltaCRR)
+	C_uB_Delta := &ElGamalEnc{
+		CL: C_uB_DeltaCL,
+		CR: C_uB_DeltaCR,
 	}
 	LC_poolA_Delta := &ElGamalEnc{
 		CL: curve.ScalarMul(proof.Pk_pool, proof.R_DeltaA),
-		CR: C_uA_Delta.CR,
+		CR: curve.Add(C_uA_DeltaCRL, curve.Neg(C_uA_DeltaCRR)),
 	}
 	LC_poolB_Delta := &ElGamalEnc{
 		CL: curve.ScalarMul(proof.Pk_pool, proof.R_DeltaB),
-		CR: C_uB_Delta.CR,
+		CR: curve.Add(C_uB_DeltaCRL, curve.Neg(C_uB_DeltaCRR)),
 	}
 	if !equalEnc(C_uA_Delta, proof.C_uA_Delta) || !equalEnc(C_uB_Delta, proof.C_uB_Delta) ||
 		!equalEnc(LC_poolA_Delta, proof.LC_poolA_Delta) || !equalEnc(LC_poolB_Delta, proof.LC_poolB_Delta) {

@@ -33,6 +33,7 @@ func TestSwapProof2_Verify(t *testing.T) {
 	assetBId := uint32(2)
 	b_A_Delta := uint64(1000)
 	b_B_Delta := uint64(970)
+	MinB_B_Delta := uint64(960)
 	b_poolA := uint64(40000)
 	b_poolB := uint64(40000)
 	feeRate := uint32(30)
@@ -47,9 +48,10 @@ func TestSwapProof2_Verify(t *testing.T) {
 	C_fee, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), curve.RandomValue(), Pk_u)
 	relation, err := NewSwapRelation(
 		C_uA,
-		Pk_pool, Pk_u, Pk_treasury,
+		Pk_u, Pk_treasury,
 		assetAId, assetBId,
-		b_A_Delta, b_B_Delta, b_u_A,
+		b_A_Delta, b_u_A,
+		MinB_B_Delta,
 		feeRate, treasuryRate,
 		sk_u,
 		C_fee,
@@ -64,7 +66,10 @@ func TestSwapProof2_Verify(t *testing.T) {
 		t.Fatal(err)
 	}
 	// set params
-	proof.AddDaoInfo(b_poolA, b_poolB)
+	err = proof.AddPoolInfo(Pk_pool, b_B_Delta, b_poolA, b_poolB)
+	if err != nil {
+		t.Fatal(err)
+	}
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
 	proof2, err := ParseSwapProofStr(proofStr)
@@ -84,6 +89,7 @@ func TestSwapProof2_VerifySameAsset(t *testing.T) {
 	assetBId := uint32(2)
 	b_A_Delta := uint64(1000)
 	b_B_Delta := uint64(970)
+	MinB_B_Delta := uint64(960)
 	b_poolA := uint64(40000)
 	b_poolB := uint64(40000)
 	feeRate := uint32(30)
@@ -98,9 +104,10 @@ func TestSwapProof2_VerifySameAsset(t *testing.T) {
 	C_fee := C_uA
 	relation, err := NewSwapRelation(
 		C_uA,
-		Pk_pool, Pk_u, Pk_treasury,
+		Pk_u, Pk_treasury,
 		assetAId, assetBId,
-		b_A_Delta, b_B_Delta, b_u_A,
+		b_A_Delta, b_u_A,
+		MinB_B_Delta,
 		feeRate, treasuryRate,
 		sk_u,
 		C_fee,
@@ -115,7 +122,10 @@ func TestSwapProof2_VerifySameAsset(t *testing.T) {
 		t.Fatal(err)
 	}
 	// set params
-	proof.AddDaoInfo(b_poolA, b_poolB)
+	err = proof.AddPoolInfo(Pk_pool, b_B_Delta, b_poolA, b_poolB)
+	if err != nil {
+		t.Fatal(err)
+	}
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
 	proof2, err := ParseSwapProofStr(proofStr)

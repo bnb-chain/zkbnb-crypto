@@ -48,13 +48,14 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 	)
 	// challenge buf
 	buf.Write(PaddingBigIntBytes(FixedCurve))
+	writeUint64IntoBuf(&buf, uint64(relation.AssetAId))
+	writeUint64IntoBuf(&buf, uint64(relation.AssetBId))
 	writePointIntoBuf(&buf, relation.Pk_u)
-	writePointIntoBuf(&buf, relation.Pk_pool)
 	writeEncIntoBuf(&buf, relation.C_uA)
 	writeEncIntoBuf(&buf, relation.C_uA_Delta)
 	writePointIntoBuf(&buf, relation.T_uA)
 	writeUint64IntoBuf(&buf, relation.B_A_Delta)
-	writeUint64IntoBuf(&buf, relation.B_B_Delta)
+	writeUint64IntoBuf(&buf, relation.MinB_B_Delta)
 	writeUint64IntoBuf(&buf, relation.B_treasuryfee_Delta)
 	// ownership
 	alpha_sk_u = curve.RandomValue()
@@ -129,6 +130,7 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 		Gamma:                 relation.Gamma,
 		AssetAId:              relation.AssetAId,
 		AssetBId:              relation.AssetBId,
+		MinB_B_Delta:          relation.MinB_B_Delta,
 		A_T_feeC_feeRPrimeInv: A_T_feeC_feeRPrimeInv,
 		Z_bar_r_fee:           Z_bar_r_fee,
 		C_fee:                 relation.C_fee,
@@ -153,13 +155,14 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 	)
 	// challenge buf
 	buf.Write(PaddingBigIntBytes(FixedCurve))
+	writeUint64IntoBuf(&buf, uint64(proof.AssetAId))
+	writeUint64IntoBuf(&buf, uint64(proof.AssetBId))
 	writePointIntoBuf(&buf, proof.Pk_u)
-	writePointIntoBuf(&buf, proof.Pk_pool)
 	writeEncIntoBuf(&buf, proof.C_uA)
 	writeEncIntoBuf(&buf, proof.C_uA_Delta)
 	writePointIntoBuf(&buf, proof.T_uA)
 	writeUint64IntoBuf(&buf, proof.B_A_Delta)
-	writeUint64IntoBuf(&buf, proof.B_B_Delta)
+	writeUint64IntoBuf(&buf, proof.MinB_B_Delta)
 	writeUint64IntoBuf(&buf, proof.B_treasuryfee_Delta)
 	// write into buf
 	// gas fee
@@ -167,6 +170,7 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 	writeEncIntoBuf(&buf, proof.C_fee)
 	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, proof.GasFee)
+	// write into buf
 	writePointIntoBuf(&buf, proof.A_pk_u)
 	writePointIntoBuf(&buf, proof.A_T_uAC_uARPrimeInv)
 	// compute challenge
@@ -183,10 +187,10 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 		return false, errors.New("[Verify SwapProof] invalid params")
 	}
 	// verify ownership
-	l2 := curve.ScalarMul(G, proof.Z_sk_u)
-	r2 := curve.Add(proof.A_pk_u, curve.ScalarMul(proof.Pk_u, c))
-	if !l2.Equal(r2) {
-		log.Println("[Verify SwapProof] l2 != r2")
+	l1 := curve.ScalarMul(G, proof.Z_sk_u)
+	r1 := curve.Add(proof.A_pk_u, curve.ScalarMul(proof.Pk_u, c))
+	if !l1.Equal(r1) {
+		log.Println("[Verify SwapProof] l1 != r1")
 		return false, nil
 	}
 	// A & gas fee proof
@@ -313,6 +317,9 @@ func (proof *SwapProof) Verify() (res bool, err error) {
 }
 
 func verifySwapParams(proof *SwapProof) (res bool, err error) {
+	if proof.B_B_Delta < proof.MinB_B_Delta {
+		return false, errors.New("[verifySwapParams] invalid B delta")
+	}
 	// pk^r
 	CL1 := curve.ScalarMul(proof.Pk_u, proof.R_DeltaA)
 	// g^r h^b
@@ -343,6 +350,7 @@ func verifySwapParams(proof *SwapProof) (res bool, err error) {
 	}
 	if !equalEnc(C_uA_Delta, proof.C_uA_Delta) || !equalEnc(C_uB_Delta, proof.C_uB_Delta) ||
 		!equalEnc(LC_poolA_Delta, proof.LC_poolA_Delta) || !equalEnc(LC_poolB_Delta, proof.LC_poolB_Delta) {
+		log.Println("invalid params")
 		return false, nil
 	}
 	// TODO verify AMM info & DAO balance info
@@ -368,9 +376,28 @@ func verifySwapParams(proof *SwapProof) (res bool, err error) {
 	return true, nil
 }
 
-func (proof *SwapProof) AddDaoInfo(b_poolA, b_poolB uint64) {
+func (proof *SwapProof) AddPoolInfo(Pk_pool *Point, B_B_Delta, b_poolA, b_poolB uint64) (err error) {
+	if B_B_Delta < proof.MinB_B_Delta {
+		return errors.New("[AddPoolInfo] invalid B delta")
+	}
+	proof.B_B_Delta = B_B_Delta
+	proof.Pk_pool = Pk_pool
+	proof.C_uB_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_B_Delta)), proof.R_DeltaB, proof.Pk_u)
+	if err != nil {
+		return err
+	}
+	B_poolA_Delta := proof.B_A_Delta - proof.B_treasuryfee_Delta
+	proof.LC_poolA_Delta, err = twistedElgamal.Enc(big.NewInt(int64(B_poolA_Delta)), proof.R_DeltaA, Pk_pool)
+	if err != nil {
+		return err
+	}
+	proof.LC_poolB_Delta, err = twistedElgamal.EncNeg(big.NewInt(int64(B_B_Delta)), proof.R_DeltaB, Pk_pool)
+	if err != nil {
+		return err
+	}
 	// set params
 	proof.B_poolA = b_poolA
 	proof.B_poolB = b_poolB
 	proof.Alpha = proof.B_A_Delta * OneMillion / proof.B_poolA
+	return nil
 }
