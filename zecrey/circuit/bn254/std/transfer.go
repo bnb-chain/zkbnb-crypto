@@ -35,7 +35,8 @@ type TransferProofConstraints struct {
 	Z_sum Variable
 	// challenges
 	C1, C2    Variable
-	Fee       Variable
+	GasFee    Variable
+	AssetId   Variable
 	IsEnabled Variable
 }
 
@@ -97,10 +98,13 @@ func VerifyTransferProof(
 	hFunc MiMC,
 	h Point,
 ) {
+	tool := NewEccTool(api, params)
 	CR_sum := zeroPoint(api)
 	// write public statements into buf
 	hFunc.Write(FixedCurveParam(api))
 	// write into buf
+	hFunc.Write(proof.GasFee)
+	hFunc.Write(proof.AssetId)
 	writePointIntoBuf(&hFunc, proof.A_sum)
 	for _, subProof := range proof.SubProofs {
 		// write common inputs into buf
@@ -132,7 +136,7 @@ func VerifyTransferProof(
 	// verify sum proof
 	var lSum, rSum Point
 	lSum.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_sum, params)
-	rSum.ScalarMulNonFixedBase(api, &h, proof.Fee, params)
+	rSum.ScalarMulNonFixedBase(api, &h, proof.GasFee, params)
 	rSum.AddGeneric(api, &CR_sum, &rSum, params)
 	rSum.ScalarMulNonFixedBase(api, &rSum, c, params)
 	rSum.AddGeneric(api, &proof.A_sum, &rSum, params)
@@ -153,8 +157,8 @@ func VerifyTransferProof(
 			CPrime, CPrimeNeg ElGamalEncConstraints
 		)
 		// set CPrime & CPrimeNeg
-		CPrime = EncAdd(api, subProof.C, subProof.CDelta, params)
-		CPrimeNeg = NegElgamal(api, CPrime)
+		CPrime = tool.EncAdd(subProof.C, subProof.CDelta)
+		CPrimeNeg = tool.NegElgamal(CPrime)
 		// verify Y_1 = g^{r_i^{\star}} h^{b_i^{\Delta}}
 		var l1, h_z_bstar1, r1 Point
 		l1.ScalarMulFixedBase(api, params.BaseX, params.BaseY, subProof.Z_rstar1, params)
@@ -243,7 +247,7 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 	witness.C1.Assign(ZeroInt)
 	witness.C2.Assign(ZeroInt)
 	// set fee
-	witness.Fee.Assign(ZeroInt)
+	witness.GasFee.Assign(ZeroInt)
 	// set sub proofs
 	for i := 0; i < NbTransferCount; i++ {
 		// define var
@@ -306,6 +310,7 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 		// set into witness
 		witness.SubProofs[i] = subProofWitness
 	}
+	witness.AssetId.Assign(ZeroInt)
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
 }
@@ -338,7 +343,7 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 	witness.C1.Assign(proof.C1)
 	witness.C2.Assign(proof.C2)
 	// set fee
-	witness.Fee.Assign(proof.GasFee)
+	witness.GasFee.Assign(proof.GasFee)
 	// set sub proofs
 	for i, subProof := range proof.SubProofs {
 		// define var
@@ -427,6 +432,7 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 		// set into witness
 		witness.SubProofs[i] = subProofWitness
 	}
+	witness.AssetId.Assign(uint64(proof.AssetId))
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

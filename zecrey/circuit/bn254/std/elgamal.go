@@ -17,8 +17,6 @@
 
 package std
 
-import "github.com/consensys/gnark/std/algebra/twistededwards"
-
 /*
 	ElGamalEncConstraints describes ElGamal Enc in circuit
 */
@@ -27,33 +25,26 @@ type ElGamalEncConstraints struct {
 	CR Point // g^r Waste^b
 }
 
-func NegElgamal(api API, C ElGamalEncConstraints) ElGamalEncConstraints {
+func (tool *EccTool) NegElgamal(C ElGamalEncConstraints) ElGamalEncConstraints {
 	return ElGamalEncConstraints{
-		CL: *C.CL.Neg(api, &C.CL),
-		CR: *C.CR.Neg(api, &C.CR),
+		CL: *C.CL.Neg(tool.api, &C.CL),
+		CR: *C.CR.Neg(tool.api, &C.CR),
 	}
 }
 
-func Enc(api API, h Point, b Variable, r Variable, pk Point, params twistededwards.EdCurve) ElGamalEncConstraints {
+func (tool *EccTool) Enc(h Point, b Variable, r Variable, pk Point) ElGamalEncConstraints {
 	var CL, gr, CR Point
-	CL.ScalarMulNonFixedBase(api, &pk, r, params)
-	gr.ScalarMulFixedBase(api, params.BaseX, params.BaseY, r, params)
-	CR.ScalarMulNonFixedBase(api, &h, b, params)
-	CR.AddGeneric(api, &CR, &gr, params)
+	CL.ScalarMulNonFixedBase(tool.api, &pk, r, tool.params)
+	gr.ScalarMulFixedBase(tool.api, tool.params.BaseX, tool.params.BaseY, r, tool.params)
+	CR.ScalarMulNonFixedBase(tool.api, &h, b, tool.params)
+	CR.AddGeneric(tool.api, &CR, &gr, tool.params)
 	return ElGamalEncConstraints{CL: CL, CR: CR}
 }
 
-func EncAdd(api API, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
-	C.CL.AddGeneric(api, &C.CL, &CDelta.CL, params)
-	C.CR.AddGeneric(api, &C.CR, &CDelta.CR, params)
+func (tool *EccTool) EncAdd(C, CDelta ElGamalEncConstraints) ElGamalEncConstraints {
+	C.CL.AddGeneric(tool.api, &C.CL, &CDelta.CL, tool.params)
+	C.CR.AddGeneric(tool.api, &C.CR, &CDelta.CR, tool.params)
 	return C
-}
-
-func EncSub(api API, C, CDelta ElGamalEncConstraints, params twistededwards.EdCurve) ElGamalEncConstraints {
-	var CL, CR Point
-	CL.AddGeneric(api, &C.CL, CDelta.CL.Neg(api, &CDelta.CL), params)
-	CR.AddGeneric(api, &C.CR, CDelta.CR.Neg(api, &CDelta.CR), params)
-	return ElGamalEncConstraints{CL: CL, CR: CR}
 }
 
 func ZeroElgamal(api API) ElGamalEncConstraints {
@@ -67,7 +58,6 @@ func SelectElgamal(api API, flag Variable, a, b ElGamalEncConstraints) ElGamalEn
 	CRY := api.Select(flag, a.CR.Y, b.CR.Y)
 	return ElGamalEncConstraints{CL: Point{X: CLX, Y: CLY}, CR: Point{X: CRX, Y: CRY}}
 }
-
 
 func printEnc(api API, a ElGamalEncConstraints) {
 	api.Println(a.CL.X)
