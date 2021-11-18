@@ -98,7 +98,7 @@ func VerifyTransferProof(
 	proof TransferProofConstraints,
 	hFunc MiMC,
 	h Point,
-) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
+) (c2 Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	CR_sum := zeroPoint(api)
 	// write public statements into buf
 	hFunc.Write(FixedCurveParam(api))
@@ -127,13 +127,12 @@ func VerifyTransferProof(
 		//}
 		//VerifyCtRangeProof(api, subProof.BStarRangeProof, params, rangeHFunc)
 	}
-	c = hFunc.Sum()
+	c := hFunc.Sum()
 	// need to check XOR, api.XOR bug exists
 	ccheck := Xor(api, proof.C1, proof.C2, 256)
 	IsVariableEqual(api, proof.IsEnabled, c, ccheck)
 	//cCheck := api.Xor(proof.C1, proof.C2)
 	//IsVariableEqual(api, proof.IsEnabled, c, cCheck)
-	// verify sum proof
 	// verify sum proof
 	lSum := tool.ScalarBaseMul(proof.Z_sum)
 	rSum := tool.Add(
@@ -181,17 +180,8 @@ func VerifyTransferProof(
 			tool.ScalarMul(subProof.Y, proof.C2),
 		)
 		IsPointEqual(api, proof.IsEnabled, l2, r2)
-		// T = g^{\bar{r}_i} h^{b'}
-		//l3 := tool.Add(
-		//	g_z_rbar,
-		//	h_z_bprime,
-		//)
-		//r3 := tool.Add(
-		//	subProof.A_T,
-		//	tool.ScalarMul(subProof.T, proof.C2),
-		//)
-		//IsPointEqual(api, proof.IsEnabled, l3, r3)
 		// set common pk
+		c2 = proof.C2
 		pkProofs[i] = SetPkProof(subProof.Pk, subProof.A_pk, subProof.Z_sk, subProof.Z_skInv)
 		tProofs[i] = SetTProof(CPrimeNeg, subProof.A_TDivCPrime, subProof.Z_bar_r, subProof.T)
 		//// pk = g^{sk}
@@ -215,7 +205,7 @@ func VerifyTransferProof(
 		//)
 		//IsPointEqual(api, proof.IsEnabled, l5, r5)
 	}
-	return c, pkProofs, tProofs
+	return c2, pkProofs, tProofs
 }
 
 /*

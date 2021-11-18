@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	RangeMaxBits   = 32
+	RangeMaxBits   = 40
 	RangeProofSize = RangeMaxBits*2*PointSize + 4*PointSize
 	PointSize      = 32
 	ErrCode        = -1

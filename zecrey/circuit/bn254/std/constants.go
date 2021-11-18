@@ -24,7 +24,7 @@ import (
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/commitRange"
+	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -40,7 +40,7 @@ const (
 	// TODO only for test
 	AccountMerkleLevels = 18
 	NbTransferCount     = 3
-	RangeMaxBits        = commitRange.RangeMaxBits
+	RangeMaxBits        = ctrange.RangeMaxBits
 
 	MaxRangeProofCount = 3
 )
