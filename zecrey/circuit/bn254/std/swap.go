@@ -89,7 +89,8 @@ func (circuit SwapProofConstraints) Define(curveID ecc.ID, api API) error {
 	if err != nil {
 		return err
 	}
-	VerifySwapProof(api, circuit, params, hFunc, H)
+	tool := NewEccTool(api, params)
+	VerifySwapProof(tool, api, circuit, hFunc, H)
 
 	return nil
 }
@@ -101,13 +102,12 @@ func (circuit SwapProofConstraints) Define(curveID ecc.ID, api API) error {
 	@params: params for the curve tebn254
 */
 func VerifySwapProof(
+	tool *EccTool,
 	api API,
 	proof SwapProofConstraints,
-	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
-) {
-	tool := NewEccTool(api, params)
+) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	// challenge buf
 	hFunc.Write(FixedCurveParam(api))
 	hFunc.Write(proof.AssetAId)
@@ -129,7 +129,7 @@ func VerifySwapProof(
 	writePointIntoBuf(&hFunc, proof.A_pk_u)
 	writePointIntoBuf(&hFunc, proof.A_T_uAC_uARPrimeInv)
 	// compute challenge
-	c := hFunc.Sum()
+	c = hFunc.Sum()
 	// verify params
 	verifySwapParams(api, proof, proof.IsEnabled, tool, h)
 	// verify ownership
@@ -150,19 +150,30 @@ func VerifySwapProof(
 	deltaA := SelectPoint(api, isSameAsset, deltaFee, zeroPoint(api))
 	C_uAPrime.CR = tool.Add(C_uAPrime.CR, deltaA)
 	C_uAPrimeNeg := tool.NegElgamal(C_uAPrime)
-	var l3, r3 Point
-	l3 = tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_A), tool.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv))
-	r3 = tool.Add(proof.A_T_uAC_uARPrimeInv, tool.ScalarMul(tool.Add(proof.T_uA, C_uAPrimeNeg.CR), c))
-	IsPointEqual(api, proof.IsEnabled, l3, r3)
+	//var l3, r3 Point
+	//l3 = tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_A), tool.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv))
+	//r3 = tool.Add(proof.A_T_uAC_uARPrimeInv, tool.ScalarMul(tool.Add(proof.T_uA, C_uAPrimeNeg.CR), c))
+	//IsPointEqual(api, proof.IsEnabled, l3, r3)
 	// fee
 	C_feeRPrime := tool.Add(proof.C_fee.CR, deltaFee)
 	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	C_feePrimeNeg = SelectElgamal(api, isSameAsset, C_uAPrimeNeg, C_feePrimeNeg)
-	var l4, r4 Point
-	l4 = tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv))
-	r4 = tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(tool.Add(proof.T_fee, C_feePrimeNeg.CR), c))
-	IsPointEqual(api, proof.IsEnabled, l4, r4)
+	//var l4, r4 Point
+	//l4 = tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv))
+	//r4 = tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(tool.Add(proof.T_fee, C_feePrimeNeg.CR), c))
+	//IsPointEqual(api, proof.IsEnabled, l4, r4)
+	// set common parts
+	pkProofs[0] = SetPkProof(proof.Pk_u, proof.A_pk_u, proof.Z_sk_u, proof.Z_sk_uInv)
+	for i := 1; i < MaxRangeProofCount; i++ {
+		pkProofs[i] = pkProofs[0]
+	}
+	tProofs[0] = SetTProof(C_uAPrimeNeg, proof.A_T_uAC_uARPrimeInv, proof.Z_bar_r_A, proof.T_uA)
+	tProofs[1] = SetTProof(C_feePrimeNeg, proof.A_T_feeC_feeRPrimeInv, proof.Z_bar_r_fee, proof.T_fee)
+	for i := 1; i < MaxRangeProofCount; i++ {
+		tProofs[i] = tProofs[0]
+	}
+	return c, pkProofs, tProofs
 }
 
 func SetEmptySwapProofWitness() (witness SwapProofConstraints) {

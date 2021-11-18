@@ -47,7 +47,7 @@ type TransferSubProofConstraints struct {
 	// sigma protocol commitment values
 	A_CLDelta, A_CRDelta, A_Y1, A_Y2, A_T, A_pk, A_TDivCPrime Point
 	// respond values
-	Z_r, Z_bDelta, Z_rstar1, Z_rstar2, Z_bstar1, Z_bstar2, Z_rbar, Z_bprime, Z_sk, Z_skInv Variable
+	Z_r, Z_bDelta, Z_rstar1, Z_rstar2, Z_bstar1, Z_bstar2, Z_bar_r, Z_bprime, Z_sk, Z_skInv Variable
 	// range proof
 	//BStarRangeProof CtRangeProofConstraints
 	// common inputs
@@ -81,7 +81,8 @@ func (circuit TransferProofConstraints) Define(curveID ecc.ID, api API) error {
 	if err != nil {
 		return err
 	}
-	VerifyTransferProof(api, circuit, params, hFunc, H)
+	tool := NewEccTool(api, params)
+	VerifyTransferProof(tool, api, circuit, hFunc, H)
 	return nil
 }
 
@@ -92,13 +93,12 @@ func (circuit TransferProofConstraints) Define(curveID ecc.ID, api API) error {
 	@params: params for the curve tebn254
 */
 func VerifyTransferProof(
+	tool *EccTool,
 	api API,
 	proof TransferProofConstraints,
-	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
-) {
-	tool := NewEccTool(api, params)
+) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	CR_sum := zeroPoint(api)
 	// write public statements into buf
 	hFunc.Write(FixedCurveParam(api))
@@ -116,7 +116,7 @@ func VerifyTransferProof(
 		// write into buf
 		writePointIntoBuf(&hFunc, subProof.A_CLDelta)
 		writePointIntoBuf(&hFunc, subProof.A_CRDelta)
-		CR_sum.AddGeneric(api, &CR_sum, &subProof.CDelta.CR, params)
+		CR_sum = tool.Add(CR_sum, subProof.CDelta.CR)
 		// verify range proof params
 		//IsPointEqual(api, proof.IsEnabled, subProof.BStarRangeProof.A, subProof.Y)
 		// verify range proof
@@ -127,30 +127,33 @@ func VerifyTransferProof(
 		//}
 		//VerifyCtRangeProof(api, subProof.BStarRangeProof, params, rangeHFunc)
 	}
-	c := hFunc.Sum()
+	c = hFunc.Sum()
 	// need to check XOR, api.XOR bug exists
 	ccheck := Xor(api, proof.C1, proof.C2, 256)
 	IsVariableEqual(api, proof.IsEnabled, c, ccheck)
 	//cCheck := api.Xor(proof.C1, proof.C2)
 	//IsVariableEqual(api, proof.IsEnabled, c, cCheck)
 	// verify sum proof
-	var lSum, rSum Point
-	lSum.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_sum, params)
-	rSum.ScalarMulNonFixedBase(api, &h, proof.GasFee, params)
-	rSum.AddGeneric(api, &CR_sum, &rSum, params)
-	rSum.ScalarMulNonFixedBase(api, &rSum, c, params)
-	rSum.AddGeneric(api, &proof.A_sum, &rSum, params)
+	// verify sum proof
+	lSum := tool.ScalarBaseMul(proof.Z_sum)
+	rSum := tool.Add(
+		proof.A_sum,
+		tool.ScalarMul(
+			tool.Add(CR_sum, tool.ScalarMul(h, proof.GasFee)),
+			c,
+		),
+	)
 	IsPointEqual(api, proof.IsEnabled, lSum, rSum)
 	// Verify sub proofs
-	for _, subProof := range proof.SubProofs {
+	for i, subProof := range proof.SubProofs {
 		// Verify valid Enc
 		verifyValidEnc(
 			api,
 			subProof.Pk, subProof.CDelta.CL, subProof.A_CLDelta, h, subProof.CDelta.CR, subProof.A_CRDelta,
 			c,
 			subProof.Z_r, subProof.Z_bDelta,
+			tool,
 			proof.IsEnabled,
-			params,
 		)
 		// define variables
 		var (
@@ -160,46 +163,59 @@ func VerifyTransferProof(
 		CPrime = tool.EncAdd(subProof.C, subProof.CDelta)
 		CPrimeNeg = tool.NegElgamal(CPrime)
 		// verify Y_1 = g^{r_i^{\star}} h^{b_i^{\Delta}}
-		var l1, h_z_bstar1, r1 Point
-		l1.ScalarMulFixedBase(api, params.BaseX, params.BaseY, subProof.Z_rstar1, params)
-		h_z_bstar1.ScalarMulNonFixedBase(api, &h, subProof.Z_bstar1, params)
-		l1.AddGeneric(api, &l1, &h_z_bstar1, params)
-		r1.ScalarMulNonFixedBase(api, &subProof.Y, proof.C1, params)
-		r1.AddGeneric(api, &r1, &subProof.A_Y1, params)
+		l1 := tool.Add(
+			tool.ScalarBaseMul(subProof.Z_rstar1),
+			tool.ScalarMul(h, subProof.Z_bstar1),
+		)
+		r1 := tool.Add(subProof.A_Y1, tool.ScalarMul(subProof.Y, proof.C1))
 		IsPointEqual(api, proof.IsEnabled, l1, r1)
 		// Verify ownership
-		var h_z_bprime, l2, h_z_bstar2, r2 Point
-		h_z_bprime.ScalarMulNonFixedBase(api, &h, subProof.Z_bprime, params)
+		//h_z_bprime := tool.ScalarMul(h, subProof.Z_bprime)
 		// Y_2 = g^{r_{i}^{\star}} h^{b_i'}
-		l2.ScalarMulFixedBase(api, params.BaseX, params.BaseY, subProof.Z_rstar2, params)
-		h_z_bstar2.ScalarMulNonFixedBase(api, &h, subProof.Z_bstar2, params)
-		l2.AddGeneric(api, &l2, &h_z_bstar2, params)
-		r2.ScalarMulNonFixedBase(api, &subProof.Y, proof.C2, params)
-		r2.AddGeneric(api, &r2, &subProof.A_Y2, params)
+		l2 := tool.Add(
+			tool.ScalarBaseMul(subProof.Z_rstar2),
+			tool.ScalarMul(h, subProof.Z_bstar2),
+		)
+		r2 := tool.Add(
+			subProof.A_Y2,
+			tool.ScalarMul(subProof.Y, proof.C2),
+		)
 		IsPointEqual(api, proof.IsEnabled, l2, r2)
 		// T = g^{\bar{r}_i} h^{b'}
-		var g_z_rbar, l3, r3 Point
-		g_z_rbar.ScalarMulFixedBase(api, params.BaseX, params.BaseY, subProof.Z_rbar, params)
-		l3.AddGeneric(api, &g_z_rbar, &h_z_bprime, params)
-		r3.ScalarMulNonFixedBase(api, &subProof.T, proof.C2, params)
-		r3.AddGeneric(api, &r3, &subProof.A_T, params)
-		IsPointEqual(api, proof.IsEnabled, l3, r3)
-		// pk = g^{sk}
-		var l4, r4 Point
-		l4.ScalarMulFixedBase(api, params.BaseX, params.BaseY, subProof.Z_sk, params)
-		r4.ScalarMulNonFixedBase(api, &subProof.Pk, proof.C2, params)
-		r4.AddGeneric(api, &r4, &subProof.A_pk, params)
-		IsPointEqual(api, proof.IsEnabled, l4, r4)
-		// T_i = (C_R')/(C_L')^{sk^{-1}} g^{\bar{r}_i}
-		var l5, r5 Point
-		l5.ScalarMulNonFixedBase(api, &CPrimeNeg.CL, subProof.Z_skInv, params)
-		l5.AddGeneric(api, &l5, &g_z_rbar, params)
-		r5.AddGeneric(api, &subProof.T, &CPrimeNeg.CR, params)
-		r5.ScalarMulNonFixedBase(api, &r5, proof.C2, params)
-		r5.AddGeneric(api, &r5, &subProof.A_TDivCPrime, params)
-		IsPointEqual(api, proof.IsEnabled, l5, r5)
+		//l3 := tool.Add(
+		//	g_z_rbar,
+		//	h_z_bprime,
+		//)
+		//r3 := tool.Add(
+		//	subProof.A_T,
+		//	tool.ScalarMul(subProof.T, proof.C2),
+		//)
+		//IsPointEqual(api, proof.IsEnabled, l3, r3)
+		// set common pk
+		pkProofs[i] = SetPkProof(subProof.Pk, subProof.A_pk, subProof.Z_sk, subProof.Z_skInv)
+		tProofs[i] = SetTProof(CPrimeNeg, subProof.A_TDivCPrime, subProof.Z_bar_r, subProof.T)
+		//// pk = g^{sk}
+		//l4 := tool.ScalarBaseMul(subProof.Z_sk)
+		//r4 := tool.Add(
+		//	subProof.A_pk,
+		//	tool.ScalarMul(subProof.Pk, proof.C2),
+		//)
+		//IsPointEqual(api, proof.IsEnabled, l4, r4)
+		//// T_i = (C_R')/(C_L')^{sk^{-1}} g^{\bar{r}_i}
+		//l5 := tool.Add(
+		//	tool.ScalarMul(CPrimeNeg.CL, subProof.Z_skInv),
+		//	tool.ScalarBaseMul(subProof.Z_bar_r),
+		//)
+		//r5 := tool.Add(
+		//	subProof.A_TDivCPrime,
+		//	tool.ScalarMul(
+		//		tool.Add(subProof.T, CPrimeNeg.CR),
+		//		proof.C2,
+		//	),
+		//)
+		//IsPointEqual(api, proof.IsEnabled, l5, r5)
 	}
-	return
+	return c, pkProofs, tProofs
 }
 
 /*
@@ -218,23 +234,23 @@ func verifyValidEnc(
 	pk, C_LDelta, A_CLDelta, h, C_RDelta, A_CRDelta Point,
 	c Variable,
 	z_r, z_bDelta Variable,
+	tool *EccTool,
 	isEnabled Variable,
-	params twistededwards.EdCurve,
 ) {
 	// pk^{z_r} == A_{C_L^{\Delta}} (C_L^{\Delta})^c
 	var l1, r1 Point
-	l1.ScalarMulNonFixedBase(api, &pk, z_r, params)
-	r1.ScalarMulNonFixedBase(api, &C_LDelta, c, params)
-	r1.AddGeneric(api, &A_CLDelta, &r1, params)
+	l1 = tool.ScalarMul(pk, z_r)
+	r1 = tool.ScalarMul(C_LDelta, c)
+	r1 = tool.Add(A_CLDelta, r1)
 	IsPointEqual(api, isEnabled, l1, r1)
 
 	// g^{z_r} h^{z_b^{\Delta}} == A_{C_R^{\Delta}} (C_R^{\Delta})^c
 	var gzr, l2, r2 Point
-	gzr.ScalarMulFixedBase(api, params.BaseX, params.BaseY, z_r, params)
-	l2.ScalarMulNonFixedBase(api, &h, z_bDelta, params)
-	l2.AddGeneric(api, &gzr, &l2, params)
-	r2.ScalarMulNonFixedBase(api, &C_RDelta, c, params)
-	r2.AddGeneric(api, &A_CRDelta, &r2, params)
+	gzr = tool.ScalarBaseMul(z_r)
+	l2 = tool.ScalarMul(h, z_bDelta)
+	l2 = tool.Add(gzr, l2)
+	r2 = tool.ScalarMul(C_RDelta, c)
+	r2 = tool.Add(A_CRDelta, r2)
 	IsPointEqual(api, isEnabled, l2, r2)
 }
 
@@ -280,7 +296,7 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 		subProofWitness.Z_bstar1.Assign(ZeroInt)
 		subProofWitness.Z_bstar2.Assign(ZeroInt)
 		// z_{\bar{r}}
-		subProofWitness.Z_rbar.Assign(ZeroInt)
+		subProofWitness.Z_bar_r.Assign(ZeroInt)
 		// z_{b'}
 		subProofWitness.Z_bprime.Assign(ZeroInt)
 		// z_{sk}
@@ -392,7 +408,7 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 		subProofWitness.Z_bstar1.Assign(subProof.Z_bstar1)
 		subProofWitness.Z_bstar2.Assign(subProof.Z_bstar2)
 		// z_{\bar{r}}
-		subProofWitness.Z_rbar.Assign(subProof.Z_rbar)
+		subProofWitness.Z_bar_r.Assign(subProof.Z_rbar)
 		// z_{b'}
 		subProofWitness.Z_bprime.Assign(subProof.Z_bprime)
 		// z_{sk}

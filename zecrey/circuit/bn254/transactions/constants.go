@@ -41,6 +41,7 @@ type (
 	WithdrawProof        = zecrey.WithdrawProof
 
 	CtRangeProofConstraints         = std.CtRangeProofConstraints
+	UnlockProofConstraints          = std.UnlockProofConstraints
 	TransferProofConstraints        = std.TransferProofConstraints
 	SwapProofConstraints            = std.SwapProofConstraints
 	AddLiquidityProofConstraints    = std.AddLiquidityProofConstraints
@@ -64,13 +65,13 @@ const (
 	EncSize     = twistedElgamal.EncSize
 	AccountSize = 160
 
-	TxTypeNoop            = 1
-	TxTypeDeposit         = 2
-	TxTypeLock            = 3
+	TxTypeNoop            = 0
+	TxTypeDeposit         = 1
+	TxTypeLock            = 2
+	TxTypeUnlock          = 3
 	TxTypeTransfer        = 4
 	TxTypeSwap            = 5
 	TxTypeAddLiquidity    = 6
 	TxTypeRemoveLiquidity = 7
-	TxTypeUnlock          = 8
-	TxTypeWithdraw        = 9
+	TxTypeWithdraw        = 8
 )

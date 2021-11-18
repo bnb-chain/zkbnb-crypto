@@ -30,6 +30,8 @@ import (
 type TxConstraints struct {
 	// tx type
 	TxType Variable
+	// unlock proof
+	UnlockProof UnlockProofConstraints
 	// transfer proof
 	TransferProof TransferProofConstraints
 	// swap proof
@@ -40,6 +42,7 @@ type TxConstraints struct {
 	RemoveLiquidityProof RemoveLiquidityProofConstraints
 	// withdraw proof
 	WithdrawProof WithdrawProofConstraints
+	// common verification part
 	// range proofs
 	RangeProofs [MaxRangeProofCount]CtRangeProofConstraints
 }
@@ -62,42 +65,53 @@ func (circuit TxConstraints) Define(curveID ecc.ID, api frontend.API) error {
 		X: api.Constant(std.HX),
 		Y: api.Constant(std.HY),
 	}
-	VerifyTransaction(api, circuit, params, hFunc, H)
+	tool := std.NewEccTool(api, params)
+	VerifyTransaction(tool, api, circuit, hFunc, H)
 
 	return nil
 }
 
 func VerifyTransaction(
+	tool *std.EccTool,
 	api API,
 	tx TxConstraints,
-	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
 ) {
 	// txType constants
+	txTypeUnlock := api.Constant(uint64(TxTypeUnlock))
 	txTypeTransfer := api.Constant(uint64(TxTypeTransfer))
 	txTypeSwap := api.Constant(uint64(TxTypeSwap))
 	txTypeAddLiquidity := api.Constant(uint64(TxTypeAddLiquidity))
 	txTypeRemoveLiquidity := api.Constant(uint64(TxTypeRemoveLiquidity))
 	txTypeWithdraw := api.Constant(uint64(TxTypeWithdraw))
-	tx.TransferProof.IsEnabled = api.IsZero(api.Sub(tx.TxType, txTypeTransfer))
-	tx.SwapProof.IsEnabled = api.IsZero(api.Sub(tx.TxType, txTypeSwap))
-	tx.AddLiquidityProof.IsEnabled = api.IsZero(api.Sub(tx.TxType, txTypeAddLiquidity))
-	tx.RemoveLiquidityProof.IsEnabled = api.IsZero(api.Sub(tx.TxType, txTypeRemoveLiquidity))
-	tx.WithdrawProof.IsEnabled = api.IsZero(api.Sub(tx.TxType, txTypeWithdraw))
+	isUnlockTx := api.IsZero(api.Sub(tx.TxType, txTypeUnlock))
+	tx.UnlockProof.IsEnabled = isUnlockTx
+	isTransferTx := api.IsZero(api.Sub(tx.TxType, txTypeTransfer))
+	tx.TransferProof.IsEnabled = isTransferTx
+	isSwapTx := api.IsZero(api.Sub(tx.TxType, txTypeSwap))
+	tx.SwapProof.IsEnabled = isSwapTx
+	isAddLiquidityTx := api.IsZero(api.Sub(tx.TxType, txTypeAddLiquidity))
+	tx.AddLiquidityProof.IsEnabled = isAddLiquidityTx
+	isRemoveLiquidityTx := api.IsZero(api.Sub(tx.TxType, txTypeRemoveLiquidity))
+	tx.RemoveLiquidityProof.IsEnabled = isRemoveLiquidityTx
+	isWithdrawTx := api.IsZero(api.Sub(tx.TxType, txTypeWithdraw))
+	tx.WithdrawProof.IsEnabled = isWithdrawTx
 
 	// verify range proofs
 	for i, rangeProof := range tx.RangeProofs {
 		// set range proof is true
 		rangeProof.IsEnabled = api.Constant(1)
-		std.VerifyCtRangeProof(api, rangeProof, params, hFunc)
+		std.VerifyCtRangeProof(tool, api, rangeProof, hFunc)
 		hFunc.Reset()
 		tx.TransferProof.SubProofs[i].Y = rangeProof.A
 	}
 	// set T or Y
+	// unlock proof
+	tx.UnlockProof.T_fee = tx.RangeProofs[0].A
 	// swap proof
 	tx.SwapProof.T_uA = tx.RangeProofs[0].A
-	tx.SwapProof.T_ufee = tx.RangeProofs[1].A
+	tx.SwapProof.T_fee = tx.RangeProofs[1].A
 	// add liquidity proof
 	tx.AddLiquidityProof.T_uA = tx.RangeProofs[0].A
 	tx.AddLiquidityProof.T_uB = tx.RangeProofs[1].A
@@ -105,21 +119,46 @@ func VerifyTransaction(
 	tx.RemoveLiquidityProof.T_uLP = tx.RangeProofs[0].A
 	// withdraw proof
 	tx.WithdrawProof.T = tx.RangeProofs[0].A
+	// verify unlock proof
+	var (
+		c, cCheck               Variable
+		pkProofs, pkProofsCheck [MaxRangeProofCount]std.CommonPkProof
+		tProofs, tProofsCheck   [MaxRangeProofCount]std.CommonTProof
+	)
+	c, pkProofs, tProofs = std.VerifyUnlockProof(tool, api, tx.UnlockProof, hFunc, h)
+	hFunc.Reset()
 	// verify transfer proof
-	std.VerifyTransferProof(api, tx.TransferProof, params, hFunc, h)
+	cCheck, pkProofsCheck, tProofsCheck = std.VerifyTransferProof(tool, api, tx.TransferProof, hFunc, h)
 	hFunc.Reset()
+	c, pkProofs, tProofs = SelectCommonPart(api, isTransferTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
 	// verify swap proof
-	std.VerifySwapProof(api, tx.SwapProof, params, hFunc, h)
+	cCheck, pkProofsCheck, tProofsCheck = std.VerifySwapProof(tool, api, tx.SwapProof, hFunc, h)
 	hFunc.Reset()
+	c, pkProofs, tProofs = SelectCommonPart(api, isSwapTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
 	// verify add liquidity proof
-	std.VerifyAddLiquidityProof(api, tx.AddLiquidityProof, params, hFunc, h)
+	cCheck, pkProofsCheck, tProofsCheck = std.VerifyAddLiquidityProof(tool, api, tx.AddLiquidityProof, hFunc, h)
 	hFunc.Reset()
+	c, pkProofs, tProofs = SelectCommonPart(api, isAddLiquidityTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
 	// verify remove liquidity proof
-	std.VerifyRemoveLiquidityProof(api, tx.RemoveLiquidityProof, params, hFunc, h)
+	cCheck, pkProofsCheck, tProofsCheck = std.VerifyRemoveLiquidityProof(tool, api, tx.RemoveLiquidityProof, hFunc, h)
 	hFunc.Reset()
+	c, pkProofs, tProofs = SelectCommonPart(api, isRemoveLiquidityTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
 	// verify withdraw proof
-	std.VerifyWithdrawProof(api, tx.WithdrawProof, params, hFunc, h)
+	cCheck, pkProofsCheck, tProofsCheck = std.VerifyWithdrawProof(tool, api, tx.WithdrawProof, hFunc, h)
 	hFunc.Reset()
+	c, pkProofs, tProofs = SelectCommonPart(api, isWithdrawTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
+	enabled := api.Constant(1)
+	for i := 0; i < MaxRangeProofCount; i++ {
+		// pk proof
+		l1 := tool.ScalarBaseMul(pkProofs[i].Z_sk_u)
+		r1 := tool.Add(pkProofs[i].A_pk_u, tool.ScalarMul(pkProofs[i].Pk_u, c))
+		std.IsPointEqual(api, enabled, l1, r1)
+		// T proof
+		// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
+		l2 := tool.Add(tool.ScalarBaseMul(tProofs[i].Z_bar_r), tool.ScalarMul(tProofs[i].C_PrimeNeg.CL, pkProofs[i].Z_sk_uInv))
+		r2 := tool.Add(tProofs[i].A_T_C_RPrimeInv, tool.ScalarMul(tool.Add(tProofs[i].T, tProofs[i].C_PrimeNeg.CR), c))
+		std.IsPointEqual(api, enabled, l2, r2)
+	}
 
 }
 
@@ -141,6 +180,7 @@ func SetTxWitness(oproof interface{}, txType uint8, isEnabled bool) (witness TxC
 			return witness, err
 		}
 		witness.TxType.Assign(uint64(txType))
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
 		witness.TransferProof = proofConstraints
 		for i, subProof := range proof.SubProofs {
 			witness.RangeProofs[i], err = std.SetCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
@@ -163,13 +203,14 @@ func SetTxWitness(oproof interface{}, txType uint8, isEnabled bool) (witness TxC
 			return witness, err
 		}
 		witness.TxType.Assign(uint64(txType))
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
 		witness.TransferProof = std.SetEmptyTransferProofWitness()
 		witness.SwapProof = proofConstraints
 		witness.RangeProofs[0], err = std.SetCtRangeProofWitness(proof.ARangeProof, isEnabled)
 		if err != nil {
 			return witness, err
 		}
-		witness.RangeProofs[1], err = std.SetCtRangeProofWitness(proof.FeeRangeProof, isEnabled)
+		witness.RangeProofs[1], err = std.SetCtRangeProofWitness(proof.GasFeePrimeRangeProof, isEnabled)
 		if err != nil {
 			return witness, err
 		}
@@ -188,6 +229,7 @@ func SetTxWitness(oproof interface{}, txType uint8, isEnabled bool) (witness TxC
 			return witness, err
 		}
 		witness.TxType.Assign(uint64(txType))
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
 		witness.TransferProof = std.SetEmptyTransferProofWitness()
 		witness.SwapProof = std.SetEmptySwapProofWitness()
 		witness.AddLiquidityProof = proofConstraints
@@ -199,7 +241,10 @@ func SetTxWitness(oproof interface{}, txType uint8, isEnabled bool) (witness TxC
 		if err != nil {
 			return witness, err
 		}
-		witness.RangeProofs[2] = witness.RangeProofs[1]
+		witness.RangeProofs[2], err = std.SetCtRangeProofWitness(proof.GasFeePrimeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
 		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
 		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
 		break
@@ -213,6 +258,7 @@ func SetTxWitness(oproof interface{}, txType uint8, isEnabled bool) (witness TxC
 			return witness, err
 		}
 		witness.TxType.Assign(uint64(txType))
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
 		witness.TransferProof = std.SetEmptyTransferProofWitness()
 		witness.SwapProof = std.SetEmptySwapProofWitness()
 		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
@@ -221,7 +267,10 @@ func SetTxWitness(oproof interface{}, txType uint8, isEnabled bool) (witness TxC
 		if err != nil {
 			return witness, err
 		}
-		witness.RangeProofs[1] = witness.RangeProofs[0]
+		witness.RangeProofs[1], err = std.SetCtRangeProofWitness(proof.GasFeePrimeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
 		witness.RangeProofs[2] = witness.RangeProofs[0]
 		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
 		break
@@ -237,6 +286,7 @@ func SetTxWitness(oproof interface{}, txType uint8, isEnabled bool) (witness TxC
 			return witness, err
 		}
 		witness.TxType.Assign(uint64(txType))
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
 		witness.TransferProof = std.SetEmptyTransferProofWitness()
 		witness.SwapProof = std.SetEmptySwapProofWitness()
 		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
@@ -246,7 +296,10 @@ func SetTxWitness(oproof interface{}, txType uint8, isEnabled bool) (witness TxC
 		if err != nil {
 			return witness, err
 		}
-		witness.RangeProofs[1] = witness.RangeProofs[0]
+		witness.RangeProofs[1], err = std.SetCtRangeProofWitness(proof.GasFeePrimeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
 		witness.RangeProofs[2] = witness.RangeProofs[0]
 		break
 	default:

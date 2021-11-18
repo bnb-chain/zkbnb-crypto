@@ -47,20 +47,21 @@ func (circuit BlockConstraints) Define(curveID ecc.ID, api API) error {
 		X: api.Constant(std.HX),
 		Y: api.Constant(std.HY),
 	}
-	VerifyBlock(api, circuit, params, hFunc, H)
+	tool := std.NewEccTool(api, params)
+	VerifyBlock(tool, api, circuit, hFunc, H)
 
 	return nil
 }
 
 func VerifyBlock(
+	tool *std.EccTool,
 	api API,
 	block BlockConstraints,
-	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
 ) {
 	for i := 0; i < len(block.Txs); i++ {
-		VerifyTransaction(api, block.Txs[i], params, hFunc, h)
+		VerifyTransaction(tool, api, block.Txs[i], hFunc, h)
 		hFunc.Reset()
 	}
 }
