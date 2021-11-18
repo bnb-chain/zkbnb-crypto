@@ -105,14 +105,14 @@ func VerifyWithdrawProof(
 	deltaBalance := api.Add(proof.BStar, deltaFee)
 	CRDelta = tool.ScalarMul(hNeg, deltaBalance)
 	CLprimeInv.Neg(api, &proof.C.CL)
-	CRPrime := tool.AddPoint(proof.C.CR, CRDelta)
+	CRPrime := tool.Add(proof.C.CR, CRDelta)
 	TDivCRprime.Neg(api, &CRPrime)
-	TDivCRprime = tool.AddPoint(proof.T, TDivCRprime)
+	TDivCRprime = tool.Add(proof.T, TDivCRprime)
 	C_feeDelta := tool.ScalarMul(hNeg, proof.GasFee)
 	C_feeLprimeInv.Neg(api, &proof.C_fee.CL)
-	C_feePrimeInv = tool.AddPoint(proof.C_fee.CR, C_feeDelta)
+	C_feePrimeInv = tool.Add(proof.C_fee.CR, C_feeDelta)
 	C_feePrimeInv.Neg(api, &C_feePrimeInv)
-	T_feeDivC_feeRprime = tool.AddPoint(proof.T_fee, C_feePrimeInv)
+	T_feeDivC_feeRprime = tool.Add(proof.T_fee, C_feePrimeInv)
 	C_feeLprimeInv = SelectPoint(api, isSameAsset, CLprimeInv, C_feeLprimeInv)
 	T_feeDivC_feeRprime = SelectPoint(api, isSameAsset, TDivCRprime, T_feeDivC_feeRprime)
 	hFunc.Write(FixedCurveParam(api))
@@ -139,8 +139,8 @@ func VerifyWithdrawProof(
 		proof.Z_sk, proof.Z_skInv, proof.Z_bar_r,
 		proof.IsEnabled, params)
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
-	l1 := tool.AddPoint(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
-	r1 := tool.AddPoint(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(T_feeDivC_feeRprime, c))
+	l1 := tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
+	r1 := tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(T_feeDivC_feeRprime, c))
 	IsPointEqual(api, proof.IsEnabled, l1, r1)
 }
 

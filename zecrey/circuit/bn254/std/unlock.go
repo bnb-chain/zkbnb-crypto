@@ -104,12 +104,12 @@ func VerifyUnlockProof(
 	C_feeDelta := tool.ScalarMul(hNeg, proof.GasFee)
 	C_feeLprimeInv.Neg(api, &proof.C_fee.CL)
 	C_feeLprimeInv.Neg(api, &proof.C_fee.CL)
-	C_feePrimeInv = tool.AddPoint(proof.C_fee.CR, C_feeDelta)
+	C_feePrimeInv = tool.Add(proof.C_fee.CR, C_feeDelta)
 	C_feePrimeInv.Neg(api, &C_feePrimeInv)
-	T_feeDivC_feeRprime = tool.AddPoint(proof.T_fee, C_feePrimeInv)
+	T_feeDivC_feeRprime = tool.Add(proof.T_fee, C_feePrimeInv)
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
-	l2 := tool.AddPoint(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
-	r2 := tool.AddPoint(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(T_feeDivC_feeRprime, c))
+	l2 := tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
+	r2 := tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(T_feeDivC_feeRprime, c))
 	IsPointEqual(api, proof.IsEnabled, l2, r2)
 }
 

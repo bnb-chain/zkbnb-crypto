@@ -59,6 +59,11 @@ func SelectElgamal(api API, flag Variable, a, b ElGamalEncConstraints) ElGamalEn
 	return ElGamalEncConstraints{CL: Point{X: CLX, Y: CLY}, CR: Point{X: CRX, Y: CRY}}
 }
 
+func printPoint(api API, a Point) {
+	api.Println(a.X)
+	api.Println(a.Y)
+}
+
 func printEnc(api API, a ElGamalEncConstraints) {
 	api.Println(a.CL.X)
 	api.Println(a.CL.Y)

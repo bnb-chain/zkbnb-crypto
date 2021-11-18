@@ -135,7 +135,7 @@ func VerifySwapProof(
 	// verify ownership
 	var l1, r1 Point
 	l1 = tool.ScalarBaseMul(proof.Z_sk_u)
-	r1 = tool.AddPoint(proof.A_pk_u, tool.ScalarMul(proof.Pk_u, c))
+	r1 = tool.Add(proof.A_pk_u, tool.ScalarMul(proof.Pk_u, c))
 	IsPointEqual(api, proof.IsEnabled, l1, r1)
 	// check if gas fee asset id is the same as asset a
 	assetDiff := api.Sub(proof.GasFeeAssetId, proof.AssetAId)
@@ -148,20 +148,20 @@ func VerifySwapProof(
 	C_uAPrime := tool.EncAdd(proof.C_uA, proof.C_uA_Delta)
 	deltaFee := tool.ScalarMul(hNeg, proof.GasFee)
 	deltaA := SelectPoint(api, isSameAsset, deltaFee, zeroPoint(api))
-	C_uAPrime.CR = tool.AddPoint(C_uAPrime.CR, deltaA)
+	C_uAPrime.CR = tool.Add(C_uAPrime.CR, deltaA)
 	C_uAPrimeNeg := tool.NegElgamal(C_uAPrime)
 	var l3, r3 Point
-	l3 = tool.AddPoint(tool.ScalarBaseMul(proof.Z_bar_r_A), tool.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv))
-	r3 = tool.AddPoint(proof.A_T_uAC_uARPrimeInv, tool.ScalarMul(tool.AddPoint(proof.T_uA, C_uAPrimeNeg.CR), c))
+	l3 = tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_A), tool.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv))
+	r3 = tool.Add(proof.A_T_uAC_uARPrimeInv, tool.ScalarMul(tool.Add(proof.T_uA, C_uAPrimeNeg.CR), c))
 	IsPointEqual(api, proof.IsEnabled, l3, r3)
 	// fee
-	C_feeRPrime := tool.AddPoint(proof.C_fee.CR, deltaFee)
+	C_feeRPrime := tool.Add(proof.C_fee.CR, deltaFee)
 	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	C_feePrimeNeg = SelectElgamal(api, isSameAsset, C_uAPrimeNeg, C_feePrimeNeg)
 	var l4, r4 Point
-	l4 = tool.AddPoint(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv))
-	r4 = tool.AddPoint(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(tool.AddPoint(proof.T_fee, C_feePrimeNeg.CR), c))
+	l4 = tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv))
+	r4 = tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(tool.Add(proof.T_fee, C_feePrimeNeg.CR), c))
 	IsPointEqual(api, proof.IsEnabled, l4, r4)
 }
 
@@ -350,7 +350,7 @@ func verifySwapParams(
 	gr1 := tool.ScalarBaseMul(proof.R_DeltaA)
 	C_uA_Delta := ElGamalEncConstraints{
 		CL: CL1,
-		CR: tool.AddPoint(gr1, hb1Neg),
+		CR: tool.Add(gr1, hb1Neg),
 	}
 	// pk^r
 	CL2 := tool.ScalarMul(proof.Pk_u, proof.R_DeltaB)
@@ -361,15 +361,15 @@ func verifySwapParams(
 	gr2 := tool.ScalarBaseMul(proof.R_DeltaB)
 	C_uB_Delta := ElGamalEncConstraints{
 		CL: CL2,
-		CR: tool.AddPoint(gr2, hb2),
+		CR: tool.Add(gr2, hb2),
 	}
 	LC_poolA_Delta := ElGamalEncConstraints{
 		CL: tool.ScalarMul(proof.Pk_pool, proof.R_DeltaA),
-		CR: tool.AddPoint(gr1, hbpool),
+		CR: tool.Add(gr1, hbpool),
 	}
 	LC_poolB_Delta := ElGamalEncConstraints{
 		CL: tool.ScalarMul(proof.Pk_pool, proof.R_DeltaB),
-		CR: tool.AddPoint(gr2, hb2Neg),
+		CR: tool.Add(gr2, hb2Neg),
 	}
 	IsElGamalEncEqual(api, isEnabled, C_uA_Delta, proof.C_uA_Delta)
 	IsElGamalEncEqual(api, isEnabled, C_uB_Delta, proof.C_uB_Delta)

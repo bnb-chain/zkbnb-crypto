@@ -276,12 +276,6 @@ func verifyRemoveLiquidityParams(proof *RemoveLiquidityProof) (res bool, err err
 		log.Println("[verifyRemoveLiquidityParams] invalid balance enc")
 		return false, nil
 	}
-	// verify LP
-	Delta_LPCheck := uint64(math.Floor(math.Sqrt(float64(proof.B_A_Delta * proof.B_B_Delta))))
-	if Delta_LPCheck != proof.Delta_LP {
-		log.Println("[verifyRemoveLiquidityParams] invalid LP")
-		return false, nil
-	}
 	// verify AMM info & DAO balance info
 	l := ffmath.Multiply(big.NewInt(int64(proof.B_A_Delta)), big.NewInt(int64(proof.B_B_Delta)))
 	r := ffmath.Multiply(big.NewInt(int64(proof.Delta_LP)), big.NewInt(int64(proof.Delta_LP)))
@@ -332,12 +326,12 @@ func (proof *RemoveLiquidityProof) AddPoolInfo(
 	proof.LC_poolA_Delta, err = twistedElgamal.EncNeg(big.NewInt(int64(B_A_Delta)), proof.R_DeltaA, Pk_pool)
 	if err != nil {
 		log.Println("[NewAddLiquidityRelation] err info:", err)
-		return  err
+		return err
 	}
 	proof.LC_poolB_Delta, err = twistedElgamal.EncNeg(big.NewInt(int64(B_B_Delta)), proof.R_DeltaB, Pk_pool)
 	if err != nil {
 		log.Println("[NewAddLiquidityRelation] err info:", err)
-		return  err
+		return err
 	}
 	// TODO re-implement P = \sqrt{x}/\sqrt{y}
 	proof.P = uint64(math.Sqrt(float64(b_pool_A)/float64(b_pool_B)) * OneMillion)

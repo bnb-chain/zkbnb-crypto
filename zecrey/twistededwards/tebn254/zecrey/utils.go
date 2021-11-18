@@ -60,6 +60,11 @@ func negElgamal(enc *ElGamalEnc) *ElGamalEnc {
 	}
 }
 
+func printPoint(a *Point) {
+	log.Println(a.X.String())
+	log.Println(a.Y.String())
+}
+
 func printElgamal(enc *ElGamalEnc) {
 	log.Println(enc.CL.X.String())
 	log.Println(enc.CL.Y.String())
