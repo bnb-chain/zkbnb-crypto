@@ -18,35 +18,44 @@
 package std
 
 import (
+	"errors"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
+	"github.com/consensys/gnark/std/hash/mimc"
 	"log"
 	"zecrey-crypto/hash/bn254/zmimc"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 type AddLiquidityProofConstraints struct {
-	// valid Enc
+	// valid enc
 	A_CLPL_Delta                Point
 	A_CLPR_DeltaHExp_DeltaLPNeg Point
 	Z_rDelta_LP                 Variable
 	// ownership
 	A_pk_u, A_T_uAC_uARPrimeInv, A_T_uBC_uBRPrimeInv Point
 	Z_sk_u, Z_bar_r_A, Z_bar_r_B, Z_sk_uInv          Variable
-	// range proofs
-	//ARangeProof, BRangeProof CtRangeProofConstraints
 	// common inputs
-	C_uA, C_uB                   ElGamalEncConstraints
-	C_uA_Delta, C_uB_Delta       ElGamalEncConstraints
-	LC_DaoA_Delta, LC_DaoB_Delta ElGamalEncConstraints
-	C_LP_Delta                   ElGamalEncConstraints
-	Pk_u, Pk_Dao                 Point
-	R_DeltaA, R_DeltaB           Variable
-	T_uA, T_uB                   Point
-	B_DaoA, B_DaoB               Variable
-	B_A_Delta, B_B_Delta         Variable
-	Delta_LP                     Variable
-	IsEnabled                    Variable
+	C_uA, C_uB                     ElGamalEncConstraints
+	C_uA_Delta, C_uB_Delta         ElGamalEncConstraints
+	LC_poolA_Delta, LC_poolB_Delta ElGamalEncConstraints
+	C_LP_Delta                     ElGamalEncConstraints
+	Pk_u, Pk_pool                  Point
+	R_DeltaA, R_DeltaB             Variable
+	T_uA, T_uB                     Point
+	B_poolA, B_poolB               Variable
+	B_A_Delta, B_B_Delta           Variable
+	Delta_LP                       Variable
+	// assets id
+	AssetAId, AssetBId Variable
+	// gas fee
+	A_T_feeC_feeRPrimeInv Point
+	Z_bar_r_fee           Variable
+	C_fee                 ElGamalEncConstraints
+	T_fee                 Point
+	GasFeeAssetId         Variable
+	GasFee                Variable
+	IsEnabled             Variable
 }
 
 // define tests for verifying the swap proof
@@ -79,28 +88,10 @@ func VerifyAddLiquidityProof(
 	hFunc MiMC,
 	h Point,
 ) {
-	//IsPointEqual(api, proof.IsEnabled, proof.T_uA, proof.ARangeProof.A)
-	//IsPointEqual(api, proof.IsEnabled, proof.T_uB, proof.BRangeProof.A)
-	var (
-		C_uAPrime, C_uBPrime       ElGamalEncConstraints
-		C_uAPrimeNeg, C_uBPrimeNeg ElGamalEncConstraints
-		c                          Variable
-	)
-	// mimc
-	//AhFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, api)
-	//if err != nil {
-	//	return
-	//}
-	//VerifyCtRangeProof(api, proof.ARangeProof, params, AhFunc)
-	//BhFunc, err := mimc.NewMiMC(zmimc.SEED, params.ID, api)
-	//if err != nil {
-	//	return
-	//}
-	//VerifyCtRangeProof(api, proof.BRangeProof, params, BhFunc)
-	// challenge buf
+	tool := NewEccTool(api, params)
 	hFunc.Write(FixedCurveParam(api))
 	writePointIntoBuf(&hFunc, proof.Pk_u)
-	writePointIntoBuf(&hFunc, proof.Pk_Dao)
+	writePointIntoBuf(&hFunc, proof.Pk_pool)
 	writeEncIntoBuf(&hFunc, proof.C_uA)
 	writeEncIntoBuf(&hFunc, proof.C_uB)
 	writeEncIntoBuf(&hFunc, proof.C_uA_Delta)
@@ -108,139 +99,194 @@ func VerifyAddLiquidityProof(
 	writeEncIntoBuf(&hFunc, proof.C_LP_Delta)
 	writePointIntoBuf(&hFunc, proof.T_uA)
 	writePointIntoBuf(&hFunc, proof.T_uB)
+	// assets id
+	hFunc.Write(proof.AssetAId)
+	hFunc.Write(proof.AssetBId)
 	// write into buf
 	writePointIntoBuf(&hFunc, proof.A_CLPL_Delta)
 	writePointIntoBuf(&hFunc, proof.A_CLPR_DeltaHExp_DeltaLPNeg)
 	// write into buf
+	// gas fee
+	writePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
+	writeEncIntoBuf(&hFunc, proof.C_fee)
+	hFunc.Write(proof.GasFeeAssetId)
+	hFunc.Write(proof.GasFee)
+
 	writePointIntoBuf(&hFunc, proof.A_pk_u)
 	writePointIntoBuf(&hFunc, proof.A_T_uAC_uARPrimeInv)
 	writePointIntoBuf(&hFunc, proof.A_T_uBC_uBRPrimeInv)
 	// compute challenge
-	c = hFunc.Sum()
+	c := hFunc.Sum()
 	// verify params
-	verifyAddLiquidityParams(
-		api,
-		proof,
-		params,
-		h,
-	)
-	// verify Enc
-	var l1, r1 Point
-	l1.ScalarMulNonFixedBase(api, &proof.Pk_u, proof.Z_rDelta_LP, params)
-	r1.ScalarMulNonFixedBase(api, &proof.C_LP_Delta.CL, c, params)
-	r1.AddGeneric(api, &r1, &proof.A_CLPL_Delta, params)
+	verifyAddLiquidityParams(api, proof, tool, h)
+	// verify enc
+	l1 := tool.ScalarMul(proof.Pk_u, proof.Z_rDelta_LP)
+	r1 := tool.Add(proof.A_CLPL_Delta, tool.ScalarMul(proof.C_LP_Delta.CL, c))
 	IsPointEqual(api, proof.IsEnabled, l1, r1)
 	// verify ownership
-	var l2, r2 Point
-	l2.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_sk_u, params)
-	r2.ScalarMulNonFixedBase(api, &proof.Pk_u, c, params)
-	r2.AddGeneric(api, &r2, &proof.A_pk_u, params)
+	l2 := tool.ScalarBaseMul(proof.Z_sk_u)
+	r2 := tool.Add(proof.A_pk_u, tool.ScalarMul(proof.Pk_u, c))
 	IsPointEqual(api, proof.IsEnabled, l2, r2)
-	C_uAPrime = EncSub(api, proof.C_uA, proof.C_uA_Delta, params)
-	C_uBPrime = EncSub(api, proof.C_uB, proof.C_uB_Delta, params)
-	C_uAPrimeNeg = NegElgamal(api, C_uAPrime)
-	C_uBPrimeNeg = NegElgamal(api, C_uBPrime)
-	var g_z_bar_r_A, l3, r3 Point
-	g_z_bar_r_A.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_bar_r_A, params)
-	l3.ScalarMulNonFixedBase(api, &C_uAPrimeNeg.CL, proof.Z_sk_uInv, params)
-	l3.AddGeneric(api, &l3, &g_z_bar_r_A, params)
-	r3.AddGeneric(api, &proof.T_uA, &C_uAPrimeNeg.CR, params)
-	r3.ScalarMulNonFixedBase(api, &r3, c, params)
-	r3.AddGeneric(api, &r3, &proof.A_T_uAC_uARPrimeInv, params)
+	// check if gas fee asset id is the same as asset a
+	assetADiff := api.Sub(proof.GasFeeAssetId, proof.AssetAId)
+	assetBDiff := api.Sub(proof.GasFeeAssetId, proof.AssetBId)
+	isSameAssetA := api.IsZero(assetADiff)
+	isSameAssetB := api.IsZero(assetBDiff)
+	hNeg := tool.Neg(h)
+	// if same, check params
+	IsElGamalEncEqual(api, isSameAssetA, proof.C_uA, proof.C_fee)
+	IsPointEqual(api, isSameAssetA, proof.A_T_uAC_uARPrimeInv, proof.A_T_feeC_feeRPrimeInv)
+	deltaFee := tool.ScalarMul(hNeg, proof.GasFee)
+	deltaA := SelectPoint(api, isSameAssetA, deltaFee, zeroPoint(api))
+	deltaB := SelectPoint(api, isSameAssetB, deltaFee, zeroPoint(api))
+	C_uAPrime := tool.EncAdd(proof.C_uA, proof.C_uA_Delta)
+	C_uAPrime.CR = tool.Add(C_uAPrime.CR, deltaA)
+	C_uAPrimeNeg := tool.NegElgamal(C_uAPrime)
+	l3 := tool.Add(
+		tool.ScalarBaseMul(proof.Z_bar_r_A),
+		tool.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
+	)
+	r3 := tool.Add(
+		proof.A_T_uAC_uARPrimeInv,
+		tool.ScalarMul(
+			tool.Add(
+				proof.T_uA,
+				C_uAPrimeNeg.CR,
+			),
+			c,
+		),
+	)
 	IsPointEqual(api, proof.IsEnabled, l3, r3)
-	// l4,r4
-	var g_z_bar_r_B, l4, r4 Point
-	g_z_bar_r_B.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_bar_r_B, params)
-	l4.ScalarMulNonFixedBase(api, &C_uBPrimeNeg.CL, proof.Z_sk_uInv, params)
-	l4.AddGeneric(api, &l4, &g_z_bar_r_B, params)
-	r4.AddGeneric(api, &proof.T_uB, &C_uBPrimeNeg.CR, params)
-	r4.ScalarMulNonFixedBase(api, &r4, c, params)
-	r4.AddGeneric(api, &r4, &proof.A_T_uBC_uBRPrimeInv, params)
+	C_uBPrime := tool.EncAdd(proof.C_uB, proof.C_uB_Delta)
+	C_uBPrime.CR = tool.Add(C_uBPrime.CR, deltaB)
+	C_uBPrimeNeg := tool.NegElgamal(C_uBPrime)
+	l4 := tool.Add(
+		tool.ScalarBaseMul(proof.Z_bar_r_B),
+		tool.ScalarMul(C_uBPrimeNeg.CL, proof.Z_sk_uInv),
+	)
+	r4 := tool.Add(
+		proof.A_T_uBC_uBRPrimeInv,
+		tool.ScalarMul(
+			tool.Add(
+				proof.T_uB,
+				C_uBPrimeNeg.CR,
+			),
+			c,
+		),
+	)
 	IsPointEqual(api, proof.IsEnabled, l4, r4)
+	// fee
+	C_feeRPrime := tool.Add(proof.C_fee.CR, deltaFee)
+	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
+	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
+	C_feePrimeNeg = SelectElgamal(api, isSameAssetA, C_uAPrimeNeg, C_feePrimeNeg)
+	C_feePrimeNeg = SelectElgamal(api, isSameAssetB, C_uBPrimeNeg, C_feePrimeNeg)
+	l5 := tool.Add(
+		tool.ScalarBaseMul(proof.Z_bar_r_fee),
+		tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv),
+	)
+	r5 := tool.Add(
+		proof.A_T_feeC_feeRPrimeInv,
+		tool.ScalarMul(
+			tool.Add(
+				proof.T_fee,
+				C_feePrimeNeg.CR,
+			),
+			c,
+		),
+	)
+	IsPointEqual(api, proof.IsEnabled, l5, r5)
 }
 
 func verifyAddLiquidityParams(
 	api API,
 	proof AddLiquidityProofConstraints,
-	params twistededwards.EdCurve,
+	tool *EccTool,
 	h Point,
 ) {
-	var C_uA_Delta, C_uB_Delta, LC_DaoA_Delta, LC_DaoB_Delta ElGamalEncConstraints
-	C_uA_Delta = Enc(api, h, proof.B_A_Delta, proof.R_DeltaA, proof.Pk_u, params)
-	C_uB_Delta = Enc(api, h, proof.B_B_Delta, proof.R_DeltaB, proof.Pk_u, params)
-	LC_DaoA_Delta.CL.ScalarMulNonFixedBase(api, &proof.Pk_Dao, proof.R_DeltaA, params)
-	LC_DaoA_Delta.CR = C_uA_Delta.CR
-	LC_DaoB_Delta.CL.ScalarMulNonFixedBase(api, &proof.Pk_Dao, proof.R_DeltaB, params)
-	LC_DaoB_Delta.CR = C_uB_Delta.CR
+	// C_uA_Delta
+	hNeg := tool.Neg(h)
+	C_uA_DeltaCL := tool.ScalarMul(proof.Pk_u, proof.R_DeltaA)
+	C_uA_DeltaCRL := tool.ScalarBaseMul(proof.R_DeltaA)
+	C_uA_DeltaCRR := tool.ScalarMul(hNeg, proof.B_A_Delta)
+	C_uA_DeltaCR := tool.Add(C_uA_DeltaCRL, C_uA_DeltaCRR)
+	C_uA_Delta := ElGamalEncConstraints{
+		CL: C_uA_DeltaCL,
+		CR: C_uA_DeltaCR,
+	}
+	// C_uB_Delta
+	C_uB_DeltaCL := tool.ScalarMul(proof.Pk_u, proof.R_DeltaB)
+	C_uB_DeltaCRL := tool.ScalarBaseMul(proof.R_DeltaB)
+	C_uB_DeltaCRR := tool.ScalarMul(hNeg, proof.B_B_Delta)
+	C_uB_DeltaCR := tool.Add(C_uB_DeltaCRL, C_uB_DeltaCRR)
+	C_uB_Delta := ElGamalEncConstraints{
+		CL: C_uB_DeltaCL,
+		CR: C_uB_DeltaCR,
+	}
+	LC_poolA_Delta := ElGamalEncConstraints{
+		CL: tool.ScalarMul(proof.Pk_pool, proof.R_DeltaA),
+		CR: tool.Add(C_uA_DeltaCRL, tool.Neg(C_uA_DeltaCRR)),
+	}
+	LC_poolB_Delta := ElGamalEncConstraints{
+		CL: tool.ScalarMul(proof.Pk_pool, proof.R_DeltaB),
+		CR: tool.Add(C_uB_DeltaCRL, tool.Neg(C_uB_DeltaCRR)),
+	}
 	IsElGamalEncEqual(api, proof.IsEnabled, C_uA_Delta, proof.C_uA_Delta)
 	IsElGamalEncEqual(api, proof.IsEnabled, C_uB_Delta, proof.C_uB_Delta)
-	IsElGamalEncEqual(api, proof.IsEnabled, LC_DaoA_Delta, proof.LC_DaoA_Delta)
-	IsElGamalEncEqual(api, proof.IsEnabled, LC_DaoB_Delta, proof.LC_DaoB_Delta)
+	IsElGamalEncEqual(api, proof.IsEnabled, LC_poolA_Delta, proof.LC_poolA_Delta)
+	IsElGamalEncEqual(api, proof.IsEnabled, LC_poolB_Delta, proof.LC_poolB_Delta)
 	// verify LP
-	deltaLP := api.Mul(proof.Delta_LP, proof.Delta_LP)
-	deltaLPCheck := api.Mul(proof.B_A_Delta, proof.B_B_Delta)
-	IsVariableEqual(api, proof.IsEnabled, deltaLP, deltaLPCheck)
+	Delta_LPCheck := api.Mul(proof.B_A_Delta, proof.B_B_Delta)
+	LPCheck := api.Mul(proof.Delta_LP, proof.Delta_LP)
+	api.AssertIsLessOrEqual(Delta_LPCheck, LPCheck)
 	// verify AMM info & DAO balance info
-	l := api.Mul(proof.B_DaoB, proof.B_A_Delta)
-	r := api.Mul(proof.B_DaoA, proof.B_B_Delta)
-	IsVariableEqual(api, proof.IsEnabled, l, r)
+	l := api.Mul(proof.B_poolB, proof.B_A_Delta)
+	r := api.Mul(proof.B_poolA, proof.B_B_Delta)
+	api.AssertIsEqual(l, r)
 }
 
 func SetEmptyAddLiquidityProofWitness() (witness AddLiquidityProofConstraints) {
+	// valid enc
 	witness.A_CLPL_Delta, _ = SetPointWitness(BasePoint)
-
 	witness.A_CLPR_DeltaHExp_DeltaLPNeg, _ = SetPointWitness(BasePoint)
-
-	// response
 	witness.Z_rDelta_LP.Assign(ZeroInt)
+	// ownership
 	witness.A_pk_u, _ = SetPointWitness(BasePoint)
-
 	witness.A_T_uAC_uARPrimeInv, _ = SetPointWitness(BasePoint)
-
 	witness.A_T_uBC_uBRPrimeInv, _ = SetPointWitness(BasePoint)
-
 	witness.Z_sk_u.Assign(ZeroInt)
 	witness.Z_bar_r_A.Assign(ZeroInt)
 	witness.Z_bar_r_B.Assign(ZeroInt)
 	witness.Z_sk_uInv.Assign(ZeroInt)
-	//witness.ARangeProof, _ = SetCtRangeProofWitness(ARangeProof, isEnabled)
-	//if err != nil {
-	//	return witness, _
-	//}
-	//witness.BRangeProof, _ = SetCtRangeProofWitness(BRangeProof, isEnabled)
-	//if err != nil {
-	//	return witness, _
-	//}
 	// common inputs
 	witness.C_uA, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-
 	witness.C_uB, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-
 	witness.C_uA_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-
 	witness.C_uB_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-
-	witness.LC_DaoA_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-
-	witness.LC_DaoB_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-
+	witness.LC_poolA_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.LC_poolB_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_LP_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-
-	witness.Pk_Dao, _ = SetPointWitness(BasePoint)
-
 	witness.Pk_u, _ = SetPointWitness(BasePoint)
-
+	witness.Pk_pool, _ = SetPointWitness(BasePoint)
 	witness.R_DeltaA.Assign(ZeroInt)
 	witness.R_DeltaB.Assign(ZeroInt)
 	witness.T_uA, _ = SetPointWitness(BasePoint)
-
 	witness.T_uB, _ = SetPointWitness(BasePoint)
-
-	witness.B_DaoA.Assign(ZeroInt)
-	witness.B_DaoB.Assign(ZeroInt)
+	witness.B_poolA.Assign(ZeroInt)
+	witness.B_poolB.Assign(ZeroInt)
 	witness.B_A_Delta.Assign(ZeroInt)
 	witness.B_B_Delta.Assign(ZeroInt)
 	witness.Delta_LP.Assign(ZeroInt)
+	// assets id
+	witness.AssetAId.Assign(ZeroInt)
+	witness.AssetBId.Assign(ZeroInt)
+	// gas fee
+	witness.A_T_feeC_feeRPrimeInv, _ = SetPointWitness(BasePoint)
+	witness.Z_bar_r_fee.Assign(ZeroInt)
+	witness.C_fee, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.T_fee, _ = SetPointWitness(BasePoint)
+	witness.GasFeeAssetId.Assign(ZeroInt)
+	witness.GasFee.Assign(ZeroInt)
 
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
@@ -264,6 +310,7 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 		return witness, errors.New("[SetWithdrawProofWitness] invalid proof")
 	}
 
+	// valid enc
 	witness.A_CLPL_Delta, err = SetPointWitness(proof.A_CLPL_Delta)
 	if err != nil {
 		return witness, err
@@ -272,8 +319,8 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	if err != nil {
 		return witness, err
 	}
-	// response
 	witness.Z_rDelta_LP.Assign(proof.Z_rDelta_LP)
+	// ownership
 	witness.A_pk_u, err = SetPointWitness(proof.A_pk_u)
 	if err != nil {
 		return witness, err
@@ -290,14 +337,6 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	witness.Z_bar_r_A.Assign(proof.Z_bar_r_A)
 	witness.Z_bar_r_B.Assign(proof.Z_bar_r_B)
 	witness.Z_sk_uInv.Assign(proof.Z_sk_uInv)
-	//witness.ARangeProof, err = SetCtRangeProofWitness(proof.ARangeProof, isEnabled)
-	//if err != nil {
-	//	return witness, err
-	//}
-	//witness.BRangeProof, err = SetCtRangeProofWitness(proof.BRangeProof, isEnabled)
-	//if err != nil {
-	//	return witness, err
-	//}
 	// common inputs
 	witness.C_uA, err = SetElGamalEncWitness(proof.C_uA)
 	if err != nil {
@@ -315,11 +354,11 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	if err != nil {
 		return witness, err
 	}
-	witness.LC_DaoA_Delta, err = SetElGamalEncWitness(proof.LC_DaoA_Delta)
+	witness.LC_poolA_Delta, err = SetElGamalEncWitness(proof.LC_poolA_Delta)
 	if err != nil {
 		return witness, err
 	}
-	witness.LC_DaoB_Delta, err = SetElGamalEncWitness(proof.LC_DaoB_Delta)
+	witness.LC_poolB_Delta, err = SetElGamalEncWitness(proof.LC_poolB_Delta)
 	if err != nil {
 		return witness, err
 	}
@@ -327,11 +366,11 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	if err != nil {
 		return witness, err
 	}
-	witness.Pk_Dao, err = SetPointWitness(proof.Pk_Dao)
+	witness.Pk_u, err = SetPointWitness(proof.Pk_u)
 	if err != nil {
 		return witness, err
 	}
-	witness.Pk_u, err = SetPointWitness(proof.Pk_u)
+	witness.Pk_pool, err = SetPointWitness(proof.Pk_pool)
 	if err != nil {
 		return witness, err
 	}
@@ -345,11 +384,30 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	if err != nil {
 		return witness, err
 	}
-	witness.B_DaoA.Assign(proof.B_DaoA)
-	witness.B_DaoB.Assign(proof.B_DaoB)
+	witness.B_poolA.Assign(proof.B_poolA)
+	witness.B_poolB.Assign(proof.B_poolB)
 	witness.B_A_Delta.Assign(proof.B_A_Delta)
 	witness.B_B_Delta.Assign(proof.B_B_Delta)
 	witness.Delta_LP.Assign(proof.Delta_LP)
+	// assets id
+	witness.AssetAId.Assign(uint64(proof.AssetAId))
+	witness.AssetBId.Assign(uint64(proof.AssetBId))
+	// gas fee
+	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
+	if err != nil {
+		return witness, err
+	}
+	witness.Z_bar_r_fee.Assign(proof.Z_bar_r_fee)
+	witness.C_fee, err = SetElGamalEncWitness(proof.C_fee)
+	if err != nil {
+		return witness, err
+	}
+	witness.T_fee, err = SetPointWitness(proof.T_fee)
+	if err != nil {
+		return witness, err
+	}
+	witness.GasFeeAssetId.Assign(uint64(proof.GasFeeAssetId))
+	witness.GasFee.Assign(proof.GasFee)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

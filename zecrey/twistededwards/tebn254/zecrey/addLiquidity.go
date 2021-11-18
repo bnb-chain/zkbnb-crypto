@@ -493,12 +493,6 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 }
 
 func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
-	// check uint64 & int64
-	if !validUint64(proof.B_A_Delta) || !validUint64(proof.B_B_Delta) ||
-		!validUint64(proof.B_poolA) || !validUint64(proof.B_poolB) {
-		log.Println("[verifyAddLiquidityParams] invalid params")
-		return false, errors.New("[verifyAddLiquidityParams] invalid params")
-	}
 	// C_uA_Delta
 	C_uA_DeltaCL := curve.ScalarMul(proof.Pk_u, proof.R_DeltaA)
 	C_uA_DeltaCRL := curve.ScalarBaseMul(proof.R_DeltaA)
