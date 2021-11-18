@@ -76,19 +76,19 @@ func (circuit AddLiquidityProofConstraints) Define(curveID ecc.ID, api API) erro
 	if err != nil {
 		return err
 	}
-	VerifyAddLiquidityProof(api, circuit, params, hFunc, H)
+	tool := NewEccTool(api, params)
+	VerifyAddLiquidityProof(tool, api, circuit, hFunc, H)
 
 	return nil
 }
 
 func VerifyAddLiquidityProof(
+	tool *EccTool,
 	api API,
 	proof AddLiquidityProofConstraints,
-	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
-) {
-	tool := NewEccTool(api, params)
+) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	hFunc.Write(FixedCurveParam(api))
 	writePointIntoBuf(&hFunc, proof.Pk_u)
 	writePointIntoBuf(&hFunc, proof.Pk_pool)
@@ -116,7 +116,7 @@ func VerifyAddLiquidityProof(
 	writePointIntoBuf(&hFunc, proof.A_T_uAC_uARPrimeInv)
 	writePointIntoBuf(&hFunc, proof.A_T_uBC_uBRPrimeInv)
 	// compute challenge
-	c := hFunc.Sum()
+	c = hFunc.Sum()
 	// verify params
 	verifyAddLiquidityParams(api, proof, tool, h)
 	// verify enc
@@ -124,9 +124,9 @@ func VerifyAddLiquidityProof(
 	r1 := tool.Add(proof.A_CLPL_Delta, tool.ScalarMul(proof.C_LP_Delta.CL, c))
 	IsPointEqual(api, proof.IsEnabled, l1, r1)
 	// verify ownership
-	l2 := tool.ScalarBaseMul(proof.Z_sk_u)
-	r2 := tool.Add(proof.A_pk_u, tool.ScalarMul(proof.Pk_u, c))
-	IsPointEqual(api, proof.IsEnabled, l2, r2)
+	//l2 := tool.ScalarBaseMul(proof.Z_sk_u)
+	//r2 := tool.Add(proof.A_pk_u, tool.ScalarMul(proof.Pk_u, c))
+	//IsPointEqual(api, proof.IsEnabled, l2, r2)
 	// check if gas fee asset id is the same as asset a
 	assetADiff := api.Sub(proof.GasFeeAssetId, proof.AssetAId)
 	assetBDiff := api.Sub(proof.GasFeeAssetId, proof.AssetBId)
@@ -142,60 +142,72 @@ func VerifyAddLiquidityProof(
 	C_uAPrime := tool.EncAdd(proof.C_uA, proof.C_uA_Delta)
 	C_uAPrime.CR = tool.Add(C_uAPrime.CR, deltaA)
 	C_uAPrimeNeg := tool.NegElgamal(C_uAPrime)
-	l3 := tool.Add(
-		tool.ScalarBaseMul(proof.Z_bar_r_A),
-		tool.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
-	)
-	r3 := tool.Add(
-		proof.A_T_uAC_uARPrimeInv,
-		tool.ScalarMul(
-			tool.Add(
-				proof.T_uA,
-				C_uAPrimeNeg.CR,
-			),
-			c,
-		),
-	)
-	IsPointEqual(api, proof.IsEnabled, l3, r3)
+	//l3 := tool.Add(
+	//	tool.ScalarBaseMul(proof.Z_bar_r_A),
+	//	tool.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv),
+	//)
+	//r3 := tool.Add(
+	//	proof.A_T_uAC_uARPrimeInv,
+	//	tool.ScalarMul(
+	//		tool.Add(
+	//			proof.T_uA,
+	//			C_uAPrimeNeg.CR,
+	//		),
+	//		c,
+	//	),
+	//)
+	//IsPointEqual(api, proof.IsEnabled, l3, r3)
 	C_uBPrime := tool.EncAdd(proof.C_uB, proof.C_uB_Delta)
 	C_uBPrime.CR = tool.Add(C_uBPrime.CR, deltaB)
 	C_uBPrimeNeg := tool.NegElgamal(C_uBPrime)
-	l4 := tool.Add(
-		tool.ScalarBaseMul(proof.Z_bar_r_B),
-		tool.ScalarMul(C_uBPrimeNeg.CL, proof.Z_sk_uInv),
-	)
-	r4 := tool.Add(
-		proof.A_T_uBC_uBRPrimeInv,
-		tool.ScalarMul(
-			tool.Add(
-				proof.T_uB,
-				C_uBPrimeNeg.CR,
-			),
-			c,
-		),
-	)
-	IsPointEqual(api, proof.IsEnabled, l4, r4)
+	//l4 := tool.Add(
+	//	tool.ScalarBaseMul(proof.Z_bar_r_B),
+	//	tool.ScalarMul(C_uBPrimeNeg.CL, proof.Z_sk_uInv),
+	//)
+	//r4 := tool.Add(
+	//	proof.A_T_uBC_uBRPrimeInv,
+	//	tool.ScalarMul(
+	//		tool.Add(
+	//			proof.T_uB,
+	//			C_uBPrimeNeg.CR,
+	//		),
+	//		c,
+	//	),
+	//)
+	//IsPointEqual(api, proof.IsEnabled, l4, r4)
 	// fee
 	C_feeRPrime := tool.Add(proof.C_fee.CR, deltaFee)
 	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	C_feePrimeNeg = SelectElgamal(api, isSameAssetA, C_uAPrimeNeg, C_feePrimeNeg)
 	C_feePrimeNeg = SelectElgamal(api, isSameAssetB, C_uBPrimeNeg, C_feePrimeNeg)
-	l5 := tool.Add(
-		tool.ScalarBaseMul(proof.Z_bar_r_fee),
-		tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv),
-	)
-	r5 := tool.Add(
-		proof.A_T_feeC_feeRPrimeInv,
-		tool.ScalarMul(
-			tool.Add(
-				proof.T_fee,
-				C_feePrimeNeg.CR,
-			),
-			c,
-		),
-	)
-	IsPointEqual(api, proof.IsEnabled, l5, r5)
+	//l5 := tool.Add(
+	//	tool.ScalarBaseMul(proof.Z_bar_r_fee),
+	//	tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv),
+	//)
+	//r5 := tool.Add(
+	//	proof.A_T_feeC_feeRPrimeInv,
+	//	tool.ScalarMul(
+	//		tool.Add(
+	//			proof.T_fee,
+	//			C_feePrimeNeg.CR,
+	//		),
+	//		c,
+	//	),
+	//)
+	//IsPointEqual(api, proof.IsEnabled, l5, r5)
+	// set common parts
+	pkProofs[0] = SetPkProof(proof.Pk_u, proof.A_pk_u, proof.Z_sk_u, proof.Z_sk_uInv)
+	for i := 1; i < MaxRangeProofCount; i++ {
+		pkProofs[i] = pkProofs[0]
+	}
+	tProofs[0] = SetTProof(C_uAPrimeNeg, proof.A_T_uAC_uARPrimeInv, proof.Z_bar_r_A, proof.T_uA)
+	tProofs[1] = SetTProof(C_uBPrimeNeg, proof.A_T_uBC_uBRPrimeInv, proof.Z_bar_r_B, proof.T_uB)
+	tProofs[2] = SetTProof(C_feePrimeNeg, proof.A_T_feeC_feeRPrimeInv, proof.Z_bar_r_fee, proof.T_fee)
+	for i := 2; i < MaxRangeProofCount; i++ {
+		tProofs[i] = tProofs[0]
+	}
+	return c, pkProofs, tProofs
 }
 
 func verifyAddLiquidityParams(

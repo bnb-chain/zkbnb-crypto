@@ -116,7 +116,7 @@ func (proof *UnlockProof) Verify() (res bool, err error) {
 		return false, errors.New("[Verify UnlockProof] invalid params")
 	}
 	var (
-		C_feeLprimeInv      *Point
+		C_feeLprimeNeg      *Point
 		T_feeDivC_feeRprime *Point
 		buf                 bytes.Buffer
 		c                   *big.Int
@@ -157,10 +157,10 @@ func (proof *UnlockProof) Verify() (res bool, err error) {
 	}
 	// check gas fee proof
 	C_feeDelta := curve.ScalarMul(H, big.NewInt(-int64(proof.GasFee)))
-	C_feeLprimeInv = curve.Neg(proof.C_fee.CL)
+	C_feeLprimeNeg = curve.Neg(proof.C_fee.CL)
 	T_feeDivC_feeRprime = curve.Add(proof.T_fee, curve.Neg(curve.Add(proof.C_fee.CR, C_feeDelta)))
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
-	l2 := curve.Add(curve.ScalarMul(G, proof.Z_bar_r_fee), curve.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
+	l2 := curve.Add(curve.ScalarMul(G, proof.Z_bar_r_fee), curve.ScalarMul(C_feeLprimeNeg, proof.Z_skInv))
 	r2 := curve.Add(proof.A_T_feeC_feeRPrimeInv, curve.ScalarMul(T_feeDivC_feeRprime, c))
 	if !l2.Equal(r2) {
 		log.Println("[Verify UnlockProof] l2!=r2")
