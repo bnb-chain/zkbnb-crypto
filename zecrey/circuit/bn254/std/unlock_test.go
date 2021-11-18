@@ -17,27 +17,45 @@
 
 package std
 
-//
-//func TestUnlockProofConstraints_Define(t *testing.T) {
-//	assert := test.NewAssert(t)
-//	var circuit, witness UnlockProofConstraints
-//	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	sk, _ := twistedElgamal.GenKeyPair()
-//	chainId := uint32(0)
-//	assetId := uint32(0)
-//	balance := uint64(10)
-//	deltaAmount := uint64(2)
-//	proof, err := zecrey.ProveUnlock(sk, chainId, assetId, balance, deltaAmount)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	fmt.Println("constraints:", r1cs.GetNbConstraints())
-//	witness, err = SetUnlockProofWitness(proof, true)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	assert.SolvingSucceeded(&circuit, &witness, test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs))
-//}
+import (
+	"fmt"
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend"
+	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/test"
+	"math/big"
+	"testing"
+	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
+	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
+)
+
+func TestUnlockProofConstraints_Define(t *testing.T) {
+	assert := test.NewAssert(t)
+	var circuit, witness UnlockProofConstraints
+	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sk, pk := twistedElgamal.GenKeyPair()
+	chainId := uint32(0)
+	assetId := uint32(0)
+	balance := uint64(10)
+	deltaAmount := uint64(2)
+	b_fee := uint64(100)
+	feeEnc, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), curve.RandomValue(), pk)
+	proof, err := zecrey.ProveUnlock(
+		sk, chainId, assetId, balance, deltaAmount,
+		feeEnc,
+		b_fee, uint32(1), 1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("constraints:", r1cs.GetNbConstraints())
+	witness, err = SetUnlockProofWitness(proof, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.SolvingSucceeded(&circuit, &witness, test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs))
+}
