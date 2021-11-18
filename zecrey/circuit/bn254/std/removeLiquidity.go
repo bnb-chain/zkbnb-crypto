@@ -79,19 +79,19 @@ func (circuit RemoveLiquidityProofConstraints) Define(curveID ecc.ID, api API) e
 	if err != nil {
 		return err
 	}
-	VerifyRemoveLiquidityProof(api, circuit, params, hFunc, H)
+	tool := NewEccTool(api, params)
+	VerifyRemoveLiquidityProof(tool, api, circuit, hFunc, H)
 
 	return nil
 }
 
 func VerifyRemoveLiquidityProof(
+	tool *EccTool,
 	api API,
 	proof RemoveLiquidityProofConstraints,
-	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
-) {
-	tool := NewEccTool(api, params)
+) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	hFunc.Write(FixedCurveParam(api))
 	writePointIntoBuf(&hFunc, proof.Pk_u)
 	writeEncIntoBuf(&hFunc, proof.C_u_LP)
@@ -109,7 +109,7 @@ func VerifyRemoveLiquidityProof(
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
 	// compute challenge
-	c := hFunc.Sum()
+	c = hFunc.Sum()
 	// verify params
 	verifyRemoveLiquidityParams(api, proof, tool, h)
 	// verify enc
@@ -118,10 +118,10 @@ func VerifyRemoveLiquidityProof(
 	r1 = tool.Add(proof.A_CLPL_Delta, tool.ScalarMul(proof.C_u_LP_Delta.CL, c))
 	IsPointEqual(api, proof.IsEnabled, l1, r1)
 	// verify ownership
-	var l2, r2 Point
-	l2 = tool.ScalarBaseMul(proof.Z_sk_u)
-	r2 = tool.Add(proof.A_pk_u, tool.ScalarMul(proof.Pk_u, c))
-	IsPointEqual(api, proof.IsEnabled, l2, r2)
+	//var l2, r2 Point
+	//l2 = tool.ScalarBaseMul(proof.Z_sk_u)
+	//r2 = tool.Add(proof.A_pk_u, tool.ScalarMul(proof.Pk_u, c))
+	//IsPointEqual(api, proof.IsEnabled, l2, r2)
 	C_uLPPrime := tool.EncAdd(proof.C_u_LP, proof.C_u_LP_Delta)
 	C_uLPPrimeNeg := tool.NegElgamal(C_uLPPrime)
 	l3 := tool.Add(
@@ -141,12 +141,24 @@ func VerifyRemoveLiquidityProof(
 	IsPointEqual(api, proof.IsEnabled, l3, r3)
 	// verify gas fee proof
 	C_feeDelta := tool.ScalarMul(tool.Neg(h), proof.GasFee)
-	C_feeLprimeInv := tool.Neg(proof.C_fee.CL)
-	T_feeDivC_feeRprime := tool.Add(proof.T_fee, tool.Neg(tool.Add(proof.C_fee.CR, C_feeDelta)))
+	C_feeRPrime := tool.Add(proof.C_fee.CR, C_feeDelta)
+	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
+	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
-	l4 := tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feeLprimeInv, proof.Z_sk_uInv))
-	r4 := tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(T_feeDivC_feeRprime, c))
-	IsPointEqual(api, proof.IsEnabled, l4, r4)
+	//l4 := tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv))
+	//r4 := tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(tool.Add(proof.T_fee, C_feePrimeNeg.CR), c))
+	//IsPointEqual(api, proof.IsEnabled, l4, r4)
+	// set common parts
+	pkProofs[0] = SetPkProof(proof.Pk_u, proof.A_pk_u, proof.Z_sk_u, proof.Z_sk_uInv)
+	for i := 1; i < MaxRangeProofCount; i++ {
+		pkProofs[i] = pkProofs[0]
+	}
+	tProofs[0] = SetTProof(C_uLPPrimeNeg, proof.A_T_uLPC_uLPRPrimeInv, proof.Z_bar_r_LP, proof.T_uLP)
+	tProofs[1] = SetTProof(C_feePrimeNeg, proof.A_T_feeC_feeRPrimeInv, proof.Z_bar_r_fee, proof.T_fee)
+	for i := 1; i < MaxRangeProofCount; i++ {
+		tProofs[i] = tProofs[0]
+	}
+	return c, pkProofs, tProofs
 }
 
 func verifyRemoveLiquidityParams(
@@ -206,6 +218,8 @@ func SetEmptyRemoveLiquidityProofWitness() (witness RemoveLiquidityProofConstrai
 
 	witness.C_uA_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_uB_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.LC_pool_A, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.LC_pool_B, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.LC_poolA_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.LC_poolB_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_u_LP, _ = SetElGamalEncWitness(ZeroElgamalEnc)

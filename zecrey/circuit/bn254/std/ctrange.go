@@ -35,7 +35,7 @@ type CtRangeProofConstraints struct {
 	Zs [RangeMaxBits]Variable
 	// commitment for b
 	A         Point
-	H      Point
+	H         Point
 	IsEnabled Variable
 }
 
@@ -57,11 +57,12 @@ func (circuit CtRangeProofConstraints) Define(curveID ecc.ID, api API) error {
 	if err != nil {
 		return err
 	}
-	VerifyCtRangeProof(api, circuit, params, hFunc)
+	tool := NewEccTool(api, params)
+	VerifyCtRangeProof(tool, api, circuit, hFunc)
 	return nil
 }
 
-func VerifyCtRangeProof(api API, proof CtRangeProofConstraints, params twistededwards.EdCurve, hFunc MiMC) {
+func VerifyCtRangeProof(tool *EccTool, api API, proof CtRangeProofConstraints, hFunc MiMC) {
 	A := Point{
 		X: api.Constant(0),
 		Y: api.Constant(1),
@@ -71,15 +72,15 @@ func VerifyCtRangeProof(api API, proof CtRangeProofConstraints, params twisteded
 	var A_As [RangeMaxBits]Point
 	for i := 0; i < RangeMaxBits; i++ {
 		var com, AihNegNeg Point
-		AihNegNeg.AddGeneric(api, &proof.As[i], &current, params)
+		AihNegNeg = tool.Add(proof.As[i], current)
 		AihNegNeg.Neg(api, &AihNegNeg)
-		AihNegNeg.ScalarMulNonFixedBase(api, &AihNegNeg, proof.C, params)
-		com.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Zs[i], params)
-		com.AddGeneric(api, &com, &AihNegNeg, params)
+		AihNegNeg = tool.ScalarMul(AihNegNeg, proof.C)
+		com = tool.ScalarBaseMul(proof.Zs[i])
+		com = tool.Add(com, AihNegNeg)
 		hFunc.Write(com.X, com.Y)
 		ci := hFunc.Sum()
-		A_As[i].ScalarMulNonFixedBase(api, &proof.As[i], ci, params)
-		current.Double(api, &current, params)
+		A_As[i] = tool.ScalarMul(proof.As[i], ci)
+		current.Double(api, &current, tool.params)
 		hFunc.Reset()
 	}
 	for _, A_Ai := range A_As {
@@ -88,7 +89,7 @@ func VerifyCtRangeProof(api API, proof CtRangeProofConstraints, params twisteded
 	hatc := hFunc.Sum()
 	IsVariableEqual(api, proof.IsEnabled, hatc, proof.C)
 	for _, Ai := range proof.As {
-		A.AddGeneric(api, &A, &Ai, params)
+		A = tool.Add(A, Ai)
 	}
 	IsPointEqual(api, proof.IsEnabled, A, proof.A)
 }

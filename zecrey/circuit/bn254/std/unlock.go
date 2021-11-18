@@ -65,18 +65,18 @@ func (circuit UnlockProofConstraints) Define(curveID ecc.ID, api API) error {
 		X: api.Constant(HX),
 		Y: api.Constant(HY),
 	}
-	VerifyUnlockProof(api, circuit, params, hFunc, H)
+	tool := NewEccTool(api, params)
+	VerifyUnlockProof(tool, api, circuit, hFunc, H)
 	return nil
 }
 
 func VerifyUnlockProof(
+	tool *EccTool,
 	api API,
 	proof UnlockProofConstraints,
-	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
-) {
-	tool := NewEccTool(api, params)
+) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	hFunc.Write(FixedCurveParam(api))
 	writePointIntoBuf(&hFunc, proof.Pk)
 	writePointIntoBuf(&hFunc, proof.A_pk)
@@ -89,28 +89,32 @@ func VerifyUnlockProof(
 	writeEncIntoBuf(&hFunc, proof.C_fee)
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
-	c := hFunc.Sum()
-	var l, r Point
-	l.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_sk, params)
-	r.ScalarMulNonFixedBase(api, &proof.Pk, c, params)
-	r.AddGeneric(api, &r, &proof.A_pk, params)
-	IsPointEqual(api, proof.IsEnabled, l, r)
+	c = hFunc.Sum()
+	//var l, r Point
+	//l = tool.ScalarBaseMul(proof.Z_sk)
+	//r = tool.ScalarMul(proof.Pk, c)
+	//r = tool.Add(r, proof.A_pk)
+	//IsPointEqual(api, proof.IsEnabled, l, r)
 	// check gas fee proof
-	var (
-		hNeg                                               Point
-		C_feePrimeInv, C_feeLprimeInv, T_feeDivC_feeRprime Point
-	)
-	hNeg.Neg(api, &h)
+	hNeg := tool.Neg(h)
 	C_feeDelta := tool.ScalarMul(hNeg, proof.GasFee)
-	C_feeLprimeInv.Neg(api, &proof.C_fee.CL)
-	C_feeLprimeInv.Neg(api, &proof.C_fee.CL)
-	C_feePrimeInv = tool.Add(proof.C_fee.CR, C_feeDelta)
-	C_feePrimeInv.Neg(api, &C_feePrimeInv)
-	T_feeDivC_feeRprime = tool.Add(proof.T_fee, C_feePrimeInv)
+	C_feeRPrime := tool.Add(proof.C_fee.CR, C_feeDelta)
+	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
+	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
-	l2 := tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
-	r2 := tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(T_feeDivC_feeRprime, c))
-	IsPointEqual(api, proof.IsEnabled, l2, r2)
+	//l2 := tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_skInv))
+	//r2 := tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(tool.Add(proof.T_fee, C_feePrimeNeg.CR), c))
+	//IsPointEqual(api, proof.IsEnabled, l2, r2)
+	// set common parts
+	pkProofs[0] = SetPkProof(proof.Pk, proof.A_pk, proof.Z_sk, proof.Z_skInv)
+	for i := 1; i < MaxRangeProofCount; i++ {
+		pkProofs[i] = pkProofs[0]
+	}
+	tProofs[0] = SetTProof(C_feePrimeNeg, proof.A_T_feeC_feeRPrimeInv, proof.Z_bar_r_fee, proof.T_fee)
+	for i := 1; i < MaxRangeProofCount; i++ {
+		tProofs[i] = tProofs[0]
+	}
+	return c, pkProofs, tProofs
 }
 
 func SetEmptyUnlockProofWitness() (witness UnlockProofConstraints) {

@@ -17,6 +17,8 @@
 
 package transactions
 
+import "zecrey-crypto/zecrey/circuit/bn254/std"
+
 func setFixedMerkleProofs(proof [][]byte) [AccountMerkleLevels][]byte {
 	var res [AccountMerkleLevels][]byte
 	for i := 0; i < AccountMerkleLevels; i++ {
@@ -32,4 +34,19 @@ func setFixedMerkleProofsHelper(proof []int) [AccountMerkleLevels - 1]int {
 		res[i] = proof[i]
 	}
 	return res
+}
+
+func SelectCommonPart(
+	api API,
+	flag Variable,
+	c, cCheck Variable,
+	pkProofs, pkProofsCheck [MaxRangeProofCount]std.CommonPkProof,
+	tProofs, tProofsCheck [MaxRangeProofCount]std.CommonTProof,
+) (cRes Variable, pkProofsRes [MaxRangeProofCount]std.CommonPkProof, tProofsRes [MaxRangeProofCount]std.CommonTProof) {
+	cRes = api.Select(flag, c, cCheck)
+	for i := 0; i < MaxRangeProofCount; i++ {
+		pkProofsRes[i] = std.SelectCommonPkProof(api, flag, pkProofs[i], pkProofsCheck[i])
+		tProofsRes[i] = std.SelectCommonTProof(api, flag, tProofs[i], tProofsCheck[i])
+	}
+	return cRes, pkProofsRes, tProofsRes
 }

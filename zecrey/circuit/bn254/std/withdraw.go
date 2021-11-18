@@ -70,7 +70,8 @@ func (circuit WithdrawProofConstraints) Define(curveID ecc.ID, api API) error {
 	if err != nil {
 		return err
 	}
-	VerifyWithdrawProof(api, circuit, params, hFunc, H)
+	tool := NewEccTool(api, params)
+	VerifyWithdrawProof(tool, api, circuit, hFunc, H)
 	return nil
 }
 
@@ -81,13 +82,12 @@ func (circuit WithdrawProofConstraints) Define(curveID ecc.ID, api API) error {
 	@params: params for the curve tebn254
 */
 func VerifyWithdrawProof(
+	tool *EccTool,
 	api API,
 	proof WithdrawProofConstraints,
-	params twistededwards.EdCurve,
 	hFunc MiMC,
 	h Point,
-) {
-	tool := NewEccTool(api, params)
+) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	// check params
 	assetIdDiff := api.Sub(proof.GasFeeAssetId, proof.AssetId)
 	isSameAsset := api.IsZero(assetIdDiff)
@@ -95,26 +95,21 @@ func VerifyWithdrawProof(
 	IsPointEqual(api, isSameAsset, proof.A_TDivCRprime, proof.A_T_feeC_feeRPrimeInv)
 	deltaFee := api.Select(isSameAsset, proof.GasFee, api.Constant(0))
 	var (
-		c                                      Variable
-		hNeg, CRDelta, CLprimeInv, TDivCRprime Point
-		C_feeLprimeInv                         Point
-		T_feeDivC_feeRprime                    Point
-		C_feePrimeInv                          Point
+		hNeg Point
 	)
 	hNeg.Neg(api, &h)
 	deltaBalance := api.Add(proof.BStar, deltaFee)
-	CRDelta = tool.ScalarMul(hNeg, deltaBalance)
-	CLprimeInv.Neg(api, &proof.C.CL)
-	CRPrime := tool.Add(proof.C.CR, CRDelta)
-	TDivCRprime.Neg(api, &CRPrime)
-	TDivCRprime = tool.Add(proof.T, TDivCRprime)
+	CRDelta := tool.ScalarMul(hNeg, deltaBalance)
+	CPrimeR := tool.Add(proof.C.CR, CRDelta)
+	CPrime := ElGamalEncConstraints{
+		CL: proof.C.CL,
+		CR: CPrimeR,
+	}
+	CPrimeNeg := tool.NegElgamal(CPrime)
 	C_feeDelta := tool.ScalarMul(hNeg, proof.GasFee)
-	C_feeLprimeInv.Neg(api, &proof.C_fee.CL)
-	C_feePrimeInv = tool.Add(proof.C_fee.CR, C_feeDelta)
-	C_feePrimeInv.Neg(api, &C_feePrimeInv)
-	T_feeDivC_feeRprime = tool.Add(proof.T_fee, C_feePrimeInv)
-	C_feeLprimeInv = SelectPoint(api, isSameAsset, CLprimeInv, C_feeLprimeInv)
-	T_feeDivC_feeRprime = SelectPoint(api, isSameAsset, TDivCRprime, T_feeDivC_feeRprime)
+	C_feeRPrime := tool.Add(proof.C_fee.CR, C_feeDelta)
+	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
+	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	hFunc.Write(FixedCurveParam(api))
 	hFunc.Write(proof.ReceiveAddr)
 	writeEncIntoBuf(&hFunc, proof.C_fee)
@@ -131,17 +126,33 @@ func VerifyWithdrawProof(
 	writePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
 	c = hFunc.Sum()
 	// Verify balance
-	verifyBalance(
-		api,
-		proof.Pk, proof.A_pk,
-		CLprimeInv, TDivCRprime, proof.A_TDivCRprime,
-		c,
-		proof.Z_sk, proof.Z_skInv, proof.Z_bar_r,
-		proof.IsEnabled, params)
+	//var l1, r1 Point
+	//// verify pk = g^{sk}
+	//l1.ScalarMulFixedBase(api, params.BaseX, params.BaseY, proof.Z_sk, params)
+	//r1.ScalarMulNonFixedBase(api, &proof.Pk, c, params)
+	//r1.AddGeneric(api, &proof.A_pk, &r1, params)
+	//IsPointEqual(api, proof.IsEnabled, l1, r1)
+
+	//var l2, r2 Point
+	// verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
+	//l2 = tool.Add(tool.ScalarBaseMul(proof.Z_bar_r), tool.ScalarMul(CPrimeNeg.CL, proof.Z_skInv))
+	//r2 = tool.Add(proof.A_TDivCRprime, tool.ScalarMul(tool.Add(proof.T, CPrimeNeg.CR), c))
+	//IsPointEqual(api, proof.IsEnabled, l2, r2)
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
-	l1 := tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
-	r1 := tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(T_feeDivC_feeRprime, c))
-	IsPointEqual(api, proof.IsEnabled, l1, r1)
+	//l1 := tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_skInv))
+	//r1 := tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(tool.Add(proof.T_fee, C_feePrimeNeg.CR), c))
+	//IsPointEqual(api, proof.IsEnabled, l1, r1)
+	// set common parts
+	pkProofs[0] = SetPkProof(proof.Pk, proof.A_pk, proof.Z_sk, proof.Z_skInv)
+	for i := 1; i < MaxRangeProofCount; i++ {
+		pkProofs[i] = pkProofs[0]
+	}
+	tProofs[0] = SetTProof(CPrimeNeg, proof.A_TDivCRprime, proof.Z_bar_r, proof.T)
+	tProofs[1] = SetTProof(C_feePrimeNeg, proof.A_T_feeC_feeRPrimeInv, proof.Z_bar_r_fee, proof.T_fee)
+	for i := 1; i < MaxRangeProofCount; i++ {
+		tProofs[i] = tProofs[0]
+	}
+	return c, pkProofs, tProofs
 }
 
 /*
@@ -160,21 +171,7 @@ func verifyBalance(
 	isEnabled Variable,
 	params twistededwards.EdCurve,
 ) {
-	var l1, r1 Point
-	// verify pk = g^{sk}
-	l1.ScalarMulFixedBase(api, params.BaseX, params.BaseY, z_sk, params)
-	r1.ScalarMulNonFixedBase(api, &pk, c, params)
-	r1.AddGeneric(api, &A_pk, &r1, params)
-	IsPointEqual(api, isEnabled, l1, r1)
 
-	var g_zrbar, l2, r2 Point
-	// verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
-	g_zrbar.ScalarMulFixedBase(api, params.BaseX, params.BaseY, z_rbar, params)
-	l2.ScalarMulNonFixedBase(api, &CLprimeInv, z_skInv, params)
-	l2.AddGeneric(api, &g_zrbar, &l2, params)
-	r2.ScalarMulNonFixedBase(api, &TDivCRprime, c, params)
-	r2.AddGeneric(api, &A_TDivCRprime, &r2, params)
-	IsPointEqual(api, isEnabled, l2, r2)
 }
 
 func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {

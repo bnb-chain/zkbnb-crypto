@@ -41,6 +41,8 @@ const (
 	AccountMerkleLevels = 18
 	NbTransferCount     = 3
 	RangeMaxBits        = commitRange.RangeMaxBits
+
+	MaxRangeProofCount = 3
 )
 
 var (
