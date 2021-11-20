@@ -19,87 +19,117 @@ package wasm
 
 import (
 	"encoding/json"
+	"log"
 	"math/big"
+	"math/rand"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
-type PTransferSegment struct {
+type TransferSegment struct {
+	// account index
+	AccountIndex uint32 `json:"account_index"`
 	// ElGamalEnc
-	EncBalance *ElGamalEnc `json:"enc_balance"`
-	// balance
-	Balance *big.Int `json:"balance"`
+	BalanceEnc *ElGamalEnc `json:"balance_enc"`
+	// Balance
+	Balance uint64 `json:"Balance"`
 	// public key
 	Pk *Point `json:"pk"`
 	// bDelta
-	BDelta *big.Int `json:"b_delta"`
+	BDelta int64 `json:"b_delta"`
 	// secret key
-	Sk *big.Int `json:"sk"`
+	Sk *big.Int `json:"Sk"`
 }
 
-// PTransferSegmentFormat Format is used to accept JSON string
-type PTransferSegmentFormat struct {
+// TransferSegmentFormat Format is used to accept JSON string
+type TransferSegmentFormat struct {
+	// account index
+	AccountIndex int `json:"account_index"`
 	// ElGamalEnc
-	EncBalance string `json:"enc_balance"`
-	// balance
-	Balance int `json:"balance"`
+	BalanceEnc string `json:"balance_enc"`
+	// Balance
+	Balance int64 `json:"Balance"`
 	// public key
 	Pk string `json:"pk"`
 	// bDelta
-	BDelta int `json:"b_delta"`
+	BDelta int64 `json:"b_delta"`
 	// secret key
-	Sk string `json:"sk"`
+	Sk string `json:"Sk"`
 }
 
-func FromPTransferSegmentJSON(segmentStr string) ([]*PTransferSegment, string) {
-	var transferSegmentFormats []*PTransferSegmentFormat
-	err := json.Unmarshal([]byte(segmentStr), &transferSegmentFormats)
+func FromTransferSegmentJSON(segmentStr string) ([]*TransferSegment, string) {
+	var segmentFormats []*TransferSegmentFormat
+	err := json.Unmarshal([]byte(segmentStr), &segmentFormats)
 	if err != nil {
+		log.Println("[FromTransferSegmentJSON] err info:", err)
 		return nil, ErrUnmarshal
 	}
-	if len(transferSegmentFormats) < 2 {
+	if len(segmentFormats) < 2 {
+		log.Println("[FromTransferSegmentJSON] err info:", ErrInvalidTransferParams)
 		return nil, ErrInvalidTransferParams
 	}
 	skCount := 0
-	var segments []*PTransferSegment
-	for _, segmentFormat := range transferSegmentFormats {
-		if segmentFormat.EncBalance == "" || segmentFormat.Pk == "" {
+	var segments []*TransferSegment
+	var indexExist = make(map[uint32]bool)
+	rand.Shuffle(len(segmentFormats), func(i, j int) {
+		segmentFormats[i], segmentFormats[j] = segmentFormats[j], segmentFormats[i]
+	})
+	for _, segmentFormat := range segmentFormats {
+		if segmentFormat.BalanceEnc == "" || segmentFormat.Pk == "" {
+			log.Println("[FromTransferSegmentJSON] err info:", ErrInvalidTransferParams)
+			return nil, ErrInvalidTransferParams
+		}
+		// verify params
+		if segmentFormat.AccountIndex < 0 || segmentFormat.Balance < 0 {
+			log.Println("[FromTransferSegmentJSON] err info:", ErrInvalidTransferParams)
 			return nil, ErrInvalidTransferParams
 		}
 		// create a new segment
-		segment := new(PTransferSegment)
+		segment := new(TransferSegment)
+		// get account index
+		accountIndex := uint32(segmentFormat.AccountIndex)
+		// each account should be different
+		if indexExist[accountIndex] == true {
+			log.Println("[FromTransferSegmentJSON] err info:", ErrReplicatedAccounts)
+			return nil, ErrReplicatedAccounts
+		}
+		indexExist[accountIndex] = true
 		// get ElGamalEnc
-		encBalance, err := twistedElgamal.FromString(segmentFormat.EncBalance)
+		encBalance, err := twistedElgamal.FromString(segmentFormat.BalanceEnc)
 		if err != nil {
+			log.Println("[FromTransferSegmentJSON] err info:", err)
 			return nil, ErrParseEnc
 		}
 		// get pk
 		pk, err := curve.FromString(segmentFormat.Pk)
 		if err != nil {
+			log.Println("[FromTransferSegmentJSON] err info:", err)
 			return nil, ErrParsePoint
 		}
 		// get bDelta
-		bDelta := big.NewInt(int64(segmentFormat.BDelta))
+		bDelta := segmentFormat.BDelta
 		// set values into segment
-		segment.EncBalance = encBalance
+		segment.BalanceEnc = encBalance
 		segment.Pk = pk
 		segment.BDelta = bDelta
-		// check if exists sk
+		// check if exists Sk
 		if segmentFormat.Sk != "" {
-			// get sk
+			// get Sk
 			skCount++
 			sk, b := new(big.Int).SetString(segmentFormat.Sk, 10)
 			if !b {
+				log.Println("[FromTransferSegmentJSON] err info:", err)
 				return nil, ErrParseBigInt
 			}
 			segment.Sk = sk
-			// get balance
-			balance := big.NewInt(int64(segmentFormat.Balance))
+			// get Balance
+			balance := uint64(segmentFormat.Balance)
 			segment.Balance = balance
 		}
 		segments = append(segments, segment)
 	}
 	if skCount != 1 {
+		log.Println("[FromTransferSegmentJSON] err info:", ErrInvalidTransferParams)
 		return nil, ErrInvalidTransferParams
 	}
 	return segments, Success
@@ -111,7 +141,7 @@ type TransferTxInfo struct {
 	// account indexes
 	AccountsIndex []uint32
 	// fee
-	Fee uint32
+	GasFee uint64
 	// transfer proof
 	Proof string
 }

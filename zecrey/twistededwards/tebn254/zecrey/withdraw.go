@@ -69,6 +69,7 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 	writeUint64IntoBuf(&buf, uint64(relation.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, relation.GasFee)
 	writeUint64IntoBuf(&buf, uint64(relation.AssetId))
+	writeUint64IntoBuf(&buf, uint64(relation.ChainId))
 	writeEncIntoBuf(&buf, relation.C)
 	writePointIntoBuf(&buf, relation.T)
 	writePointIntoBuf(&buf, relation.T_fee)
@@ -98,6 +99,7 @@ func ProveWithdraw(relation *WithdrawProofRelation) (proof *WithdrawProof, err e
 		Pk:                    relation.Pk,
 		ReceiveAddr:           relation.ReceiveAddr,
 		AssetId:               relation.AssetId,
+		ChainId:               relation.ChainId,
 		C_fee:                 relation.C_fee,
 		T_fee:                 relation.T_fee,
 		GasFeeAssetId:         relation.GasFeeAssetId,
@@ -151,6 +153,7 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, proof.GasFee)
 	writeUint64IntoBuf(&buf, uint64(proof.AssetId))
+	writeUint64IntoBuf(&buf, uint64(proof.ChainId))
 	writeEncIntoBuf(&buf, proof.C)
 	writePointIntoBuf(&buf, proof.T)
 	writePointIntoBuf(&buf, proof.T_fee)
@@ -168,6 +171,10 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	if err != nil {
 		log.Println("err info:", err)
 		return false, err
+	}
+	if !balanceRes {
+		log.Println("[Verify WithdrawProof] invalid balance res")
+		return false, errors.New("[Verify WithdrawProof] invalid balance res")
 	}
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
 	l1 := curve.Add(curve.ScalarMul(G, proof.Z_bar_r_fee), curve.ScalarMul(C_feeLprimeInv, proof.Z_skInv))

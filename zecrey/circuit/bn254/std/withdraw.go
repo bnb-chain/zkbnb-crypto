@@ -42,6 +42,7 @@ type WithdrawProofConstraints struct {
 	T, Pk       Point
 	ReceiveAddr Variable
 	AssetId     Variable
+	ChainId     Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
@@ -116,6 +117,7 @@ func VerifyWithdrawProof(
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
 	hFunc.Write(proof.AssetId)
+	hFunc.Write(proof.ChainId)
 	// gas fee
 	writeEncIntoBuf(&hFunc, proof.C)
 	writePointIntoBuf(&hFunc, proof.T)
@@ -247,6 +249,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	}
 	witness.ReceiveAddr.Assign(proof.ReceiveAddr)
 	witness.AssetId.Assign(uint64(proof.AssetId))
+	witness.ChainId.Assign(uint64(proof.ChainId))
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
 	if err != nil {

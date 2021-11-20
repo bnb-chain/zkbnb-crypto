@@ -35,7 +35,7 @@ const (
 	PointSize             = curve.PointSize
 	ElGamalEncSize        = PointSize * 2
 	RangeProofSize        = ctrange.RangeProofSize
-	WithdrawProofSize     = 14*PointSize + 2*RangeProofSize + 2*EightBytes + AddressSize + 2*FourBytes
+	WithdrawProofSize     = 14*PointSize + 2*RangeProofSize + 2*EightBytes + AddressSize + 3*FourBytes
 	OneMillion            = 1000000
 	TenThousand           = 10000
 	MaxFeeRate            = 40

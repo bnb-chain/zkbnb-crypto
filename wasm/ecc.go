@@ -36,7 +36,7 @@ func GetL2PublicKey() js.Func {
 		if !b {
 			return ErrL2SkParams
 		}
-		// pk = g^{sk}
+		// pk = g^{Sk}
 		pk := curve.ScalarBaseMul(sk)
 		return curve.ToString(pk)
 	})

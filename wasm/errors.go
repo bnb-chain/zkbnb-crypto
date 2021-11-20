@@ -25,14 +25,17 @@ const (
 	ErrParseBigInt                   = "ErrParseBigInt"
 	ErrInvalidWithdrawRelationParams = "ErrInvalidWithdrawRelationParams"
 	ErrProveWithdraw                 = "ErrProveWithdraw"
+	ErrProveSwap = "ErrProveSwap"
 	ErrMarshalTx                     = "ErrMarshalTx"
 
 	ErrInvalidTransferParams         = "ErrInvalidTransferParams"
 	ErrInvalidTransferRelationParams = "ErrInvalidTransferRelationParams"
 	ErrProveTransfer                 = "ErrProveTransfer"
+	ErrProveUnlock = "ErrProveUnlock"
 
-	ErrInvalidL1TransferParams  = "ErrInvalidL1TransferParams"
-	ErrUnableConstructDepositTx = "ErrUnableConstructDepositTx"
+	ErrInvalidUnlockParams = "ErrInvalidUnlockParams"
+
+	ErrReplicatedAccounts       = "ErrReplicatedAccounts"
 
 	ErrL2SkParams = "ErrL2SkParams"
 
