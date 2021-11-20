@@ -24,15 +24,15 @@ import (
 )
 
 func main() {
-	fmt.Println("Zecrey Assembly")
+	fmt.Println("Zecrey Crypto Assembly")
 	js.Global().Set("getL2PublicKey", wasm.GetL2PublicKey())
 	js.Global().Set("elgamalEnc", wasm.ElgamalEnc())
 	js.Global().Set("elgamalDec", wasm.ElgamalDec())
 	js.Global().Set("elgamalRawDec", wasm.ElgamalRawDec())
 	js.Global().Set("proveWithdraw", wasm.ProveWithdraw())
+	js.Global().Set("proveUnlock", wasm.ProveUnlock())
 	js.Global().Set("proveTransfer", wasm.ProveTransfer())
 	js.Global().Set("proveSwap", wasm.ProveSwap())
-	js.Global().Set("proveL1PrivacyTransfer", wasm.ProveL1PrivacyTransfer())
 	js.Global().Set("proveAddLiquidity", wasm.ProveAddLiquidity())
 	js.Global().Set("proveRemoveLiquidity", wasm.ProveRemoveLiquidity())
 	<-make(chan bool)
