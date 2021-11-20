@@ -18,6 +18,7 @@
 package zecrey
 
 import (
+	"fmt"
 	"gotest.tools/assert"
 	"log"
 	"math/big"
@@ -44,6 +45,12 @@ func TestAddLiquidityProof_Verify(t *testing.T) {
 	C_fee, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), curve.RandomValue(), Pk_u)
 	GasFeeAssetId := uint32(3)
 	GasFee := uint64(10)
+	fmt.Println("sk:",sk_u.String())
+	fmt.Println("Pk_u:",curve.ToString(Pk_u))
+	fmt.Println("Pk_pool:",curve.ToString(Pk_pool))
+	fmt.Println("C_u_A:",C_uA.String())
+	fmt.Println("C_u_B:",C_uB.String())
+	fmt.Println("C_fee:",C_fee.String())
 	relation, err := NewAddLiquidityRelation(
 		C_uA, C_uB,
 		Pk_pool, Pk_u,

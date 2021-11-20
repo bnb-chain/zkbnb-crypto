@@ -18,6 +18,7 @@
 package zecrey
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
@@ -41,6 +42,9 @@ func TestUnlockProof_Verify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println("sk:", sk.String())
+	fmt.Println("pk:", curve.ToString(pk))
+	fmt.Println("fee enc:", feeEnc.String())
 	proofStr := proof.String()
 	proof2, err := ParseUnlockProofStr(proofStr)
 	if err != nil {

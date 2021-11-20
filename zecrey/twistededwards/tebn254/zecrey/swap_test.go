@@ -18,6 +18,7 @@
 package zecrey
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"math/big"
@@ -46,6 +47,12 @@ func TestSwapProof2_Verify(t *testing.T) {
 	b_fee := uint64(1000)
 	//b_fee := b_u_A
 	C_fee, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), curve.RandomValue(), Pk_u)
+	fmt.Println("sk_u:", sk_u.String())
+	fmt.Println("C_u_A:", C_uA.String())
+	fmt.Println("pk_u:", curve.ToString(Pk_u))
+	fmt.Println("Pk_treasury:", curve.ToString(Pk_treasury))
+	fmt.Println("C_u_A:", C_uA.String())
+	fmt.Println("C_fee:", C_fee.String())
 	relation, err := NewSwapRelation(
 		C_uA,
 		Pk_u, Pk_treasury,
