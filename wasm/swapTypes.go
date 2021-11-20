@@ -19,6 +19,7 @@ package wasm
 
 import (
 	"encoding/json"
+	"log"
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
@@ -28,72 +29,124 @@ import (
 	SwapSegment: which is used to construct swap proof
 */
 type SwapSegment struct {
-	EncBalance         *ElGamalEnc `json:"enc_balance"`
-	Balance            *big.Int    `json:"balance"`
-	Pk                 *Point      `json:"pk"`
-	ReceiverEncBalance *ElGamalEnc `json:"receiver_enc_balance"`
-	ReceiverPk         *Point      `json:"receiver_pk"`
-	BStarFrom          *big.Int    `json:"b_star_from"`
-	BStarTo            *big.Int    `json:"b_star_to"`
-	Sk                 *big.Int    `json:"sk"`
+	PairIndex          uint32
+	AccountIndex       uint32
+	C_uA               *ElGamalEnc
+	Pk_u, Pk_treasury  *Point
+	AssetAId, AssetBId uint32
+	B_A_Delta, B_u_A   uint64
+	MinB_B_Delta       uint64
+	FeeRate            uint32
+	TreasuryRate       uint32
+	Sk_u               *big.Int
+	// fee part
+	C_fee         *ElGamalEnc
+	B_fee         uint64
+	GasFeeAssetId uint32
+	GasFee        uint64
 }
 
 /*
 	SwapSegmentFormat: format version of SwapSegment
 */
 type SwapSegmentFormat struct {
-	EncBalance         string `json:"enc_balance"`
-	Balance            int    `json:"balance"`
-	Pk                 string `json:"pk"`
-	ReceiverEncBalance string `json:"receiver_enc_balance"`
-	ReceiverPk         string `json:"receiver_pk"`
-	BStarFrom          int    `json:"b_star_from"`
-	BStarTo            int    `json:"b_star_to"`
-	Sk                 string `json:"sk"`
+	// pair index
+	PairIndex    int    `json:"pair_index"`
+	// account index
+	AccountIndex int    `json:"account_index"`
+	// encryption of the balance of asset A
+	C_uA         string `json:"c_u_a"`
+	// user public key
+	Pk_u         string `json:"pk_u"`
+	// system treasury account public key
+	Pk_treasury  string `json:"pk_treasury"`
+	// asset a id
+	AssetAId     int    `json:"asset_a_id"`
+	// asset b id
+	AssetBId     int    `json:"asset_b_id"`
+	// swap amount for asset a
+	B_A_Delta    int64  `json:"b_a_delta"`
+	// balance for asset a
+	B_u_A        int64  `json:"b_u_a"`
+	// equal to B * (1 - slippage), B gets from the layer-2
+	MinB_B_Delta int64  `json:"min_b_b_delta"`
+	// fee rate, gets from layer-2
+	FeeRate      int    `json:"fee_rate"`
+	// treasury rate gets from layer-2
+	TreasuryRate int    `json:"treasury_rate"`
+	// private key
+	Sk_u         string `json:"sk_u"`
+	// fee part
+	C_fee         string `json:"c_fee"`
+	B_fee         int64  `json:"b_fee"`
+	GasFeeAssetId int    `json:"gas_fee_asset_id"`
+	GasFee        int64  `json:"gas_fee"`
 }
 
 func FromSwapSegmentJSON(segmentStr string) (*SwapSegment, string) {
-	var swapSegmentFormat *SwapSegmentFormat
-	err := json.Unmarshal([]byte(segmentStr), &swapSegmentFormat)
+	var segmentFormat *SwapSegmentFormat
+	err := json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
+		log.Println("[FromSwapSegmentJSON] err info: ", err)
 		return nil, ErrUnmarshal
 	}
-	if swapSegmentFormat.EncBalance == "" || swapSegmentFormat.Pk == "" ||
-		swapSegmentFormat.BStarFrom <= 0 || swapSegmentFormat.BStarTo <= 0 || swapSegmentFormat.Sk == "" {
+	if segmentFormat.C_uA == "" || segmentFormat.C_fee == "" || segmentFormat.Pk_u == "" || segmentFormat.Pk_treasury == "" ||
+		segmentFormat.Sk_u == "" {
+		log.Println("[FromSwapSegmentJSON] err info: ", ErrInvalidSwapParams)
 		return nil, ErrInvalidSwapParams
 	}
-	encBalance, err := twistedElgamal.FromString(swapSegmentFormat.EncBalance)
+	// verify params
+	if segmentFormat.PairIndex < 0 || segmentFormat.AccountIndex < 0 || segmentFormat.AssetAId < 0 ||
+		segmentFormat.AssetBId < 0 || segmentFormat.AssetAId == segmentFormat.AssetBId ||
+		segmentFormat.B_A_Delta < 0 || segmentFormat.B_u_A < 0 || segmentFormat.B_u_A < segmentFormat.B_A_Delta ||
+		segmentFormat.MinB_B_Delta < 0 || segmentFormat.FeeRate < 0 || segmentFormat.TreasuryRate < 0 || segmentFormat.FeeRate < segmentFormat.TreasuryRate ||
+		segmentFormat.B_fee < 0 || segmentFormat.GasFeeAssetId < 0 || segmentFormat.GasFee < 0 {
+		log.Println("[FromSwapSegmentJSON] err info: ", ErrInvalidSwapParams)
+		return nil, ErrInvalidSwapParams
+	}
+	C_uA, err := twistedElgamal.FromString(segmentFormat.C_uA)
 	if err != nil {
+		log.Println("[FromSwapSegmentJSON] err info: ", err)
 		return nil, ErrParseEnc
 	}
-	balance := big.NewInt(int64(swapSegmentFormat.Balance))
-	receiverEncBalance, err := twistedElgamal.FromString(swapSegmentFormat.ReceiverEncBalance)
+	Pk_u, err := curve.FromString(segmentFormat.Pk_u)
 	if err != nil {
-		return nil, ErrParseEnc
-	}
-	pk, err := curve.FromString(swapSegmentFormat.Pk)
-	if err != nil {
+		log.Println("[FromSwapSegmentJSON] err info: ", err)
 		return nil, ErrParsePoint
 	}
-	receiverPk, err := curve.FromString(swapSegmentFormat.ReceiverPk)
+	Pk_treasury, err := curve.FromString(segmentFormat.Pk_treasury)
 	if err != nil {
+		log.Println("[FromSwapSegmentJSON] err info: ", err)
 		return nil, ErrParsePoint
 	}
-	bStarFrom := big.NewInt(int64(swapSegmentFormat.BStarFrom))
-	bStarTo := big.NewInt(int64(swapSegmentFormat.BStarTo))
-	sk, b := new(big.Int).SetString(swapSegmentFormat.Sk, 10)
-	if !b {
+	Sk_u, isValid := new(big.Int).SetString(segmentFormat.Sk_u, 10)
+	if !isValid {
+		log.Println("[FromSwapSegmentJSON] err info: ", ErrParseBigInt)
 		return nil, ErrParseBigInt
 	}
+	C_fee, err := twistedElgamal.FromString(segmentFormat.C_fee)
+	if err != nil {
+		log.Println("[FromSwapSegmentJSON] err info: ", err)
+		return nil, ErrParseEnc
+	}
 	swapSegment := &SwapSegment{
-		EncBalance:         encBalance,
-		Balance:            balance,
-		Pk:                 pk,
-		ReceiverEncBalance: receiverEncBalance,
-		ReceiverPk:         receiverPk,
-		BStarFrom:          bStarFrom,
-		BStarTo:            bStarTo,
-		Sk:                 sk,
+		PairIndex:     uint32(segmentFormat.PairIndex),
+		AccountIndex:  uint32(segmentFormat.AccountIndex),
+		C_uA:          C_uA,
+		Pk_u:          Pk_u,
+		Pk_treasury:   Pk_treasury,
+		AssetAId:      uint32(segmentFormat.AssetAId),
+		AssetBId:      uint32(segmentFormat.AssetBId),
+		B_A_Delta:     uint64(segmentFormat.B_A_Delta),
+		B_u_A:         uint64(segmentFormat.B_u_A),
+		MinB_B_Delta:  uint64(segmentFormat.MinB_B_Delta),
+		FeeRate:       uint32(segmentFormat.FeeRate),
+		TreasuryRate:  uint32(segmentFormat.TreasuryRate),
+		Sk_u:          Sk_u,
+		C_fee:         C_fee,
+		B_fee:         uint64(segmentFormat.B_fee),
+		GasFeeAssetId: uint32(segmentFormat.GasFeeAssetId),
+		GasFee:        uint64(segmentFormat.GasFee),
 	}
 	return swapSegment, Success
 }
@@ -101,16 +154,18 @@ func FromSwapSegmentJSON(segmentStr string) (*SwapSegment, string) {
 type SwapTxInfo struct {
 	// pair index
 	PairIndex uint32
-	AssetAId  uint32
-	AssetBId  uint32
 	// account index
-	AccountIndexFrom uint32
-	AccountIndexTo   uint32
-	// fee
-	Fee uint32
+	AccountIndex uint32
+	AssetAId     uint32
+	AssetBId     uint32
+	// gas fee part
+	GasFeeAssetId uint32
+	GasFee        uint64
+	FeeRate       uint32
+	TreasuryRate  uint32
 	// swap amount
-	DeltaX *big.Int
-	DeltaY *big.Int
+	B_A_Delta    uint64
+	MinB_B_Delta uint64
 	// swap proof
 	Proof string
 }

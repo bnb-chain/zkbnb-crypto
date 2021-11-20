@@ -59,7 +59,7 @@ func ElgamalEnc() js.Func {
 /*
 	ElgamalDec: dec function for ElGamalEnc
 	@CStr: string of encryption value(ElGamalEnc)
-	@skStr: string of sk
+	@skStr: string of Sk
 	@start: start value
 	@end: max value of dec
 */
@@ -81,7 +81,7 @@ func ElgamalDec() js.Func {
 		if err != nil {
 			return ErrParseEnc
 		}
-		// parse sk
+		// parse Sk
 		sk, b := new(big.Int).SetString(skStr, 10)
 		if !b {
 			return ErrParseBigInt
@@ -117,7 +117,7 @@ func ElgamalDec() js.Func {
 /*
 	ElgamalRawDec: raw dec function for ElGamalEnc
 	@CStr: string of encryption value(ElGamalEnc)
-	@skStr: string of sk
+	@skStr: string of Sk
 */
 func ElgamalRawDec() js.Func {
 	elgamalRawDecFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
@@ -136,13 +136,13 @@ func ElgamalRawDec() js.Func {
 		if C.CL.Equal(curve.ZeroPoint()) {
 			return curve.ToString(C.CR)
 		}
-		// parse sk
+		// parse Sk
 		sk, b := new(big.Int).SetString(skStr, 10)
 		if !b {
 			return ErrParseBigInt
 		}
 		// call elgamal dec
-		// (pk^r)^{sk^{-1}}
+		// (pk^r)^{Sk^{-1}}
 		skInv := ffmath.ModInverse(sk, curve.Order)
 		gExpr := curve.ScalarMul(C.CL, skInv)
 		hExpb := curve.Add(C.CR, curve.Neg(gExpr))
