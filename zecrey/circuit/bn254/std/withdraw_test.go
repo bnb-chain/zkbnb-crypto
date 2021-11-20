@@ -54,6 +54,7 @@ func TestWithdrawProofCircuit_Define(t *testing.T) {
 		assetId := uint32(1)
 		feeAssetId := uint32(2)
 		relation, err := zecrey.NewWithdrawRelation(
+			1,
 			bEnc,
 			pk,
 			b, bStar,

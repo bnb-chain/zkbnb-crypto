@@ -41,6 +41,7 @@ type WithdrawProof struct {
 	T, Pk       *Point
 	ReceiveAddr *big.Int
 	AssetId     uint32
+	ChainId     uint32
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
 	Z_bar_r_fee           *big.Int
@@ -66,6 +67,7 @@ func (proof *WithdrawProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
 	offset = copyBuf(&buf, offset, AddressSize, proof.ReceiveAddr.FillBytes(make([]byte, AddressSize)))
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.AssetId))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ChainId))
 	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
 	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C_fee))
@@ -118,6 +120,7 @@ func ParseWithdrawProofBytes(proofBytes []byte) (proof *WithdrawProof, err error
 	}
 	offset, proof.ReceiveAddr = readAddressFromBuf(proofBytes, offset)
 	offset, proof.AssetId = readUint32FromBuf(proofBytes, offset)
+	offset, proof.ChainId = readUint32FromBuf(proofBytes, offset)
 	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
@@ -162,6 +165,7 @@ type WithdrawProofRelation struct {
 	Bstar       uint64
 	ReceiveAddr *big.Int
 	AssetId     uint32
+	ChainId     uint32
 	// ----------- private ---------------------
 	Sk      *big.Int
 	B_prime uint64
@@ -176,6 +180,7 @@ type WithdrawProofRelation struct {
 }
 
 func NewWithdrawRelation(
+	chainId uint8,
 	C *ElGamalEnc,
 	pk *Point,
 	b uint64, bStar uint64,
@@ -257,6 +262,7 @@ func NewWithdrawRelation(
 		Bstar:                 bStar,
 		ReceiveAddr:           addrInt,
 		AssetId:               assetId,
+		ChainId:               uint32(chainId),
 		Sk:                    sk,
 		B_prime:               B_prime,
 		Bar_r:                 Bar_r,
