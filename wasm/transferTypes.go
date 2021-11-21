@@ -94,6 +94,7 @@ func FromTransferSegmentJSON(segmentStr string) ([]*TransferSegment, string) {
 			return nil, ErrReplicatedAccounts
 		}
 		indexExist[accountIndex] = true
+		segment.AccountIndex = accountIndex
 		// get ElGamalEnc
 		encBalance, err := twistedElgamal.FromString(segmentFormat.BalanceEnc)
 		if err != nil {
