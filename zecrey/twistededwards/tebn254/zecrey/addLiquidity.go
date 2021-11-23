@@ -539,11 +539,12 @@ func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
 	return true, nil
 }
 
-func (proof *AddLiquidityProof) AddpoolInfo(b_pool_A, b_pool_B uint64) {
+func (proof *AddLiquidityProof) AddPoolInfo(b_pool_A, b_pool_B uint64) (err error) {
 	if !validUint64(b_pool_A) || !validUint64(b_pool_B) {
-		log.Println("[AddpoolInfo] invalid params")
-		return
+		log.Println("[AddPoolInfo] invalid params")
+		return errors.New("[AddPoolInfo] invalid params")
 	}
 	proof.B_poolA = b_pool_A
 	proof.B_poolB = b_pool_B
+	return nil
 }

@@ -195,7 +195,7 @@ func NewWithdrawRelation(
 		log.Println("[NewWithdrawRelation] invalid params")
 		return nil, ErrInvalidParams
 	}
-	addrBytes, err := decodeAddress(receiveAddr)
+	addrBytes, err := DecodeAddress(receiveAddr)
 	if err != nil {
 		log.Println("[NewWithdrawRelation] err info:", err)
 		return nil, err
@@ -276,17 +276,17 @@ func NewWithdrawRelation(
 	return relation, nil
 }
 
-func decodeAddress(addr string) ([]byte, error) {
+func DecodeAddress(addr string) ([]byte, error) {
 	if len(addr) != 42 {
-		return nil, errors.New("[decodeAddress] invalid address")
+		return nil, errors.New("[DecodeAddress] invalid address")
 	}
 	addrBytes, err := hex.DecodeString(addr[2:])
 	if err != nil {
 		return nil, err
 	}
 	if len(addrBytes) != AddressSize {
-		log.Println("[decodeAddress] invalid address")
-		return nil, errors.New("[decodeAddress] invalid address")
+		log.Println("[DecodeAddress] invalid address")
+		return nil, errors.New("[DecodeAddress] invalid address")
 	}
 	return addrBytes, nil
 }
