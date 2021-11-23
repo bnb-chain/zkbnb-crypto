@@ -22,6 +22,7 @@ import (
 	"log"
 	"math/big"
 	"math/rand"
+	"time"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
@@ -71,6 +72,7 @@ func FromTransferSegmentJSON(segmentStr string) ([]*TransferSegment, string) {
 	skCount := 0
 	var segments []*TransferSegment
 	var indexExist = make(map[uint32]bool)
+	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(segmentFormats), func(i, j int) {
 		segmentFormats[i], segmentFormats[j] = segmentFormats[j], segmentFormats[i]
 	})
@@ -94,6 +96,7 @@ func FromTransferSegmentJSON(segmentStr string) ([]*TransferSegment, string) {
 			return nil, ErrReplicatedAccounts
 		}
 		indexExist[accountIndex] = true
+		segment.AccountIndex = accountIndex
 		// get ElGamalEnc
 		encBalance, err := twistedElgamal.FromString(segmentFormat.BalanceEnc)
 		if err != nil {
