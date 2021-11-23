@@ -131,6 +131,8 @@ func ProveRemoveLiquidity(relation *RemoveLiquidityRelation) (proof *RemoveLiqui
 		B_pool_B:                    relation.B_pool_B,
 		B_A_Delta:                   relation.B_A_Delta,
 		B_B_Delta:                   relation.B_B_Delta,
+		MinB_A_Delta:                relation.MinB_A_Delta,
+		MinB_B_Delta:                relation.MinB_B_Delta,
 		Delta_LP:                    relation.Delta_LP,
 		P:                           relation.P,
 		AssetAId:                    relation.AssetAId,
@@ -279,7 +281,7 @@ func verifyRemoveLiquidityParams(proof *RemoveLiquidityProof) (res bool, err err
 	// verify AMM info & DAO balance info
 	l := ffmath.Multiply(big.NewInt(int64(proof.B_A_Delta)), big.NewInt(int64(proof.B_B_Delta)))
 	r := ffmath.Multiply(big.NewInt(int64(proof.Delta_LP)), big.NewInt(int64(proof.Delta_LP)))
-	if !ffmath.Equal(l, r) {
+	if l.Cmp(r) > 0 {
 		log.Println("[verifyRemoveLiquidityParams] invalid delta amount")
 		return false, nil
 	}
