@@ -107,6 +107,8 @@ func (proof *RemoveLiquidityProof) Bytes() []byte {
 	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.MinB_B_Delta))
 	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.Delta_LP))
 	offset = copyBuf(&proofBytes, offset, EightBytes, uint64ToBytes(proof.P))
+	offset = copyBuf(&proofBytes, offset, FourBytes, uint32ToBytes(proof.AssetAId))
+	offset = copyBuf(&proofBytes, offset, FourBytes, uint32ToBytes(proof.AssetBId))
 	// range proofs
 	offset = copyBuf(&proofBytes, offset, RangeProofSize, proof.LPRangeProof.Bytes())
 	// gas part
@@ -220,6 +222,8 @@ func ParseRemoveLiquidityProofBytes(proofBytes []byte) (proof *RemoveLiquidityPr
 	offset, proof.MinB_B_Delta = readUint64FromBuf(proofBytes, offset)
 	offset, proof.Delta_LP = readUint64FromBuf(proofBytes, offset)
 	offset, proof.P = readUint64FromBuf(proofBytes, offset)
+	offset, proof.AssetAId = readUint32FromBuf(proofBytes, offset)
+	offset, proof.AssetBId = readUint32FromBuf(proofBytes, offset)
 	// range proofs
 	offset, proof.LPRangeProof, err = readRangeProofFromBuf(proofBytes, offset)
 	if err != nil {

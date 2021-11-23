@@ -27,4 +27,6 @@ func TestCopyBuf(t *testing.T) {
 	buf := make([]byte, PointSize)
 	copyBuf(&buf, 0, PointSize, curve.ZeroPoint().Marshal())
 	fmt.Println(buf)
+
+	
 }
