@@ -33,7 +33,7 @@ import (
 */
 func ProveTransfer() js.Func {
 	proveTransferFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		if len(args) != 3 {
+		if len(args) != 4 {
 			return ErrInvalidTransferParams
 		}
 		// read token id
@@ -48,8 +48,10 @@ func ProveTransfer() js.Func {
 			return ErrInvalidTransferParams
 		}
 		GasFee := uint64(GasFeeInt)
+		// memo
+		memo := args[2].String()
 		// read segmentInfo Str
-		segmentInfosStr := args[2].String()
+		segmentInfosStr := args[3].String()
 		// parse segmentInfo: []TransferSegment
 		segments, errStr := FromTransferSegmentJSON(segmentInfosStr)
 		if errStr != Success {
@@ -85,6 +87,7 @@ func ProveTransfer() js.Func {
 			GasFee: GasFee,
 			// transfer proof
 			Proof: transferProof.String(),
+			Memo:  memo,
 		}
 		txBytes, err := json.Marshal(tx)
 		if err != nil {
