@@ -37,26 +37,26 @@ type UnlockSegment struct {
 
 type UnlockSegmentFormat struct {
 	// chain id
-	ChainId      int    `json:"chain_id"`
+	ChainId int `json:"chain_id"`
 	// account index
-	AccountIndex int    `json:"account_index"`
+	AccountIndex int `json:"account_index"`
 	// asset id
-	AssetId      int    `json:"asset_id"`
+	AssetId int `json:"asset_id"`
 	// balance
-	Balance      int64  `json:"balance"`
+	Balance int64 `json:"balance"`
 	// unlock amount
-	DeltaAmount  int64  `json:"delta_amount"`
+	DeltaAmount int64 `json:"delta_amount"`
 	// private key
-	Sk           string `json:"sk"`
+	Sk string `json:"sk"`
 	// fee part
 	// encryption of the balance of the gas fee
-	C_fee         string `json:"c_fee"`
+	C_fee string `json:"c_fee"`
 	// gas fee balance
-	B_fee         int64  `json:"b_fee"`
+	B_fee int64 `json:"b_fee"`
 	// gas fee asset id
-	GasFeeAssetId int    `json:"gas_fee_asset_id"`
+	GasFeeAssetId int `json:"gas_fee_asset_id"`
 	// gas fee
-	GasFee        int64  `json:"gas_fee"`
+	GasFee int64 `json:"gas_fee"`
 }
 
 func FromUnlockSegmentJSON(segmentStr string) (*UnlockSegment, string) {
@@ -109,5 +109,6 @@ type UnlockTxInfo struct {
 	AssetId       uint32
 	GasFeeAssetId uint32
 	GasFee        uint64
+	DeltaAmount   uint64
 	Proof         string
 }

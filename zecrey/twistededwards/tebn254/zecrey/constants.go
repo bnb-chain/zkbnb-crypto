@@ -48,7 +48,7 @@ const (
 
 	SwapProofSize            = 32*PointSize + 2*RangeProofSize + 10*EightBytes + 4*FourBytes
 	AddLiquidityProofSize    = 35*PointSize + 6*EightBytes + 3*FourBytes + 3*RangeProofSize
-	RemoveLiquidityProofSize = 36*PointSize + 9*EightBytes + 1*FourBytes + 2*RangeProofSize
+	RemoveLiquidityProofSize = 36*PointSize + 9*EightBytes + 3*FourBytes + 2*RangeProofSize
 	UnlockProofSize          = 9*PointSize + 3*FourBytes + 3*EightBytes + 1*RangeProofSize
 
 	AddressSize = 20

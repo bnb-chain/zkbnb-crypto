@@ -72,7 +72,7 @@ func TestAddLiquidityProofConstraints_Define(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	proof.AddpoolInfo(b_Dao_A, b_Dao_B)
+	proof.AddPoolInfo(b_Dao_A, b_Dao_B)
 	fmt.Println("constraints:", r1cs.GetNbConstraints())
 	witness, err = SetAddLiquidityProofWitness(proof, true)
 	if err != nil {

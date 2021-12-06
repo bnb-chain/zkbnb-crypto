@@ -147,4 +147,6 @@ type TransferTxInfo struct {
 	GasFee uint64
 	// transfer proof
 	Proof string
+	// memo
+	Memo string
 }

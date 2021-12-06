@@ -69,7 +69,7 @@ func TestAddLiquidityProof_Verify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	proof.AddpoolInfo(b_Dao_A, b_Dao_B)
+	proof.AddPoolInfo(b_Dao_A, b_Dao_B)
 	log.Println("prove time:", time.Since(elapse))
 	proofStr := proof.String()
 	proof2, err := ParseAddLiquidityProofStr(proofStr)

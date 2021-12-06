@@ -25,6 +25,7 @@ import (
 	"math/big"
 	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
+	"zecrey-crypto/ffmath"
 )
 
 func (proof *SwapProof) Bytes() []byte {
@@ -350,7 +351,17 @@ func NewSwapRelation(
 		GasFeePrimeRangeProof = new(RangeProof)
 	)
 	// compute B_poolA_Delta
-	B_treasuryfee_Delta = uint64(math.Floor(float64(B_A_Delta*uint64(treasuryRate)) / float64(TenThousand)))
+	B_treasuryfee_Delta = uint64(
+		math.Floor(
+			float64(
+				ffmath.Div(
+					ffmath.Multiply(
+						big.NewInt(int64(B_A_Delta)), big.NewInt(int64(treasuryRate)),
+					),
+					big.NewInt(int64(TenThousand))).Uint64(),
+			),
+		),
+	)
 	if B_treasuryfee_Delta == 0 {
 		B_treasuryfee_Delta = MinFee
 	}
