@@ -97,7 +97,6 @@ func (circuit TxConstraints) Define(curveID ecc.ID, api frontend.API) error {
 		return err
 	}
 
-	// TODO verify H: need to optimize
 	H := Point{
 		X: api.Constant(std.HX),
 		Y: api.Constant(std.HY),
@@ -255,23 +254,23 @@ func VerifyTransaction(
 	// verify unlock proof
 	// set public data
 	// set account info
-	tx.UnlockProof.ChainId = tx.AccountsInfoBefore[0].LockedAssetInfo.ChainId
-	tx.UnlockProof.AssetId = tx.AccountsInfoBefore[0].LockedAssetInfo.AssetId
-	tx.UnlockProof.Pk = tx.AccountsInfoBefore[0].AccountPk
-	tx.UnlockProof.Balance = tx.AccountsInfoBefore[0].LockedAssetInfo.LockedAmount
+	tx.UnlockProof.ChainId = tx.AccountsInfoBefore[UnlockFromAccount].LockedAssetInfo.ChainId
+	tx.UnlockProof.AssetId = tx.AccountsInfoBefore[UnlockFromAccount].LockedAssetInfo.AssetId
+	tx.UnlockProof.Pk = tx.AccountsInfoBefore[UnlockFromAccount].AccountPk
+	tx.UnlockProof.Balance = tx.AccountsInfoBefore[UnlockFromAccount].LockedAssetInfo.LockedAmount
 	// fee info
-	tx.UnlockProof.C_fee = tx.AccountsInfoBefore[0].AssetsInfo[1].BalanceEnc
-	tx.UnlockProof.GasFeeAssetId = tx.AccountsInfoBefore[0].AssetsInfo[1].AssetId
+	tx.UnlockProof.C_fee = tx.AccountsInfoBefore[UnlockFromAccount].AssetsInfo[UnlockFromAccountGasAsset].BalanceEnc
+	tx.UnlockProof.GasFeeAssetId = tx.AccountsInfoBefore[UnlockFromAccount].AssetsInfo[UnlockFromAccountGasAsset].AssetId
 	c, pkProofs, tProofs = std.VerifyUnlockProof(tool, api, tx.UnlockProof, hFunc, h)
 	hFunc.Reset()
 
 	// verify transfer proof
 	// set public data
 	// set account info
-	tx.TransferProof.AssetId = tx.AccountsInfoBefore[0].AssetsInfo[0].AssetId
+	tx.TransferProof.AssetId = tx.AccountsInfoBefore[TransferAccountA].AssetsInfo[TransferAccountTransferAsset].AssetId
 	for i := 0; i < NbTransferCount; i++ {
 		tx.TransferProof.SubProofs[i].Pk = tx.AccountsInfoBefore[i].AccountPk
-		tx.TransferProof.SubProofs[i].C = tx.AccountsInfoBefore[i].AssetsInfo[0].BalanceEnc
+		tx.TransferProof.SubProofs[i].C = tx.AccountsInfoBefore[i].AssetsInfo[TransferAccountTransferAsset].BalanceEnc
 	}
 	cCheck, pkProofsCheck, tProofsCheck = std.VerifyTransferProof(tool, api, tx.TransferProof, hFunc, h)
 	hFunc.Reset()
@@ -280,17 +279,17 @@ func VerifyTransaction(
 	// verify swap proof
 	// set public data
 	// set account info
-	tx.SwapProof.C_uA = tx.AccountsInfoBefore[0].AssetsInfo[0].BalanceEnc
-	tx.SwapProof.Pk_u = tx.AccountsInfoBefore[0].AccountPk
-	tx.SwapProof.AssetAId = tx.AccountsInfoBefore[1].LiquidityInfo.AssetAId
-	tx.SwapProof.AssetBId = tx.AccountsInfoBefore[1].LiquidityInfo.AssetBId
-	tx.SwapProof.Pk_pool = tx.AccountsInfoBefore[1].AccountPk
-	tx.SwapProof.B_poolA = tx.AccountsInfoBefore[1].LiquidityInfo.AssetA
-	tx.SwapProof.B_poolB = tx.AccountsInfoBefore[1].LiquidityInfo.AssetB
-	tx.SwapProof.Pk_treasury = tx.AccountsInfoBefore[2].AccountPk
+	tx.SwapProof.C_uA = tx.AccountsInfoBefore[SwapFromAccount].AssetsInfo[SwapFromAccountAssetA].BalanceEnc
+	tx.SwapProof.Pk_u = tx.AccountsInfoBefore[SwapFromAccount].AccountPk
+	tx.SwapProof.AssetAId = tx.AccountsInfoBefore[SwapPoolAccount].LiquidityInfo.AssetAId
+	tx.SwapProof.AssetBId = tx.AccountsInfoBefore[SwapPoolAccount].LiquidityInfo.AssetBId
+	tx.SwapProof.Pk_pool = tx.AccountsInfoBefore[SwapPoolAccount].AccountPk
+	tx.SwapProof.B_poolA = tx.AccountsInfoBefore[SwapPoolAccount].LiquidityInfo.AssetA
+	tx.SwapProof.B_poolB = tx.AccountsInfoBefore[SwapPoolAccount].LiquidityInfo.AssetB
+	tx.SwapProof.Pk_treasury = tx.AccountsInfoBefore[SwapTreasuryAccount].AccountPk
 	// fee info
-	tx.SwapProof.C_fee = tx.AccountsInfoBefore[0].AssetsInfo[2].BalanceEnc
-	tx.SwapProof.GasFeeAssetId = tx.AccountsInfoBefore[0].AssetsInfo[2].AssetId
+	tx.SwapProof.C_fee = tx.AccountsInfoBefore[SwapFromAccount].AssetsInfo[SwapFromAccountGasAsset].BalanceEnc
+	tx.SwapProof.GasFeeAssetId = tx.AccountsInfoBefore[SwapFromAccount].AssetsInfo[SwapFromAccountGasAsset].AssetId
 	cCheck, pkProofsCheck, tProofsCheck = std.VerifySwapProof(tool, api, tx.SwapProof, hFunc, h)
 	hFunc.Reset()
 	c, pkProofs, tProofs = SelectCommonPart(api, isSwapTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
@@ -298,17 +297,17 @@ func VerifyTransaction(
 	// verify add liquidity proof
 	// set public data
 	// set account info
-	tx.AddLiquidityProof.C_uA = tx.AccountsInfoBefore[0].AssetsInfo[0].BalanceEnc
-	tx.AddLiquidityProof.C_uB = tx.AccountsInfoBefore[0].AssetsInfo[1].BalanceEnc
-	tx.AddLiquidityProof.Pk_u = tx.AccountsInfoBefore[0].AccountPk
-	tx.AddLiquidityProof.AssetAId = tx.AccountsInfoBefore[1].LiquidityInfo.AssetAId
-	tx.AddLiquidityProof.AssetBId = tx.AccountsInfoBefore[1].LiquidityInfo.AssetBId
-	tx.AddLiquidityProof.Pk_pool = tx.AccountsInfoBefore[1].AccountPk
-	tx.AddLiquidityProof.B_poolA = tx.AccountsInfoBefore[1].LiquidityInfo.AssetA
-	tx.AddLiquidityProof.B_poolB = tx.AccountsInfoBefore[1].LiquidityInfo.AssetB
+	tx.AddLiquidityProof.C_uA = tx.AccountsInfoBefore[AddLiquidityFromAccount].AssetsInfo[AddLiquidityFromAccountAssetA].BalanceEnc
+	tx.AddLiquidityProof.C_uB = tx.AccountsInfoBefore[AddLiquidityFromAccount].AssetsInfo[AddLiquidityFromAccountAssetB].BalanceEnc
+	tx.AddLiquidityProof.Pk_u = tx.AccountsInfoBefore[AddLiquidityFromAccount].AccountPk
+	tx.AddLiquidityProof.AssetAId = tx.AccountsInfoBefore[AddLiquidityPoolAccount].LiquidityInfo.AssetAId
+	tx.AddLiquidityProof.AssetBId = tx.AccountsInfoBefore[AddLiquidityPoolAccount].LiquidityInfo.AssetBId
+	tx.AddLiquidityProof.Pk_pool = tx.AccountsInfoBefore[AddLiquidityPoolAccount].AccountPk
+	tx.AddLiquidityProof.B_poolA = tx.AccountsInfoBefore[AddLiquidityPoolAccount].LiquidityInfo.AssetA
+	tx.AddLiquidityProof.B_poolB = tx.AccountsInfoBefore[AddLiquidityPoolAccount].LiquidityInfo.AssetB
 	// fee info
-	tx.AddLiquidityProof.C_fee = tx.AccountsInfoBefore[0].AssetsInfo[2].BalanceEnc
-	tx.AddLiquidityProof.GasFeeAssetId = tx.AccountsInfoBefore[0].AssetsInfo[2].AssetId
+	tx.AddLiquidityProof.C_fee = tx.AccountsInfoBefore[AddLiquidityFromAccount].AssetsInfo[AddLiquidityFromAccountGasAsset].BalanceEnc
+	tx.AddLiquidityProof.GasFeeAssetId = tx.AccountsInfoBefore[AddLiquidityFromAccount].AssetsInfo[AddLiquidityFromAccountGasAsset].AssetId
 	cCheck, pkProofsCheck, tProofsCheck = std.VerifyAddLiquidityProof(tool, api, tx.AddLiquidityProof, hFunc, h)
 	hFunc.Reset()
 	c, pkProofs, tProofs = SelectCommonPart(api, isAddLiquidityTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
@@ -316,16 +315,16 @@ func VerifyTransaction(
 	// verify remove liquidity proof
 	// set public data
 	// set account info
-	tx.RemoveLiquidityProof.C_u_LP = tx.AccountsInfoBefore[0].LiquidityInfo.LpEnc
-	tx.RemoveLiquidityProof.Pk_u = tx.AccountsInfoBefore[0].AccountPk
-	tx.RemoveLiquidityProof.AssetAId = tx.AccountsInfoBefore[1].LiquidityInfo.AssetAId
-	tx.RemoveLiquidityProof.AssetBId = tx.AccountsInfoBefore[1].LiquidityInfo.AssetBId
-	tx.RemoveLiquidityProof.Pk_pool = tx.AccountsInfoBefore[1].AccountPk
-	tx.RemoveLiquidityProof.B_pool_A = tx.AccountsInfoBefore[1].LiquidityInfo.AssetA
-	tx.RemoveLiquidityProof.B_pool_B = tx.AccountsInfoBefore[1].LiquidityInfo.AssetB
+	tx.RemoveLiquidityProof.C_u_LP = tx.AccountsInfoBefore[RemoveLiquidityFromAccount].LiquidityInfo.LpEnc
+	tx.RemoveLiquidityProof.Pk_u = tx.AccountsInfoBefore[RemoveLiquidityFromAccount].AccountPk
+	tx.RemoveLiquidityProof.AssetAId = tx.AccountsInfoBefore[RemoveLiquidityPoolAccount].LiquidityInfo.AssetAId
+	tx.RemoveLiquidityProof.AssetBId = tx.AccountsInfoBefore[RemoveLiquidityPoolAccount].LiquidityInfo.AssetBId
+	tx.RemoveLiquidityProof.Pk_pool = tx.AccountsInfoBefore[RemoveLiquidityPoolAccount].AccountPk
+	tx.RemoveLiquidityProof.B_pool_A = tx.AccountsInfoBefore[RemoveLiquidityPoolAccount].LiquidityInfo.AssetA
+	tx.RemoveLiquidityProof.B_pool_B = tx.AccountsInfoBefore[RemoveLiquidityPoolAccount].LiquidityInfo.AssetB
 	// fee info
-	tx.RemoveLiquidityProof.C_fee = tx.AccountsInfoBefore[0].AssetsInfo[2].BalanceEnc
-	tx.RemoveLiquidityProof.GasFeeAssetId = tx.AccountsInfoBefore[0].AssetsInfo[2].AssetId
+	tx.RemoveLiquidityProof.C_fee = tx.AccountsInfoBefore[RemoveLiquidityFromAccount].AssetsInfo[RemoveLiquidityFromAccountGasAsset].BalanceEnc
+	tx.RemoveLiquidityProof.GasFeeAssetId = tx.AccountsInfoBefore[RemoveLiquidityFromAccount].AssetsInfo[RemoveLiquidityFromAccountGasAsset].AssetId
 	cCheck, pkProofsCheck, tProofsCheck = std.VerifyRemoveLiquidityProof(tool, api, tx.RemoveLiquidityProof, hFunc, h)
 	hFunc.Reset()
 	c, pkProofs, tProofs = SelectCommonPart(api, isRemoveLiquidityTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
@@ -333,11 +332,11 @@ func VerifyTransaction(
 	// verify withdraw proof
 	// set public data
 	// set account info
-	tx.WithdrawProof.AssetId = tx.AccountsInfoBefore[0].AssetsInfo[0].AssetId
-	tx.WithdrawProof.Pk = tx.AccountsInfoBefore[0].AccountPk
+	tx.WithdrawProof.AssetId = tx.AccountsInfoBefore[WithdrawFromAccount].AssetsInfo[WithdrawFromAccountAsset].AssetId
+	tx.WithdrawProof.Pk = tx.AccountsInfoBefore[WithdrawFromAccount].AccountPk
 	// fee info
-	tx.WithdrawProof.C_fee = tx.AccountsInfoBefore[0].AssetsInfo[1].BalanceEnc
-	tx.WithdrawProof.GasFeeAssetId = tx.AccountsInfoBefore[0].AssetsInfo[1].AssetId
+	tx.WithdrawProof.C_fee = tx.AccountsInfoBefore[WithdrawFromAccount].AssetsInfo[WithdrawFromAccountGasAsset].BalanceEnc
+	tx.WithdrawProof.GasFeeAssetId = tx.AccountsInfoBefore[WithdrawFromAccount].AssetsInfo[WithdrawFromAccountGasAsset].AssetId
 	cCheck, pkProofsCheck, tProofsCheck = std.VerifyWithdrawProof(tool, api, tx.WithdrawProof, hFunc, h)
 	hFunc.Reset()
 	c, pkProofs, tProofs = SelectCommonPart(api, isWithdrawTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
@@ -355,6 +354,7 @@ func VerifyTransaction(
 	}
 
 	// check if the after account info is correct
+	
 
 
 	// verify account after

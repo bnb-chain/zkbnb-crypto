@@ -28,6 +28,8 @@ import (
 )
 
 type (
+	EccTool = std.EccTool
+
 	Point                 = twistededwards.Point
 	Variable              = frontend.Variable
 	API                   = frontend.API
@@ -87,4 +89,42 @@ const (
 	TxTypeAddLiquidity    = 6
 	TxTypeRemoveLiquidity = 7
 	TxTypeWithdraw        = 8
+
+	// unlock related account index
+	UnlockFromAccount            = 0
+	UnlockFromAccountUnlockAsset = 0
+	UnlockFromAccountGasAsset    = 1
+	UnlockGasAccount             = 1
+	UnlockGasAccountGasAsset     = 0
+	// transfer related account index
+	TransferAccountTransferAsset = 0
+	TransferAccountA             = 0
+	TransferAccountB             = 1
+	TransferAccountC             = 2
+	TransferGasAccount           = 3
+	// swap related account index
+	SwapFromAccount         = 0
+	SwapFromAccountAssetA   = 0
+	SwapFromAccountAssetB   = 1
+	SwapFromAccountGasAsset = 2
+	SwapPoolAccount         = 1
+	SwapTreasuryAccount     = 2
+	SwapGasAccount          = 3
+	// add liquidity related account index
+	AddLiquidityFromAccount         = 0
+	AddLiquidityFromAccountAssetA   = 0
+	AddLiquidityFromAccountAssetB   = 1
+	AddLiquidityFromAccountGasAsset = 2
+	AddLiquidityPoolAccount         = 1
+	// remove liquidity related account index
+	RemoveLiquidityFromAccount         = 0
+	RemoveLiquidityFromAccountAssetA   = 0
+	RemoveLiquidityFromAccountAssetB   = 1
+	RemoveLiquidityFromAccountGasAsset = 2
+	RemoveLiquidityPoolAccount         = 1
+	// withdraw related account index
+	WithdrawFromAccount         = 0
+	WithdrawFromAccountAsset    = 0
+	WithdrawFromAccountGasAsset = 1
+	WithdrawGasAccount          = 1
 )

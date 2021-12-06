@@ -34,3 +34,17 @@ func (tool *EccTool) Add(a, b Point) Point {
 	p.AddGeneric(tool.api, &a, &b, tool.params)
 	return p
 }
+
+func (tool *EccTool) ZeroPoint() Point {
+	var p Point
+	p.X = tool.api.Constant(0)
+	p.Y = tool.api.Constant(1)
+	return p
+}
+
+func (tool *EccTool) ZeroElgamalEnc() ElGamalEncConstraints {
+	var enc ElGamalEncConstraints
+	enc.CL = tool.ZeroPoint()
+	enc.CR = tool.ZeroPoint()
+	return enc
+}

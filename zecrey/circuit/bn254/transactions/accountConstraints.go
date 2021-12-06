@@ -58,6 +58,20 @@ type AccountLiquidityConstraints struct {
 	LpEnc     ElGamalEncConstraints
 }
 
+type AccountDeltaConstraints struct {
+	AssetsDeltaInfo      [NbAccountAssetsPerAccount]ElGamalEncConstraints
+	LockedAssetDeltaInfo Variable
+	LiquidityDeltaInfo   AccountLiquidityDeltaConstraints
+}
+
+type AccountLiquidityDeltaConstraints struct {
+	AssetADelta  Variable
+	AssetBDelta  Variable
+	AssetARDelta Variable
+	AssetBRDelta Variable
+	LpEncDelta   ElGamalEncConstraints
+}
+
 func SetAccountWitness(account *Account) (witness AccountConstraints, err error) {
 	if account == nil {
 		log.Println("[SetAccountWitness] invalid params")

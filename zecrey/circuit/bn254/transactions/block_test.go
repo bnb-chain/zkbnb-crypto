@@ -73,18 +73,18 @@ func TestBlockConstraints_Define(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	proof, err := zecrey.ProveTransfer(relation)
-	if err != nil {
-		t.Fatal(err)
-	}
+	//proof, err := zecrey.ProveTransfer(relation)
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
 	size := 35
 	txs := make([]TxConstraints, size)
 	for i := 0; i < size; i++ {
-		txWitness, err := SetTxWitness(proof, TxTypeTransfer, true)
-		if err != nil {
-			t.Fatal(err)
-		}
-		txs[i] = txWitness
+		//txWitness, err := SetTxWitness(proof, TxTypeTransfer, true)
+		//if err != nil {
+		//	t.Fatal(err)
+		//}
+		//txs[i] = txWitness
 	}
 	witness, err = SetBlockWitness(txs)
 	if err != nil {
