@@ -18,72 +18,84 @@
 package transactions
 
 import (
-	"encoding/binary"
-	"hash"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"math/big"
 	"zecrey-crypto/zecrey/circuit/bn254/std"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
-type AccountConstraints struct {
-	Index   Variable // index in the tree
-	AssetId Variable // tokenId
-	Balance ElGamalEncConstraints
-	PubKey  Point
+type AccountAsset struct {
+	AssetId    uint64
+	BalanceEnc *zecrey.ElGamalEnc
 }
 
-// TODO only for test
+func EmptyAccountAsset() *AccountAsset {
+	return &AccountAsset{
+		AssetId:    std.ZeroInt,
+		BalanceEnc: std.ZeroElgamalEnc,
+	}
+}
+
+type AccountAssetLock struct {
+	ChainId      uint64
+	AssetId      uint64
+	LockedAmount uint64
+}
+
+func EmptyAccountAssetLock() *AccountAssetLock {
+	return &AccountAssetLock{
+		ChainId:      std.ZeroInt,
+		AssetId:      std.ZeroInt,
+		LockedAmount: std.ZeroInt,
+	}
+}
+
+type AccountLiquidity struct {
+	PairIndex uint64
+	AssetAId  uint64
+	AssetBId  uint64
+	AssetA    uint64
+	AssetB    uint64
+	AssetAR   *big.Int
+	AssetBR   *big.Int
+	LpEnc     *zecrey.ElGamalEnc
+}
+
+func EmptyAccountLiquidity() *AccountLiquidity {
+	return &AccountLiquidity{
+		PairIndex: std.ZeroInt,
+		AssetA:    std.ZeroInt,
+		AssetB:    std.ZeroInt,
+		AssetAR:   std.ZeroBigInt,
+		AssetBR:   std.ZeroBigInt,
+		LpEnc:     std.ZeroElgamalEnc,
+	}
+}
+
 type Account struct {
-	Index   uint32
-	AssetId uint32
-	Balance *zecrey.ElGamalEnc
-	PubKey  *zecrey.Point
+	AccountIndex            uint64
+	AccountName             *big.Int
+	AccountPk               *zecrey.Point
+	StateRoot               []byte
+	AccountAssetsRoot       []byte
+	AccountLockedAssetsRoot []byte
+	AccountLiquidityRoot    []byte
+	AssetsInfo              [NbAccountAssetsPerAccount]*AccountAsset
+	LockedAssetInfo         *AccountAssetLock
+	LiquidityInfo           *AccountLiquidity
 }
 
-func SetAccountWitness(account *Account) (witness AccountConstraints, err error) {
-	witness.Index.Assign(int(account.Index))
-	witness.AssetId.Assign(int(account.AssetId))
-	witness.Balance, err = std.SetElGamalEncWitness(account.Balance)
-	if err != nil {
-		return witness, err
-	}
-	witness.PubKey, err = std.SetPointWitness(account.PubKey)
-	if err != nil {
-		return witness, err
-	}
-	return witness, nil
-}
-
-func SerializeAccount(account *Account) [AccountSize]byte {
-	var res [AccountSize]byte
-	binary.BigEndian.PutUint32(res[:PointSize], account.Index)
-	binary.BigEndian.PutUint32(res[PointSize:2*PointSize], account.AssetId)
-	copy(res[2*PointSize:3*PointSize], account.Balance.CL.Marshal())
-	copy(res[3*PointSize:4*PointSize], account.Balance.CR.Marshal())
-	copy(res[4*PointSize:5*PointSize], account.PubKey.Marshal())
-	return res
-}
-
-func DeserializeAccount(accBytes [AccountSize]byte) *Account {
-	index := binary.BigEndian.Uint32(accBytes[:PointSize])
-	tokenId := binary.BigEndian.Uint32(accBytes[PointSize : 2*PointSize])
-	CL, _ := curve.FromBytes(accBytes[2*PointSize : 3*PointSize])
-	CR, _ := curve.FromBytes(accBytes[3*PointSize : 4*PointSize])
-	PubKey, _ := curve.FromBytes(accBytes[4*PointSize : 5*PointSize])
+func EmptyAccount() *Account {
 	return &Account{
-		Index:   index,
-		AssetId: tokenId,
-		Balance: &zecrey.ElGamalEnc{
-			CL: CL,
-			CR: CR,
+		AccountIndex: std.ZeroInt,
+		AccountName:  std.ZeroBigInt,
+		AccountPk:    std.ZeroPoint,
+		StateRoot:    []byte{},
+		AssetsInfo: [3]*AccountAsset{
+			EmptyAccountAsset(),
+			EmptyAccountAsset(),
+			EmptyAccountAsset(),
 		},
-		PubKey: PubKey,
+		LockedAssetInfo: EmptyAccountAssetLock(),
+		LiquidityInfo:   EmptyAccountLiquidity(),
 	}
-}
-
-func mockAccountHash(account *Account, h hash.Hash) []byte {
-	h.Reset()
-	res := SerializeAccount(account)
-	h.Write(res[:])
-	return h.Sum([]byte{})
 }

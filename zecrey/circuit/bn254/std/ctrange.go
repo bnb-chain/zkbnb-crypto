@@ -94,6 +94,19 @@ func VerifyCtRangeProof(tool *EccTool, api API, proof CtRangeProofConstraints, h
 	IsPointEqual(api, proof.IsEnabled, A, proof.A)
 }
 
+func SetEmptyCtRangeProofWitness() (witness CtRangeProofConstraints) {
+	witness.H, _ = SetPointWitness(ZeroPoint)
+	witness.A, _ = SetPointWitness(ZeroPoint)
+	witness.C.Assign(ZeroInt)
+	// set buf and
+	for i := 0; i < RangeMaxBits; i++ {
+		witness.As[i], _ = SetPointWitness(ZeroPoint)
+		witness.Zs[i].Assign(ZeroInt)
+	}
+	witness.IsEnabled = SetBoolWitness(false)
+	return witness
+}
+
 /*
 	setComRangeProofWitness set witness for the range proof
 	@proof: original range proofs

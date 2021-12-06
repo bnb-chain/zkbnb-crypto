@@ -86,7 +86,7 @@ func TestBlockConstraints_Define(t *testing.T) {
 		}
 		txs[i] = txWitness
 	}
-	witness, err = SetBlockWitness(txs, true)
+	witness, err = SetBlockWitness(txs)
 	if err != nil {
 		t.Fatal(err)
 	}

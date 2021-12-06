@@ -17,13 +17,13 @@
 
 package std
 
-func writePointIntoBuf(hFunc *MiMC, p Point) {
+func WritePointIntoBuf(hFunc *MiMC, p Point) {
 	hFunc.Write(p.X, p.Y)
 }
 
-func writeEncIntoBuf(hFunc *MiMC, enc ElGamalEncConstraints) {
-	writePointIntoBuf(hFunc, enc.CL)
-	writePointIntoBuf(hFunc, enc.CR)
+func WriteEncIntoBuf(hFunc *MiMC, enc ElGamalEncConstraints) {
+	WritePointIntoBuf(hFunc, enc.CL)
+	WritePointIntoBuf(hFunc, enc.CR)
 }
 
 func zeroPoint(api API) Point {

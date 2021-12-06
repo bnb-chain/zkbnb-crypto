@@ -76,17 +76,19 @@ func VerifyUnlockProof(
 	proof UnlockProofConstraints,
 	hFunc MiMC,
 	h Point,
-) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
+) (
+	c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof,
+) {
 	hFunc.Write(FixedCurveParam(api))
-	writePointIntoBuf(&hFunc, proof.Pk)
-	writePointIntoBuf(&hFunc, proof.A_pk)
+	WritePointIntoBuf(&hFunc, proof.Pk)
+	WritePointIntoBuf(&hFunc, proof.A_pk)
 	hFunc.Write(proof.ChainId)
 	hFunc.Write(proof.AssetId)
 	hFunc.Write(proof.Balance)
 	hFunc.Write(proof.DeltaAmount)
 	// gas fee
-	writePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
-	writeEncIntoBuf(&hFunc, proof.C_fee)
+	WritePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
+	WriteEncIntoBuf(&hFunc, proof.C_fee)
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
 	c = hFunc.Sum()

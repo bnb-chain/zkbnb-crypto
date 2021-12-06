@@ -19,23 +19,6 @@ package transactions
 
 import "zecrey-crypto/zecrey/circuit/bn254/std"
 
-func setFixedMerkleProofs(proof [][]byte) [AccountMerkleLevels][]byte {
-	var res [AccountMerkleLevels][]byte
-	for i := 0; i < AccountMerkleLevels; i++ {
-		res[i] = make([]byte, len(proof[i]))
-		copy(res[i], proof[i])
-	}
-	return res
-}
-
-func setFixedMerkleProofsHelper(proof []int) [AccountMerkleLevels - 1]int {
-	var res [AccountMerkleLevels - 1]int
-	for i := 0; i < AccountMerkleLevels-1; i++ {
-		res[i] = proof[i]
-	}
-	return res
-}
-
 func SelectCommonPart(
 	api API,
 	flag Variable,

@@ -93,19 +93,19 @@ func VerifyRemoveLiquidityProof(
 	h Point,
 ) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	hFunc.Write(FixedCurveParam(api))
-	writePointIntoBuf(&hFunc, proof.Pk_u)
-	writeEncIntoBuf(&hFunc, proof.C_u_LP)
-	writeEncIntoBuf(&hFunc, proof.C_u_LP_Delta)
-	writePointIntoBuf(&hFunc, proof.T_uLP)
+	WritePointIntoBuf(&hFunc, proof.Pk_u)
+	WriteEncIntoBuf(&hFunc, proof.C_u_LP)
+	WriteEncIntoBuf(&hFunc, proof.C_u_LP_Delta)
+	WritePointIntoBuf(&hFunc, proof.T_uLP)
 	// write into buf
-	writePointIntoBuf(&hFunc, proof.A_CLPL_Delta)
-	writePointIntoBuf(&hFunc, proof.A_CLPR_DeltaHExp_DeltaLPNeg)
+	WritePointIntoBuf(&hFunc, proof.A_CLPL_Delta)
+	WritePointIntoBuf(&hFunc, proof.A_CLPR_DeltaHExp_DeltaLPNeg)
 	// write into buf
-	writePointIntoBuf(&hFunc, proof.A_pk_u)
-	writePointIntoBuf(&hFunc, proof.A_T_uLPC_uLPRPrimeInv)
+	WritePointIntoBuf(&hFunc, proof.A_pk_u)
+	WritePointIntoBuf(&hFunc, proof.A_T_uLPC_uLPRPrimeInv)
 	// gas fee
-	writePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
-	writeEncIntoBuf(&hFunc, proof.C_fee)
+	WritePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
+	WriteEncIntoBuf(&hFunc, proof.C_fee)
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
 	// compute challenge

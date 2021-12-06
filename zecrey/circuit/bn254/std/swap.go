@@ -112,22 +112,22 @@ func VerifySwapProof(
 	hFunc.Write(FixedCurveParam(api))
 	hFunc.Write(proof.AssetAId)
 	hFunc.Write(proof.AssetBId)
-	writePointIntoBuf(&hFunc, proof.Pk_u)
-	writeEncIntoBuf(&hFunc, proof.C_uA)
-	writeEncIntoBuf(&hFunc, proof.C_uA_Delta)
-	writePointIntoBuf(&hFunc, proof.T_uA)
+	WritePointIntoBuf(&hFunc, proof.Pk_u)
+	WriteEncIntoBuf(&hFunc, proof.C_uA)
+	WriteEncIntoBuf(&hFunc, proof.C_uA_Delta)
+	WritePointIntoBuf(&hFunc, proof.T_uA)
 	hFunc.Write(proof.B_A_Delta)
 	hFunc.Write(proof.MinB_B_Delta)
 	hFunc.Write(proof.B_treasuryfee_Delta)
 	// write into buf
 	// gas fee
-	writePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
-	writeEncIntoBuf(&hFunc, proof.C_fee)
+	WritePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
+	WriteEncIntoBuf(&hFunc, proof.C_fee)
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
 	// write into buf
-	writePointIntoBuf(&hFunc, proof.A_pk_u)
-	writePointIntoBuf(&hFunc, proof.A_T_uAC_uARPrimeInv)
+	WritePointIntoBuf(&hFunc, proof.A_pk_u)
+	WritePointIntoBuf(&hFunc, proof.A_T_uAC_uARPrimeInv)
 	// compute challenge
 	c = hFunc.Sum()
 	// verify params

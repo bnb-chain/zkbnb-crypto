@@ -105,17 +105,17 @@ func VerifyTransferProof(
 	// write into buf
 	hFunc.Write(proof.GasFee)
 	hFunc.Write(proof.AssetId)
-	writePointIntoBuf(&hFunc, proof.A_sum)
+	WritePointIntoBuf(&hFunc, proof.A_sum)
 	for _, subProof := range proof.SubProofs {
 		// write common inputs into buf
-		writeEncIntoBuf(&hFunc, subProof.C)
-		writeEncIntoBuf(&hFunc, subProof.CDelta)
-		writePointIntoBuf(&hFunc, subProof.Y)
-		writePointIntoBuf(&hFunc, subProof.T)
-		writePointIntoBuf(&hFunc, subProof.Pk)
+		WriteEncIntoBuf(&hFunc, subProof.C)
+		WriteEncIntoBuf(&hFunc, subProof.CDelta)
+		WritePointIntoBuf(&hFunc, subProof.Y)
+		WritePointIntoBuf(&hFunc, subProof.T)
+		WritePointIntoBuf(&hFunc, subProof.Pk)
 		// write into buf
-		writePointIntoBuf(&hFunc, subProof.A_CLDelta)
-		writePointIntoBuf(&hFunc, subProof.A_CRDelta)
+		WritePointIntoBuf(&hFunc, subProof.A_CLDelta)
+		WritePointIntoBuf(&hFunc, subProof.A_CRDelta)
 		CR_sum = tool.Add(CR_sum, subProof.CDelta.CR)
 		// verify range proof params
 		//IsPointEqual(api, proof.IsEnabled, subProof.BStarRangeProof.A, subProof.Y)

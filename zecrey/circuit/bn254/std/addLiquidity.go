@@ -90,31 +90,31 @@ func VerifyAddLiquidityProof(
 	h Point,
 ) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	hFunc.Write(FixedCurveParam(api))
-	writePointIntoBuf(&hFunc, proof.Pk_u)
-	writePointIntoBuf(&hFunc, proof.Pk_pool)
-	writeEncIntoBuf(&hFunc, proof.C_uA)
-	writeEncIntoBuf(&hFunc, proof.C_uB)
-	writeEncIntoBuf(&hFunc, proof.C_uA_Delta)
-	writeEncIntoBuf(&hFunc, proof.C_uB_Delta)
-	writeEncIntoBuf(&hFunc, proof.C_LP_Delta)
-	writePointIntoBuf(&hFunc, proof.T_uA)
-	writePointIntoBuf(&hFunc, proof.T_uB)
+	WritePointIntoBuf(&hFunc, proof.Pk_u)
+	WritePointIntoBuf(&hFunc, proof.Pk_pool)
+	WriteEncIntoBuf(&hFunc, proof.C_uA)
+	WriteEncIntoBuf(&hFunc, proof.C_uB)
+	WriteEncIntoBuf(&hFunc, proof.C_uA_Delta)
+	WriteEncIntoBuf(&hFunc, proof.C_uB_Delta)
+	WriteEncIntoBuf(&hFunc, proof.C_LP_Delta)
+	WritePointIntoBuf(&hFunc, proof.T_uA)
+	WritePointIntoBuf(&hFunc, proof.T_uB)
 	// assets id
 	hFunc.Write(proof.AssetAId)
 	hFunc.Write(proof.AssetBId)
 	// write into buf
-	writePointIntoBuf(&hFunc, proof.A_CLPL_Delta)
-	writePointIntoBuf(&hFunc, proof.A_CLPR_DeltaHExp_DeltaLPNeg)
+	WritePointIntoBuf(&hFunc, proof.A_CLPL_Delta)
+	WritePointIntoBuf(&hFunc, proof.A_CLPR_DeltaHExp_DeltaLPNeg)
 	// write into buf
 	// gas fee
-	writePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
-	writeEncIntoBuf(&hFunc, proof.C_fee)
+	WritePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
+	WriteEncIntoBuf(&hFunc, proof.C_fee)
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
 
-	writePointIntoBuf(&hFunc, proof.A_pk_u)
-	writePointIntoBuf(&hFunc, proof.A_T_uAC_uARPrimeInv)
-	writePointIntoBuf(&hFunc, proof.A_T_uBC_uBRPrimeInv)
+	WritePointIntoBuf(&hFunc, proof.A_pk_u)
+	WritePointIntoBuf(&hFunc, proof.A_T_uAC_uARPrimeInv)
+	WritePointIntoBuf(&hFunc, proof.A_T_uBC_uBRPrimeInv)
 	// compute challenge
 	c = hFunc.Sum()
 	// verify params

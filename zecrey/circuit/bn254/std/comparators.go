@@ -18,7 +18,7 @@
 package std
 
 /*
-	IsVariableEqual: check if two variables are equal, will force equal if isEnabled = true
+	IsVariableEqual: check if two variables are equal, will force equal if isEnabled = false
 */
 func IsVariableEqual(api API, isEnabled, i1, i2 Variable) {
 	zero := api.Constant(0)

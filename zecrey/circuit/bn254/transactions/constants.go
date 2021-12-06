@@ -34,6 +34,8 @@ type (
 	ElGamalEncConstraints = std.ElGamalEncConstraints
 	MiMC                  = mimc.MiMC
 
+	DepositOrLockTx      = std.DepositOrLockTx
+	UnlockProof          = zecrey.UnlockProof
 	TransferProof        = zecrey.TransferProof
 	SwapProof            = zecrey.SwapProof
 	AddLiquidityProof    = zecrey.AddLiquidityProof
@@ -41,6 +43,7 @@ type (
 	WithdrawProof        = zecrey.WithdrawProof
 
 	CtRangeProofConstraints         = std.CtRangeProofConstraints
+	DepositOrLockTxConstraints      = std.DepositOrLockTxConstraints
 	UnlockProofConstraints          = std.UnlockProofConstraints
 	TransferProofConstraints        = std.TransferProofConstraints
 	SwapProofConstraints            = std.SwapProofConstraints
@@ -50,15 +53,25 @@ type (
 )
 
 const (
-	MaxRangeProofCount    = 3
-	NbTxs                 = 20
-	AccountMerkleLevels   = std.AccountMerkleLevels
-	NbTransferCount       = std.NbTransferCount
-	NbTransferCountAndFee = NbTransferCount + 1
-	NbSwapCount           = 2
-	NbSwapCountAndFee     = NbSwapCount + 1
-	NbWithdrawCountAndFee = 2
-	BalanceMerkleLevels   = 16
+	MaxRangeProofCount            = 3
+	NbTxsCountHalf                = 70
+	NbTxsCountFull                = 140
+	NbAccountsPerTx               = 4
+	NbAccountAssetsPerAccount     = 3
+	AccountMerkleLevels           = 32
+	AccountMerkleHelperLevels     = AccountMerkleLevels - 1
+	AssetMerkleLevels             = 16
+	AssetMerkleHelperLevels       = AssetMerkleLevels - 1
+	LockedAssetMerkleLevels       = 16
+	LockedAssetMerkleHelperLevels = LockedAssetMerkleLevels - 1
+	LiquidityMerkleLevels         = 16
+	LiquidityMerkleHelperLevels   = LiquidityMerkleLevels - 1
+	NbTransferCount               = std.NbTransferCount
+	NbTransferCountAndFee         = NbTransferCount + 1
+	NbSwapCount                   = 2
+	NbSwapCountAndFee             = NbSwapCount + 1
+	NbWithdrawCountAndFee         = 2
+	BalanceMerkleLevels           = 16
 
 	// size
 	PointSize   = curve.PointSize

@@ -26,7 +26,12 @@ import (
 )
 
 type BlockConstraints struct {
-	Txs [35]TxConstraints
+	// public inputs
+	OldRoot         Variable `gnark:",public"`
+	NewRoot         Variable `gnark:",public"`
+	BlockCommitment Variable `gnark:",public"`
+	// tx info
+	Txs [NbTxsCountHalf]TxConstraints
 }
 
 func (circuit BlockConstraints) Define(curveID ecc.ID, api API) error {
@@ -66,7 +71,7 @@ func VerifyBlock(
 	}
 }
 
-func SetBlockWitness(txs []TxConstraints, isEnabled bool) (witness BlockConstraints, err error) {
+func SetBlockWitness(txs []TxConstraints) (witness BlockConstraints, err error) {
 	for i := 0; i < len(txs); i++ {
 		witness.Txs[i] = txs[i]
 	}
