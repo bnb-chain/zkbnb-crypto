@@ -165,5 +165,5 @@ func init() {
 	H, _ = MapToGroup(SeedH)
 	U, _ = MapToGroup(SeedU)
 	// set log info
-	log.SetFlags(log.Lshortfile | log.Ldate | log.Lmicroseconds)
+	log.SetFlags(log.Llongfile | log.Ldate | log.Lmicroseconds)
 }
