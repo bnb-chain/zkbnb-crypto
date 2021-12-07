@@ -52,6 +52,8 @@ type AddLiquidityProofConstraints struct {
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
 	C_fee                 ElGamalEncConstraints
+	C_fee_DeltaForFrom    ElGamalEncConstraints
+	C_fee_DeltaForGas     ElGamalEncConstraints
 	T_fee                 Point
 	GasFeeAssetId         Variable
 	GasFee                Variable
@@ -77,7 +79,7 @@ func (circuit AddLiquidityProofConstraints) Define(curveID ecc.ID, api API) erro
 		return err
 	}
 	tool := NewEccTool(api, params)
-	VerifyAddLiquidityProof(tool, api, circuit, hFunc, H)
+	VerifyAddLiquidityProof(tool, api, &circuit, hFunc, H)
 
 	return nil
 }
@@ -85,7 +87,7 @@ func (circuit AddLiquidityProofConstraints) Define(curveID ecc.ID, api API) erro
 func VerifyAddLiquidityProof(
 	tool *EccTool,
 	api API,
-	proof AddLiquidityProofConstraints,
+	proof *AddLiquidityProofConstraints,
 	hFunc MiMC,
 	h Point,
 ) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
@@ -118,7 +120,7 @@ func VerifyAddLiquidityProof(
 	// compute challenge
 	c = hFunc.Sum()
 	// verify params
-	verifyAddLiquidityParams(api, proof, tool, h)
+	verifyAddLiquidityParams(api, *proof, tool, h)
 	// verify enc
 	l1 := tool.ScalarMul(proof.Pk_u, proof.Z_rDelta_LP)
 	r1 := tool.Add(proof.A_CLPL_Delta, tool.ScalarMul(proof.C_LP_Delta.CL, c))
@@ -136,11 +138,14 @@ func VerifyAddLiquidityProof(
 	// if same, check params
 	IsElGamalEncEqual(api, isSameAssetA, proof.C_uA, proof.C_fee)
 	IsPointEqual(api, isSameAssetA, proof.A_T_uAC_uARPrimeInv, proof.A_T_feeC_feeRPrimeInv)
+	C_uA_Delta := proof.C_uA_Delta
+	C_uB_Delta := proof.C_uB_Delta
 	deltaFee := tool.ScalarMul(hNeg, proof.GasFee)
 	deltaA := SelectPoint(api, isSameAssetA, deltaFee, zeroPoint(api))
 	deltaB := SelectPoint(api, isSameAssetB, deltaFee, zeroPoint(api))
-	C_uAPrime := tool.EncAdd(proof.C_uA, proof.C_uA_Delta)
-	C_uAPrime.CR = tool.Add(C_uAPrime.CR, deltaA)
+	C_uA_Delta.CR = tool.Add(C_uA_Delta.CR, deltaA)
+	C_uB_Delta.CR = tool.Add(C_uB_Delta.CR, deltaB)
+	C_uAPrime := tool.EncAdd(proof.C_uA, C_uA_Delta)
 	C_uAPrimeNeg := tool.NegElgamal(C_uAPrime)
 	//l3 := tool.Add(
 	//	tool.ScalarBaseMul(proof.Z_bar_r_A),
@@ -157,7 +162,7 @@ func VerifyAddLiquidityProof(
 	//	),
 	//)
 	//IsPointEqual(api, proof.IsEnabled, l3, r3)
-	C_uBPrime := tool.EncAdd(proof.C_uB, proof.C_uB_Delta)
+	C_uBPrime := tool.EncAdd(proof.C_uB, C_uB_Delta)
 	C_uBPrime.CR = tool.Add(C_uBPrime.CR, deltaB)
 	C_uBPrimeNeg := tool.NegElgamal(C_uBPrime)
 	//l4 := tool.Add(
@@ -176,8 +181,11 @@ func VerifyAddLiquidityProof(
 	//)
 	//IsPointEqual(api, proof.IsEnabled, l4, r4)
 	// fee
-	C_feeRPrime := tool.Add(proof.C_fee.CR, deltaFee)
-	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
+	C_fee_DeltaForFrom := ElGamalEncConstraints{CL: tool.ZeroPoint(), CR: deltaFee}
+	C_fee_DeltaForGas := ElGamalEncConstraints{CL: C_fee_DeltaForFrom.CL, CR: tool.Neg(C_fee_DeltaForFrom.CR)}
+	C_fee_DeltaForFrom = SelectElgamal(api, isSameAssetA, C_uA_Delta, C_fee_DeltaForFrom)
+	C_fee_DeltaForFrom = SelectElgamal(api, isSameAssetB, C_uB_Delta, C_fee_DeltaForFrom)
+	C_feePrime := tool.EncAdd(proof.C_fee, C_fee_DeltaForFrom)
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	C_feePrimeNeg = SelectElgamal(api, isSameAssetA, C_uAPrimeNeg, C_feePrimeNeg)
 	C_feePrimeNeg = SelectElgamal(api, isSameAssetB, C_uBPrimeNeg, C_feePrimeNeg)
@@ -207,6 +215,11 @@ func VerifyAddLiquidityProof(
 	for i := 2; i < MaxRangeProofCount; i++ {
 		tProofs[i] = tProofs[0]
 	}
+	// set proof deltas
+	proof.C_uA_Delta = C_uA_Delta
+	proof.C_uB_Delta = C_uB_Delta
+	proof.C_fee_DeltaForFrom = C_fee_DeltaForFrom
+	proof.C_fee_DeltaForGas = C_fee_DeltaForGas
 	return c, pkProofs, tProofs
 }
 
@@ -299,7 +312,8 @@ func SetEmptyAddLiquidityProofWitness() (witness AddLiquidityProofConstraints) {
 	witness.T_fee, _ = SetPointWitness(BasePoint)
 	witness.GasFeeAssetId.Assign(ZeroInt)
 	witness.GasFee.Assign(ZeroInt)
-
+	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
 }
@@ -420,6 +434,8 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	}
 	witness.GasFeeAssetId.Assign(uint64(proof.GasFeeAssetId))
 	witness.GasFee.Assign(proof.GasFee)
+	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

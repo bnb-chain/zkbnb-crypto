@@ -34,10 +34,11 @@ type TransferProofConstraints struct {
 	A_sum Point
 	Z_sum Variable
 	// challenges
-	C1, C2    Variable
-	GasFee    Variable
-	AssetId   Variable
-	IsEnabled Variable
+	C1, C2            Variable
+	GasFee            Variable
+	C_fee_DeltaForGas ElGamalEncConstraints
+	AssetId           Variable
+	IsEnabled         Variable
 }
 
 /*
@@ -82,7 +83,7 @@ func (circuit TransferProofConstraints) Define(curveID ecc.ID, api API) error {
 		return err
 	}
 	tool := NewEccTool(api, params)
-	VerifyTransferProof(tool, api, circuit, hFunc, H)
+	VerifyTransferProof(tool, api, &circuit, hFunc, H)
 	return nil
 }
 
@@ -95,7 +96,7 @@ func (circuit TransferProofConstraints) Define(curveID ecc.ID, api API) error {
 func VerifyTransferProof(
 	tool *EccTool,
 	api API,
-	proof TransferProofConstraints,
+	proof *TransferProofConstraints,
 	hFunc MiMC,
 	h Point,
 ) (c2 Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
@@ -204,6 +205,10 @@ func VerifyTransferProof(
 		//	),
 		//)
 		//IsPointEqual(api, proof.IsEnabled, l5, r5)
+	}
+	proof.C_fee_DeltaForGas = ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: tool.ScalarMul(h, proof.GasFee),
 	}
 	return c2, pkProofs, tProofs
 }
@@ -317,6 +322,7 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 		witness.SubProofs[i] = subProofWitness
 	}
 	witness.AssetId.Assign(ZeroInt)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
 }
@@ -439,6 +445,7 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 		witness.SubProofs[i] = subProofWitness
 	}
 	witness.AssetId.Assign(uint64(proof.AssetId))
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

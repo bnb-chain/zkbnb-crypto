@@ -65,6 +65,8 @@ type SwapProofConstraints struct {
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
 	C_fee                 ElGamalEncConstraints
+	C_fee_DeltaForFrom    ElGamalEncConstraints
+	C_fee_DeltaForGas     ElGamalEncConstraints
 	T_fee                 Point
 	GasFeeAssetId         Variable
 	GasFee                Variable
@@ -90,7 +92,7 @@ func (circuit SwapProofConstraints) Define(curveID ecc.ID, api API) error {
 		return err
 	}
 	tool := NewEccTool(api, params)
-	VerifySwapProof(tool, api, circuit, hFunc, H)
+	VerifySwapProof(tool, api, &circuit, hFunc, H)
 
 	return nil
 }
@@ -104,7 +106,7 @@ func (circuit SwapProofConstraints) Define(curveID ecc.ID, api API) error {
 func VerifySwapProof(
 	tool *EccTool,
 	api API,
-	proof SwapProofConstraints,
+	proof *SwapProofConstraints,
 	hFunc MiMC,
 	h Point,
 ) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
@@ -131,7 +133,7 @@ func VerifySwapProof(
 	// compute challenge
 	c = hFunc.Sum()
 	// verify params
-	verifySwapParams(api, proof, proof.IsEnabled, tool, h)
+	verifySwapParams(api, *proof, proof.IsEnabled, tool, h)
 	// verify ownership
 	var l1, r1 Point
 	l1 = tool.ScalarBaseMul(proof.Z_sk_u)
@@ -145,20 +147,30 @@ func VerifySwapProof(
 	// if same, check params
 	IsElGamalEncEqual(api, isSameAsset, proof.C_uA, proof.C_fee)
 	IsPointEqual(api, isSameAsset, proof.A_T_uAC_uARPrimeInv, proof.A_T_feeC_feeRPrimeInv)
-	C_uAPrime := tool.EncAdd(proof.C_uA, proof.C_uA_Delta)
+	C_uA_Delta := proof.C_uA_Delta
+	// compute fee delta
 	deltaFee := tool.ScalarMul(hNeg, proof.GasFee)
+	// compute A delta
 	deltaA := SelectPoint(api, isSameAsset, deltaFee, zeroPoint(api))
-	C_uAPrime.CR = tool.Add(C_uAPrime.CR, deltaA)
+	C_uA_Delta.CR = tool.Add(C_uA_Delta.CR, deltaA)
+	C_uAPrime := tool.EncAdd(proof.C_uA, proof.C_uA_Delta)
 	C_uAPrimeNeg := tool.NegElgamal(C_uAPrime)
+	// set proof delta
+	proof.C_uA_Delta = C_uA_Delta
 	//var l3, r3 Point
 	//l3 = tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_A), tool.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv))
 	//r3 = tool.Add(proof.A_T_uAC_uARPrimeInv, tool.ScalarMul(tool.Add(proof.T_uA, C_uAPrimeNeg.CR), c))
 	//IsPointEqual(api, proof.IsEnabled, l3, r3)
 	// fee
-	C_feeRPrime := tool.Add(proof.C_fee.CR, deltaFee)
-	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
+	C_fee_DeltaForFrom := ElGamalEncConstraints{CL: tool.ZeroPoint(), CR: deltaFee}
+	C_fee_DeltaForGas := ElGamalEncConstraints{CL: C_fee_DeltaForFrom.CL, CR: tool.Neg(C_fee_DeltaForFrom.CR)}
+	C_fee_DeltaForFrom = SelectElgamal(api, isSameAsset, C_uA_Delta, C_fee_DeltaForFrom)
+	C_feePrime := tool.EncAdd(proof.C_fee, C_fee_DeltaForFrom)
+	C_feePrime = SelectElgamal(api, isSameAsset, C_uAPrime, C_feePrime)
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
-	C_feePrimeNeg = SelectElgamal(api, isSameAsset, C_uAPrimeNeg, C_feePrimeNeg)
+	// set proof deltas
+	proof.C_fee_DeltaForFrom = C_fee_DeltaForFrom
+	proof.C_fee_DeltaForGas = C_fee_DeltaForGas
 	//var l4, r4 Point
 	//l4 = tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_fee), tool.ScalarMul(C_feePrimeNeg.CL, proof.Z_sk_uInv))
 	//r4 = tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(tool.Add(proof.T_fee, C_feePrimeNeg.CR), c))
@@ -225,6 +237,8 @@ func SetEmptySwapProofWitness() (witness SwapProofConstraints) {
 	witness.T_fee, _ = SetPointWitness(BasePoint)
 	witness.GasFeeAssetId.Assign(ZeroInt)
 	witness.GasFee.Assign(ZeroInt)
+	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
 }
@@ -338,6 +352,8 @@ func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapP
 	}
 	witness.GasFeeAssetId.Assign(uint64(proof.GasFeeAssetId))
 	witness.GasFee.Assign(proof.GasFee)
+	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

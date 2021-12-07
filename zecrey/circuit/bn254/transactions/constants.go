@@ -116,12 +116,14 @@ const (
 	AddLiquidityFromAccountAssetB   = 1
 	AddLiquidityFromAccountGasAsset = 2
 	AddLiquidityPoolAccount         = 1
+	AddLiquidityGasAccount          = 2
 	// remove liquidity related account index
 	RemoveLiquidityFromAccount         = 0
 	RemoveLiquidityFromAccountAssetA   = 0
 	RemoveLiquidityFromAccountAssetB   = 1
 	RemoveLiquidityFromAccountGasAsset = 2
 	RemoveLiquidityPoolAccount         = 1
+	RemoveLiquidityGasAccount          = 2
 	// withdraw related account index
 	WithdrawFromAccount         = 0
 	WithdrawFromAccountAsset    = 0

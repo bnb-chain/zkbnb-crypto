@@ -43,10 +43,13 @@ type WithdrawProofConstraints struct {
 	ReceiveAddr Variable
 	AssetId     Variable
 	ChainId     Variable
+	C_Delta     ElGamalEncConstraints
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
 	C_fee                 ElGamalEncConstraints
+	C_fee_DeltaForFrom    ElGamalEncConstraints
+	C_fee_DeltaForGas     ElGamalEncConstraints
 	T_fee                 Point
 	GasFeeAssetId         Variable
 	GasFee                Variable
@@ -100,15 +103,15 @@ func VerifyWithdrawProof(
 	)
 	hNeg.Neg(api, &h)
 	deltaBalance := api.Add(proof.BStar, deltaFee)
-	CRDelta := tool.ScalarMul(hNeg, deltaBalance)
-	CPrimeR := tool.Add(proof.C.CR, CRDelta)
+	CRDeltaR := tool.ScalarMul(hNeg, deltaBalance)
+	CPrimeR := tool.Add(proof.C.CR, CRDeltaR)
 	CPrime := ElGamalEncConstraints{
 		CL: proof.C.CL,
 		CR: CPrimeR,
 	}
 	CPrimeNeg := tool.NegElgamal(CPrime)
-	C_feeDelta := tool.ScalarMul(hNeg, proof.GasFee)
-	C_feeRPrime := tool.Add(proof.C_fee.CR, C_feeDelta)
+	C_feeDeltaR := tool.ScalarMul(hNeg, proof.GasFee)
+	C_feeRPrime := tool.Add(proof.C_fee.CR, C_feeDeltaR)
 	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	hFunc.Write(FixedCurveParam(api))
@@ -157,25 +160,6 @@ func VerifyWithdrawProof(
 	return c, pkProofs, tProofs
 }
 
-/*
-	verifyBalance verify the remaining balance is positive
-	@api: the constraint system
-	@pk,CLprimeInv,TDivCRprime: public inputs
-	@A_pk,A_TDivCRprime: the random commitment
-	@z_sk, z_skInv, z_rbar: the response value
-	@params: params for the curve tebn254
-*/
-func verifyBalance(
-	api API,
-	pk, A_pk, CLprimeInv, TDivCRprime, A_TDivCRprime Point,
-	c Variable,
-	z_sk, z_skInv, z_rbar Variable,
-	isEnabled Variable,
-	params twistededwards.EdCurve,
-) {
-
-}
-
 func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
 
 	// commitments
@@ -192,6 +176,7 @@ func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.ReceiveAddr.Assign(ZeroInt)
 	witness.AssetId.Assign(ZeroInt)
+	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, _ = SetPointWitness(BasePoint)
 	witness.Z_bar_r_fee.Assign(ZeroInt)
@@ -199,6 +184,8 @@ func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
 	witness.T_fee, _ = SetPointWitness(BasePoint)
 	witness.GasFeeAssetId.Assign(ZeroInt)
 	witness.GasFee.Assign(ZeroInt)
+	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
 }
@@ -250,6 +237,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	witness.ReceiveAddr.Assign(proof.ReceiveAddr)
 	witness.AssetId.Assign(uint64(proof.AssetId))
 	witness.ChainId.Assign(uint64(proof.ChainId))
+	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
 	if err != nil {
@@ -271,6 +259,8 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	//	return witness, err
 	//}
 	// common inputs
+	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

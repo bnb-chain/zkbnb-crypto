@@ -45,6 +45,8 @@ type UnlockProofConstraints struct {
 	T_fee                 Point
 	GasFeeAssetId         Variable
 	GasFee                Variable
+	C_fee_DeltaForGas     ElGamalEncConstraints
+	C_fee_DeltaForFrom    ElGamalEncConstraints
 	IsEnabled             Variable
 }
 
@@ -66,14 +68,14 @@ func (circuit UnlockProofConstraints) Define(curveID ecc.ID, api API) error {
 		Y: api.Constant(HY),
 	}
 	tool := NewEccTool(api, params)
-	VerifyUnlockProof(tool, api, circuit, hFunc, H)
+	VerifyUnlockProof(tool, api, &circuit, hFunc, H)
 	return nil
 }
 
 func VerifyUnlockProof(
 	tool *EccTool,
 	api API,
-	proof UnlockProofConstraints,
+	proof *UnlockProofConstraints,
 	hFunc MiMC,
 	h Point,
 ) (
@@ -108,6 +110,14 @@ func VerifyUnlockProof(
 	//r2 := tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(tool.Add(proof.T_fee, C_feePrimeNeg.CR), c))
 	//IsPointEqual(api, proof.IsEnabled, l2, r2)
 	// set common parts
+	proof.C_fee_DeltaForGas = ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: C_feeDelta,
+	}
+	proof.C_fee_DeltaForFrom = ElGamalEncConstraints{
+		CL: proof.C_fee_DeltaForGas.CL,
+		CR: tool.Neg(proof.C_fee_DeltaForGas.CR),
+	}
 	pkProofs[0] = SetPkProof(proof.Pk, proof.A_pk, proof.Z_sk, proof.Z_skInv)
 	for i := 1; i < MaxRangeProofCount; i++ {
 		pkProofs[i] = pkProofs[0]
@@ -136,6 +146,8 @@ func SetEmptyUnlockProofWitness() (witness UnlockProofConstraints) {
 	witness.T_fee, _ = SetPointWitness(BasePoint)
 	witness.GasFeeAssetId.Assign(ZeroInt)
 	witness.GasFee.Assign(ZeroInt)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
 }
@@ -189,6 +201,8 @@ func SetUnlockProofWitness(proof *zecrey.UnlockProof, isEnabled bool) (witness U
 	}
 	witness.GasFeeAssetId.Assign(uint64(proof.GasFeeAssetId))
 	witness.GasFee.Assign(proof.GasFee)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }
