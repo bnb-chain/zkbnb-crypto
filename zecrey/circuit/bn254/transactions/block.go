@@ -66,7 +66,7 @@ func VerifyBlock(
 	h Point,
 ) {
 	for i := 0; i < len(block.Txs); i++ {
-		VerifyTransaction(tool, api, block.Txs[i], hFunc, h)
+		VerifyTransaction(tool, api, block.Txs[i], hFunc, h, h, api.Constant(0))
 		hFunc.Reset()
 	}
 }

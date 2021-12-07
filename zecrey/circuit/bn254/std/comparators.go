@@ -40,6 +40,10 @@ func IsPointEqual(api API, isEnabled Variable, p1, p2 Point) {
 	api.AssertIsEqual(p1.Y, p2.Y)
 }
 
+func GetPointNotEqualFlag(api API, a, b Point) Variable {
+	return api.IsZero(api.And(api.IsZero(api.Sub(a.X, b.X)), api.IsZero(api.Sub(a.Y, b.Y))))
+}
+
 /*
 	IsElGamalEncEqual: check if two ElGamalEnc are equal, will force equal if isEnabled = false
 */

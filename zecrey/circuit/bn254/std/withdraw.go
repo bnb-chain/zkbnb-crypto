@@ -75,7 +75,7 @@ func (circuit WithdrawProofConstraints) Define(curveID ecc.ID, api API) error {
 		return err
 	}
 	tool := NewEccTool(api, params)
-	VerifyWithdrawProof(tool, api, circuit, hFunc, H)
+	VerifyWithdrawProof(tool, api, &circuit, hFunc, H)
 	return nil
 }
 
@@ -88,7 +88,7 @@ func (circuit WithdrawProofConstraints) Define(curveID ecc.ID, api API) error {
 func VerifyWithdrawProof(
 	tool *EccTool,
 	api API,
-	proof WithdrawProofConstraints,
+	proof *WithdrawProofConstraints,
 	hFunc MiMC,
 	h Point,
 ) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
@@ -97,22 +97,28 @@ func VerifyWithdrawProof(
 	isSameAsset := api.IsZero(assetIdDiff)
 	IsElGamalEncEqual(api, isSameAsset, proof.C, proof.C_fee)
 	IsPointEqual(api, isSameAsset, proof.A_TDivCRprime, proof.A_T_feeC_feeRPrimeInv)
-	deltaFee := api.Select(isSameAsset, proof.GasFee, api.Constant(0))
+	deltaFeeForFrom := api.Select(isSameAsset, proof.GasFee, api.Constant(0))
 	var (
 		hNeg Point
 	)
 	hNeg.Neg(api, &h)
-	deltaBalance := api.Add(proof.BStar, deltaFee)
-	CRDeltaR := tool.ScalarMul(hNeg, deltaBalance)
-	CPrimeR := tool.Add(proof.C.CR, CRDeltaR)
-	CPrime := ElGamalEncConstraints{
-		CL: proof.C.CL,
-		CR: CPrimeR,
+	deltaBalance := api.Add(proof.BStar, deltaFeeForFrom)
+	C_Delta := ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: tool.ScalarMul(hNeg, deltaBalance),
 	}
+	CPrime := tool.EncAdd(proof.C, C_Delta)
 	CPrimeNeg := tool.NegElgamal(CPrime)
-	C_feeDeltaR := tool.ScalarMul(hNeg, proof.GasFee)
-	C_feeRPrime := tool.Add(proof.C_fee.CR, C_feeDeltaR)
-	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
+	C_fee_DeltaForGas := ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: tool.ScalarMul(h, proof.GasFee),
+	}
+	C_fee_DeltaForFrom := ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: tool.Neg(C_fee_DeltaForGas.CR),
+	}
+	C_fee_DeltaForFrom = SelectElgamal(api, isSameAsset, C_Delta, C_fee_DeltaForFrom)
+	C_feePrime := tool.EncAdd(proof.C_fee, C_fee_DeltaForFrom)
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	hFunc.Write(FixedCurveParam(api))
 	hFunc.Write(proof.ReceiveAddr)
@@ -157,6 +163,10 @@ func VerifyWithdrawProof(
 	for i := 1; i < MaxRangeProofCount; i++ {
 		tProofs[i] = tProofs[0]
 	}
+	// set proof deltas
+	proof.C_Delta = C_Delta
+	proof.C_fee_DeltaForGas = C_fee_DeltaForGas
+	proof.C_fee_DeltaForFrom = C_fee_DeltaForFrom
 	return c, pkProofs, tProofs
 }
 
