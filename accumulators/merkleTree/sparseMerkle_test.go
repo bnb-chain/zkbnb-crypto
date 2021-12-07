@@ -21,8 +21,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
-	"strconv"
 	"testing"
 	"time"
 	"zecrey-crypto/hash/bn254/zmimc"
@@ -36,7 +36,7 @@ func mockState(size int) [][]byte {
 	h := zmimc.Hmimc
 	for i := 0; i < size; i++ {
 		h.Reset()
-		h.Write([]byte(strconv.Itoa(i)))
+		//h.Write([]byte(strconv.Itoa(i)))
 		hashState = append(hashState, h.Sum([]byte{}))
 	}
 	return hashState
@@ -48,30 +48,34 @@ func toString(buf []byte) string {
 
 func TestNewTree(t *testing.T) {
 	elapse := time.Now()
-	hashState := mockState(131072)
+	hashState := mockState(32)
 	fmt.Println(time.Since(elapse))
 	leaves := CreateLeaves(hashState)
 	elapse = time.Now()
 	h := mimc.NewMiMC(SEED)
+	nilHash := h.Sum([]byte{})
+	fmt.Println("nil hash:", common.Bytes2Hex(nilHash))
+	h.Reset()
 	tree, err := NewTree(leaves, h)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println("build tree time:", time.Since(elapse))
-	fmt.Println(tree.Height)
-	fmt.Println(toString(tree.Root))
+	fmt.Println("height:", tree.Height)
+	fmt.Println("root:", toString(tree.Root))
 	fmt.Println(tree.RootNode.Left.Height)
 	fmt.Println(tree.RootNode.Right.Right)
 	fmt.Println(tree.RootNode.Left.Parent.Value)
 	elapse = time.Now()
-	merkleProofs, helperMerkleProofs, err := tree.BuildMerkleProofs(473)
+	merkleProofs, helperMerkleProofs, err := tree.BuildMerkleProofs(0)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println("build proofs time:", time.Since(elapse))
 	res := tree.VerifyMerkleProofs(merkleProofs, helperMerkleProofs)
+	fmt.Println("merkle proof helper:", helperMerkleProofs)
 	assert.Equal(t, res, true, "build merkle proofs successfully")
-	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(32)
+	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,11 +83,11 @@ func TestNewTree(t *testing.T) {
 	assert.Equal(t, res, true, "build merkle proofs successfully")
 	h.Reset()
 	h.Write([]byte("modify"))
-	err = tree.UpdateNode(32, h.Sum([]byte{}))
+	err = tree.UpdateNode(2, h.Sum([]byte{}))
 	if err != nil {
 		t.Fatal(err)
 	}
-	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(32)
+	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(2)
 	if err != nil {
 		t.Fatal(err)
 	}

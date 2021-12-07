@@ -39,7 +39,7 @@ func ProveUnlock() js.Func {
 		// parse segmentInfo: []TransferSegment
 		segment, errStr := FromUnlockSegmentJSON(segmentInfoStr)
 		if errStr != Success {
-			log.Println("[FromUnlockSegmentJSON] err info:",errStr)
+			log.Println("[FromUnlockSegmentJSON] err info:", errStr)
 			return errStr
 		}
 		proof, err := zecrey.ProveUnlock(
@@ -47,7 +47,7 @@ func ProveUnlock() js.Func {
 			segment.C_fee, segment.B_fee, segment.GasFeeAssetId, segment.GasFee,
 		)
 		if err != nil {
-			log.Println("[FromUnlockSegmentJSON] err info:",err)
+			log.Println("[FromUnlockSegmentJSON] err info:", err)
 			return ErrProveUnlock
 		}
 		tx := &UnlockTxInfo{
@@ -56,6 +56,7 @@ func ProveUnlock() js.Func {
 			AssetId:       segment.AssetId,
 			GasFeeAssetId: segment.GasFeeAssetId,
 			GasFee:        segment.GasFee,
+			DeltaAmount:   segment.DeltaAmount,
 			// unlock proof
 			Proof: proof.String(),
 		}

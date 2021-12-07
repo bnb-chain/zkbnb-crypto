@@ -34,10 +34,11 @@ type TransferProofConstraints struct {
 	A_sum Point
 	Z_sum Variable
 	// challenges
-	C1, C2    Variable
-	GasFee    Variable
-	AssetId   Variable
-	IsEnabled Variable
+	C1, C2            Variable
+	GasFee            Variable
+	C_fee_DeltaForGas ElGamalEncConstraints
+	AssetId           Variable
+	IsEnabled         Variable
 }
 
 /*
@@ -82,7 +83,7 @@ func (circuit TransferProofConstraints) Define(curveID ecc.ID, api API) error {
 		return err
 	}
 	tool := NewEccTool(api, params)
-	VerifyTransferProof(tool, api, circuit, hFunc, H)
+	VerifyTransferProof(tool, api, &circuit, hFunc, H)
 	return nil
 }
 
@@ -95,7 +96,7 @@ func (circuit TransferProofConstraints) Define(curveID ecc.ID, api API) error {
 func VerifyTransferProof(
 	tool *EccTool,
 	api API,
-	proof TransferProofConstraints,
+	proof *TransferProofConstraints,
 	hFunc MiMC,
 	h Point,
 ) (c2 Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
@@ -105,17 +106,17 @@ func VerifyTransferProof(
 	// write into buf
 	hFunc.Write(proof.GasFee)
 	hFunc.Write(proof.AssetId)
-	writePointIntoBuf(&hFunc, proof.A_sum)
+	WritePointIntoBuf(&hFunc, proof.A_sum)
 	for _, subProof := range proof.SubProofs {
 		// write common inputs into buf
-		writeEncIntoBuf(&hFunc, subProof.C)
-		writeEncIntoBuf(&hFunc, subProof.CDelta)
-		writePointIntoBuf(&hFunc, subProof.Y)
-		writePointIntoBuf(&hFunc, subProof.T)
-		writePointIntoBuf(&hFunc, subProof.Pk)
+		WriteEncIntoBuf(&hFunc, subProof.C)
+		WriteEncIntoBuf(&hFunc, subProof.CDelta)
+		WritePointIntoBuf(&hFunc, subProof.Y)
+		WritePointIntoBuf(&hFunc, subProof.T)
+		WritePointIntoBuf(&hFunc, subProof.Pk)
 		// write into buf
-		writePointIntoBuf(&hFunc, subProof.A_CLDelta)
-		writePointIntoBuf(&hFunc, subProof.A_CRDelta)
+		WritePointIntoBuf(&hFunc, subProof.A_CLDelta)
+		WritePointIntoBuf(&hFunc, subProof.A_CRDelta)
 		CR_sum = tool.Add(CR_sum, subProof.CDelta.CR)
 		// verify range proof params
 		//IsPointEqual(api, proof.IsEnabled, subProof.BStarRangeProof.A, subProof.Y)
@@ -204,6 +205,10 @@ func VerifyTransferProof(
 		//	),
 		//)
 		//IsPointEqual(api, proof.IsEnabled, l5, r5)
+	}
+	proof.C_fee_DeltaForGas = ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: tool.ScalarMul(h, proof.GasFee),
 	}
 	return c2, pkProofs, tProofs
 }
@@ -317,6 +322,7 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 		witness.SubProofs[i] = subProofWitness
 	}
 	witness.AssetId.Assign(ZeroInt)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
 }
@@ -439,6 +445,7 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 		witness.SubProofs[i] = subProofWitness
 	}
 	witness.AssetId.Assign(uint64(proof.AssetId))
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

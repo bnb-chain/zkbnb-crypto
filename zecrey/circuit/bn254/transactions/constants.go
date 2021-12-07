@@ -28,12 +28,16 @@ import (
 )
 
 type (
+	EccTool = std.EccTool
+
 	Point                 = twistededwards.Point
 	Variable              = frontend.Variable
 	API                   = frontend.API
 	ElGamalEncConstraints = std.ElGamalEncConstraints
 	MiMC                  = mimc.MiMC
 
+	DepositOrLockTx      = std.DepositOrLockTx
+	UnlockProof          = zecrey.UnlockProof
 	TransferProof        = zecrey.TransferProof
 	SwapProof            = zecrey.SwapProof
 	AddLiquidityProof    = zecrey.AddLiquidityProof
@@ -41,6 +45,7 @@ type (
 	WithdrawProof        = zecrey.WithdrawProof
 
 	CtRangeProofConstraints         = std.CtRangeProofConstraints
+	DepositOrLockTxConstraints      = std.DepositOrLockTxConstraints
 	UnlockProofConstraints          = std.UnlockProofConstraints
 	TransferProofConstraints        = std.TransferProofConstraints
 	SwapProofConstraints            = std.SwapProofConstraints
@@ -50,15 +55,25 @@ type (
 )
 
 const (
-	MaxRangeProofCount    = 3
-	NbTxs                 = 20
-	AccountMerkleLevels   = std.AccountMerkleLevels
-	NbTransferCount       = std.NbTransferCount
-	NbTransferCountAndFee = NbTransferCount + 1
-	NbSwapCount           = 2
-	NbSwapCountAndFee     = NbSwapCount + 1
-	NbWithdrawCountAndFee = 2
-	BalanceMerkleLevels   = 16
+	MaxRangeProofCount            = 3
+	NbTxsCountHalf                = 70
+	NbTxsCountFull                = 140
+	NbAccountsPerTx               = 4
+	NbAccountAssetsPerAccount     = 3
+	AccountMerkleLevels           = 32
+	AccountMerkleHelperLevels     = AccountMerkleLevels - 1
+	AssetMerkleLevels             = 16
+	AssetMerkleHelperLevels       = AssetMerkleLevels - 1
+	LockedAssetMerkleLevels       = 16
+	LockedAssetMerkleHelperLevels = LockedAssetMerkleLevels - 1
+	LiquidityMerkleLevels         = 16
+	LiquidityMerkleHelperLevels   = LiquidityMerkleLevels - 1
+	NbTransferCount               = std.NbTransferCount
+	NbTransferCountAndFee         = NbTransferCount + 1
+	NbSwapCount                   = 2
+	NbSwapCountAndFee             = NbSwapCount + 1
+	NbWithdrawCountAndFee         = 2
+	BalanceMerkleLevels           = 16
 
 	// size
 	PointSize   = curve.PointSize
@@ -74,4 +89,44 @@ const (
 	TxTypeAddLiquidity    = 6
 	TxTypeRemoveLiquidity = 7
 	TxTypeWithdraw        = 8
+
+	// unlock related account index
+	UnlockFromAccount            = 0
+	UnlockFromAccountUnlockAsset = 0
+	UnlockFromAccountGasAsset    = 1
+	UnlockGasAccount             = 1
+	UnlockGasAccountGasAsset     = 0
+	// transfer related account index
+	TransferAccountTransferAsset = 0
+	TransferAccountA             = 0
+	TransferAccountB             = 1
+	TransferAccountC             = 2
+	TransferGasAccount           = 3
+	// swap related account index
+	SwapFromAccount         = 0
+	SwapFromAccountAssetA   = 0
+	SwapFromAccountAssetB   = 1
+	SwapFromAccountGasAsset = 2
+	SwapPoolAccount         = 1
+	SwapTreasuryAccount     = 2
+	SwapGasAccount          = 3
+	// add liquidity related account index
+	AddLiquidityFromAccount         = 0
+	AddLiquidityFromAccountAssetA   = 0
+	AddLiquidityFromAccountAssetB   = 1
+	AddLiquidityFromAccountGasAsset = 2
+	AddLiquidityPoolAccount         = 1
+	AddLiquidityGasAccount          = 2
+	// remove liquidity related account index
+	RemoveLiquidityFromAccount         = 0
+	RemoveLiquidityFromAccountAssetA   = 0
+	RemoveLiquidityFromAccountAssetB   = 1
+	RemoveLiquidityFromAccountGasAsset = 2
+	RemoveLiquidityPoolAccount         = 1
+	RemoveLiquidityGasAccount          = 2
+	// withdraw related account index
+	WithdrawFromAccount         = 0
+	WithdrawFromAccountAsset    = 0
+	WithdrawFromAccountGasAsset = 1
+	WithdrawGasAccount          = 1
 )

@@ -37,10 +37,8 @@ type (
 )
 
 const (
-	// TODO only for test
-	AccountMerkleLevels = 18
-	NbTransferCount     = 3
-	RangeMaxBits        = ctrange.RangeMaxBits
+	NbTransferCount = 3
+	RangeMaxBits    = ctrange.RangeMaxBits
 
 	MaxRangeProofCount = 3
 )
@@ -50,6 +48,16 @@ var (
 	HY, _          = new(big.Int).SetString("1424962496956403694866513262744390851176749772810717397211030275710635902220", 10)
 	BasePoint      = curve.G
 	ZeroInt        = uint64(0)
+	ZeroBigInt     = big.NewInt(0)
 	ZeroElgamalEnc = &ElgamalEnc{CL: BasePoint, CR: BasePoint}
+	ZeroPoint      = curve.ZeroPoint()
 	FixedCurve     = zecrey.FixedCurve
 )
+
+type PairInfoConstraints struct {
+	AssetA  Variable
+	AssetAR Variable
+	AssetB  Variable
+	AssetBR Variable
+	LpEnc   ElGamalEncConstraints
+}

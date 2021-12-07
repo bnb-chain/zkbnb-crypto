@@ -55,6 +55,8 @@ type RemoveLiquidityProofConstraints struct {
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
 	C_fee                 ElGamalEncConstraints
+	C_fee_DeltaForFrom    ElGamalEncConstraints
+	C_fee_DeltaForGas     ElGamalEncConstraints
 	T_fee                 Point
 	GasFeeAssetId         Variable
 	GasFee                Variable
@@ -80,7 +82,7 @@ func (circuit RemoveLiquidityProofConstraints) Define(curveID ecc.ID, api API) e
 		return err
 	}
 	tool := NewEccTool(api, params)
-	VerifyRemoveLiquidityProof(tool, api, circuit, hFunc, H)
+	VerifyRemoveLiquidityProof(tool, api, &circuit, hFunc, H)
 
 	return nil
 }
@@ -88,30 +90,30 @@ func (circuit RemoveLiquidityProofConstraints) Define(curveID ecc.ID, api API) e
 func VerifyRemoveLiquidityProof(
 	tool *EccTool,
 	api API,
-	proof RemoveLiquidityProofConstraints,
+	proof *RemoveLiquidityProofConstraints,
 	hFunc MiMC,
 	h Point,
 ) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	hFunc.Write(FixedCurveParam(api))
-	writePointIntoBuf(&hFunc, proof.Pk_u)
-	writeEncIntoBuf(&hFunc, proof.C_u_LP)
-	writeEncIntoBuf(&hFunc, proof.C_u_LP_Delta)
-	writePointIntoBuf(&hFunc, proof.T_uLP)
+	WritePointIntoBuf(&hFunc, proof.Pk_u)
+	WriteEncIntoBuf(&hFunc, proof.C_u_LP)
+	WriteEncIntoBuf(&hFunc, proof.C_u_LP_Delta)
+	WritePointIntoBuf(&hFunc, proof.T_uLP)
 	// write into buf
-	writePointIntoBuf(&hFunc, proof.A_CLPL_Delta)
-	writePointIntoBuf(&hFunc, proof.A_CLPR_DeltaHExp_DeltaLPNeg)
+	WritePointIntoBuf(&hFunc, proof.A_CLPL_Delta)
+	WritePointIntoBuf(&hFunc, proof.A_CLPR_DeltaHExp_DeltaLPNeg)
 	// write into buf
-	writePointIntoBuf(&hFunc, proof.A_pk_u)
-	writePointIntoBuf(&hFunc, proof.A_T_uLPC_uLPRPrimeInv)
+	WritePointIntoBuf(&hFunc, proof.A_pk_u)
+	WritePointIntoBuf(&hFunc, proof.A_T_uLPC_uLPRPrimeInv)
 	// gas fee
-	writePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
-	writeEncIntoBuf(&hFunc, proof.C_fee)
+	WritePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
+	WriteEncIntoBuf(&hFunc, proof.C_fee)
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
 	// compute challenge
 	c = hFunc.Sum()
 	// verify params
-	verifyRemoveLiquidityParams(api, proof, tool, h)
+	verifyRemoveLiquidityParams(api, *proof, tool, h)
 	// verify enc
 	var l1, r1 Point
 	l1 = tool.ScalarMul(proof.Pk_u, proof.Z_rDelta_LP)
@@ -140,8 +142,8 @@ func VerifyRemoveLiquidityProof(
 	)
 	IsPointEqual(api, proof.IsEnabled, l3, r3)
 	// verify gas fee proof
-	C_feeDelta := tool.ScalarMul(tool.Neg(h), proof.GasFee)
-	C_feeRPrime := tool.Add(proof.C_fee.CR, C_feeDelta)
+	C_feeDeltaR := tool.ScalarMul(tool.Neg(h), proof.GasFee)
+	C_feeRPrime := tool.Add(proof.C_fee.CR, C_feeDeltaR)
 	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
@@ -158,6 +160,28 @@ func VerifyRemoveLiquidityProof(
 	for i := 1; i < MaxRangeProofCount; i++ {
 		tProofs[i] = tProofs[0]
 	}
+	// set proof deltas
+	proof.C_fee_DeltaForGas = ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: tool.Neg(C_feeDeltaR),
+	}
+	C_fee_DeltaForFrom := ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: C_feeDeltaR,
+	}
+	isSameAssetA := api.IsZero(api.Sub(proof.AssetAId, proof.GasFeeAssetId))
+	isSameAssetB := api.IsZero(api.Sub(proof.AssetBId, proof.GasFeeAssetId))
+	deltaA := SelectPoint(api, isSameAssetA, C_feeDeltaR, tool.ZeroPoint())
+	deltaB := SelectPoint(api, isSameAssetB, C_feeDeltaR, tool.ZeroPoint())
+	C_uA_Delta := proof.C_uA_Delta
+	C_uB_Delta := proof.C_uB_Delta
+	C_uA_Delta.CR = tool.Add(C_uA_Delta.CR, deltaA)
+	C_uB_Delta.CR = tool.Add(C_uB_Delta.CR, deltaB)
+	proof.C_uA_Delta = C_uA_Delta
+	proof.C_uB_Delta = C_uB_Delta
+	C_fee_DeltaForFrom = SelectElgamal(api, isSameAssetA, C_uA_Delta, C_fee_DeltaForFrom)
+	C_fee_DeltaForFrom = SelectElgamal(api, isSameAssetB, C_uB_Delta, C_fee_DeltaForFrom)
+	proof.C_fee_DeltaForFrom = C_fee_DeltaForFrom
 	return c, pkProofs, tProofs
 }
 
@@ -248,6 +272,8 @@ func SetEmptyRemoveLiquidityProofWitness() (witness RemoveLiquidityProofConstrai
 	witness.T_fee, _ = SetPointWitness(BasePoint)
 	witness.GasFeeAssetId.Assign(ZeroInt)
 	witness.GasFee.Assign(ZeroInt)
+	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
 }
@@ -375,6 +401,8 @@ func SetRemoveLiquidityProofWitness(proof *zecrey.RemoveLiquidityProof, isEnable
 	}
 	witness.GasFeeAssetId.Assign(uint64(proof.GasFeeAssetId))
 	witness.GasFee.Assign(proof.GasFee)
+	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 
 	return witness, nil
