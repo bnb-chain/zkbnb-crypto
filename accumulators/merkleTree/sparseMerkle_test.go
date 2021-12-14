@@ -63,23 +63,21 @@ func TestNewTree(t *testing.T) {
 	fmt.Println("build tree time:", time.Since(elapse))
 	fmt.Println("height:", tree.Height)
 	fmt.Println("root:", toString(tree.Root))
-	fmt.Println(tree.RootNode.Left.Height)
-	fmt.Println(tree.RootNode.Right.Right)
-	fmt.Println(tree.RootNode.Left.Parent.Value)
 	elapse = time.Now()
 	merkleProofs, helperMerkleProofs, err := tree.BuildMerkleProofs(0)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println("build proofs time:", time.Since(elapse))
-	res := tree.VerifyMerkleProofs(merkleProofs, helperMerkleProofs)
 	fmt.Println("merkle proof helper:", helperMerkleProofs)
+	res := tree.VerifyMerkleProofs(merkleProofs, helperMerkleProofs)
 	assert.Equal(t, res, true, "build merkle proofs successfully")
 	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	res = tree.VerifyMerkleProofs(merkleProofs, helperMerkleProofs)
+	fmt.Println("merkle proof helper:", helperMerkleProofs)
 	assert.Equal(t, res, true, "build merkle proofs successfully")
 	h.Reset()
 	h.Write([]byte("modify"))
@@ -91,8 +89,20 @@ func TestNewTree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, res, true, "update tree and build merkle proofs successfully")
+	fmt.Println("merkle proof helper:", helperMerkleProofs)
 
+	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("merkle proof helper:", helperMerkleProofs)
+
+
+	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(4)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("merkle proof helper:", helperMerkleProofs)
 	//var oldState []byte
 	//for i := 0; i < len(hashState); i++ {
 	//	oldState = append(oldState, hashState[i]...)
