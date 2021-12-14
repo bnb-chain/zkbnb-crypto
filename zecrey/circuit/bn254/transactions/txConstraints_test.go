@@ -77,7 +77,31 @@ func TestTxConstraints_Define_Transfer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	witness, err = SetTxWitness(proof, TxTypeTransfer, true)
+	oTx := &Tx{
+		TxType:                                      TxTypeTransfer,
+		OProof:                                      proof,
+		AccountRootBefore:                           nil,
+		AccountsInfoBefore:                          [4]*Account{},
+		MerkleProofsAccountAssetsBefore:             [4][3][16][]byte{},
+		MerkleProofsHelperAccountAssetsBefore:       [4][3][15]int{},
+		MerkleProofsAccountLockedAssetsBefore:       [4][16][]byte{},
+		MerkleProofsHelperAccountLockedAssetsBefore: [4][15]int{},
+		MerkleProofsAccountLiquidityBefore:          [4][16][]byte{},
+		MerkleProofsHelperAccountLiquidityBefore:    [4][15]int{},
+		MerkleProofsAccountBefore:                   [4][32][]byte{},
+		MerkleProofsHelperAccountBefore:             [4][31]int{},
+		AccountRootAfter:                            nil,
+		AccountsInfoAfter:                           [4]*Account{},
+		MerkleProofsAccountAssetsAfter:              [4][16][]byte{},
+		MerkleProofsHelperAccountAssetsAfter:        [4][15]int{},
+		MerkleProofsAccountLockedAssetsAfter:        [4][16][]byte{},
+		MerkleProofsHelperAccountLockedAssetsAfter:  [4][15]int{},
+		MerkleProofsAccountLiquidityAfter:           [4][16][]byte{},
+		MerkleProofsHelperAccountLiquidityAfter:     [4][15]int{},
+		MerkleProofsAccountAfter:                    [4][32][]byte{},
+		MerkleProofsHelperAccountAfter:              [4][31]int{},
+	}
+	witness, err = SetTxWitness(oTx)
 	if err != nil {
 		t.Fatal(err)
 	}

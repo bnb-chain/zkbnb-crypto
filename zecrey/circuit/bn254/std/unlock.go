@@ -38,6 +38,7 @@ type UnlockProofConstraints struct {
 	AssetId     Variable
 	Balance     Variable
 	DeltaAmount Variable
+	C_Delta     ElGamalEncConstraints
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
@@ -101,8 +102,8 @@ func VerifyUnlockProof(
 	//IsPointEqual(api, proof.IsEnabled, l, r)
 	// check gas fee proof
 	hNeg := tool.Neg(h)
-	C_feeDelta := tool.ScalarMul(hNeg, proof.GasFee)
-	C_feeRPrime := tool.Add(proof.C_fee.CR, C_feeDelta)
+	C_feeDeltaR := tool.ScalarMul(hNeg, proof.GasFee)
+	C_feeRPrime := tool.Add(proof.C_fee.CR, C_feeDeltaR)
 	C_feePrime := ElGamalEncConstraints{CL: proof.C_fee.CL, CR: C_feeRPrime}
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
@@ -110,14 +111,6 @@ func VerifyUnlockProof(
 	//r2 := tool.Add(proof.A_T_feeC_feeRPrimeInv, tool.ScalarMul(tool.Add(proof.T_fee, C_feePrimeNeg.CR), c))
 	//IsPointEqual(api, proof.IsEnabled, l2, r2)
 	// set common parts
-	proof.C_fee_DeltaForGas = ElGamalEncConstraints{
-		CL: tool.ZeroPoint(),
-		CR: C_feeDelta,
-	}
-	proof.C_fee_DeltaForFrom = ElGamalEncConstraints{
-		CL: proof.C_fee_DeltaForGas.CL,
-		CR: tool.Neg(proof.C_fee_DeltaForGas.CR),
-	}
 	pkProofs[0] = SetPkProof(proof.Pk, proof.A_pk, proof.Z_sk, proof.Z_skInv)
 	for i := 1; i < MaxRangeProofCount; i++ {
 		pkProofs[i] = pkProofs[0]
@@ -126,6 +119,24 @@ func VerifyUnlockProof(
 	for i := 1; i < MaxRangeProofCount; i++ {
 		tProofs[i] = tProofs[0]
 	}
+	// set proof deltas
+	isSameAsset := api.IsZero(api.Sub(proof.AssetId, proof.GasFeeAssetId))
+	deltaFeeForFrom := api.Select(isSameAsset, proof.GasFee, api.Constant(ZeroInt))
+	deltaAmount := api.Sub(proof.DeltaAmount, deltaFeeForFrom)
+	C_Delta := ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: tool.ScalarMul(h, deltaAmount),
+	}
+	proof.C_fee_DeltaForGas = ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: tool.Neg(C_feeDeltaR),
+	}
+	C_fee_DeltaForFrom := ElGamalEncConstraints{
+		CL: tool.ZeroPoint(),
+		CR: C_feeDeltaR,
+	}
+	C_fee_DeltaForFrom = SelectElgamal(api, isSameAsset, C_Delta, C_fee_DeltaForFrom)
+	proof.C_fee_DeltaForFrom = C_fee_DeltaForFrom
 	return c, pkProofs, tProofs
 }
 
@@ -139,6 +150,7 @@ func SetEmptyUnlockProofWitness() (witness UnlockProofConstraints) {
 	witness.AssetId.Assign(ZeroInt)
 	witness.Balance.Assign(ZeroInt)
 	witness.DeltaAmount.Assign(ZeroInt)
+	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, _ = SetPointWitness(BasePoint)
 	witness.Z_bar_r_fee.Assign(ZeroInt)
@@ -185,6 +197,7 @@ func SetUnlockProofWitness(proof *zecrey.UnlockProof, isEnabled bool) (witness U
 	witness.AssetId.Assign(uint64(proof.AssetId))
 	witness.Balance.Assign(proof.Balance)
 	witness.DeltaAmount.Assign(proof.DeltaAmount)
+	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
 	if err != nil {

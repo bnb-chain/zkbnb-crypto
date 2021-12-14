@@ -58,6 +58,14 @@ type AccountLiquidityConstraints struct {
 	LpEnc     ElGamalEncConstraints
 }
 
+func IsAccountLiquidityConstraintsEqual(api API, flag Variable, a, b AccountLiquidityConstraints) {
+	std.IsVariableEqual(api, flag, a.AssetA, b.AssetA)
+	std.IsVariableEqual(api, flag, a.AssetAR, b.AssetAR)
+	std.IsVariableEqual(api, flag, a.AssetB, b.AssetB)
+	std.IsVariableEqual(api, flag, a.AssetBR, b.AssetBR)
+	std.IsElGamalEncEqual(api, flag, a.LpEnc, b.LpEnc)
+}
+
 type AccountDeltaConstraints struct {
 	AssetsDeltaInfo      [NbAccountAssetsPerAccount]ElGamalEncConstraints
 	LockedAssetDeltaInfo Variable
@@ -70,6 +78,18 @@ type AccountLiquidityDeltaConstraints struct {
 	AssetARDelta Variable
 	AssetBRDelta Variable
 	LpEncDelta   ElGamalEncConstraints
+}
+
+func ComputeNewLiquidityConstraints(api API, tool *EccTool, balance AccountLiquidityConstraints, delta AccountLiquidityDeltaConstraints) (newBalance AccountLiquidityConstraints) {
+	newBalance.AssetAId = balance.AssetAId
+	newBalance.AssetBId = balance.AssetBId
+	newBalance.PairIndex = balance.PairIndex
+	newBalance.AssetA = api.Add(balance.AssetA, delta.AssetADelta)
+	newBalance.AssetAR = api.Add(balance.AssetAR, delta.AssetARDelta)
+	newBalance.AssetB = api.Add(balance.AssetB, delta.AssetBDelta)
+	newBalance.AssetBR = api.Add(balance.AssetBR, delta.AssetBRDelta)
+	newBalance.LpEnc = tool.EncAdd(balance.LpEnc, delta.LpEncDelta)
+	return newBalance
 }
 
 func SetAccountWitness(account *Account) (witness AccountConstraints, err error) {
@@ -147,8 +167,8 @@ func SetAccountLiquidityWitness(accountLiquidity *AccountLiquidity) (witness Acc
 	witness.AssetBId.Assign(accountLiquidity.AssetBId)
 	witness.AssetA.Assign(accountLiquidity.AssetA)
 	witness.AssetAR.Assign(accountLiquidity.AssetAR)
-	witness.AssetA.Assign(accountLiquidity.AssetB)
-	witness.AssetAR.Assign(accountLiquidity.AssetBR)
+	witness.AssetB.Assign(accountLiquidity.AssetB)
+	witness.AssetBR.Assign(accountLiquidity.AssetBR)
 	witness.LpEnc, err = std.SetElGamalEncWitness(accountLiquidity.LpEnc)
 	if err != nil {
 		log.Println("[SetAccountAssetWitness] err info:", err)
