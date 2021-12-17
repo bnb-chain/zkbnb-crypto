@@ -19,23 +19,29 @@ package merkleTree
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"hash"
+	"log"
+)
+
+const (
+	Left  = 0
+	Right = 1
 )
 
 /*
 	Tree: sparse merkle tree
 */
 type Tree struct {
+	// root Node
+	RootNode *Node
 	// leaves
 	Leaves []*Node
-	// root val
-	Root []byte
-	// root node
-	RootNode *Node
-	// height
-	Height int
-	// leaves count
-	NbLeavesCount int64
+	// max height
+	MaxHeight int
+	// nil hash tree
+	NilHashValueConst [][]byte
 	// hash function
 	HashFunc hash.Hash
 }
@@ -76,92 +82,322 @@ func CreateLeaves(hashState [][]byte) []*Node {
 	return leaves
 }
 
+func (t *Tree) InitNilHashValueConst() (err error) {
+	nilHash := t.NilHashValueConst[0]
+	for i := 1; i < t.MaxHeight; i++ {
+		var (
+			nHash []byte
+		)
+		nHash = t.HashSubTrees(nilHash, nilHash)
+		t.NilHashValueConst[i] = nHash
+		nilHash = nHash
+	}
+	return err
+}
+
 /*
-	NewTree: build sparse merkle trees
-	@leaves: nodes
+	func: NewTree
+	params: leaves []*Node, maxHeight int, nilHash []byte, hFunc hash.Hash
+    desp: Use leaf nodes to initialize the tree,
+          and call the BuildTree method through the root to initialize the hash value of the entire tree
 */
-func NewTree(leaves []*Node, h hash.Hash) (*Tree, error) {
-	// leaves count should be the power of 2
-	size := int64(len(leaves))
-	if !IsPowerOfTwo(size) {
-		return nil, ErrInvalidLeavesSize
+func NewTree(leaves []*Node, maxHeight int, nilHash []byte, hFunc hash.Hash) (*Tree, error) {
+	// define variables
+	var (
+		root *Node
+	)
+	// empty tree
+	if len(leaves) == 0 {
+		root = &Node{
+			Value:  nilHash,
+			Left:   nil,
+			Right:  nil,
+			Parent: nil,
+			Height: 0,
+		}
+		return &Tree{
+			RootNode:  root,
+			Leaves:    leaves,
+			MaxHeight: 0,
+			HashFunc:  hFunc,
+		}, nil
 	}
-	// construct tree
-	rootNode := buildTree(leaves, h)
+	// construct root node
+	root = &Node{
+		Value:  nilHash,
+		Left:   nil,
+		Right:  nil,
+		Parent: nil,
+		Height: maxHeight,
+	}
+	// init nil hash values for different heights
+	nilHashValueConst := make([][]byte, maxHeight+1)
+	nilHashValueConst[0] = nilHash
+	// init tree
 	tree := &Tree{
-		Leaves:        leaves,
-		Root:          rootNode.Value,
-		RootNode:      rootNode,
-		Height:        rootNode.Height,
-		NbLeavesCount: size,
-		HashFunc:      h,
+		RootNode:          root,
+		Leaves:            leaves,
+		MaxHeight:         maxHeight,
+		NilHashValueConst: nilHashValueConst,
+		HashFunc:          hFunc,
 	}
+	err := tree.InitNilHashValueConst()
+	if err != nil {
+		errInfo := fmt.Sprintf("[smt.NewTree] InitNilHashValueConst error: %s", err.Error())
+		log.Println(errInfo)
+		return nil, errors.New(errInfo)
+	}
+
+	tree.BuildTree(tree.Leaves)
 	return tree, nil
 }
 
 /*
-	buildTree: internal function to build merkle tree
+	HashSubTrees: hash sub-tree nodes
 */
-func buildTree(nodes []*Node, h hash.Hash) *Node {
-	if len(nodes) == 1 {
-		return nodes[0]
+func (t *Tree) HashSubTrees(l []byte, r []byte) []byte {
+	t.HashFunc.Reset()
+	t.HashFunc.Write(l)
+	t.HashFunc.Write(r)
+	val := t.HashFunc.Sum([]byte{})
+	return val
+}
+
+/*
+	BuildTree: build sparse merkle tree
+*/
+func (t *Tree) BuildTree(nodes []*Node) {
+	// get to the max height
+	if len(nodes) == 0 {
+		log.Println("[BuildTree] smt BuildTree error, nodes length == 0")
+		return
+	} else {
+		if nodes[0].Height == t.MaxHeight && len(nodes) == 1 {
+			t.RootNode = nodes[0]
+			return
+		}
 	}
-	var upperNodes []*Node
+	if len(nodes)%2 != 0 {
+		nodes = append(nodes, &Node{
+			Value:  t.NilHashValueConst[nodes[0].Height],
+			Left:   nil,
+			Right:  nil,
+			Parent: nil,
+			Height: nodes[0].Height,
+		})
+	}
+	var parents []*Node
 	for i := 0; i < len(nodes); i += 2 {
-		// construct parent node
-		node := &Node{
-			Value:  sumNode(nodes[i].Value, nodes[i+1].Value, h),
+		nodes[i].Parent = &Node{
+			Value:  t.HashSubTrees(nodes[i].Value, nodes[i+1].Value),
 			Left:   nodes[i],
 			Right:  nodes[i+1],
 			Parent: nil,
 			Height: nodes[i].Height + 1,
 		}
-		// modify lower nodes
-		node.Left.Parent = node
-		node.Right.Parent = node
-		upperNodes = append(upperNodes, node)
+		nodes[i+1].Parent = nodes[i].Parent
+
+		parents = append(parents, nodes[i].Parent)
 	}
-	return buildTree(upperNodes, h)
+	t.BuildTree(parents)
 }
 
 /*
-	sumNode: compute sum of the node
+	BuildMerkleProofs: construct merkle proofs
 */
-func sumNode(l, r []byte, h hash.Hash) []byte {
-	h.Reset()
-	h.Write(l)
-	h.Write(r)
-	return h.Sum([]byte{})
-}
-
-/*
-	BuildMerkleProofs: build merkle proofs for the index
-	@index: index
-*/
-func (tree *Tree) BuildMerkleProofs(index int64) (merkleProofs [][]byte, helperMerkleProofs []int, err error) {
-	if index >= tree.NbLeavesCount || index < 0 {
-		return nil, nil, ErrInvalidIndex
+func (t *Tree) BuildMerkleProofs(index int) (
+	rMerkleProof [][]byte,
+	rProofHelper []int,
+	err error,
+) {
+	var proofs [][]byte
+	var proofHelpers []int
+	if index >= (1 << t.MaxHeight) {
+		errInfo := fmt.Sprintf("[BuildMerkleProofs] index error, index: %v is bigger than tree capacity: %v.",
+			index, 1<<t.MaxHeight)
+		log.Println(errInfo)
+		return nil, nil, errors.New(errInfo)
 	}
-	current := tree.Leaves[index]
-	merkleProofs = append(merkleProofs, current.Value)
-	i := 0
-	prev := *current
-	// get node recursively
-	for current.Parent != nil {
-		current = current.Parent
-		if bytes.Equal(current.Left.Value, prev.Value) {
-			merkleProofs = append(merkleProofs, current.Right.Value)
-			helperMerkleProofs = append(helperMerkleProofs, 0)
-		} else if bytes.Equal(current.Right.Value, prev.Value) {
-			merkleProofs = append(merkleProofs, current.Left.Value)
-			helperMerkleProofs = append(helperMerkleProofs, 1)
-		} else {
-			return nil, nil, ErrInvalidMerkleTree
+	// if index belongs to leaves
+	if index < len(t.Leaves) {
+		node := t.Leaves[index]
+		proofs = append(proofs, node.Value)
+		for node.Parent != nil {
+			if node.Parent.Left == node {
+				if node.Parent.Right == nil {
+					proofs = append(proofs, t.NilHashValueConst[node.Height])
+				} else {
+					proofs = append(proofs, node.Parent.Right.Value)
+				}
+				proofHelpers = append(proofHelpers, Left)
+			} else if node.Parent.Right == node {
+				proofs = append(proofs, node.Parent.Left.Value)
+				proofHelpers = append(proofHelpers, Right)
+			} else {
+				errInfo := fmt.Sprintf("[BuildMerkleProofs] node error, node is neither left node nor right node.")
+				log.Println(errInfo)
+				return nil, nil, errors.New(errInfo)
+			}
+			node = node.Parent
 		}
-		i++
-		prev = *current
+	} else {
+		// add itself
+		proofs = append(proofs, t.NilHashValueConst[0])
+		// get last index
+		lastIndex := len(t.Leaves) - 1
+		// get last leave node
+		node := t.Leaves[lastIndex]
+		for lastIndex+1 != index {
+			proofs = append(proofs, t.NilHashValueConst[node.Height])
+			if index%2 == 0 {
+				proofHelpers = append(proofHelpers, Right)
+			} else {
+				proofHelpers = append(proofHelpers, Left)
+			}
+			// update value
+			lastIndex /= 2
+			index /= 2
+			node = node.Parent
+		}
+		proofs = append(proofs, node.Value)
+		proofHelpers = append(proofHelpers, Left)
+		node = node.Parent
+		for node.Parent != nil {
+			if node.Parent.Left == node {
+				if node.Parent.Right == nil {
+					proofs = append(proofs, t.NilHashValueConst[node.Height])
+				} else {
+					proofs = append(proofs, node.Parent.Right.Value)
+				}
+				proofHelpers = append(proofHelpers, Left)
+			} else if node.Parent.Right == node {
+				proofs = append(proofs, node.Parent.Left.Value)
+				proofHelpers = append(proofHelpers, Right)
+			} else {
+				errInfo := fmt.Sprintf("[BuildMerkleProofs] node error, node is neither left node nor right node.")
+				log.Println(errInfo)
+				return nil, nil, errors.New(errInfo)
+			}
+			node = node.Parent
+		}
 	}
-	return merkleProofs, helperMerkleProofs, nil
+	return proofs, proofHelpers, nil
+}
+
+func (t *Tree) Update(index int, nVal []byte) (err error) {
+	if index >= 1<<t.MaxHeight {
+		log.Println("[Update] invalid index")
+		return errors.New("[Update] invalid index")
+	}
+	// index belong to leaves
+	if index < len(t.Leaves) {
+		node := t.Leaves[index]
+		node.Value = nVal
+		node = node.Parent
+		for node != nil {
+			if node.Right != nil {
+				node.Value = t.HashSubTrees(node.Left.Value, node.Right.Value)
+			} else {
+				node.Value = t.HashSubTrees(node.Left.Value, t.NilHashValueConst[node.Left.Height])
+			}
+			node = node.Parent
+		}
+	} else { // index larger than leaves
+		// that's also insert
+		if index != len(t.Leaves) {
+			return errors.New("[Update] the index should only be lastIndex+1")
+		}
+		// get last index
+		lastIndex := len(t.Leaves) - 1
+		// get last leave node
+		node := t.Leaves[lastIndex]
+		// even
+		if (index+1)%2 == 0 {
+			// construct node
+			nNode := &Node{
+				Value:  nVal,
+				Parent: node.Parent,
+				Height: 0,
+			}
+			node.Parent.Right = nNode
+			t.Leaves = append(t.Leaves, nNode)
+			node = node.Parent
+			for node != nil {
+				if node.Right != nil {
+					node.Value = t.HashSubTrees(node.Left.Value, node.Right.Value)
+				} else {
+					node.Value = t.HashSubTrees(node.Left.Value, t.NilHashValueConst[node.Left.Height])
+				}
+				node = node.Parent
+			}
+		} else { // odd
+			node = node.Parent.Parent
+			nNode := &Node{
+				Value:  nVal,
+				Parent: nil,
+				Height: 0,
+			}
+			parentNode := &Node{
+				Value:  t.HashSubTrees(nVal, t.NilHashValueConst[0]),
+				Left:   nNode,
+				Parent: node,
+				Height: nNode.Height + 1,
+			}
+			nNode.Parent = parentNode
+			node.Right = parentNode
+			t.Leaves = append(t.Leaves, nNode)
+			for node != nil {
+				if node.Right != nil {
+					node.Value = t.HashSubTrees(node.Left.Value, node.Right.Value)
+				} else {
+					node.Value = t.HashSubTrees(node.Left.Value, t.NilHashValueConst[node.Left.Height])
+				}
+				node = node.Parent
+			}
+		}
+	}
+	return nil
+}
+
+func (t *Tree) insert(nodes []*Node) {
+
+	if len(nodes) == 0 {
+		log.Println("[BuildTree] smt BuildTree error, nodes length == 0")
+		return
+	} else {
+		if nodes[0].Height == 0 && len(nodes) == 1 {
+			t.RootNode = nodes[0]
+			return
+		}
+	}
+	var parents []*Node
+
+	for i := 0; i < len(nodes); i += 2 {
+		if nodes[i].Parent == nil {
+			logInfo := fmt.Sprintf("[insert] boundary one: len(nodes) = %v. i = %v.", len(nodes), i)
+			log.Println(logInfo)
+			// The left node has no parent, need to create a parent node
+			nodes[i].Parent = &Node{
+				Value:  t.HashSubTrees(nodes[i].Value, t.NilHashValueConst[nodes[i].Height]),
+				Left:   nodes[i],
+				Right:  nil,
+				Parent: nil,
+				Height: nodes[i].Height - 1,
+			}
+		} else if i+1 <= len(nodes)-1 {
+			if nodes[i+1].Parent == nil && nodes[i].Parent != nil {
+				logInfo := fmt.Sprintf("[insert] boundary two:len(nodes) = %v. i = %v.", len(nodes), i)
+				log.Println(logInfo)
+				// The right node has no parent, but the left node has a parent, do not need to create a parent node
+				nodes[i+1].Parent = nodes[i].Parent
+				nodes[i+1].Parent.Right = nodes[i+1]
+				nodes[i+1].Parent.Value = t.HashSubTrees(nodes[i].Value, nodes[i+1].Value)
+			}
+		}
+
+		parents = append(parents, nodes[i].Parent)
+	}
+	t.insert(parents)
 }
 
 /*
@@ -169,44 +405,23 @@ func (tree *Tree) BuildMerkleProofs(index int64) (merkleProofs [][]byte, helperM
 	@inclusionProofs: inclusion proofs
 	@helperProofs: helper function
 */
-func (tree *Tree) VerifyMerkleProofs(inclusionProofs [][]byte, helperProofs []int) bool {
+func (t *Tree) VerifyMerkleProofs(inclusionProofs [][]byte, helperProofs []int) bool {
 	if len(inclusionProofs) != len(helperProofs)+1 {
 		return false
 	}
-	root := tree.Root
+	root := t.RootNode.Value
 	node := inclusionProofs[0]
 	for i := 1; i < len(inclusionProofs); i++ {
 		switch helperProofs[i-1] {
-		case 0:
-			node = sumNode(node, inclusionProofs[i], tree.HashFunc)
+		case Left:
+			node = t.HashSubTrees(node, inclusionProofs[i])
 			continue
-		case 1:
-			node = sumNode(inclusionProofs[i], node, tree.HashFunc)
+		case Right:
+			node = t.HashSubTrees(inclusionProofs[i], node)
 			continue
 		default:
 			return false
 		}
 	}
 	return bytes.Equal(root, node)
-}
-
-/*
-	UpdateNode: update node
-	@index: index
-	@val: new value
-*/
-func (tree *Tree) UpdateNode(index int64, val []byte) error {
-	// index should smaller than NbLeavesCount
-	if index > tree.NbLeavesCount || index < 0 {
-		return ErrInvalidIndex
-	}
-	current := tree.Leaves[index]
-	current.Value = val
-	// update node recursively
-	for current.Parent != nil {
-		current = current.Parent
-		current.Value = sumNode(current.Left.Value, current.Right.Value, tree.HashFunc)
-	}
-	tree.Root = current.Value
-	return nil
 }

@@ -81,6 +81,7 @@ func ProveTransfer(relation *TransferProofRelation) (proof *TransferProof, err e
 	proof = new(TransferProof)
 	// add Pt,G,Waste from relation
 	proof.GasFee = relation.GasFee
+	proof.AssetId = relation.AssetId
 	// write public statements into buf
 	buf.Write(PaddingBigIntBytes(FixedCurve))
 	writeUint64IntoBuf(&buf, proof.GasFee)
