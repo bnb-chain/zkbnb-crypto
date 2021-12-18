@@ -84,7 +84,7 @@ func CreateLeaves(hashState [][]byte) []*Node {
 
 func (t *Tree) InitNilHashValueConst() (err error) {
 	nilHash := t.NilHashValueConst[0]
-	for i := 1; i < t.MaxHeight; i++ {
+	for i := 1; i <= t.MaxHeight; i++ {
 		var (
 			nHash []byte
 		)
@@ -260,7 +260,7 @@ func (t *Tree) BuildMerkleProofs(index int) (
 			node = node.Parent
 		}
 		proofs = append(proofs, node.Value)
-		proofHelpers = append(proofHelpers, Left)
+		proofHelpers = append(proofHelpers, Right)
 		node = node.Parent
 		for node.Parent != nil {
 			if node.Parent.Left == node {
