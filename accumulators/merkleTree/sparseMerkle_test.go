@@ -23,6 +23,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"strconv"
 	"testing"
 	"time"
 	"zecrey-crypto/hash/bn254/zmimc"
@@ -36,7 +37,7 @@ func mockState(size int) [][]byte {
 	h := zmimc.Hmimc
 	for i := 0; i < size; i++ {
 		h.Reset()
-		//h.Write([]byte(strconv.Itoa(i)))
+		h.Write([]byte(strconv.Itoa(i)))
 		hashState = append(hashState, h.Sum([]byte{}))
 	}
 	return hashState
@@ -56,13 +57,14 @@ func TestNewTree(t *testing.T) {
 	nilHash := h.Sum([]byte{})
 	fmt.Println("nil hash:", common.Bytes2Hex(nilHash))
 	h.Reset()
-	tree, err := NewTree(leaves, 5, nilHash, h)
+	tree, err := NewTree(leaves, 32, nilHash, h)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println("BuildTree tree time:", time.Since(elapse))
 	fmt.Println("height:", tree.MaxHeight)
 	fmt.Println("root:", toString(tree.RootNode.Value))
+	fmt.Println("nil root:", toString(tree.NilHashValueConst[32]))
 	elapse = time.Now()
 	// verify index belongs to len(t.leaves)
 	merkleProofs, helperMerkleProofs, err := tree.BuildMerkleProofs(4)

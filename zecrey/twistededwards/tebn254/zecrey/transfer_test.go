@@ -60,11 +60,11 @@ func TestCorrectInfoProve(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b1Enc, pk1, b1, -5, sk1)
+	err = relation.AddStatement(b1Enc, pk1, b1, -3, sk1)
 	if err != nil {
 		t.Error(err)
 	}
-	err = relation.AddStatement(b3Enc, pk3, 0, 2, nil)
+	err = relation.AddStatement(b3Enc, pk3, 0, 0, nil)
 	if err != nil {
 		t.Error(err)
 	}
