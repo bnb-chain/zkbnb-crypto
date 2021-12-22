@@ -18,6 +18,7 @@
 package transactions
 
 import (
+	"encoding/hex"
 	"errors"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
@@ -102,8 +103,12 @@ func (circuit TxConstraints) Define(curveID ecc.ID, api frontend.API) error {
 		Y: api.Constant(std.HY),
 	}
 	tool := std.NewEccTool(api, params)
-	VerifyTransaction(tool, api, circuit, hFunc, H, H, api.Constant(0))
-
+	nilHashBytes, err := hex.DecodeString("01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a")
+	if err != nil {
+		return err
+	}
+	nilHash := api.Constant(nilHashBytes)
+	VerifyTransaction(tool, api, circuit, hFunc, H, nilHash)
 	return nil
 }
 
@@ -113,7 +118,7 @@ func VerifyTransaction(
 	tx TxConstraints,
 	hFunc MiMC,
 	h Point,
-	nilPoint Point, nilHash Variable,
+	nilHash Variable,
 ) {
 	// txType constants
 	txTypeNoop := api.Constant(uint64(TxTypeNoop))
@@ -176,23 +181,24 @@ func VerifyTransaction(
 	// withdraw proof
 	tx.WithdrawProof.T = tx.RangeProofs[0].A
 	tx.WithdrawProof.T_fee = tx.RangeProofs[1].A
-
+	// check if it is nil account root
+	//notNilAccount := api.IsZero(api.IsZero(api.Sub(tx.AccountRootBefore, nilHash)))
 	// verify account before
 	for i := 0; i < NbAccountsPerTx; i++ {
 		// verify accounts before & after params
 		// check if it is nil account
-		notNilAccount := std.GetPointNotEqualFlag(api, tx.AccountsInfoBefore[i].AccountPk, nilPoint)
-		std.IsVariableEqual(api, notNilAccount, tx.AccountsInfoBefore[i].AccountIndex, tx.AccountsInfoAfter[i].AccountIndex)
-		std.IsVariableEqual(api, notNilAccount, tx.AccountsInfoBefore[i].AccountName, tx.AccountsInfoAfter[i].AccountName)
-		std.IsPointEqual(api, notNilAccount, tx.AccountsInfoBefore[i].AccountPk, tx.AccountsInfoAfter[i].AccountPk)
+		notNilAccountState := api.IsZero(api.IsZero(api.Sub(tx.AccountsInfoBefore[i].StateRoot, nilHash)))
+		std.IsVariableEqual(api, notNilAccountState, tx.AccountsInfoBefore[i].AccountIndex, tx.AccountsInfoAfter[i].AccountIndex)
+		std.IsVariableEqual(api, notNilAccountState, tx.AccountsInfoBefore[i].AccountName, tx.AccountsInfoAfter[i].AccountName)
+		std.IsPointEqual(api, notNilAccountState, tx.AccountsInfoBefore[i].AccountPk, tx.AccountsInfoAfter[i].AccountPk)
 		// check state root
 		hFunc.Write(
 			tx.AccountsInfoBefore[i].AccountAssetsRoot,
 			tx.AccountsInfoBefore[i].AccountLockedAssetsRoot,
 			tx.AccountsInfoBefore[i].AccountLiquidityRoot,
 		)
-		stateRootCheck := hFunc.Sum()
-		std.IsVariableEqual(api, notNilAccount, stateRootCheck, tx.AccountsInfoBefore[i].StateRoot)
+		accountRootCheck := hFunc.Sum()
+		std.IsVariableEqual(api, notNilAccountState, accountRootCheck, tx.AccountsInfoBefore[i].StateRoot)
 		hFunc.Reset()
 		// check account hash
 		hFunc.Write(
@@ -202,47 +208,50 @@ func VerifyTransaction(
 		std.WritePointIntoBuf(&hFunc, tx.AccountsInfoBefore[i].AccountPk)
 		hFunc.Write(tx.AccountsInfoBefore[i].StateRoot)
 		accountHashCheck := hFunc.Sum()
-		accountHash := api.Select(notNilAccount, nilHash, accountHashCheck)
+		accountHash := api.Select(notNilAccountState, nilHash, accountHashCheck)
 		std.IsVariableEqual(api, isCheckAccount, accountHash, tx.MerkleProofsAccountBefore[i][0])
 		hFunc.Reset()
 		// verify account asset root
+		notNilAssetRoot := api.IsZero(api.IsZero(api.Sub(tx.AccountsInfoBefore[i].AccountAssetsRoot, nilHash)))
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
 			std.VerifyMerkleProof(
-				api, notNilAccount, hFunc,
+				api, notNilAssetRoot, hFunc,
 				tx.AccountsInfoBefore[i].AccountAssetsRoot,
 				tx.MerkleProofsAccountAssetsBefore[i][j][:], tx.MerkleProofsHelperAccountAssetsBefore[i][j][:])
 			hFunc.Reset()
 			// verify account asset before & after params
 			std.IsVariableEqual(
-				api, notNilAccount,
+				api, notNilAssetRoot,
 				tx.AccountsInfoBefore[i].AssetsInfo[j].AssetId, tx.AccountsInfoAfter[i].AssetsInfo[j].AssetId)
 		}
 		// verify account locked asset root
+		notNilLockedAssetRoot := api.IsZero(api.IsZero(api.Sub(tx.AccountsInfoBefore[i].LockedAssetInfo, nilHash)))
 		std.VerifyMerkleProof(
-			api, isCheckAccount, hFunc,
+			api, notNilLockedAssetRoot, hFunc,
 			tx.AccountsInfoBefore[i].AccountLockedAssetsRoot,
 			tx.MerkleProofsAccountLockedAssetsBefore[i][:], tx.MerkleProofsHelperAccountLockedAssetsBefore[i][:])
 		hFunc.Reset()
 		// verify account locked asset before & after params
 		std.IsVariableEqual(
-			api, notNilAccount,
+			api, notNilLockedAssetRoot,
 			tx.AccountsInfoBefore[i].LockedAssetInfo.ChainId, tx.AccountsInfoAfter[i].LockedAssetInfo.ChainId)
 		std.IsVariableEqual(
-			api, notNilAccount,
+			api, notNilLockedAssetRoot,
 			tx.AccountsInfoBefore[i].LockedAssetInfo.AssetId, tx.AccountsInfoAfter[i].LockedAssetInfo.AssetId)
 		// verify account liquidity root
+		notNilAccountLiquidityRoot := api.IsZero(api.IsZero(api.Sub(tx.AccountsInfoBefore[i].AccountLiquidityRoot, nilHash)))
 		std.VerifyMerkleProof(
-			api, isCheckAccount, hFunc,
+			api, notNilAccountLiquidityRoot, hFunc,
 			tx.AccountsInfoBefore[i].AccountLiquidityRoot,
 			tx.MerkleProofsAccountLiquidityBefore[i][:], tx.MerkleProofsHelperAccountLiquidityBefore[i][:])
 		hFunc.Reset()
 		// verify account liquidity before & after params
 		std.IsVariableEqual(
-			api, notNilAccount,
+			api, notNilAccountLiquidityRoot,
 			tx.AccountsInfoBefore[i].LiquidityInfo.PairIndex, tx.AccountsInfoAfter[i].LiquidityInfo.PairIndex)
 		// verify account root
 		std.VerifyMerkleProof(
-			api, isCheckAccount, hFunc,
+			api, notNilAccountState, hFunc,
 			tx.AccountRootBefore,
 			tx.MerkleProofsAccountBefore[i][:], tx.MerkleProofsHelperAccountBefore[i][:])
 		hFunc.Reset()

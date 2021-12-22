@@ -17,6 +17,8 @@
 
 package merkleTree
 
+import "zecrey-crypto/hash/bn254/zmimc"
+
 /*
 IsPowerOfTwo returns true for arguments that are a power of 2, false otherwise.
 https://stackoverflow.com/a/600306/844313
@@ -35,4 +37,14 @@ func CopyMerkleProofs(a [][]byte) [][]byte {
 		copy(res[i], a[i])
 	}
 	return res
+}
+
+func MockNilHashState(size int) [][]byte {
+	var hashState [][]byte
+	h := zmimc.Hmimc
+	for i := 0; i < size; i++ {
+		h.Reset()
+		hashState = append(hashState, h.Sum([]byte{}))
+	}
+	return hashState
 }

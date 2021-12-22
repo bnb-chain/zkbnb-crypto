@@ -29,7 +29,7 @@ import (
 	"zecrey-crypto/hash/bn254/zmimc"
 )
 
-func mockState(size int) [][]byte {
+func MockState(size int) [][]byte {
 	//if !IsPowerOfTwo(int64(size)) {
 	//	panic("err size")
 	//}
@@ -43,13 +43,13 @@ func mockState(size int) [][]byte {
 	return hashState
 }
 
-func toString(buf []byte) string {
+func ToString(buf []byte) string {
 	return hex.EncodeToString(buf)
 }
 
 func TestNewTree(t *testing.T) {
 	elapse := time.Now()
-	hashState := mockState(6)
+	hashState := MockState(6)
 	fmt.Println(time.Since(elapse))
 	leaves := CreateLeaves(hashState)
 	elapse = time.Now()
@@ -57,14 +57,14 @@ func TestNewTree(t *testing.T) {
 	nilHash := h.Sum([]byte{})
 	fmt.Println("nil hash:", common.Bytes2Hex(nilHash))
 	h.Reset()
-	tree, err := NewTree(leaves, 32, nilHash, h)
+	tree, err := NewTree(leaves, 5, nilHash, h)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println("BuildTree tree time:", time.Since(elapse))
 	fmt.Println("height:", tree.MaxHeight)
-	fmt.Println("root:", toString(tree.RootNode.Value))
-	fmt.Println("nil root:", toString(tree.NilHashValueConst[32]))
+	fmt.Println("root:", ToString(tree.RootNode.Value))
+	fmt.Println("nil root:", ToString(tree.NilHashValueConst[0]))
 	elapse = time.Now()
 	// verify index belongs to len(t.leaves)
 	merkleProofs, helperMerkleProofs, err := tree.BuildMerkleProofs(4)
@@ -76,7 +76,7 @@ func TestNewTree(t *testing.T) {
 	res := tree.VerifyMerkleProofs(merkleProofs, helperMerkleProofs)
 	assert.Equal(t, res, true, "BuildTree merkle proofs successfully")
 	// if len(t.leaves) % 2 != 0 && index == len(t.leaves) + 1
-	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(5)
+	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func TestNewTree(t *testing.T) {
 	assert.Equal(t, res, true, "BuildTree merkle proofs successfully")
 	// verify index >= len(t.leaves) + 1
 	fmt.Println("111:", tree.NilHashValueConst[0])
-	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(7)
+	merkleProofs, helperMerkleProofs, err = tree.BuildMerkleProofs(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +97,6 @@ func TestNewTree(t *testing.T) {
 	h.Write([]byte("modify"))
 	nVal := h.Sum([]byte{})
 	fmt.Println("nVal:", nVal)
-	leaves[4].Value = nilHash
 	err = tree.Update(6, nVal)
 	if err != nil {
 		t.Fatal(err)
@@ -132,10 +131,10 @@ func TestNewTree(t *testing.T) {
 	//	t.Fatal(err)
 	//}
 	//helper := merkle.GenerateProofHelper(inclusionProofs, 7, numLeaves)
-	//fmt.Println(toString(tree.Root))
-	//fmt.Println(toString(root))
-	//fmt.Println(toString(merkleProofs[2]))
-	//fmt.Println(toString(inclusionProofs[2]))
+	//fmt.Println(ToString(tree.Root))
+	//fmt.Println(ToString(root))
+	//fmt.Println(ToString(merkleProofs[2]))
+	//fmt.Println(ToString(inclusionProofs[2]))
 	//fmt.Println(helperMerkleProofs[2])
 	//fmt.Println(helper[2])
 

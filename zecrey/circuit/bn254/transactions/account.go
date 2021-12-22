@@ -84,12 +84,15 @@ type Account struct {
 	LiquidityInfo           *AccountLiquidity
 }
 
-func EmptyAccount() *Account {
+func EmptyAccount(nilHash []byte) *Account {
 	return &Account{
-		AccountIndex: std.ZeroInt,
-		AccountName:  std.ZeroBigInt,
-		AccountPk:    std.ZeroPoint,
-		StateRoot:    []byte{},
+		AccountIndex:            std.ZeroInt,
+		AccountName:             std.ZeroBigInt,
+		AccountPk:               std.ZeroPoint,
+		StateRoot:               nilHash,
+		AccountAssetsRoot:       nilHash,
+		AccountLockedAssetsRoot: nilHash,
+		AccountLiquidityRoot:    nilHash,
 		AssetsInfo: [3]*AccountAsset{
 			EmptyAccountAsset(),
 			EmptyAccountAsset(),

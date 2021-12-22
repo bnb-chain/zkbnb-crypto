@@ -60,13 +60,14 @@ const (
 	NbTxsCountFull                = 140
 	NbAccountsPerTx               = 4
 	NbAccountAssetsPerAccount     = 3
-	AccountMerkleLevels           = 32
+	AccountMerkleLevels           = 33
 	AccountMerkleHelperLevels     = AccountMerkleLevels - 1
-	AssetMerkleLevels             = 16
+	AssetMerkleLevels             = 17
 	AssetMerkleHelperLevels       = AssetMerkleLevels - 1
-	LockedAssetMerkleLevels       = 16
+
+	LockedAssetMerkleLevels       = 17
 	LockedAssetMerkleHelperLevels = LockedAssetMerkleLevels - 1
-	LiquidityMerkleLevels         = 16
+	LiquidityMerkleLevels         = 17
 	LiquidityMerkleHelperLevels   = LiquidityMerkleLevels - 1
 	NbTransferCount               = std.NbTransferCount
 	NbTransferCountAndFee         = NbTransferCount + 1
