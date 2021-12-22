@@ -95,6 +95,34 @@ func (t *Tree) InitNilHashValueConst() (err error) {
 	return err
 }
 
+func NewEmptyTree(maxHeight int, nilHash []byte, hFunc hash.Hash) (*Tree, error) {
+	root := &Node{
+		Value:  nilHash,
+		Left:   nil,
+		Right:  nil,
+		Parent: nil,
+		Height: maxHeight,
+	}
+	// init nil hash values for different heights
+	nilHashValueConst := make([][]byte, maxHeight+1)
+	nilHashValueConst[0] = nilHash
+	// init tree
+	tree := &Tree{
+		RootNode:          root,
+		MaxHeight:         maxHeight,
+		Leaves:            *new([]*Node),
+		NilHashValueConst: nilHashValueConst,
+		HashFunc:          hFunc,
+	}
+	err := tree.InitNilHashValueConst()
+	if err != nil {
+		errInfo := fmt.Sprintf("[smt.NewEmptyTree] InitNilHashValueConst error: %s", err.Error())
+		log.Println(errInfo)
+		return nil, errors.New(errInfo)
+	}
+	return tree, nil
+}
+
 /*
 	func: NewTree
 	params: leaves []*Node, maxHeight int, nilHash []byte, hFunc hash.Hash
@@ -107,20 +135,8 @@ func NewTree(leaves []*Node, maxHeight int, nilHash []byte, hFunc hash.Hash) (*T
 		root *Node
 	)
 	// empty tree
-	if len(leaves) == 0 {
-		root = &Node{
-			Value:  nilHash,
-			Left:   nil,
-			Right:  nil,
-			Parent: nil,
-			Height: 0,
-		}
-		return &Tree{
-			RootNode:  root,
-			Leaves:    leaves,
-			MaxHeight: 0,
-			HashFunc:  hFunc,
-		}, nil
+	if len(leaves) == 0 || leaves == nil {
+		return NewEmptyTree(maxHeight, nilHash, hFunc)
 	}
 	// construct root node
 	root = &Node{
@@ -205,7 +221,7 @@ func (t *Tree) BuildTree(nodes []*Node) {
 /*
 	BuildMerkleProofs: construct merkle proofs
 */
-func (t *Tree) BuildMerkleProofs(index int) (
+func (t *Tree) BuildMerkleProofs(index uint32) (
 	rMerkleProof [][]byte,
 	rProofHelper []int,
 	err error,
@@ -218,8 +234,16 @@ func (t *Tree) BuildMerkleProofs(index int) (
 		log.Println(errInfo)
 		return nil, nil, errors.New(errInfo)
 	}
+	// empty tree
+	if len(t.Leaves) == 0 {
+		rProofHelper = make([]int, t.MaxHeight)
+		for i := 0; i < t.MaxHeight; i++ {
+			rProofHelper[i] = 0
+		}
+		return t.NilHashValueConst, rProofHelper, nil
+	}
 	// if index belongs to leaves
-	if index < len(t.Leaves) {
+	if index < uint32(len(t.Leaves)) {
 		node := t.Leaves[index]
 		proofs = append(proofs, node.Value)
 		for node.Parent != nil {
@@ -247,7 +271,7 @@ func (t *Tree) BuildMerkleProofs(index int) (
 		lastIndex := len(t.Leaves) - 1
 		// get last leave node
 		node := t.Leaves[lastIndex]
-		for lastIndex+1 != index {
+		for uint32(lastIndex+1) != index {
 			proofs = append(proofs, t.NilHashValueConst[node.Height])
 			if index%2 == 0 {
 				proofHelpers = append(proofHelpers, Right)
@@ -288,6 +312,17 @@ func (t *Tree) Update(index int, nVal []byte) (err error) {
 	if index >= 1<<t.MaxHeight {
 		log.Println("[Update] invalid index")
 		return errors.New("[Update] invalid index")
+	}
+	// empty tree
+	if len(t.Leaves) == 0 {
+		if index != 0 {
+			return errors.New("[Update] invalid index")
+		}
+		t.BuildTree([]*Node{{
+			Value:  nVal,
+			Height: 0,
+		}})
+		return nil
 	}
 	// index belong to leaves
 	if index < len(t.Leaves) {
@@ -408,6 +443,10 @@ func (t *Tree) insert(nodes []*Node) {
 func (t *Tree) VerifyMerkleProofs(inclusionProofs [][]byte, helperProofs []int) bool {
 	if len(inclusionProofs) != len(helperProofs)+1 {
 		return false
+	}
+	// empty tree
+	if len(t.Leaves) == 0 {
+		return true
 	}
 	root := t.RootNode.Value
 	node := inclusionProofs[0]

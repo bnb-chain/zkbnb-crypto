@@ -139,3 +139,28 @@ func TestNewTree(t *testing.T) {
 	//fmt.Println(helper[2])
 
 }
+
+func TestNewEmptyTree(t *testing.T) {
+	h := mimc.NewMiMC(SEED)
+	nilHash := h.Sum([]byte{})
+	tree, err := NewEmptyTree(5, nilHash, zmimc.Hmimc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	merkleProofs, merkleProofsHelper, err := tree.BuildMerkleProofs(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	isValid := tree.VerifyMerkleProofs(merkleProofs, merkleProofsHelper)
+	assert.Equal(t, true, isValid, "invalid proof")
+	h.Reset()
+	h.Write([]byte("1"))
+	nVal := h.Sum([]byte{})
+	err = tree.Update(0, nVal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	merkleProofs, merkleProofsHelper, err = tree.BuildMerkleProofs(0)
+	isValid = tree.VerifyMerkleProofs(merkleProofs, merkleProofsHelper)
+	assert.Equal(t, true, isValid, "invalid proof")
+}
