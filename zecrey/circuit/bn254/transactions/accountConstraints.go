@@ -26,9 +26,9 @@ import (
 type AccountConstraints struct {
 	AccountIndex            Variable
 	AccountName             Variable
-	AccountPk               Point
-	StateRoot               Variable
-	AssetsInfo              [NbAccountAssetsPerAccount]AccountAssetConstraints
+	AccountPk  Point
+	StateRoot  Variable
+	AssetsInfo [NbAccountAssetsPerAccount]AccountAssetConstraints
 	LockedAssetInfo         AccountAssetLockConstraints
 	LiquidityInfo           AccountLiquidityConstraints
 	AccountAssetsRoot       Variable

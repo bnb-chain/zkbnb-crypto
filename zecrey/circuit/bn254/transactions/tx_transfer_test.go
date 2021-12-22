@@ -23,10 +23,8 @@ import (
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
-	"math/big"
 	"testing"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
+	"zecrey-crypto/zecrey/circuit/bn254/mockAccount"
 	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
@@ -41,35 +39,20 @@ func TestTxConstraints_Define_Transfer(t *testing.T) {
 	fmt.Println("constraints:", r1cs.GetNbConstraints())
 
 	// test transfer
-	sk1, pk1 := twistedElgamal.GenKeyPair()
-	b1 := uint64(8)
-	r1 := curve.RandomValue()
-	_, pk2 := twistedElgamal.GenKeyPair()
-	b2 := big.NewInt(2)
-	r2 := curve.RandomValue()
-	_, pk3 := twistedElgamal.GenKeyPair()
-	b3 := big.NewInt(3)
-	r3 := curve.RandomValue()
-	b1Enc, err := twistedElgamal.Enc(big.NewInt(int64(b1)), r1, pk1)
-	b2Enc, err := twistedElgamal.Enc(b2, r2, pk2)
-	b3Enc, err := twistedElgamal.Enc(b3, r3, pk3)
-	if err != nil {
-		t.Fatal(err)
-	}
 	fee := uint64(1)
-	relation, err := zecrey.NewTransferProofRelation(1, fee)
+	relation, err := zecrey.NewTransferProofRelation(mockAccount.AssetAId, fee)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = relation.AddStatement(b2Enc, pk2, 0, 2, nil)
+	err = relation.AddStatement(mockAccount.GavinCA, mockAccount.GavinPk, 0, 2, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = relation.AddStatement(b1Enc, pk1, b1, -5, sk1)
+	err = relation.AddStatement(mockAccount.SherCA, mockAccount.SherPk, mockAccount.SherAssetABalance, -5, mockAccount.SherSk)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = relation.AddStatement(b3Enc, pk3, 0, 2, nil)
+	err = relation.AddStatement(mockAccount.JasonCA, mockAccount.JasonPk, 0, 2, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,29 +60,30 @@ func TestTxConstraints_Define_Transfer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	oTx := &Tx{
 		TxType:                                      TxTypeTransfer,
 		OProof:                                      proof,
 		AccountRootBefore:                           nil,
 		AccountsInfoBefore:                          [4]*Account{},
-		MerkleProofsAccountAssetsBefore:             [4][3][16][]byte{},
-		MerkleProofsHelperAccountAssetsBefore:       [4][3][15]int{},
-		MerkleProofsAccountLockedAssetsBefore:       [4][16][]byte{},
-		MerkleProofsHelperAccountLockedAssetsBefore: [4][15]int{},
-		MerkleProofsAccountLiquidityBefore:          [4][16][]byte{},
-		MerkleProofsHelperAccountLiquidityBefore:    [4][15]int{},
-		MerkleProofsAccountBefore:                   [4][32][]byte{},
-		MerkleProofsHelperAccountBefore:             [4][31]int{},
+		MerkleProofsAccountAssetsBefore:             [4][3][17][]byte{},
+		MerkleProofsHelperAccountAssetsBefore:       [4][3][16]int{},
+		MerkleProofsAccountLockedAssetsBefore:       [4][17][]byte{},
+		MerkleProofsHelperAccountLockedAssetsBefore: [4][16]int{},
+		MerkleProofsAccountLiquidityBefore:          [4][17][]byte{},
+		MerkleProofsHelperAccountLiquidityBefore:    [4][16]int{},
+		MerkleProofsAccountBefore:                   [4][33][]byte{},
+		MerkleProofsHelperAccountBefore:             [4][32]int{},
 		AccountRootAfter:                            nil,
 		AccountsInfoAfter:                           [4]*Account{},
-		MerkleProofsAccountAssetsAfter:              [4][16][]byte{},
-		MerkleProofsHelperAccountAssetsAfter:        [4][15]int{},
-		MerkleProofsAccountLockedAssetsAfter:        [4][16][]byte{},
-		MerkleProofsHelperAccountLockedAssetsAfter:  [4][15]int{},
-		MerkleProofsAccountLiquidityAfter:           [4][16][]byte{},
-		MerkleProofsHelperAccountLiquidityAfter:     [4][15]int{},
-		MerkleProofsAccountAfter:                    [4][32][]byte{},
-		MerkleProofsHelperAccountAfter:              [4][31]int{},
+		MerkleProofsAccountAssetsAfter:              [4][17][]byte{},
+		MerkleProofsHelperAccountAssetsAfter:        [4][16]int{},
+		MerkleProofsAccountLockedAssetsAfter:        [4][17][]byte{},
+		MerkleProofsHelperAccountLockedAssetsAfter:  [4][16]int{},
+		MerkleProofsAccountLiquidityAfter:           [4][17][]byte{},
+		MerkleProofsHelperAccountLiquidityAfter:     [4][16]int{},
+		MerkleProofsAccountAfter:                    [4][33][]byte{},
+		MerkleProofsHelperAccountAfter:              [4][32]int{},
 	}
 	witness, err = SetTxWitness(oTx)
 	if err != nil {

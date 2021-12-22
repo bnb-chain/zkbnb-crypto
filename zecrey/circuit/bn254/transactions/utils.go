@@ -17,7 +17,10 @@
 
 package transactions
 
-import "zecrey-crypto/zecrey/circuit/bn254/std"
+import (
+	"math/big"
+	"zecrey-crypto/zecrey/circuit/bn254/std"
+)
 
 func SelectCommonPart(
 	api API,
@@ -456,4 +459,13 @@ func GetAccountDeltasFromWithdrawProof(
 	deltas[2] = deltas[WithdrawGasAccount]
 	deltas[3] = deltas[WithdrawGasAccount]
 	return deltas
+}
+
+func SetFixed32Bytes(buf []byte) [32]byte {
+	newBuf := new(big.Int).SetBytes(buf).FillBytes(make([]byte, 32))
+	var res [32]byte
+	if len(buf) != 0 {
+		copy(res[:], newBuf[:])
+	}
+	return res
 }
