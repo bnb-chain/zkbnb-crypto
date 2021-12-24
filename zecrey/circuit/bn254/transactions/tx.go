@@ -43,8 +43,8 @@ type Tx struct {
 	// account after info, size is 4
 	AccountsInfoAfter [NbAccountsPerTx]*Account
 	// after account asset merkle proof
-	MerkleProofsAccountAssetsAfter       [NbAccountsPerTx][AssetMerkleLevels][]byte
-	MerkleProofsHelperAccountAssetsAfter [NbAccountsPerTx][AssetMerkleHelperLevels]int
+	MerkleProofsAccountAssetsAfter       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
+	MerkleProofsHelperAccountAssetsAfter [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]int
 	// after account asset lock merkle proof
 	MerkleProofsAccountLockedAssetsAfter       [NbAccountsPerTx][LockedAssetMerkleLevels][]byte
 	MerkleProofsHelperAccountLockedAssetsAfter [NbAccountsPerTx][LockedAssetMerkleHelperLevels]int

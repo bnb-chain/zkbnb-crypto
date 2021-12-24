@@ -788,10 +788,10 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
 			copy(
 				witness.MerkleProofsAccountAssetsAfter[i][j][:],
-				std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAssetsAfter[i][:], AssetMerkleLevels))
+				std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAssetsAfter[i][j][:], AssetMerkleLevels))
 			copy(
 				witness.MerkleProofsHelperAccountAssetsAfter[i][j][:],
-				std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountAssetsAfter[i][:], AssetMerkleHelperLevels))
+				std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountAssetsAfter[i][j][:], AssetMerkleHelperLevels))
 		}
 		//witness.MerkleProofsAccountAssetsAfter[i] =
 		//	std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAssetsAfter[i][:], AssetMerkleLevels)
