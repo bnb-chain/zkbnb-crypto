@@ -75,8 +75,8 @@ type TxConstraints struct {
 	MerkleProofsAccountAfter       [NbAccountsPerTx][AccountMerkleLevels]Variable
 	MerkleProofsHelperAccountAfter [NbAccountsPerTx][AccountMerkleHelperLevels]Variable
 	// after account asset merkle proof
-	MerkleProofsAccountAssetsAfter       [NbAccountsPerTx][AssetMerkleLevels]Variable
-	MerkleProofsHelperAccountAssetsAfter [NbAccountsPerTx][AssetMerkleHelperLevels]Variable
+	MerkleProofsAccountAssetsAfter       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels]Variable
+	MerkleProofsHelperAccountAssetsAfter [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]Variable
 	// after account asset lock merkle proof
 	MerkleProofsAccountLockedAssetsAfter       [NbAccountsPerTx][LockedAssetMerkleLevels]Variable
 	MerkleProofsHelperAccountLockedAssetsAfter [NbAccountsPerTx][LockedAssetMerkleHelperLevels]Variable
@@ -212,42 +212,47 @@ func VerifyTransaction(
 		std.IsVariableEqual(api, isCheckAccount, accountHash, tx.MerkleProofsAccountBefore[i][0])
 		hFunc.Reset()
 		// verify account asset root
-		notNilAssetRoot := api.IsZero(api.IsZero(api.Sub(tx.AccountsInfoBefore[i].AccountAssetsRoot, nilHash)))
+		isNilAssetRoot := api.IsZero(api.Sub(tx.AccountsInfoBefore[i].AccountAssetsRoot, nilHash))
+		notNilAssetRootAndNotLockTx := api.IsZero(api.Or(isNilAssetRoot, isLockTx))
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
 			std.VerifyMerkleProof(
-				api, notNilAssetRoot, hFunc,
+				api, notNilAssetRootAndNotLockTx, hFunc,
 				tx.AccountsInfoBefore[i].AccountAssetsRoot,
 				tx.MerkleProofsAccountAssetsBefore[i][j][:], tx.MerkleProofsHelperAccountAssetsBefore[i][j][:])
 			hFunc.Reset()
 			// verify account asset before & after params
 			std.IsVariableEqual(
-				api, notNilAssetRoot,
+				api, notNilAssetRootAndNotLockTx,
 				tx.AccountsInfoBefore[i].AssetsInfo[j].AssetId, tx.AccountsInfoAfter[i].AssetsInfo[j].AssetId)
 		}
 		// verify account locked asset root
-		notNilLockedAssetRoot := api.IsZero(api.IsZero(api.Sub(tx.AccountsInfoBefore[i].LockedAssetInfo, nilHash)))
+		isNilLockedAssetRoot := api.IsZero(api.Sub(tx.AccountsInfoBefore[i].LockedAssetInfo, nilHash))
+		isLockRelatedTx := api.Or(isLockTx, isUnlockTx)
+		notNilLockedAssetRootAndNotLockRelatedTx := api.IsZero(api.Or(isNilLockedAssetRoot, isLockRelatedTx))
 		std.VerifyMerkleProof(
-			api, notNilLockedAssetRoot, hFunc,
+			api, notNilLockedAssetRootAndNotLockRelatedTx, hFunc,
 			tx.AccountsInfoBefore[i].AccountLockedAssetsRoot,
 			tx.MerkleProofsAccountLockedAssetsBefore[i][:], tx.MerkleProofsHelperAccountLockedAssetsBefore[i][:])
 		hFunc.Reset()
 		// verify account locked asset before & after params
 		std.IsVariableEqual(
-			api, notNilLockedAssetRoot,
+			api, notNilLockedAssetRootAndNotLockRelatedTx,
 			tx.AccountsInfoBefore[i].LockedAssetInfo.ChainId, tx.AccountsInfoAfter[i].LockedAssetInfo.ChainId)
 		std.IsVariableEqual(
-			api, notNilLockedAssetRoot,
+			api, notNilLockedAssetRootAndNotLockRelatedTx,
 			tx.AccountsInfoBefore[i].LockedAssetInfo.AssetId, tx.AccountsInfoAfter[i].LockedAssetInfo.AssetId)
 		// verify account liquidity root
-		notNilAccountLiquidityRoot := api.IsZero(api.IsZero(api.Sub(tx.AccountsInfoBefore[i].AccountLiquidityRoot, nilHash)))
+		isNilAccountLiquidityRoot := api.IsZero(api.Sub(tx.AccountsInfoBefore[i].AccountLiquidityRoot, nilHash))
+		isLiquidityRelatedTx := api.Or(api.Or(isSwapTx, isAddLiquidityTx), isRemoveLiquidityTx)
+		isNilAccountLiquidityRootAndNotLiquidityRelatedTx := api.IsZero(api.Or(isNilAccountLiquidityRoot, isLiquidityRelatedTx))
 		std.VerifyMerkleProof(
-			api, notNilAccountLiquidityRoot, hFunc,
+			api, isNilAccountLiquidityRootAndNotLiquidityRelatedTx, hFunc,
 			tx.AccountsInfoBefore[i].AccountLiquidityRoot,
 			tx.MerkleProofsAccountLiquidityBefore[i][:], tx.MerkleProofsHelperAccountLiquidityBefore[i][:])
 		hFunc.Reset()
 		// verify account liquidity before & after params
 		std.IsVariableEqual(
-			api, notNilAccountLiquidityRoot,
+			api, isNilAccountLiquidityRootAndNotLiquidityRelatedTx,
 			tx.AccountsInfoBefore[i].LiquidityInfo.PairIndex, tx.AccountsInfoAfter[i].LiquidityInfo.PairIndex)
 		// verify account root
 		std.VerifyMerkleProof(
@@ -430,11 +435,13 @@ func VerifyTransaction(
 		std.IsVariableEqual(api, isCheckAccount, accountHashCheck, tx.MerkleProofsAccountAfter[i][0])
 		hFunc.Reset()
 		// verify account asset root
-		std.VerifyMerkleProof(
-			api, isCheckAccount, hFunc,
-			tx.AccountsInfoAfter[i].AccountAssetsRoot,
-			tx.MerkleProofsAccountAssetsAfter[i][:], tx.MerkleProofsHelperAccountAssetsAfter[i][:])
-		hFunc.Reset()
+		for j := 0; j < NbAccountAssetsPerAccount; j++ {
+			std.VerifyMerkleProof(
+				api, isCheckAccount, hFunc,
+				tx.AccountsInfoAfter[i].AccountAssetsRoot,
+				tx.MerkleProofsAccountAssetsAfter[i][j][:], tx.MerkleProofsHelperAccountAssetsAfter[i][j][:])
+			hFunc.Reset()
+		}
 		// verify account locked asset root
 		std.VerifyMerkleProof(
 			api, isCheckAccount, hFunc,
@@ -778,12 +785,14 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	}
 	// after account asset merkle proof
 	for i := 0; i < NbAccountsPerTx; i++ {
-		copy(
-			witness.MerkleProofsAccountAssetsAfter[i][:],
-			std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAssetsAfter[i][:], AssetMerkleLevels))
-		copy(
-			witness.MerkleProofsHelperAccountAssetsAfter[i][:],
-			std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountAssetsAfter[i][:], AssetMerkleHelperLevels))
+		for j := 0; j < NbAccountAssetsPerAccount; j++ {
+			copy(
+				witness.MerkleProofsAccountAssetsAfter[i][j][:],
+				std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAssetsAfter[i][:], AssetMerkleLevels))
+			copy(
+				witness.MerkleProofsHelperAccountAssetsAfter[i][j][:],
+				std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountAssetsAfter[i][:], AssetMerkleHelperLevels))
+		}
 		//witness.MerkleProofsAccountAssetsAfter[i] =
 		//	std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAssetsAfter[i][:], AssetMerkleLevels)
 		//witness.MerkleProofsHelperAccountAssetsAfter[i] =
