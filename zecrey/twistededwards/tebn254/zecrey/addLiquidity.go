@@ -531,8 +531,10 @@ func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
 		return false, nil
 	}
 	// verify AMM info & DAO balance info
-	if ffmath.Multiply(big.NewInt(int64(proof.B_poolB)), big.NewInt(int64(proof.B_A_Delta))).Cmp(
-		ffmath.Multiply(big.NewInt(int64(proof.B_poolA)), big.NewInt(int64(proof.B_B_Delta)))) != 0 {
+	l := ffmath.Multiply(big.NewInt(int64(proof.B_poolB)), big.NewInt(int64(proof.B_A_Delta)))
+	r := ffmath.Multiply(big.NewInt(int64(proof.B_poolA)), big.NewInt(int64(proof.B_B_Delta)))
+	minPool := int64(math.Floor(math.Min(float64(proof.B_poolA), float64(proof.B_poolB))))
+	if new(big.Int).Abs(ffmath.Sub(l, r)).Cmp(big.NewInt(minPool)) > 0 {
 		log.Println("[verifyAddLiquidityParams] invalid liquidity rate")
 		return false, nil
 	}
