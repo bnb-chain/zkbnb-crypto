@@ -17,6 +17,15 @@
 
 package merkleTree
 
-import "zecrey-crypto/hash/bn254/zmimc"
+import (
+	"github.com/ethereum/go-ethereum/common"
+	"zecrey-crypto/hash/bn254/zmimc"
+)
 
-const SEED = zmimc.SEED
+const (
+	SEED = zmimc.SEED
+)
+
+var (
+	NilHash = common.FromHex("01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a")
+)
