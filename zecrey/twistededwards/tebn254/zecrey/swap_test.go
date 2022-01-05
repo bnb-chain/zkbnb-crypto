@@ -20,12 +20,12 @@ package zecrey
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"log"
 	"math/big"
 	"testing"
 	"time"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
 func TestSwapProof2_Verify(t *testing.T) {

@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
 func TestProveVerify(t *testing.T) {

@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"testing"
 	"time"
-	"zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 )
 
 func MockState(size int) [][]byte {

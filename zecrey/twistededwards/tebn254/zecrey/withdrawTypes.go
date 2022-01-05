@@ -23,8 +23,8 @@ import (
 	"errors"
 	"log"
 	"math/big"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/ffmath"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 type WithdrawProof struct {

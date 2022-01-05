@@ -21,7 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"syscall/js"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 /*

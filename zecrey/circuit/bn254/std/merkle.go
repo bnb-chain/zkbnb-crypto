@@ -48,7 +48,7 @@ func VerifyMerkleProof(api API, isEnabled Variable, h MiMC, merkleRoot Variable,
 func SetMerkleProofsWitness(proofs [][]byte, level int) (witness []Variable) {
 	witness = make([]Variable, level)
 	for i := 0; i < level; i++ {
-		witness[i].Assign(proofs[i])
+		witness[i] = proofs[i]
 	}
 	return witness
 }
@@ -56,7 +56,7 @@ func SetMerkleProofsWitness(proofs [][]byte, level int) (witness []Variable) {
 func SetMerkleProofsHelperWitness(proofs []int, level int) (witness []Variable) {
 	witness = make([]Variable, level-1)
 	for i := 0; i < level-1; i++ {
-		witness[i].Assign(proofs[i])
+		witness[i] = proofs[i]
 	}
 	return witness
 }

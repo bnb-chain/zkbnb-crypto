@@ -30,11 +30,11 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/transactions"
 	"math/big"
 	"os"
 	"testing"
 	"time"
-	"zecrey-crypto/zecrey/circuit/bn254/transactions"
 )
 
 func TestExportSol(t *testing.T) {
@@ -148,8 +148,8 @@ func (t *ExportSolidityTestSuite) TestVerifyProof() {
 	// create a valid proof
 	var witness transactions.BlockConstraints
 
-	tx := transactions.PrepareBlockSmall()
-	witness, err := transactions.SetBlockWitness(tx)
+	//tx := transactions.PrepareBlockSmall()
+	witness, err := transactions.SetBlockWitness(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -190,8 +190,8 @@ func (t *ExportSolidityTestSuite) TestVerifyProof() {
 	c[1] = new(big.Int).SetBytes(proofBytes[fpSize*7 : fpSize*8])
 
 	// public witness
-	input[0] = new(big.Int).SetBytes(tx.OldRoot)
-	input[1] = new(big.Int).SetBytes(tx.NewRoot)
+	//input[0] = new(big.Int).SetBytes(tx.OldRoot)
+	//input[1] = new(big.Int).SetBytes(tx.NewRoot)
 
 	// call the contract
 	fmt.Println("start verify proof on-chain")

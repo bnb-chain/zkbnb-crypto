@@ -1,6 +1,6 @@
-# zecrey-crypto
+# github.com/zecrey-labs/zecrey-crypto
 
-`zecrey-crypto` is the crypto library for Zecrey Protocol. It implements not only basic cryptography algorithms, such as `commitment scheme`, `ECC utils`, `finite field utils`, `ElGamal Encryption`, .etc, but also advanced cryptography algorithms, such as `BulletProofs`, `Twisted ElGamal Encryption`, `basic Sigma Protocols`. What's more, it provides many implementations based on different Elliptic Curves. It also includes the core crypto algorithm of the Zecrey Protocol, such as `ComRangeProof`, `Privacy Proof`, `circuit of Zecrey`. Zecrey is based on the curve which is called `baby jubjub`, so the implementation of `baby jubjub` is the core part.
+`github.com/zecrey-labs/zecrey-crypto` is the crypto library for Zecrey Protocol. It implements not only basic cryptography algorithms, such as `commitment scheme`, `ECC utils`, `finite field utils`, `ElGamal Encryption`, .etc, but also advanced cryptography algorithms, such as `BulletProofs`, `Twisted ElGamal Encryption`, `basic Sigma Protocols`. What's more, it provides many implementations based on different Elliptic Curves. It also includes the core crypto algorithm of the Zecrey Protocol, such as `ComRangeProof`, `Privacy Proof`, `circuit of Zecrey`. Zecrey is based on the curve which is called `baby jubjub`, so the implementation of `baby jubjub` is the core part.
 
 ## Project Structure
 
@@ -353,7 +353,7 @@ func TestProveSwap(t *testing.T) {
 
 ## Contributions
 
-This project is licensed under the Apache 2 License - see the [LICENSE](https://github.com/zecrey-labs/zecrey-crypto/LICENSE) file for details
+This project is licensed under the Apache 2 License - see the [LICENSE](https://github.com/zecrey-labs/github.com/zecrey-labs/zecrey-crypto/LICENSE) file for details
 
-Welcome to make contributions to `zecrey-crypto`. Thanks!
+Welcome to make contributions to `github.com/zecrey-labs/zecrey-crypto`. Thanks!
 

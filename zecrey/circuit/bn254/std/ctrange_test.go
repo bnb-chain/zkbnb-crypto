@@ -23,9 +23,9 @@ import (
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 	"testing"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
 func TestVerifyRangeProof(t *testing.T) {
@@ -33,7 +33,6 @@ func TestVerifyRangeProof(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	assert := test.NewAssert(t)
 	var circuit, witness CtRangeProofConstraints
 	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs)

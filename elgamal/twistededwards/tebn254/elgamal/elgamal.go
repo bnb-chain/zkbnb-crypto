@@ -19,7 +19,7 @@ package elgamal
 
 import (
 	"math/big"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
 var ORDER = curve.Order

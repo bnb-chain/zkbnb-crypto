@@ -20,8 +20,8 @@ package bulletProofs
 import (
 	"math/big"
 	"strconv"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/ffmath"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 func Setup(N int64, M int64) (params *BPSetupParams, err error) {

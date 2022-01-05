@@ -20,7 +20,7 @@ package zbls381
 import (
 	"github.com/consensys/gnark-crypto/ecc/bls12-381"
 	"math/big"
-	"zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 var (

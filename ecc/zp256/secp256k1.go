@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"math/big"
-	"zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 type MyBitCurve struct {

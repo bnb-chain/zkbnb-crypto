@@ -19,7 +19,7 @@ package commitRange
 
 import (
 	"math/big"
-	"zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 /*

@@ -27,7 +27,7 @@ func WriteEncIntoBuf(hFunc *MiMC, enc ElGamalEncConstraints) {
 }
 
 func zeroPoint(api API) Point {
-	return Point{X: api.Constant(0), Y: api.Constant(1)}
+	return Point{X: 0, Y: 1}
 }
 
 func Xor(api API, a, b Variable, size int) Variable {
@@ -41,7 +41,7 @@ func Xor(api API, a, b Variable, size int) Variable {
 }
 
 func FixedCurveParam(api API) Variable {
-	return api.Constant(FixedCurve)
+	return FixedCurve
 }
 
 func SelectPoint(api API, flag Variable, a, b Point) Point {

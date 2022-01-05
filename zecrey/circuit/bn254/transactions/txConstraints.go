@@ -20,13 +20,12 @@ package transactions
 import (
 	"encoding/hex"
 	"errors"
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
 	"log"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/zecrey/circuit/bn254/std"
 )
 
 type TxConstraints struct {
@@ -85,29 +84,29 @@ type TxConstraints struct {
 	MerkleProofsHelperAccountLiquidityAfter [NbAccountsPerTx][LiquidityMerkleHelperLevels]Variable
 }
 
-func (circuit TxConstraints) Define(curveID ecc.ID, api frontend.API) error {
+func (circuit TxConstraints) Define(api frontend.API) error {
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(curveID)
+	params, err := twistededwards.NewEdCurve(api.Curve())
 	if err != nil {
 		return err
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, api)
 	if err != nil {
 		return err
 	}
 
 	H := Point{
-		X: api.Constant(std.HX),
-		Y: api.Constant(std.HY),
+		X: std.HX,
+		Y: std.HY,
 	}
 	tool := std.NewEccTool(api, params)
 	nilHashBytes, err := hex.DecodeString("01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a")
 	if err != nil {
 		return err
 	}
-	nilHash := api.Constant(nilHashBytes)
+	nilHash := nilHashBytes
 	VerifyTransaction(tool, api, circuit, hFunc, H, nilHash)
 	return nil
 }
@@ -121,15 +120,15 @@ func VerifyTransaction(
 	nilHash Variable,
 ) {
 	// txType constants
-	txTypeNoop := api.Constant(uint64(TxTypeNoop))
-	txTypeDeposit := api.Constant(uint64(TxTypeDeposit))
-	txTypeLock := api.Constant(uint64(TxTypeLock))
-	txTypeUnlock := api.Constant(uint64(TxTypeUnlock))
-	txTypeTransfer := api.Constant(uint64(TxTypeTransfer))
-	txTypeSwap := api.Constant(uint64(TxTypeSwap))
-	txTypeAddLiquidity := api.Constant(uint64(TxTypeAddLiquidity))
-	txTypeRemoveLiquidity := api.Constant(uint64(TxTypeRemoveLiquidity))
-	txTypeWithdraw := api.Constant(uint64(TxTypeWithdraw))
+	txTypeNoop := uint64(TxTypeNoop)
+	txTypeDeposit := uint64(TxTypeDeposit)
+	txTypeLock := uint64(TxTypeLock)
+	txTypeUnlock := uint64(TxTypeUnlock)
+	txTypeTransfer := uint64(TxTypeTransfer)
+	txTypeSwap := uint64(TxTypeSwap)
+	txTypeAddLiquidity := uint64(TxTypeAddLiquidity)
+	txTypeRemoveLiquidity := uint64(TxTypeRemoveLiquidity)
+	txTypeWithdraw := uint64(TxTypeWithdraw)
 
 	// compute tx type
 	isNoopTx := api.IsZero(api.Sub(tx.TxType, txTypeNoop))
@@ -358,7 +357,7 @@ func VerifyTransaction(
 	cCheck, pkProofsCheck, tProofsCheck = std.VerifyWithdrawProof(tool, api, &tx.WithdrawProof, hFunc, h)
 	hFunc.Reset()
 	c, pkProofs, tProofs = SelectCommonPart(api, isWithdrawTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
-	enabled := api.Constant(1)
+	enabled := 1
 	for i := 0; i < MaxRangeProofCount; i++ {
 		// pk proof
 		l1 := tool.ScalarBaseMul(pkProofs[i].Z_sk_u)
@@ -471,7 +470,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	switch txType {
 	case TxTypeNoop:
 		// set witness
-		witness.TxType.Assign(uint64(txType))
+		witness.TxType = uint64(txType)
 		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
@@ -492,7 +491,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
 		}
 		// set witness
-		witness.TxType.Assign(uint64(txType))
+		witness.TxType = uint64(txType)
 		witness.DepositTxInfo, err = std.SetDepositOrLockWitness(tx, isEnabled)
 		if err != nil {
 			return witness, err
@@ -515,7 +514,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
 		}
 		// set witness
-		witness.TxType.Assign(uint64(txType))
+		witness.TxType = uint64(txType)
 		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.LockTxInfo, err = std.SetDepositOrLockWitness(tx, isEnabled)
 		if err != nil {
@@ -543,7 +542,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 			return witness, err
 		}
 		// set witness
-		witness.TxType.Assign(uint64(txType))
+		witness.TxType = uint64(txType)
 		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
@@ -569,7 +568,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 			return witness, err
 		}
 		// set witness
-		witness.TxType.Assign(uint64(txType))
+		witness.TxType = uint64(txType)
 		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
@@ -598,7 +597,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 			return witness, err
 		}
 		// set witness
-		witness.TxType.Assign(uint64(txType))
+		witness.TxType = uint64(txType)
 		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
@@ -630,7 +629,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 			return witness, err
 		}
 		// set witness
-		witness.TxType.Assign(uint64(txType))
+		witness.TxType = uint64(txType)
 		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
@@ -659,7 +658,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 			return witness, err
 		}
 		// set witness
-		witness.TxType.Assign(uint64(txType))
+		witness.TxType = uint64(txType)
 		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.UnlockProof = proofConstraints
@@ -685,7 +684,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 			return witness, err
 		}
 		// set witness
-		witness.TxType.Assign(uint64(txType))
+		witness.TxType = uint64(txType)
 		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
@@ -710,7 +709,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	}
 	// set common account & merkle parts
 	// account root before
-	witness.AccountRootBefore.Assign(oTx.AccountRootBefore)
+	witness.AccountRootBefore = oTx.AccountRootBefore
 	// account before info, size is 4
 	for i := 0; i < NbAccountsPerTx; i++ {
 		witness.AccountsInfoBefore[i], err = SetAccountWitness(oTx.AccountsInfoBefore[i])
@@ -774,7 +773,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		//	std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountBefore[i][:], AccountMerkleHelperLevels)
 	}
 	// account root after
-	witness.AccountRootAfter.Assign(oTx.AccountRootAfter)
+	witness.AccountRootAfter = oTx.AccountRootAfter
 	// account after info, size is 4
 	for i := 0; i < NbAccountsPerTx; i++ {
 		witness.AccountsInfoAfter[i], err = SetAccountWitness(oTx.AccountsInfoAfter[i])

@@ -23,9 +23,9 @@ import (
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/mockAccount"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"testing"
-	"zecrey-crypto/zecrey/circuit/bn254/mockAccount"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 func TestTxConstraints_Define_Transfer(t *testing.T) {
@@ -76,8 +76,8 @@ func TestTxConstraints_Define_Transfer(t *testing.T) {
 		MerkleProofsHelperAccountBefore:             [4][32]int{},
 		AccountRootAfter:                            nil,
 		AccountsInfoAfter:                           [4]*Account{},
-		MerkleProofsAccountAssetsAfter:              [4][17][]byte{},
-		MerkleProofsHelperAccountAssetsAfter:        [4][16]int{},
+		MerkleProofsAccountAssetsAfter:              [4][3][17][]byte{},
+		MerkleProofsHelperAccountAssetsAfter:        [4][3][16]int{},
 		MerkleProofsAccountLockedAssetsAfter:        [4][17][]byte{},
 		MerkleProofsHelperAccountLockedAssetsAfter:  [4][16]int{},
 		MerkleProofsAccountLiquidityAfter:           [4][17][]byte{},

@@ -19,16 +19,16 @@ package transactions
 
 import (
 	"errors"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
 	"log"
-	"zecrey-crypto/zecrey/circuit/bn254/std"
 )
 
 type AccountConstraints struct {
 	AccountIndex            Variable
 	AccountName             Variable
-	AccountPk  Point
-	StateRoot  Variable
-	AssetsInfo [NbAccountAssetsPerAccount]AccountAssetConstraints
+	AccountPk               Point
+	StateRoot               Variable
+	AssetsInfo              [NbAccountAssetsPerAccount]AccountAssetConstraints
 	LockedAssetInfo         AccountAssetLockConstraints
 	LiquidityInfo           AccountLiquidityConstraints
 	AccountAssetsRoot       Variable
@@ -97,18 +97,18 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 		log.Println("[SetAccountWitness] invalid params")
 		return witness, errors.New("[SetAccountWitness] invalid params")
 	}
-	witness.AccountIndex.Assign(account.AccountIndex)
-	witness.AccountName.Assign(account.AccountName)
+	witness.AccountIndex = account.AccountIndex
+	witness.AccountName = account.AccountName
 	witness.AccountPk, err = std.SetPointWitness(account.AccountPk)
 	if err != nil {
 		log.Println("[SetAccountWitness] err info:", err)
 		return witness, err
 	}
 	// set root for different trees
-	witness.StateRoot.Assign(account.StateRoot)
-	witness.AccountAssetsRoot.Assign(account.AccountAssetsRoot)
-	witness.AccountLockedAssetsRoot.Assign(account.AccountLockedAssetsRoot)
-	witness.AccountLiquidityRoot.Assign(account.AccountLiquidityRoot)
+	witness.StateRoot = account.StateRoot
+	witness.AccountAssetsRoot = account.AccountAssetsRoot
+	witness.AccountLockedAssetsRoot = account.AccountLockedAssetsRoot
+	witness.AccountLiquidityRoot = account.AccountLiquidityRoot
 	// set asset info
 	for i, asset := range account.AssetsInfo {
 		witness.AssetsInfo[i], err = SetAccountAssetWitness(asset)
@@ -137,7 +137,7 @@ func SetAccountAssetWitness(accountAsset *AccountAsset) (witness AccountAssetCon
 		log.Println("[SetAccountAssetWitness] invalid params")
 		return witness, errors.New("[SetAccountAssetWitness] invalid params")
 	}
-	witness.AssetId.Assign(accountAsset.AssetId)
+	witness.AssetId = accountAsset.AssetId
 	witness.BalanceEnc, err = std.SetElGamalEncWitness(accountAsset.BalanceEnc)
 	if err != nil {
 		log.Println("[SetAccountAssetWitness] err info:", err)
@@ -151,9 +151,9 @@ func SetAccountLockedAssetWitness(accountLockedAsset *AccountAssetLock) (witness
 		log.Println("[SetAccountLockedAssetWitness] invalid params")
 		return witness, errors.New("[SetAccountLockedAssetWitness] invalid params")
 	}
-	witness.ChainId.Assign(accountLockedAsset.ChainId)
-	witness.AssetId.Assign(accountLockedAsset.AssetId)
-	witness.LockedAmount.Assign(accountLockedAsset.LockedAmount)
+	witness.ChainId = accountLockedAsset.ChainId
+	witness.AssetId = accountLockedAsset.AssetId
+	witness.LockedAmount = accountLockedAsset.LockedAmount
 	return witness, nil
 }
 
@@ -162,13 +162,13 @@ func SetAccountLiquidityWitness(accountLiquidity *AccountLiquidity) (witness Acc
 		log.Println("[SetAccountLiquidityWitness] invalid params")
 		return witness, errors.New("[SetAccountLiquidityWitness] invalid params")
 	}
-	witness.PairIndex.Assign(accountLiquidity.PairIndex)
-	witness.AssetAId.Assign(accountLiquidity.AssetAId)
-	witness.AssetBId.Assign(accountLiquidity.AssetBId)
-	witness.AssetA.Assign(accountLiquidity.AssetA)
-	witness.AssetAR.Assign(accountLiquidity.AssetAR)
-	witness.AssetB.Assign(accountLiquidity.AssetB)
-	witness.AssetBR.Assign(accountLiquidity.AssetBR)
+	witness.PairIndex = accountLiquidity.PairIndex
+	witness.AssetAId = accountLiquidity.AssetAId
+	witness.AssetBId = accountLiquidity.AssetBId
+	witness.AssetA = accountLiquidity.AssetA
+	witness.AssetAR = accountLiquidity.AssetAR
+	witness.AssetB = accountLiquidity.AssetB
+	witness.AssetBR = accountLiquidity.AssetBR
 	witness.LpEnc, err = std.SetElGamalEncWitness(accountLiquidity.LpEnc)
 	if err != nil {
 		log.Println("[SetAccountAssetWitness] err info:", err)

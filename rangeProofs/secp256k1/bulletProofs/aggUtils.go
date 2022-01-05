@@ -18,7 +18,7 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"math/big"
 )
 

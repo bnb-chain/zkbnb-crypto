@@ -20,9 +20,9 @@ package wasm
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
 	"syscall/js"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 /*

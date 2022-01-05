@@ -20,7 +20,7 @@ package zecrey
 import (
 	"log"
 	"math/big"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
+	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
 func proveCtRange(b int64, g, h *Point) (r *big.Int, proof *RangeProof, err error) {

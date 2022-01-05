@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
-	"zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 func TestNeg(t *testing.T) {

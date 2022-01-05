@@ -20,8 +20,8 @@ package zbn254
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"math/big"
-	"zecrey-crypto/ffmath"
-	"zecrey-crypto/util"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/util"
 )
 
 var (

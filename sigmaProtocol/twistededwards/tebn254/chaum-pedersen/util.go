@@ -20,8 +20,8 @@ package chaum_pedersen
 import (
 	"bytes"
 	"math/big"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/util"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/util"
 )
 
 func HashChaumPedersen(Vt, Wt, v, w *Point) *big.Int {

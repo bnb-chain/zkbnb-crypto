@@ -18,8 +18,8 @@
 package transactions
 
 import (
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
 	"math/big"
-	"zecrey-crypto/zecrey/circuit/bn254/std"
 )
 
 func SelectCommonPart(
@@ -79,10 +79,10 @@ func GetAccountDeltasFromUnlockProof(
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(proof.DeltaAmount),
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -94,12 +94,12 @@ func GetAccountDeltasFromUnlockProof(
 			proof.C_fee_DeltaForGas,
 			proof.C_fee_DeltaForGas,
 		},
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -121,12 +121,12 @@ func GetAccountDeltasFromTransferProof(
 			proof.SubProofs[TransferAccountA].CDelta,
 		},
 		// locked asset
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -139,12 +139,12 @@ func GetAccountDeltasFromTransferProof(
 			proof.SubProofs[TransferAccountB].CDelta,
 		},
 		// locked asset
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -157,12 +157,12 @@ func GetAccountDeltasFromTransferProof(
 			proof.SubProofs[TransferAccountC].CDelta,
 		},
 		// locked asset
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -175,12 +175,12 @@ func GetAccountDeltasFromTransferProof(
 			proof.C_fee_DeltaForGas,
 		},
 		// locked asset
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -202,12 +202,12 @@ func GetAccountDeltasFromSwapProof(
 			proof.C_fee_DeltaForFrom,
 		},
 		// locked asset
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -228,7 +228,7 @@ func GetAccountDeltasFromSwapProof(
 			tool.ZeroElgamalEnc(),
 		},
 		// locked asset
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		// pool info
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
 			AssetADelta:  Pool_A_Delta,
@@ -246,12 +246,12 @@ func GetAccountDeltasFromSwapProof(
 			proof.C_treasuryfee_Delta,
 			proof.C_treasuryfee_Delta,
 		},
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -263,12 +263,12 @@ func GetAccountDeltasFromSwapProof(
 			proof.C_fee_DeltaForGas,
 			proof.C_fee_DeltaForGas,
 		},
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -290,12 +290,12 @@ func GetAccountDeltasFromAddLiquidityProof(
 			proof.C_fee_DeltaForFrom,
 		},
 		// locked asset
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   proof.C_LP_Delta,
 		},
 	}
@@ -314,7 +314,7 @@ func GetAccountDeltasFromAddLiquidityProof(
 			tool.ZeroElgamalEnc(),
 		},
 		// locked asset
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		// pool info
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
 			AssetADelta:  Pool_A_Delta,
@@ -332,12 +332,12 @@ func GetAccountDeltasFromAddLiquidityProof(
 			proof.C_fee_DeltaForGas,
 			proof.C_fee_DeltaForGas,
 		},
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -360,12 +360,12 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 			proof.C_fee_DeltaForFrom,
 		},
 		// locked asset
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   proof.C_u_LP_Delta,
 		},
 	}
@@ -384,7 +384,7 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 			tool.ZeroElgamalEnc(),
 		},
 		// locked asset
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		// pool info
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
 			AssetADelta:  Pool_A_Delta,
@@ -402,12 +402,12 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 			proof.C_fee_DeltaForGas,
 			proof.C_fee_DeltaForGas,
 		},
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -432,10 +432,10 @@ func GetAccountDeltasFromWithdrawProof(
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
@@ -447,12 +447,12 @@ func GetAccountDeltasFromWithdrawProof(
 			proof.C_fee_DeltaForGas,
 			proof.C_fee_DeltaForGas,
 		},
-		LockedAssetDeltaInfo: api.Constant(std.ZeroInt),
+		LockedAssetDeltaInfo: std.ZeroInt,
 		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
-			AssetADelta:  api.Constant(std.ZeroInt),
-			AssetBDelta:  api.Constant(std.ZeroInt),
-			AssetARDelta: api.Constant(std.ZeroInt),
-			AssetBRDelta: api.Constant(std.ZeroInt),
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}

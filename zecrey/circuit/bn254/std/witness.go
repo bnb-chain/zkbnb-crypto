@@ -19,7 +19,7 @@ package std
 
 import (
 	"errors"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 /*
@@ -29,8 +29,8 @@ func SetPointWitness(point *zecrey.Point) (witness Point, err error) {
 	if point == nil {
 		return witness, errors.New("[SetPointWitness] invalid point")
 	}
-	witness.X.Assign(point.X.String())
-	witness.Y.Assign(point.Y.String())
+	witness.X = point.X.String()
+	witness.Y = point.Y.String()
 	return witness, nil
 }
 
@@ -55,9 +55,9 @@ func SetElGamalEncWitness(encVal *zecrey.ElGamalEnc) (witness ElGamalEncConstrai
 func SetBoolWitness(isEnabled bool) Variable {
 	var witness Variable
 	if isEnabled {
-		witness.Assign(1)
+		witness = 1
 	} else {
-		witness.Assign(0)
+		witness = 0
 	}
 	return witness
 }

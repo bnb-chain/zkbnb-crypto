@@ -1,8 +1,8 @@
 package mockAccount
 
 import (
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"math/big"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
 var (

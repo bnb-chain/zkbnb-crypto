@@ -19,12 +19,11 @@ package std
 
 import (
 	"errors"
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 type TransferProofConstraints struct {
@@ -65,20 +64,20 @@ type TransferSubProofConstraints struct {
 }
 
 // define for testing transfer proof
-func (circuit TransferProofConstraints) Define(curveID ecc.ID, api API) error {
+func (circuit TransferProofConstraints) Define(api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(curveID)
+	params, err := twistededwards.NewEdCurve(api.Curve())
 	if err != nil {
 		return err
 	}
 	// verify H
 	H := Point{
-		X: api.Constant(HX),
-		Y: api.Constant(HY),
+		X: HX,
+		Y: HY,
 	}
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, api)
 	if err != nil {
 		return err
 	}
@@ -253,12 +252,12 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 	// A_sum
 	witness.A_sum, _ = SetPointWitness(BasePoint)
 	// z_tsk
-	witness.Z_sum.Assign(ZeroInt)
+	witness.Z_sum = ZeroInt
 	// C = C1 \oplus C2
-	witness.C1.Assign(ZeroInt)
-	witness.C2.Assign(ZeroInt)
+	witness.C1 = ZeroInt
+	witness.C2 = ZeroInt
 	// set fee
-	witness.GasFee.Assign(ZeroInt)
+	witness.GasFee = ZeroInt
 	// set sub proofs
 	for i := 0; i < NbTransferCount; i++ {
 		// define var
@@ -282,22 +281,22 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 		subProofWitness.A_TDivCPrime, _ = SetPointWitness(BasePoint)
 
 		// Z_r
-		subProofWitness.Z_r.Assign(ZeroInt)
+		subProofWitness.Z_r = ZeroInt
 		// z_{b^{\Delta}}
-		subProofWitness.Z_bDelta.Assign(ZeroInt)
+		subProofWitness.Z_bDelta = ZeroInt
 		// z_{r^{\star} - r}
-		subProofWitness.Z_rstar1.Assign(ZeroInt)
-		subProofWitness.Z_rstar2.Assign(ZeroInt)
-		subProofWitness.Z_bstar1.Assign(ZeroInt)
-		subProofWitness.Z_bstar2.Assign(ZeroInt)
+		subProofWitness.Z_rstar1 = ZeroInt
+		subProofWitness.Z_rstar2 = ZeroInt
+		subProofWitness.Z_bstar1 = ZeroInt
+		subProofWitness.Z_bstar2 = ZeroInt
 		// z_{\bar{r}}
-		subProofWitness.Z_bar_r.Assign(ZeroInt)
+		subProofWitness.Z_bar_r = ZeroInt
 		// z_{b'}
-		subProofWitness.Z_bprime.Assign(ZeroInt)
+		subProofWitness.Z_bprime = ZeroInt
 		// z_{sk}
-		subProofWitness.Z_sk.Assign(ZeroInt)
+		subProofWitness.Z_sk = ZeroInt
 		// z_{sk}
-		subProofWitness.Z_skInv.Assign(ZeroInt)
+		subProofWitness.Z_skInv = ZeroInt
 		// range proof
 		//subProofWitness.BStarRangeProof, err = SetCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
 		//if err != nil {
@@ -321,7 +320,7 @@ func SetEmptyTransferProofWitness() (witness TransferProofConstraints) {
 		// set into witness
 		witness.SubProofs[i] = subProofWitness
 	}
-	witness.AssetId.Assign(ZeroInt)
+	witness.AssetId = ZeroInt
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
@@ -347,15 +346,15 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 		return witness, err
 	}
 	// z_tsk
-	witness.Z_sum.Assign(proof.Z_sum)
+	witness.Z_sum = proof.Z_sum
 	if err != nil {
 		return witness, err
 	}
 	// C = C1 \oplus C2
-	witness.C1.Assign(proof.C1)
-	witness.C2.Assign(proof.C2)
+	witness.C1 = proof.C1
+	witness.C2 = proof.C2
 	// set fee
-	witness.GasFee.Assign(proof.GasFee)
+	witness.GasFee = proof.GasFee
 	// set sub proofs
 	for i, subProof := range proof.SubProofs {
 		// define var
@@ -395,22 +394,22 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 			return witness, err
 		}
 		// Z_r
-		subProofWitness.Z_r.Assign(subProof.Z_r)
+		subProofWitness.Z_r = subProof.Z_r
 		// z_{b^{\Delta}}
-		subProofWitness.Z_bDelta.Assign(subProof.Z_bDelta)
+		subProofWitness.Z_bDelta = subProof.Z_bDelta
 		// z_{r^{\star} - r}
-		subProofWitness.Z_rstar1.Assign(subProof.Z_rstar1)
-		subProofWitness.Z_rstar2.Assign(subProof.Z_rstar2)
-		subProofWitness.Z_bstar1.Assign(subProof.Z_bstar1)
-		subProofWitness.Z_bstar2.Assign(subProof.Z_bstar2)
+		subProofWitness.Z_rstar1 = subProof.Z_rstar1
+		subProofWitness.Z_rstar2 = subProof.Z_rstar2
+		subProofWitness.Z_bstar1 = subProof.Z_bstar1
+		subProofWitness.Z_bstar2 = subProof.Z_bstar2
 		// z_{\bar{r}}
-		subProofWitness.Z_bar_r.Assign(subProof.Z_rbar)
+		subProofWitness.Z_bar_r = subProof.Z_rbar
 		// z_{b'}
-		subProofWitness.Z_bprime.Assign(subProof.Z_bprime)
+		subProofWitness.Z_bprime = subProof.Z_bprime
 		// z_{sk}
-		subProofWitness.Z_sk.Assign(subProof.Z_sk)
+		subProofWitness.Z_sk = subProof.Z_sk
 		// z_{sk}
-		subProofWitness.Z_skInv.Assign(subProof.Z_skInv)
+		subProofWitness.Z_skInv = subProof.Z_skInv
 		// range proof
 		//subProofWitness.BStarRangeProof, err = SetCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
 		//if err != nil {
@@ -444,7 +443,7 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 		// set into witness
 		witness.SubProofs[i] = subProofWitness
 	}
-	witness.AssetId.Assign(uint64(proof.AssetId))
+	witness.AssetId = uint64(proof.AssetId)
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil

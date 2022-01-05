@@ -18,9 +18,9 @@
 package transactions
 
 import (
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"math/big"
-	"zecrey-crypto/zecrey/circuit/bn254/std"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 type AccountAsset struct {

@@ -20,9 +20,9 @@ package linear
 import (
 	"bytes"
 	"math/big"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/util"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/util"
 )
 
 func HashLinear(UtArr, uArr []*Point) *big.Int {

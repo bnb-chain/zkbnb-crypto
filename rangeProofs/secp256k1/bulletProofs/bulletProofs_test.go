@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/elgamal/secp256k1/twistedElgamal"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/secp256k1/twistedElgamal"
 )
 
 func TestProveVerify(t *testing.T) {

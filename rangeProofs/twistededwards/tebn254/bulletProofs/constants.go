@@ -18,7 +18,7 @@
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
 var Order = tebn254.Order
