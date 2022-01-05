@@ -20,8 +20,8 @@ package bulletProofs
 import (
 	"errors"
 	"math/big"
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 /*

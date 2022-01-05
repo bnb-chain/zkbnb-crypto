@@ -19,13 +19,13 @@ package zecrey
 
 import (
 	"fmt"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"gotest.tools/assert"
 	"log"
 	"math/big"
 	"testing"
 	"time"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
 func TestAddLiquidityProof_Verify(t *testing.T) {

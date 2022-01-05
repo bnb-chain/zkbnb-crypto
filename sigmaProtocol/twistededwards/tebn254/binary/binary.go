@@ -20,9 +20,9 @@ package binary
 import (
 	"errors"
 	"math/big"
-	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 type Point = curve.Point

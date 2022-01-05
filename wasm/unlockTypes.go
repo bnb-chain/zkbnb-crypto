@@ -19,9 +19,9 @@ package wasm
 
 import (
 	"encoding/json"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"log"
 	"math/big"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
 type UnlockSegment struct {

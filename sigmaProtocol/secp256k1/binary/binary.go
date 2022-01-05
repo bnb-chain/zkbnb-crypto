@@ -20,9 +20,9 @@ package binary
 import (
 	"errors"
 	"math/big"
-	"zecrey-crypto/commitment/secp256k1/pedersen"
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/commitment/secp256k1/pedersen"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 type P256 = zp256.P256

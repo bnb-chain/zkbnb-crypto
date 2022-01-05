@@ -22,7 +22,7 @@ import (
 	"math"
 	"math/big"
 	"testing"
-	"zecrey-crypto/ecc/zp256"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
 )
 
 func TestDec(t *testing.T) {

@@ -22,7 +22,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"hash"
 	"math/big"
-	"zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 )
 
 /*

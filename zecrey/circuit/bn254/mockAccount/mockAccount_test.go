@@ -2,10 +2,10 @@ package mockAccount
 
 import (
 	"fmt"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"math/big"
 	"testing"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
 func TestMock(t *testing.T) {

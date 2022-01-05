@@ -19,7 +19,7 @@ package merkleTree
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 )
 
 const (

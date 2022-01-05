@@ -19,7 +19,7 @@ package pedersen
 
 import (
 	"math/big"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
 type Point = curve.Point

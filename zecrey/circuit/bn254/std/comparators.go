@@ -21,7 +21,7 @@ package std
 	IsVariableEqual: check if two variables are equal, will force equal if isEnabled = false
 */
 func IsVariableEqual(api API, isEnabled, i1, i2 Variable) {
-	zero := api.Constant(0)
+	zero := 0
 	i1 = api.Select(isEnabled, i1, zero)
 	i2 = api.Select(isEnabled, i2, zero)
 	api.AssertIsEqual(i1, i2)
@@ -31,7 +31,7 @@ func IsVariableEqual(api API, isEnabled, i1, i2 Variable) {
 	IsPointEqual: check if two points are equal, will force equal if isEnabled = false
 */
 func IsPointEqual(api API, isEnabled Variable, p1, p2 Point) {
-	zero := api.Constant(0)
+	zero := 0
 	p1.X = api.Select(isEnabled, p1.X, zero)
 	p1.Y = api.Select(isEnabled, p1.Y, zero)
 	p2.X = api.Select(isEnabled, p2.X, zero)

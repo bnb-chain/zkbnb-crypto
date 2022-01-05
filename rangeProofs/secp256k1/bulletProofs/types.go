@@ -19,7 +19,7 @@ package bulletProofs
 
 import (
 	"math/big"
-	"zecrey-crypto/ecc/zp256"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
 )
 
 type P256 = zp256.P256

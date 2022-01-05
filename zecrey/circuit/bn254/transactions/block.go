@@ -18,11 +18,10 @@
 package transactions
 
 import (
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/zecrey/circuit/bn254/std"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
 )
 
 type BlockConstraints struct {
@@ -34,23 +33,23 @@ type BlockConstraints struct {
 	Txs [NbTxsCountHalf]TxConstraints
 }
 
-func (circuit BlockConstraints) Define(curveID ecc.ID, api API) error {
+func (circuit BlockConstraints) Define(api API) error {
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(curveID)
+	params, err := twistededwards.NewEdCurve(api.Curve())
 	if err != nil {
 		return err
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, api)
 	if err != nil {
 		return err
 	}
 
 	// TODO verify H: need to optimize
 	H := Point{
-		X: api.Constant(std.HX),
-		Y: api.Constant(std.HY),
+		X: std.HX,
+		Y: std.HY,
 	}
 	tool := std.NewEccTool(api, params)
 	VerifyBlock(tool, api, circuit, hFunc, H)
@@ -66,7 +65,7 @@ func VerifyBlock(
 	h Point,
 ) {
 	for i := 0; i < len(block.Txs); i++ {
-		VerifyTransaction(tool, api, block.Txs[i], hFunc, h, h, api.Constant(0))
+		VerifyTransaction(tool, api, block.Txs[i], hFunc, h, 0)
 		hFunc.Reset()
 	}
 }

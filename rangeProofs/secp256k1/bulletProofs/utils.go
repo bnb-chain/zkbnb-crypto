@@ -20,10 +20,10 @@ package bulletProofs
 import (
 	"bytes"
 	"math/big"
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/ffmath"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/util"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/util"
 )
 
 /*

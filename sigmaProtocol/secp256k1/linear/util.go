@@ -20,9 +20,9 @@ package linear
 import (
 	"bytes"
 	"math/big"
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/util"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/util"
 )
 
 func HashLinear(UtArr, uArr []*P256) *big.Int {

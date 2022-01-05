@@ -25,11 +25,11 @@ func Sha256Hash(api API, data []Variable, nBits int) {
 	for k := 0; k < nBits; k++ {
 		paddedIn = append(paddedIn, data[k])
 	}
-	paddedIn = append(paddedIn, api.Constant(1))
+	paddedIn = append(paddedIn, 1)
 	for k := nBits + 1; k < nBlocks*512-64; k++ {
-		paddedIn = append(paddedIn, api.Constant(0))
+		paddedIn = append(paddedIn, 0)
 	}
 	for k := 0; k < 64; k++ {
-		paddedIn[nBlocks*512-k-1] = api.Constant((nBits >> k) & 1)
+		paddedIn[nBlocks*512-k-1] = (nBits >> k) & 1
 	}
 }

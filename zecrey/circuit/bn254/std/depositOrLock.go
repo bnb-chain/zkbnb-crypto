@@ -42,12 +42,12 @@ type DepositOrLockTx struct {
 }
 
 func SetEmptyDepositOrLockWitness() (witness DepositOrLockTxConstraints) {
-	witness.ChainId.Assign(ZeroInt)
-	witness.AssetId.Assign(ZeroInt)
-	witness.AccountIndex.Assign(ZeroInt)
-	witness.AccountName.Assign(ZeroInt)
-	witness.NativeAddress.Assign(ZeroInt)
-	witness.Amount.Assign(ZeroInt)
+	witness.ChainId = ZeroInt
+	witness.AssetId = ZeroInt
+	witness.AccountIndex = ZeroInt
+	witness.AccountName = ZeroInt
+	witness.NativeAddress = ZeroInt
+	witness.Amount = ZeroInt
 	return witness
 }
 
@@ -56,12 +56,12 @@ func SetDepositOrLockWitness(tx *DepositOrLockTx, isEnabled bool) (witness Depos
 		log.Println("[SetDepositOrLockWitness] invalid params")
 		return witness, err
 	}
-	witness.ChainId.Assign(tx.ChainId)
-	witness.AssetId.Assign(tx.AssetId)
-	witness.AccountIndex.Assign(tx.AccountIndex)
-	witness.AccountName.Assign(tx.AccountName)
-	witness.NativeAddress.Assign(tx.NativeAddress)
-	witness.Amount.Assign(tx.Amount)
+	witness.ChainId = tx.ChainId
+	witness.AssetId = tx.AssetId
+	witness.AccountIndex = tx.AccountIndex
+	witness.AccountName = tx.AccountName
+	witness.NativeAddress = tx.NativeAddress
+	witness.Amount = tx.Amount
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

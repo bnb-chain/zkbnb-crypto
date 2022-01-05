@@ -19,12 +19,11 @@ package std
 
 import (
 	"errors"
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 type AddLiquidityProofConstraints struct {
@@ -61,20 +60,20 @@ type AddLiquidityProofConstraints struct {
 }
 
 // define tests for verifying the swap proof
-func (circuit AddLiquidityProofConstraints) Define(curveID ecc.ID, api API) error {
+func (circuit AddLiquidityProofConstraints) Define(api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(curveID)
+	params, err := twistededwards.NewEdCurve(api.Curve())
 	if err != nil {
 		return err
 	}
 	// verify H
 	H := Point{
-		X: api.Constant(HX),
-		Y: api.Constant(HY),
+		X: HX,
+		Y: HY,
 	}
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, api)
 	if err != nil {
 		return err
 	}
@@ -274,15 +273,15 @@ func SetEmptyAddLiquidityProofWitness() (witness AddLiquidityProofConstraints) {
 	// valid enc
 	witness.A_CLPL_Delta, _ = SetPointWitness(BasePoint)
 	witness.A_CLPR_DeltaHExp_DeltaLPNeg, _ = SetPointWitness(BasePoint)
-	witness.Z_rDelta_LP.Assign(ZeroInt)
+	witness.Z_rDelta_LP = ZeroInt
 	// ownership
 	witness.A_pk_u, _ = SetPointWitness(BasePoint)
 	witness.A_T_uAC_uARPrimeInv, _ = SetPointWitness(BasePoint)
 	witness.A_T_uBC_uBRPrimeInv, _ = SetPointWitness(BasePoint)
-	witness.Z_sk_u.Assign(ZeroInt)
-	witness.Z_bar_r_A.Assign(ZeroInt)
-	witness.Z_bar_r_B.Assign(ZeroInt)
-	witness.Z_sk_uInv.Assign(ZeroInt)
+	witness.Z_sk_u = ZeroInt
+	witness.Z_bar_r_A = ZeroInt
+	witness.Z_bar_r_B = ZeroInt
+	witness.Z_sk_uInv = ZeroInt
 	// common inputs
 	witness.C_uA, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_uB, _ = SetElGamalEncWitness(ZeroElgamalEnc)
@@ -293,25 +292,25 @@ func SetEmptyAddLiquidityProofWitness() (witness AddLiquidityProofConstraints) {
 	witness.C_LP_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.Pk_u, _ = SetPointWitness(BasePoint)
 	witness.Pk_pool, _ = SetPointWitness(BasePoint)
-	witness.R_DeltaA.Assign(ZeroInt)
-	witness.R_DeltaB.Assign(ZeroInt)
+	witness.R_DeltaA = ZeroInt
+	witness.R_DeltaB = ZeroInt
 	witness.T_uA, _ = SetPointWitness(BasePoint)
 	witness.T_uB, _ = SetPointWitness(BasePoint)
-	witness.B_poolA.Assign(ZeroInt)
-	witness.B_poolB.Assign(ZeroInt)
-	witness.B_A_Delta.Assign(ZeroInt)
-	witness.B_B_Delta.Assign(ZeroInt)
-	witness.Delta_LP.Assign(ZeroInt)
+	witness.B_poolA = ZeroInt
+	witness.B_poolB = ZeroInt
+	witness.B_A_Delta = ZeroInt
+	witness.B_B_Delta = ZeroInt
+	witness.Delta_LP = ZeroInt
 	// assets id
-	witness.AssetAId.Assign(ZeroInt)
-	witness.AssetBId.Assign(ZeroInt)
+	witness.AssetAId = ZeroInt
+	witness.AssetBId = ZeroInt
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, _ = SetPointWitness(BasePoint)
-	witness.Z_bar_r_fee.Assign(ZeroInt)
+	witness.Z_bar_r_fee = ZeroInt
 	witness.C_fee, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.T_fee, _ = SetPointWitness(BasePoint)
-	witness.GasFeeAssetId.Assign(ZeroInt)
-	witness.GasFee.Assign(ZeroInt)
+	witness.GasFeeAssetId = ZeroInt
+	witness.GasFee = ZeroInt
 	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
@@ -345,7 +344,7 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	if err != nil {
 		return witness, err
 	}
-	witness.Z_rDelta_LP.Assign(proof.Z_rDelta_LP)
+	witness.Z_rDelta_LP = proof.Z_rDelta_LP
 	// ownership
 	witness.A_pk_u, err = SetPointWitness(proof.A_pk_u)
 	if err != nil {
@@ -359,10 +358,10 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	if err != nil {
 		return witness, err
 	}
-	witness.Z_sk_u.Assign(proof.Z_sk_u)
-	witness.Z_bar_r_A.Assign(proof.Z_bar_r_A)
-	witness.Z_bar_r_B.Assign(proof.Z_bar_r_B)
-	witness.Z_sk_uInv.Assign(proof.Z_sk_uInv)
+	witness.Z_sk_u = proof.Z_sk_u
+	witness.Z_bar_r_A = proof.Z_bar_r_A
+	witness.Z_bar_r_B = proof.Z_bar_r_B
+	witness.Z_sk_uInv = proof.Z_sk_uInv
 	// common inputs
 	witness.C_uA, err = SetElGamalEncWitness(proof.C_uA)
 	if err != nil {
@@ -400,8 +399,8 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	if err != nil {
 		return witness, err
 	}
-	witness.R_DeltaA.Assign(proof.R_DeltaA)
-	witness.R_DeltaB.Assign(proof.R_DeltaB)
+	witness.R_DeltaA = proof.R_DeltaA
+	witness.R_DeltaB = proof.R_DeltaB
 	witness.T_uA, err = SetPointWitness(proof.T_uA)
 	if err != nil {
 		return witness, err
@@ -410,20 +409,20 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	if err != nil {
 		return witness, err
 	}
-	witness.B_poolA.Assign(proof.B_poolA)
-	witness.B_poolB.Assign(proof.B_poolB)
-	witness.B_A_Delta.Assign(proof.B_A_Delta)
-	witness.B_B_Delta.Assign(proof.B_B_Delta)
-	witness.Delta_LP.Assign(proof.Delta_LP)
+	witness.B_poolA = proof.B_poolA
+	witness.B_poolB = proof.B_poolB
+	witness.B_A_Delta = proof.B_A_Delta
+	witness.B_B_Delta = proof.B_B_Delta
+	witness.Delta_LP = proof.Delta_LP
 	// assets id
-	witness.AssetAId.Assign(uint64(proof.AssetAId))
-	witness.AssetBId.Assign(uint64(proof.AssetBId))
+	witness.AssetAId = uint64(proof.AssetAId)
+	witness.AssetBId = uint64(proof.AssetBId)
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
 	if err != nil {
 		return witness, err
 	}
-	witness.Z_bar_r_fee.Assign(proof.Z_bar_r_fee)
+	witness.Z_bar_r_fee = proof.Z_bar_r_fee
 	witness.C_fee, err = SetElGamalEncWitness(proof.C_fee)
 	if err != nil {
 		return witness, err
@@ -432,8 +431,8 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	if err != nil {
 		return witness, err
 	}
-	witness.GasFeeAssetId.Assign(uint64(proof.GasFeeAssetId))
-	witness.GasFee.Assign(proof.GasFee)
+	witness.GasFeeAssetId = uint64(proof.GasFeeAssetId)
+	witness.GasFee = proof.GasFee
 	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)

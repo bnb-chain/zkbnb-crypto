@@ -19,12 +19,11 @@ package std
 
 import (
 	"errors"
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 	"log"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
 type CtRangeProofConstraints struct {
@@ -40,20 +39,20 @@ type CtRangeProofConstraints struct {
 }
 
 // define for range proof test
-func (circuit CtRangeProofConstraints) Define(curveID ecc.ID, api API) error {
+func (circuit CtRangeProofConstraints) Define(api API) error {
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(curveID)
+	params, err := twistededwards.NewEdCurve(api.Curve())
 	if err != nil {
 		return err
 	}
 	// verify H
 	H := Point{
-		X: api.Constant(HX),
-		Y: api.Constant(HY),
+		X: HX,
+		Y: HY,
 	}
 	IsPointEqual(api, circuit.IsEnabled, H, circuit.H)
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, api)
 	if err != nil {
 		return err
 	}
@@ -64,8 +63,8 @@ func (circuit CtRangeProofConstraints) Define(curveID ecc.ID, api API) error {
 
 func VerifyCtRangeProof(tool *EccTool, api API, proof CtRangeProofConstraints, hFunc MiMC) {
 	A := Point{
-		X: api.Constant(0),
-		Y: api.Constant(1),
+		X: 0,
+		Y: 1,
 	}
 	var current Point
 	current.Neg(api, &proof.H)
@@ -97,11 +96,11 @@ func VerifyCtRangeProof(tool *EccTool, api API, proof CtRangeProofConstraints, h
 func SetEmptyCtRangeProofWitness() (witness CtRangeProofConstraints) {
 	witness.H, _ = SetPointWitness(ZeroPoint)
 	witness.A, _ = SetPointWitness(ZeroPoint)
-	witness.C.Assign(ZeroInt)
+	witness.C = ZeroInt
 	// set buf and
 	for i := 0; i < RangeMaxBits; i++ {
 		witness.As[i], _ = SetPointWitness(ZeroPoint)
-		witness.Zs[i].Assign(ZeroInt)
+		witness.Zs[i] = ZeroInt
 	}
 	witness.IsEnabled = SetBoolWitness(false)
 	return witness
@@ -136,14 +135,14 @@ func SetCtRangeProofWitness(proof *ctrange.RangeProof, isEnabled bool) (witness 
 	if err != nil {
 		return witness, err
 	}
-	witness.C.Assign(proof.C)
+	witness.C = proof.C
 	// set buf and
 	for i := 0; i < RangeMaxBits; i++ {
 		witness.As[i], err = SetPointWitness(proof.As[i])
 		if err != nil {
 			return witness, err
 		}
-		witness.Zs[i].Assign(proof.Zs[i])
+		witness.Zs[i] = proof.Zs[i]
 	}
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil

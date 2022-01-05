@@ -20,9 +20,9 @@ package wasm
 import (
 	"math/big"
 	"syscall/js"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"zecrey-crypto/ffmath"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 /*

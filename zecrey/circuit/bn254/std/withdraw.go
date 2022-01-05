@@ -19,12 +19,11 @@ package std
 
 import (
 	"errors"
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 )
 
 // WithdrawProof in circuit
@@ -57,20 +56,20 @@ type WithdrawProofConstraints struct {
 }
 
 // define tests for verifying the withdraw proof
-func (circuit WithdrawProofConstraints) Define(curveID ecc.ID, api API) error {
+func (circuit WithdrawProofConstraints) Define(api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(curveID)
+	params, err := twistededwards.NewEdCurve(api.Curve())
 	if err != nil {
 		return err
 	}
 	// verify H
 	H := Point{
-		X: api.Constant(HX),
-		Y: api.Constant(HY),
+		X: HX,
+		Y: HY,
 	}
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, curveID, api)
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, api)
 	if err != nil {
 		return err
 	}
@@ -97,7 +96,7 @@ func VerifyWithdrawProof(
 	isSameAsset := api.IsZero(assetIdDiff)
 	IsElGamalEncEqual(api, isSameAsset, proof.C, proof.C_fee)
 	IsPointEqual(api, isSameAsset, proof.A_TDivCRprime, proof.A_T_feeC_feeRPrimeInv)
-	deltaFeeForFrom := api.Select(isSameAsset, proof.GasFee, api.Constant(0))
+	deltaFeeForFrom := api.Select(isSameAsset, proof.GasFee, ZeroInt)
 	var (
 		hNeg Point
 	)
@@ -176,24 +175,24 @@ func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
 	witness.A_pk, _ = SetPointWitness(BasePoint)
 	witness.A_TDivCRprime, _ = SetPointWitness(BasePoint)
 	// response
-	witness.Z_bar_r.Assign(ZeroInt)
-	witness.Z_sk.Assign(ZeroInt)
-	witness.Z_skInv.Assign(ZeroInt)
+	witness.Z_bar_r = ZeroInt
+	witness.Z_sk = ZeroInt
+	witness.Z_skInv = ZeroInt
 	// common inputs
-	witness.BStar.Assign(ZeroInt)
+	witness.BStar = ZeroInt
 	witness.C, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.T, _ = SetPointWitness(BasePoint)
 	witness.Pk, _ = SetPointWitness(BasePoint)
-	witness.ReceiveAddr.Assign(ZeroInt)
-	witness.AssetId.Assign(ZeroInt)
+	witness.ReceiveAddr = ZeroInt
+	witness.AssetId = ZeroInt
 	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, _ = SetPointWitness(BasePoint)
-	witness.Z_bar_r_fee.Assign(ZeroInt)
+	witness.Z_bar_r_fee = ZeroInt
 	witness.C_fee, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.T_fee, _ = SetPointWitness(BasePoint)
-	witness.GasFeeAssetId.Assign(ZeroInt)
-	witness.GasFee.Assign(ZeroInt)
+	witness.GasFeeAssetId = ZeroInt
+	witness.GasFee = ZeroInt
 	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
@@ -227,11 +226,11 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 		return witness, err
 	}
 	// response
-	witness.Z_bar_r.Assign(proof.Z_bar_r)
-	witness.Z_sk.Assign(proof.Z_sk)
-	witness.Z_skInv.Assign(proof.Z_skInv)
+	witness.Z_bar_r = proof.Z_bar_r
+	witness.Z_sk = proof.Z_sk
+	witness.Z_skInv = proof.Z_skInv
 	// common inputs
-	witness.BStar.Assign(proof.BStar)
+	witness.BStar = proof.BStar
 	witness.C, err = SetElGamalEncWitness(proof.C)
 	if err != nil {
 		return witness, err
@@ -244,16 +243,16 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	if err != nil {
 		return witness, err
 	}
-	witness.ReceiveAddr.Assign(proof.ReceiveAddr)
-	witness.AssetId.Assign(uint64(proof.AssetId))
-	witness.ChainId.Assign(uint64(proof.ChainId))
+	witness.ReceiveAddr = proof.ReceiveAddr
+	witness.AssetId = uint64(proof.AssetId)
+	witness.ChainId = uint64(proof.ChainId)
 	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
 	if err != nil {
 		return witness, err
 	}
-	witness.Z_bar_r_fee.Assign(proof.Z_bar_r_fee)
+	witness.Z_bar_r_fee = proof.Z_bar_r_fee
 	witness.C_fee, err = SetElGamalEncWitness(proof.C_fee)
 	if err != nil {
 		return witness, err
@@ -262,8 +261,8 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	if err != nil {
 		return witness, err
 	}
-	witness.GasFeeAssetId.Assign(uint64(proof.GasFeeAssetId))
-	witness.GasFee.Assign(proof.GasFee)
+	witness.GasFeeAssetId = uint64(proof.GasFeeAssetId)
+	witness.GasFee = proof.GasFee
 	//witness.BPrimeRangeProof, err = SetCtRangeProofWitness(proof.BPrimeRangeProof, isEnabled)
 	//if err != nil {
 	//	return witness, err

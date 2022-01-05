@@ -17,7 +17,7 @@
 
 package merkleTree
 
-import "zecrey-crypto/hash/bn254/zmimc"
+import "github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 
 /*
 IsPowerOfTwo returns true for arguments that are a power of 2, false otherwise.

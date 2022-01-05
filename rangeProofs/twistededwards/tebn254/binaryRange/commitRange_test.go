@@ -24,10 +24,10 @@ import (
 	"math/big"
 	"testing"
 	"time"
-	"zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"zecrey-crypto/hash/bn254/zmimc"
-	"zecrey-crypto/util"
+	"github.com/zecrey-labs/zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/util"
 )
 
 func TestProveAndVerify(t *testing.T) {

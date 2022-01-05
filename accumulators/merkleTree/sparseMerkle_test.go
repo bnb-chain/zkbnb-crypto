@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"testing"
 	"time"
-	"zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 )
 
 func MockState(size int) [][]byte {
@@ -71,6 +71,7 @@ func TestNewTree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println("len:", len(merkleProofs))
 	fmt.Println("BuildTree proofs time:", time.Since(elapse))
 	fmt.Println("merkle proof helper:", helperMerkleProofs)
 	res := tree.VerifyMerkleProofs(merkleProofs, helperMerkleProofs)

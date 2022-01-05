@@ -19,8 +19,8 @@ package twistedElgamal
 
 import (
 	"math/big"
-	curve "zecrey-crypto/ecc/zbn254"
-	"zecrey-crypto/ffmath"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/zbn254"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 var (

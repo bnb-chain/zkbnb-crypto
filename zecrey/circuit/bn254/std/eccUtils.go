@@ -37,8 +37,8 @@ func (tool *EccTool) Add(a, b Point) Point {
 
 func (tool *EccTool) ZeroPoint() Point {
 	var p Point
-	p.X = tool.api.Constant(0)
-	p.Y = tool.api.Constant(1)
+	p.X = 0
+	p.Y = 1
 	return p
 }
 

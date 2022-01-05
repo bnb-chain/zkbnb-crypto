@@ -20,7 +20,7 @@ package zecrey
 import (
 	"fmt"
 	"testing"
-	curve "zecrey-crypto/ecc/ztwistededwards/tebn254"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
 func TestCopyBuf(t *testing.T) {

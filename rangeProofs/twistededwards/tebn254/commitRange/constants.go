@@ -19,7 +19,7 @@ package commitRange
 
 import (
 	"math/big"
-	"zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 )
 
 const (

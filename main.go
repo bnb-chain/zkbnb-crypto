@@ -19,8 +19,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/zecrey-labs/zecrey-crypto/wasm"
 	"syscall/js"
-	"zecrey-crypto/wasm"
 )
 
 func main() {
