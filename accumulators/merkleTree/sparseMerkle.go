@@ -82,6 +82,16 @@ func CreateLeaves(hashState [][]byte) []*Node {
 	return leaves
 }
 
+func CreateLeafNode(hashVal []byte) *Node {
+	return &Node{
+		Value:  hashVal,
+		Left:   nil,
+		Right:  nil,
+		Parent: nil,
+		Height: 0,
+	}
+}
+
 func (t *Tree) InitNilHashValueConst() (err error) {
 	nilHash := t.NilHashValueConst[0]
 	for i := 1; i <= t.MaxHeight; i++ {
@@ -120,6 +130,72 @@ func NewEmptyTree(maxHeight int, nilHash []byte, hFunc hash.Hash) (*Tree, error)
 		log.Println(errInfo)
 		return nil, errors.New(errInfo)
 	}
+	return tree, nil
+}
+
+/*
+	func: NewTree
+	params: leaves []*Node, maxHeight int, nilHash []byte, hFunc hash.Hash
+    desp: Use leaf nodes to initialize the tree,
+          and call the BuildTree method through the root to initialize the hash value of the entire tree
+*/
+func NewTreeByMap(leaves map[int64]*Node, maxHeight int, nilHash []byte, hFunc hash.Hash) (*Tree, error) {
+	// define variables
+	var (
+		root *Node
+	)
+	// empty tree
+	if len(leaves) == 0 || leaves == nil {
+		return NewEmptyTree(maxHeight, nilHash, hFunc)
+	}
+	// construct root node
+	root = &Node{
+		Value:  nilHash,
+		Left:   nil,
+		Right:  nil,
+		Parent: nil,
+		Height: maxHeight,
+	}
+	// init nil hash values for different heights
+	nilHashValueConst := make([][]byte, maxHeight+1)
+	nilHashValueConst[0] = nilHash
+	// scan map
+	maxIndex := int64(0)
+	for index, _ := range leaves {
+		if index > maxIndex {
+			maxIndex = index
+		}
+	}
+	var nodes []*Node
+	for i := int64(0); i < maxIndex; i++ {
+		if leaves[i] != nil {
+			nodes = append(nodes, leaves[i])
+		} else {
+			nodes = append(nodes, &Node{
+				Value:  nilHash,
+				Left:   nil,
+				Right:  nil,
+				Parent: nil,
+				Height: 0,
+			})
+		}
+	}
+	// init tree
+	tree := &Tree{
+		RootNode:          root,
+		Leaves:            nodes,
+		MaxHeight:         maxHeight,
+		NilHashValueConst: nilHashValueConst,
+		HashFunc:          hFunc,
+	}
+	err := tree.InitNilHashValueConst()
+	if err != nil {
+		errInfo := fmt.Sprintf("[smt.NewTree] InitNilHashValueConst error: %s", err.Error())
+		log.Println(errInfo)
+		return nil, errors.New(errInfo)
+	}
+
+	tree.BuildTree(tree.Leaves)
 	return tree, nil
 }
 

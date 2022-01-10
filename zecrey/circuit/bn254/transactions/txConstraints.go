@@ -225,7 +225,7 @@ func VerifyTransaction(
 				tx.AccountsInfoBefore[i].AssetsInfo[j].AssetId, tx.AccountsInfoAfter[i].AssetsInfo[j].AssetId)
 		}
 		// verify account locked asset root
-		isNilLockedAssetRoot := api.IsZero(api.Sub(tx.AccountsInfoBefore[i].LockedAssetInfo, nilHash))
+		isNilLockedAssetRoot := api.IsZero(api.Sub(tx.AccountsInfoBefore[i].AccountLockedAssetsRoot, nilHash))
 		isLockRelatedTx := api.Or(isLockTx, isUnlockTx)
 		notNilLockedAssetRootAndNotLockRelatedTx := api.IsZero(api.Or(isNilLockedAssetRoot, isLockRelatedTx))
 		std.VerifyMerkleProof(
