@@ -24,6 +24,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"log"
 	"strconv"
 	"testing"
 	"time"
@@ -98,7 +99,7 @@ func TestNewTree(t *testing.T) {
 	h.Write([]byte("modify"))
 	nVal := h.Sum([]byte{})
 	fmt.Println("nVal:", nVal)
-	err = tree.Update(6, nVal)
+	err = tree.updateExistOrNext(6, nVal)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,6 +174,28 @@ func TestNewTreeByMap(t *testing.T) {
 	}
 	isValid := tree.VerifyMerkleProofs(proofs, proofsHelper)
 	assert.Equal(t, true, isValid, "invalid proof")
+	proofs, proofsHelper, err = tree.BuildMerkleProofs(110)
+	if err != nil {
+		t.Fatal(err)
+	}
+	isValid = tree.VerifyMerkleProofs(proofs, proofsHelper)
+	assert.Equal(t, true, isValid, "invalid proof")
+	log.Println(common.Bytes2Hex(proofs[0]))
+	h.Reset()
+	h.Write([]byte("110"))
+	nVal := h.Sum(nil)
+	err = tree.Update(110, nVal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	log.Println(common.Bytes2Hex(nVal))
+	proofs, proofsHelper, err = tree.BuildMerkleProofs(110)
+	if err != nil {
+		t.Fatal(err)
+	}
+	isValid = tree.VerifyMerkleProofs(proofs, proofsHelper)
+	assert.Equal(t, true, isValid, "invalid proof")
+	log.Println(common.Bytes2Hex(proofs[0]))
 }
 
 func TestNewEmptyTree(t *testing.T) {
@@ -191,7 +214,7 @@ func TestNewEmptyTree(t *testing.T) {
 	h.Reset()
 	h.Write([]byte("1"))
 	nVal := h.Sum([]byte{})
-	err = tree.Update(0, nVal)
+	err = tree.updateExistOrNext(0, nVal)
 	if err != nil {
 		t.Fatal(err)
 	}
