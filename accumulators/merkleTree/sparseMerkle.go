@@ -145,7 +145,7 @@ func NewTreeByMap(leaves map[int64]*Node, maxHeight int, nilHash []byte, hFunc h
 		root *Node
 	)
 	// empty tree
-	if len(leaves) == 0 || leaves == nil {
+	if leaves == nil {
 		return NewEmptyTree(maxHeight, nilHash, hFunc)
 	}
 	// construct root node
@@ -167,7 +167,7 @@ func NewTreeByMap(leaves map[int64]*Node, maxHeight int, nilHash []byte, hFunc h
 		}
 	}
 	var nodes []*Node
-	for i := int64(0); i < maxIndex; i++ {
+	for i := int64(0); i <= maxIndex; i++ {
 		if leaves[i] != nil {
 			nodes = append(nodes, leaves[i])
 		} else {
@@ -240,7 +240,11 @@ func NewTree(leaves []*Node, maxHeight int, nilHash []byte, hFunc hash.Hash) (*T
 		return nil, errors.New(errInfo)
 	}
 
-	tree.BuildTree(tree.Leaves)
+	err = tree.BuildTree(tree.Leaves)
+	if err != nil {
+		log.Println("[NewTree] unable to build tree: ", err)
+		return nil, err
+	}
 	return tree, nil
 }
 
@@ -258,15 +262,15 @@ func (t *Tree) HashSubTrees(l []byte, r []byte) []byte {
 /*
 	BuildTree: build sparse merkle tree
 */
-func (t *Tree) BuildTree(nodes []*Node) {
+func (t *Tree) BuildTree(nodes []*Node) (err error) {
 	// get to the max height
 	if len(nodes) == 0 {
 		log.Println("[BuildTree] smt BuildTree error, nodes length == 0")
-		return
+		return errors.New("[BuildTree] nodes length == 0")
 	} else {
 		if nodes[0].Height == t.MaxHeight && len(nodes) == 1 {
 			t.RootNode = nodes[0]
-			return
+			return nil
 		}
 	}
 	if len(nodes)%2 != 0 {
@@ -291,7 +295,8 @@ func (t *Tree) BuildTree(nodes []*Node) {
 
 		parents = append(parents, nodes[i].Parent)
 	}
-	t.BuildTree(parents)
+	err = t.BuildTree(parents)
+	return err
 }
 
 /*

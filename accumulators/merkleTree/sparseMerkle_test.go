@@ -23,10 +23,10 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"strconv"
 	"testing"
 	"time"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 )
 
 func MockState(size int) [][]byte {
@@ -139,6 +139,40 @@ func TestNewTree(t *testing.T) {
 	//fmt.Println(helperMerkleProofs[2])
 	//fmt.Println(helper[2])
 
+}
+
+func TestNewTreeByMap(t *testing.T) {
+	h := mimc.NewMiMC(SEED)
+	h.Write([]byte("1"))
+	hashVal1 := h.Sum(nil)
+	h.Reset()
+	h.Write([]byte("100"))
+	hashVal2 := h.Sum(nil)
+	leaves := make(map[int64]*Node)
+	leaves[0] = &Node{
+		Value:  hashVal1,
+		Left:   nil,
+		Right:  nil,
+		Parent: nil,
+		Height: 0,
+	}
+	leaves[100] = &Node{
+		Value:  hashVal2,
+		Left:   nil,
+		Right:  nil,
+		Parent: nil,
+		Height: 0,
+	}
+	tree, err := NewTreeByMap(leaves, 16, NilHash, zmimc.Hmimc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proofs, proofsHelper, err := tree.BuildMerkleProofs(3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	isValid := tree.VerifyMerkleProofs(proofs, proofsHelper)
+	assert.Equal(t, true, isValid, "invalid proof")
 }
 
 func TestNewEmptyTree(t *testing.T) {
