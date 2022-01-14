@@ -306,14 +306,14 @@ func (t *Tree) BuildTree(nodes []*Node) (err error) {
 /*
 	BuildMerkleProofs: construct merkle proofs
 */
-func (t *Tree) BuildMerkleProofs(index uint32) (
+func (t *Tree) BuildMerkleProofs(index int64) (
 	rMerkleProof [][]byte,
 	rProofHelper []int,
 	err error,
 ) {
 	var proofs [][]byte
 	var proofHelpers []int
-	if index >= uint32(1 << t.MaxHeight) {
+	if index >= (1 << t.MaxHeight) {
 		errInfo := fmt.Sprintf("[BuildMerkleProofs] index error, index: %v is bigger than tree capacity: %v.",
 			index, 1<<t.MaxHeight)
 		log.Println(errInfo)
@@ -328,7 +328,7 @@ func (t *Tree) BuildMerkleProofs(index uint32) (
 		return t.NilHashValueConst, rProofHelper, nil
 	}
 	// if index belongs to leaves
-	if index < uint32(len(t.Leaves)) {
+	if index < int64(len(t.Leaves)) {
 		node := t.Leaves[index]
 		proofs = append(proofs, node.Value)
 		for node.Parent != nil {
@@ -353,10 +353,10 @@ func (t *Tree) BuildMerkleProofs(index uint32) (
 		// add itself
 		proofs = append(proofs, t.NilHashValueConst[0])
 		// get last index
-		lastIndex := len(t.Leaves) - 1
+		lastIndex := int64(len(t.Leaves) - 1)
 		// get last leave node
 		node := t.Leaves[lastIndex]
-		for uint32(lastIndex+1) != index {
+		for lastIndex+1 != index {
 			proofs = append(proofs, t.NilHashValueConst[node.Height])
 			if index%2 == 0 {
 				proofHelpers = append(proofHelpers, Right)
