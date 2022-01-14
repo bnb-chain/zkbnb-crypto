@@ -23,10 +23,11 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"log"
 	"strconv"
 	"testing"
 	"time"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 )
 
 func MockState(size int) [][]byte {
@@ -98,7 +99,7 @@ func TestNewTree(t *testing.T) {
 	h.Write([]byte("modify"))
 	nVal := h.Sum([]byte{})
 	fmt.Println("nVal:", nVal)
-	err = tree.Update(6, nVal)
+	err = tree.updateExistOrNext(6, nVal)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,6 +142,62 @@ func TestNewTree(t *testing.T) {
 
 }
 
+func TestNewTreeByMap(t *testing.T) {
+	h := mimc.NewMiMC(SEED)
+	h.Write([]byte("1"))
+	hashVal1 := h.Sum(nil)
+	h.Reset()
+	h.Write([]byte("100"))
+	hashVal2 := h.Sum(nil)
+	leaves := make(map[int64]*Node)
+	leaves[0] = &Node{
+		Value:  hashVal1,
+		Left:   nil,
+		Right:  nil,
+		Parent: nil,
+		Height: 0,
+	}
+	leaves[100] = &Node{
+		Value:  hashVal2,
+		Left:   nil,
+		Right:  nil,
+		Parent: nil,
+		Height: 0,
+	}
+	tree, err := NewTreeByMap(leaves, 16, NilHash, zmimc.Hmimc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proofs, proofsHelper, err := tree.BuildMerkleProofs(3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	isValid := tree.VerifyMerkleProofs(proofs, proofsHelper)
+	assert.Equal(t, true, isValid, "invalid proof")
+	proofs, proofsHelper, err = tree.BuildMerkleProofs(110)
+	if err != nil {
+		t.Fatal(err)
+	}
+	isValid = tree.VerifyMerkleProofs(proofs, proofsHelper)
+	assert.Equal(t, true, isValid, "invalid proof")
+	log.Println(common.Bytes2Hex(proofs[0]))
+	h.Reset()
+	h.Write([]byte("110"))
+	nVal := h.Sum(nil)
+	err = tree.Update(110, nVal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	log.Println(common.Bytes2Hex(nVal))
+	proofs, proofsHelper, err = tree.BuildMerkleProofs(110)
+	if err != nil {
+		t.Fatal(err)
+	}
+	isValid = tree.VerifyMerkleProofs(proofs, proofsHelper)
+	assert.Equal(t, true, isValid, "invalid proof")
+	log.Println(common.Bytes2Hex(proofs[0]))
+}
+
 func TestNewEmptyTree(t *testing.T) {
 	h := mimc.NewMiMC(SEED)
 	nilHash := h.Sum([]byte{})
@@ -157,7 +214,7 @@ func TestNewEmptyTree(t *testing.T) {
 	h.Reset()
 	h.Write([]byte("1"))
 	nVal := h.Sum([]byte{})
-	err = tree.Update(0, nVal)
+	err = tree.updateExistOrNext(0, nVal)
 	if err != nil {
 		t.Fatal(err)
 	}

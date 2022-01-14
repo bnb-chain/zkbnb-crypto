@@ -145,7 +145,7 @@ func NewTreeByMap(leaves map[int64]*Node, maxHeight int, nilHash []byte, hFunc h
 		root *Node
 	)
 	// empty tree
-	if len(leaves) == 0 || leaves == nil {
+	if leaves == nil {
 		return NewEmptyTree(maxHeight, nilHash, hFunc)
 	}
 	// construct root node
@@ -167,7 +167,7 @@ func NewTreeByMap(leaves map[int64]*Node, maxHeight int, nilHash []byte, hFunc h
 		}
 	}
 	var nodes []*Node
-	for i := int64(0); i < maxIndex; i++ {
+	for i := int64(0); i <= maxIndex; i++ {
 		if leaves[i] != nil {
 			nodes = append(nodes, leaves[i])
 		} else {
@@ -195,7 +195,11 @@ func NewTreeByMap(leaves map[int64]*Node, maxHeight int, nilHash []byte, hFunc h
 		return nil, errors.New(errInfo)
 	}
 
-	tree.BuildTree(tree.Leaves)
+	err = tree.BuildTree(tree.Leaves)
+	if err != nil {
+		log.Println("[NewTree] unable to build tree: ", err)
+		return nil, err
+	}
 	return tree, nil
 }
 
@@ -240,7 +244,11 @@ func NewTree(leaves []*Node, maxHeight int, nilHash []byte, hFunc hash.Hash) (*T
 		return nil, errors.New(errInfo)
 	}
 
-	tree.BuildTree(tree.Leaves)
+	err = tree.BuildTree(tree.Leaves)
+	if err != nil {
+		log.Println("[NewTree] unable to build tree: ", err)
+		return nil, err
+	}
 	return tree, nil
 }
 
@@ -258,15 +266,15 @@ func (t *Tree) HashSubTrees(l []byte, r []byte) []byte {
 /*
 	BuildTree: build sparse merkle tree
 */
-func (t *Tree) BuildTree(nodes []*Node) {
+func (t *Tree) BuildTree(nodes []*Node) (err error) {
 	// get to the max height
 	if len(nodes) == 0 {
 		log.Println("[BuildTree] smt BuildTree error, nodes length == 0")
-		return
+		return errors.New("[BuildTree] nodes length == 0")
 	} else {
 		if nodes[0].Height == t.MaxHeight && len(nodes) == 1 {
 			t.RootNode = nodes[0]
-			return
+			return nil
 		}
 	}
 	if len(nodes)%2 != 0 {
@@ -291,13 +299,14 @@ func (t *Tree) BuildTree(nodes []*Node) {
 
 		parents = append(parents, nodes[i].Parent)
 	}
-	t.BuildTree(parents)
+	err = t.BuildTree(parents)
+	return err
 }
 
 /*
 	BuildMerkleProofs: construct merkle proofs
 */
-func (t *Tree) BuildMerkleProofs(index uint32) (
+func (t *Tree) BuildMerkleProofs(index int64) (
 	rMerkleProof [][]byte,
 	rProofHelper []int,
 	err error,
@@ -319,7 +328,7 @@ func (t *Tree) BuildMerkleProofs(index uint32) (
 		return t.NilHashValueConst, rProofHelper, nil
 	}
 	// if index belongs to leaves
-	if index < uint32(len(t.Leaves)) {
+	if index < int64(len(t.Leaves)) {
 		node := t.Leaves[index]
 		proofs = append(proofs, node.Value)
 		for node.Parent != nil {
@@ -344,10 +353,10 @@ func (t *Tree) BuildMerkleProofs(index uint32) (
 		// add itself
 		proofs = append(proofs, t.NilHashValueConst[0])
 		// get last index
-		lastIndex := len(t.Leaves) - 1
+		lastIndex := int64(len(t.Leaves) - 1)
 		// get last leave node
 		node := t.Leaves[lastIndex]
-		for uint32(lastIndex+1) != index {
+		for lastIndex+1 != index {
 			proofs = append(proofs, t.NilHashValueConst[node.Height])
 			if index%2 == 0 {
 				proofHelpers = append(proofHelpers, Right)
@@ -384,24 +393,48 @@ func (t *Tree) BuildMerkleProofs(index uint32) (
 	return proofs, proofHelpers, nil
 }
 
-func (t *Tree) Update(index int, nVal []byte) (err error) {
+func (t *Tree) Update(index int64, nVal []byte) (err error) {
 	if index >= 1<<t.MaxHeight {
 		log.Println("[Update] invalid index")
 		return errors.New("[Update] invalid index")
 	}
+	if index <= int64(len(t.Leaves)) {
+		return t.updateExistOrNext(index, nVal)
+	} else {
+		for i := int64(len(t.Leaves)); i < index; i++ {
+			err = t.updateExistOrNext(i, t.NilHashValueConst[0])
+			if err != nil {
+				log.Println("[Update] unable to update exist or next:", err)
+				return err
+			}
+		}
+		err = t.updateExistOrNext(index, nVal)
+		if err != nil {
+			log.Println("[Update] unable to update exist or next:", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *Tree) updateExistOrNext(index int64, nVal []byte) (err error) {
+	if index >= 1<<t.MaxHeight {
+		log.Println("[updateExistOrNext] invalid index")
+		return errors.New("[updateExistOrNext] invalid index")
+	}
 	// empty tree
 	if len(t.Leaves) == 0 {
 		if index != 0 {
-			return errors.New("[Update] invalid index")
+			return errors.New("[updateExistOrNext] invalid index")
 		}
-		t.BuildTree([]*Node{{
+		err = t.BuildTree([]*Node{{
 			Value:  nVal,
 			Height: 0,
 		}})
-		return nil
+		return err
 	}
 	// index belong to leaves
-	if index < len(t.Leaves) {
+	if index < int64(len(t.Leaves)) {
 		node := t.Leaves[index]
 		node.Value = nVal
 		node = node.Parent
@@ -415,8 +448,8 @@ func (t *Tree) Update(index int, nVal []byte) (err error) {
 		}
 	} else { // index larger than leaves
 		// that's also insert
-		if index != len(t.Leaves) {
-			return errors.New("[Update] the index should only be lastIndex+1")
+		if index != int64(len(t.Leaves)) {
+			return errors.New("[updateExistOrNext] the index should only be lastIndex+1")
 		}
 		// get last index
 		lastIndex := len(t.Leaves) - 1

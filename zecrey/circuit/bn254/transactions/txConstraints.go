@@ -196,8 +196,8 @@ func VerifyTransaction(
 			tx.AccountsInfoBefore[i].AccountLockedAssetsRoot,
 			tx.AccountsInfoBefore[i].AccountLiquidityRoot,
 		)
-		accountRootCheck := hFunc.Sum()
-		std.IsVariableEqual(api, notNilAccountState, accountRootCheck, tx.AccountsInfoBefore[i].StateRoot)
+		stateRootCheck := hFunc.Sum()
+		std.IsVariableEqual(api, notNilAccountState, stateRootCheck, tx.AccountsInfoBefore[i].StateRoot)
 		hFunc.Reset()
 		// check account hash
 		hFunc.Write(
