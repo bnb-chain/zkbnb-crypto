@@ -195,7 +195,11 @@ func NewTreeByMap(leaves map[int64]*Node, maxHeight int, nilHash []byte, hFunc h
 		return nil, errors.New(errInfo)
 	}
 
-	tree.BuildTree(tree.Leaves)
+	err = tree.BuildTree(tree.Leaves)
+	if err != nil {
+		log.Println("[NewTree] unable to build tree: ", err)
+		return nil, err
+	}
 	return tree, nil
 }
 
@@ -309,7 +313,7 @@ func (t *Tree) BuildMerkleProofs(index uint32) (
 ) {
 	var proofs [][]byte
 	var proofHelpers []int
-	if index >= (1 << t.MaxHeight) {
+	if index >= uint32(1 << t.MaxHeight) {
 		errInfo := fmt.Sprintf("[BuildMerkleProofs] index error, index: %v is bigger than tree capacity: %v.",
 			index, 1<<t.MaxHeight)
 		log.Println(errInfo)
