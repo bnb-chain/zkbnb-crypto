@@ -573,3 +573,7 @@ func (t *Tree) VerifyMerkleProofs(inclusionProofs [][]byte, helperProofs []int) 
 	}
 	return bytes.Equal(root, node)
 }
+
+func (t *Tree) IsEmptyTree() bool {
+	return len(t.Leaves) == 0
+}
