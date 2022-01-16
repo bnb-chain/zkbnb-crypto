@@ -425,6 +425,7 @@ func (t *Tree) updateExistOrNext(index int64, nVal []byte) (err error) {
 	// empty tree
 	if len(t.Leaves) == 0 {
 		if index != 0 {
+			log.Println("[updateExistOrNext] invalid index")
 			return errors.New("[updateExistOrNext] invalid index")
 		}
 		err = t.BuildTree([]*Node{{
