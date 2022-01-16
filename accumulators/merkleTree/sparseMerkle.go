@@ -428,10 +428,12 @@ func (t *Tree) updateExistOrNext(index int64, nVal []byte) (err error) {
 			log.Println("[updateExistOrNext] invalid index")
 			return errors.New("[updateExistOrNext] invalid index")
 		}
-		err = t.BuildTree([]*Node{{
+		nodeInfo := &Node{
 			Value:  nVal,
 			Height: 0,
-		}})
+		}
+		t.Leaves = append(t.Leaves, nodeInfo)
+		err = t.BuildTree(t.Leaves)
 		return err
 	}
 	// index belong to leaves
