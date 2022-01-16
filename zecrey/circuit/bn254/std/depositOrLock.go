@@ -48,6 +48,7 @@ func SetEmptyDepositOrLockWitness() (witness DepositOrLockTxConstraints) {
 	witness.AccountName = ZeroInt
 	witness.NativeAddress = ZeroInt
 	witness.Amount = ZeroInt
+	witness.IsEnabled = SetBoolWitness(false)
 	return witness
 }
 
