@@ -184,6 +184,7 @@ func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
 	witness.T, _ = SetPointWitness(BasePoint)
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.ReceiveAddr = ZeroInt
+	witness.ChainId = ZeroInt
 	witness.AssetId = ZeroInt
 	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	// gas fee

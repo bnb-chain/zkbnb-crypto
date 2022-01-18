@@ -54,7 +54,7 @@ func SetMerkleProofsWitness(proofs [][]byte, level int) (witness []Variable) {
 }
 
 func SetMerkleProofsHelperWitness(proofs []int, level int) (witness []Variable) {
-	witness = make([]Variable, level-1)
+	witness = make([]Variable, level)
 	for i := 0; i < level-1; i++ {
 		witness[i] = proofs[i]
 	}

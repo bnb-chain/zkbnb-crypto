@@ -18,7 +18,6 @@
 package transactions
 
 import (
-	"encoding/hex"
 	"errors"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
@@ -102,12 +101,7 @@ func (circuit TxConstraints) Define(api frontend.API) error {
 		Y: std.HY,
 	}
 	tool := std.NewEccTool(api, params)
-	nilHashBytes, err := hex.DecodeString("01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a")
-	if err != nil {
-		return err
-	}
-	nilHash := nilHashBytes
-	VerifyTransaction(tool, api, circuit, hFunc, H, nilHash)
+	VerifyTransaction(tool, api, circuit, hFunc, H, NilHash)
 	return nil
 }
 
@@ -496,6 +490,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		if err != nil {
 			return witness, err
 		}
+		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
 		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
 		witness.TransferProof = std.SetEmptyTransferProofWitness()
 		witness.SwapProof = std.SetEmptySwapProofWitness()
@@ -710,131 +705,69 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	// set common account & merkle parts
 	// account root before
 	witness.AccountRootBefore = oTx.AccountRootBefore
+	// account root after
+	witness.AccountRootAfter = oTx.AccountRootAfter
 	// account before info, size is 4
 	for i := 0; i < NbAccountsPerTx; i++ {
+		// accounts info before
 		witness.AccountsInfoBefore[i], err = SetAccountWitness(oTx.AccountsInfoBefore[i])
 		if err != nil {
 			log.Println("[SetTxWitness] err info:", err)
 			return witness, err
 		}
-	}
-	// before account asset merkle proof
-	for i := 0; i < NbAccountsPerTx; i++ {
-		for j := 0; j < NbAccountAssetsPerAccount; j++ {
-			copy(
-				witness.MerkleProofsAccountAssetsBefore[i][j][:],
-				std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAssetsBefore[i][j][:], AssetMerkleLevels))
-			copy(
-				witness.MerkleProofsHelperAccountAssetsBefore[i][j][:],
-				std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountAssetsBefore[i][j][:], AssetMerkleHelperLevels))
-			//witness.MerkleProofsAccountAssetsBefore[i][j] =
-			//	std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAssetsBefore[i][j][:], AssetMerkleLevels)
-			//witness.MerkleProofsHelperAccountAssetsBefore[i][j] =
-			//	std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountAssetsBefore[i][j][:], AssetMerkleHelperLevels)
-		}
-	}
-	// before account asset lock merkle proof
-	for i := 0; i < NbAccountsPerTx; i++ {
-		copy(
-			witness.MerkleProofsAccountLockedAssetsBefore[i][:],
-			std.SetMerkleProofsWitness(oTx.MerkleProofsAccountLockedAssetsBefore[i][:], LockedAssetMerkleLevels))
-		copy(
-			witness.MerkleProofsHelperAccountLockedAssetsBefore[i][:],
-			std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountLockedAssetsBefore[i][:], LockedAssetMerkleHelperLevels))
-		//witness.MerkleProofsAccountLockedAssetsBefore[i] =
-		//	std.SetMerkleProofsWitness(oTx.MerkleProofsAccountLockedAssetsBefore[i][:], LockedAssetMerkleLevels)
-		//witness.MerkleProofsHelperAccountLockedAssetsBefore[i] =
-		//	std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountLockedAssetsBefore[i][:], LockedAssetMerkleHelperLevels)
-	}
-	// before account liquidity merkle proof
-	for i := 0; i < NbAccountsPerTx; i++ {
-		copy(
-			witness.MerkleProofsAccountLiquidityBefore[i][:],
-			std.SetMerkleProofsWitness(oTx.MerkleProofsAccountLiquidityBefore[i][:], LiquidityMerkleLevels))
-		copy(
-			witness.MerkleProofsHelperAccountLiquidityBefore[i][:],
-			std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountLiquidityBefore[i][:], LiquidityMerkleHelperLevels))
-		//witness.MerkleProofsAccountLiquidityBefore[i] =
-		//	std.SetMerkleProofsWitness(oTx.MerkleProofsAccountLiquidityBefore[i][:], LiquidityMerkleLevels)
-		//witness.MerkleProofsHelperAccountLiquidityBefore[i] =
-		//	std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountLiquidityBefore[i][:], LiquidityMerkleHelperLevels)
-	}
-	// before account merkle proof
-	for i := 0; i < NbAccountsPerTx; i++ {
-		copy(
-			witness.MerkleProofsAccountBefore[i][:],
-			std.SetMerkleProofsWitness(oTx.MerkleProofsAccountBefore[i][:], AccountMerkleLevels))
-		copy(
-			witness.MerkleProofsHelperAccountBefore[i][:],
-			std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountBefore[i][:], AccountMerkleHelperLevels))
-		//witness.MerkleProofsAccountBefore[i] =
-		//	std.SetMerkleProofsWitness(oTx.MerkleProofsAccountBefore[i][:], AccountMerkleLevels)
-		//witness.MerkleProofsHelperAccountBefore[i] =
-		//	std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountBefore[i][:], AccountMerkleHelperLevels)
-	}
-	// account root after
-	witness.AccountRootAfter = oTx.AccountRootAfter
-	// account after info, size is 4
-	for i := 0; i < NbAccountsPerTx; i++ {
+		// accounts info after
 		witness.AccountsInfoAfter[i], err = SetAccountWitness(oTx.AccountsInfoAfter[i])
 		if err != nil {
 			log.Println("[SetTxWitness] err info:", err)
 			return witness, err
 		}
-	}
-	// after account asset merkle proof
-	for i := 0; i < NbAccountsPerTx; i++ {
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
-			copy(
-				witness.MerkleProofsAccountAssetsAfter[i][j][:],
-				std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAssetsAfter[i][j][:], AssetMerkleLevels))
-			copy(
-				witness.MerkleProofsHelperAccountAssetsAfter[i][j][:],
-				std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountAssetsAfter[i][j][:], AssetMerkleHelperLevels))
+			for k := 0; k < AssetMerkleLevels; k++ {
+				if k != AssetMerkleHelperLevels {
+					// account assets before
+					witness.MerkleProofsHelperAccountAssetsBefore[i][j][k] = oTx.MerkleProofsHelperAccountAssetsBefore[i][j][k]
+					// account assets after
+					witness.MerkleProofsHelperAccountAssetsAfter[i][j][k] = oTx.MerkleProofsHelperAccountAssetsAfter[i][j][k]
+				}
+				// account assets before
+				witness.MerkleProofsAccountAssetsBefore[i][j][k] = oTx.MerkleProofsAccountAssetsBefore[i][j][k]
+				// account assets after
+				witness.MerkleProofsAccountAssetsAfter[i][j][k] = oTx.MerkleProofsAccountAssetsAfter[i][j][k]
+			}
 		}
-		//witness.MerkleProofsAccountAssetsAfter[i] =
-		//	std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAssetsAfter[i][:], AssetMerkleLevels)
-		//witness.MerkleProofsHelperAccountAssetsAfter[i] =
-		//	std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountAssetsAfter[i][:], AssetMerkleHelperLevels)
-	}
-	// after account asset lock merkle proof
-	for i := 0; i < NbAccountsPerTx; i++ {
-		copy(
-			witness.MerkleProofsAccountLockedAssetsAfter[i][:],
-			std.SetMerkleProofsWitness(oTx.MerkleProofsAccountLockedAssetsAfter[i][:], LockedAssetMerkleLevels))
-		copy(
-			witness.MerkleProofsHelperAccountLockedAssetsAfter[i][:],
-			std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountLockedAssetsAfter[i][:], LockedAssetMerkleHelperLevels))
-		//witness.MerkleProofsAccountLockedAssetsAfter[i] =
-		//	std.SetMerkleProofsWitness(oTx.MerkleProofsAccountLockedAssetsAfter[i][:], LockedAssetMerkleLevels)
-		//witness.MerkleProofsHelperAccountLockedAssetsAfter[i] =
-		//	std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountLockedAssetsAfter[i][:], LockedAssetMerkleHelperLevels)
-	}
-	// after account liquidity merkle proof
-	for i := 0; i < NbAccountsPerTx; i++ {
-		copy(
-			witness.MerkleProofsAccountLiquidityAfter[i][:],
-			std.SetMerkleProofsWitness(oTx.MerkleProofsAccountLiquidityAfter[i][:], LiquidityMerkleLevels))
-		copy(
-			witness.MerkleProofsHelperAccountLiquidityAfter[i][:],
-			std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountLiquidityAfter[i][:], LiquidityMerkleHelperLevels))
-		//witness.MerkleProofsAccountLiquidityAfter[i] =
-		//	std.SetMerkleProofsWitness(oTx.MerkleProofsAccountLiquidityAfter[i][:], LiquidityMerkleLevels)
-		//witness.MerkleProofsHelperAccountLiquidityAfter[i] =
-		//	std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountLiquidityAfter[i][:], LiquidityMerkleHelperLevels)
-	}
-	// after account merkle proof
-	for i := 0; i < NbAccountsPerTx; i++ {
-		copy(
-			witness.MerkleProofsAccountAfter[i][:],
-			std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAfter[i][:], AccountMerkleLevels))
-		copy(
-			witness.MerkleProofsHelperAccountAfter[i][:],
-			std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountAfter[i][:], AccountMerkleHelperLevels))
-		//witness.MerkleProofsAccountAfter[i] =
-		//	std.SetMerkleProofsWitness(oTx.MerkleProofsAccountAfter[i][:], AccountMerkleLevels)
-		//witness.MerkleProofsHelperAccountAfter[i] =
-		//	std.SetMerkleProofsHelperWitness(oTx.MerkleProofsHelperAccountAfter[i][:], AccountMerkleHelperLevels)
+		for j := 0; j < AssetMerkleLevels; j++ {
+			if j != AssetMerkleHelperLevels {
+				// locked assets before
+				witness.MerkleProofsHelperAccountLockedAssetsBefore[i][j] = oTx.MerkleProofsHelperAccountLockedAssetsBefore[i][j]
+				// locked assets after
+				witness.MerkleProofsHelperAccountLockedAssetsAfter[i][j] = oTx.MerkleProofsHelperAccountLockedAssetsAfter[i][j]
+				// liquidity asset before
+				witness.MerkleProofsHelperAccountLiquidityBefore[i][j] = oTx.MerkleProofsHelperAccountLiquidityBefore[i][j]
+				// liquidity asset after
+				witness.MerkleProofsHelperAccountLiquidityAfter[i][j] = oTx.MerkleProofsHelperAccountLiquidityAfter[i][j]
+			}
+			// locked assets before
+			witness.MerkleProofsAccountLockedAssetsBefore[i][j] = oTx.MerkleProofsAccountLockedAssetsBefore[i][j]
+			// locked assets after
+			witness.MerkleProofsAccountLockedAssetsAfter[i][j] = oTx.MerkleProofsAccountLockedAssetsAfter[i][j]
+			// liquidity asset before
+			witness.MerkleProofsAccountLiquidityBefore[i][j] = oTx.MerkleProofsAccountLiquidityBefore[i][j]
+			// liquidity asset after
+			witness.MerkleProofsAccountLiquidityAfter[i][j] = oTx.MerkleProofsAccountLiquidityAfter[i][j]
+
+		}
+		for j := 0; j < AccountMerkleLevels; j++ {
+			if j != AccountMerkleHelperLevels {
+				// account before
+				witness.MerkleProofsHelperAccountBefore[i][j] = oTx.MerkleProofsHelperAccountBefore[i][j]
+				// account after
+				witness.MerkleProofsHelperAccountAfter[i][j] = oTx.MerkleProofsHelperAccountAfter[i][j]
+			}
+			// account before
+			witness.MerkleProofsAccountBefore[i][j] = oTx.MerkleProofsAccountBefore[i][j]
+			// account after
+			witness.MerkleProofsAccountAfter[i][j] = oTx.MerkleProofsAccountAfter[i][j]
+		}
 	}
 	return witness, nil
 }
