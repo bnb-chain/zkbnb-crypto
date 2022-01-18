@@ -18,7 +18,6 @@
 package transactions
 
 import (
-	"encoding/hex"
 	"errors"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
@@ -102,12 +101,7 @@ func (circuit TxConstraints) Define(api frontend.API) error {
 		Y: std.HY,
 	}
 	tool := std.NewEccTool(api, params)
-	nilHashBytes, err := hex.DecodeString("01ef55cdf3b9b0d65e6fb6317f79627534d971fd96c811281af618c0028d5e7a")
-	if err != nil {
-		return err
-	}
-	var nilHash Variable = nilHashBytes
-	VerifyTransaction(tool, api, circuit, hFunc, H, nilHash)
+	VerifyTransaction(tool, api, circuit, hFunc, H, NilHash)
 	return nil
 }
 

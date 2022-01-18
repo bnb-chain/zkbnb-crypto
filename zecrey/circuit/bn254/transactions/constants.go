@@ -21,6 +21,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/zecrey-labs/zecrey-crypto/accumulators/merkleTree"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
@@ -55,15 +56,15 @@ type (
 )
 
 const (
-	MaxRangeProofCount            = 3
-	NbTxsCountHalf                = 70
-	NbTxsCountFull                = 140
-	NbAccountsPerTx               = 4
-	NbAccountAssetsPerAccount     = 3
-	AccountMerkleLevels           = 33
-	AccountMerkleHelperLevels     = AccountMerkleLevels - 1
-	AssetMerkleLevels             = 17
-	AssetMerkleHelperLevels       = AssetMerkleLevels - 1
+	MaxRangeProofCount        = 3
+	NbTxsCountHalf            = 70
+	NbTxsCountFull            = 140
+	NbAccountsPerTx           = 4
+	NbAccountAssetsPerAccount = 3
+	AccountMerkleLevels       = 33
+	AccountMerkleHelperLevels = AccountMerkleLevels - 1
+	AssetMerkleLevels         = 17
+	AssetMerkleHelperLevels   = AssetMerkleLevels - 1
 
 	LockedAssetMerkleLevels       = 17
 	LockedAssetMerkleHelperLevels = LockedAssetMerkleLevels - 1
@@ -130,4 +131,8 @@ const (
 	WithdrawFromAccountAsset    = 0
 	WithdrawFromAccountGasAsset = 1
 	WithdrawGasAccount          = 1
+)
+
+var (
+	NilHash = merkleTree.NilHash
 )
