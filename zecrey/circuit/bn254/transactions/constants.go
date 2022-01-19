@@ -26,6 +26,7 @@ import (
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
+	"math/big"
 )
 
 type (
@@ -92,6 +93,10 @@ const (
 	TxTypeRemoveLiquidity = 7
 	TxTypeWithdraw        = 8
 
+	// deposit or lock
+	DepositFromAccount      = 0
+	DepositFromAccountFromAsset = 0
+	LockFromAccount         = 0
 	// unlock related account index
 	UnlockFromAccount            = 0
 	UnlockFromAccountUnlockAsset = 0
@@ -134,5 +139,6 @@ const (
 )
 
 var (
-	NilHash = merkleTree.NilHash
+	NilHash     = merkleTree.NilHash
+	NilHashFull = new(big.Int).SetBytes(NilHash).FillBytes(make([]byte, PointSize))
 )

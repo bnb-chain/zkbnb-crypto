@@ -144,16 +144,16 @@ func VerifyTransaction(
 	tx.WithdrawProof.IsEnabled = isWithdrawTx
 
 	isCheckAccount := api.IsZero(isNoopTx)
-	// verify range proofs
-	for i, rangeProof := range tx.RangeProofs {
-		// set range proof is true
-		isNoRangeTx := api.Or(isDepositTx, isLockTx)
-		isEnabled := api.IsZero(isNoRangeTx)
-		rangeProof.IsEnabled = isEnabled
-		std.VerifyCtRangeProof(tool, api, rangeProof, hFunc)
-		hFunc.Reset()
-		tx.TransferProof.SubProofs[i].Y = rangeProof.A
-	}
+	// TODO verify range proofs
+	//for i, rangeProof := range tx.RangeProofs {
+	//	// set range proof is true
+	//	isNoRangeTx := api.Or(isDepositTx, isLockTx)
+	//	isEnabled := api.IsZero(isNoRangeTx)
+	//	rangeProof.IsEnabled = isEnabled
+	//	std.VerifyCtRangeProof(tool, api, rangeProof, hFunc)
+	//	hFunc.Reset()
+	//	tx.TransferProof.SubProofs[i].Y = rangeProof.A
+	//}
 	// set T or Y
 	// unlock proof
 	tx.UnlockProof.T_fee = tx.RangeProofs[0].A
@@ -201,7 +201,7 @@ func VerifyTransaction(
 		std.WritePointIntoBuf(&hFunc, tx.AccountsInfoBefore[i].AccountPk)
 		hFunc.Write(tx.AccountsInfoBefore[i].StateRoot)
 		accountHashCheck := hFunc.Sum()
-		accountHash := api.Select(notNilAccountState, nilHash, accountHashCheck)
+		accountHash := api.Select(notNilAccountState, accountHashCheck, nilHash)
 		std.IsVariableEqual(api, isCheckAccount, accountHash, tx.MerkleProofsAccountBefore[i][0])
 		hFunc.Reset()
 		// verify account asset root
@@ -351,32 +351,38 @@ func VerifyTransaction(
 	cCheck, pkProofsCheck, tProofsCheck = std.VerifyWithdrawProof(tool, api, &tx.WithdrawProof, hFunc, h)
 	hFunc.Reset()
 	c, pkProofs, tProofs = SelectCommonPart(api, isWithdrawTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
-	enabled := 1
+	// if it's deposit or lock tx, no need to check this part
+	notDepositOrLockTx := api.IsZero(api.Or(isDepositTx, isLockTx))
 	for i := 0; i < MaxRangeProofCount; i++ {
 		// pk proof
 		l1 := tool.ScalarBaseMul(pkProofs[i].Z_sk_u)
 		r1 := tool.Add(pkProofs[i].A_pk_u, tool.ScalarMul(pkProofs[i].Pk_u, c))
-		std.IsPointEqual(api, enabled, l1, r1)
+		std.IsPointEqual(api, notDepositOrLockTx, l1, r1)
 		// T proof
 		// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
 		l2 := tool.Add(tool.ScalarBaseMul(tProofs[i].Z_bar_r), tool.ScalarMul(tProofs[i].C_PrimeNeg.CL, pkProofs[i].Z_sk_uInv))
 		r2 := tool.Add(tProofs[i].A_T_C_RPrimeInv, tool.ScalarMul(tool.Add(tProofs[i].T, tProofs[i].C_PrimeNeg.CR), c))
-		std.IsPointEqual(api, enabled, l2, r2)
+		std.IsPointEqual(api, notDepositOrLockTx, l2, r2)
 	}
 
 	// check if the after account info is correct
+	// collect from deposit or lock tx
+	deltas := GetAccountDeltasFromDepositTx(api, tool, h, tx.DepositTxInfo)
+	deltasCheck := GetAccountDeltasFromLockTx(api, tool, tx.LockTxInfo)
+	deltas = SelectDeltas(api, isLockTx, deltasCheck, deltas)
 	// collect deltas from proof
-	deltas := GetAccountDeltasFromUnlockProof(api, tool, tx.UnlockProof)
-	deltasCheck := GetAccountDeltasFromTransferProof(api, tool, tx.TransferProof)
+	deltasCheck = GetAccountDeltasFromUnlockProof(api, tool, tx.UnlockProof)
+	deltas = SelectDeltas(api, isUnlockTx, deltasCheck, deltas)
+	deltasCheck = GetAccountDeltasFromTransferProof(api, tool, tx.TransferProof)
 	deltas = SelectDeltas(api, isTransferTx, deltasCheck, deltas)
 	deltasCheck = GetAccountDeltasFromSwapProof(api, tool, tx.SwapProof, tx.AccountsInfoBefore[SwapPoolAccount])
-	deltas = SelectDeltas(api, isTransferTx, deltasCheck, deltas)
+	deltas = SelectDeltas(api, isSwapTx, deltasCheck, deltas)
 	deltasCheck = GetAccountDeltasFromAddLiquidityProof(api, tool, tx.AddLiquidityProof, tx.AccountsInfoBefore[AddLiquidityPoolAccount])
-	deltas = SelectDeltas(api, isTransferTx, deltasCheck, deltas)
+	deltas = SelectDeltas(api, isAddLiquidityTx, deltasCheck, deltas)
 	deltasCheck = GetAccountDeltasFromRemoveLiquidityProof(api, tool, tx.RemoveLiquidityProof, tx.AccountsInfoBefore[RemoveLiquidityPoolAccount])
-	deltas = SelectDeltas(api, isTransferTx, deltasCheck, deltas)
+	deltas = SelectDeltas(api, isRemoveLiquidityTx, deltasCheck, deltas)
 	deltasCheck = GetAccountDeltasFromWithdrawProof(api, tool, tx.WithdrawProof)
-	deltas = SelectDeltas(api, isTransferTx, deltasCheck, deltas)
+	deltas = SelectDeltas(api, isWithdrawTx, deltasCheck, deltas)
 	// update account before and check if equal to account after
 	for i := 0; i < NbAccountsPerTx; i++ {
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
@@ -436,14 +442,20 @@ func VerifyTransaction(
 			hFunc.Reset()
 		}
 		// verify account locked asset root
+		isNilLockedAssetRoot := api.IsZero(api.Sub(tx.AccountsInfoBefore[i].AccountLockedAssetsRoot, nilHash))
+		isLockRelatedTx := api.Or(isLockTx, isUnlockTx)
+		notNilLockedAssetRootAndNotLockRelatedTx := api.IsZero(api.Or(isNilLockedAssetRoot, isLockRelatedTx))
 		std.VerifyMerkleProof(
-			api, isCheckAccount, hFunc,
+			api, notNilLockedAssetRootAndNotLockRelatedTx, hFunc,
 			tx.AccountsInfoAfter[i].AccountLockedAssetsRoot,
 			tx.MerkleProofsAccountLockedAssetsAfter[i][:], tx.MerkleProofsHelperAccountLockedAssetsAfter[i][:])
 		hFunc.Reset()
 		// verify account liquidity root
+		isNilAccountLiquidityRoot := api.IsZero(api.Sub(tx.AccountsInfoBefore[i].AccountLiquidityRoot, nilHash))
+		isLiquidityRelatedTx := api.Or(api.Or(isSwapTx, isAddLiquidityTx), isRemoveLiquidityTx)
+		isNilAccountLiquidityRootAndNotLiquidityRelatedTx := api.IsZero(api.Or(isNilAccountLiquidityRoot, isLiquidityRelatedTx))
 		std.VerifyMerkleProof(
-			api, isCheckAccount, hFunc,
+			api, isNilAccountLiquidityRootAndNotLiquidityRelatedTx, hFunc,
 			tx.AccountsInfoAfter[i].AccountLiquidityRoot,
 			tx.MerkleProofsAccountLiquidityAfter[i][:], tx.MerkleProofsHelperAccountLiquidityAfter[i][:])
 		hFunc.Reset()
