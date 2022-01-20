@@ -93,10 +93,11 @@ func VerifyWithdrawProof(
 ) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
 	// check params
 	assetIdDiff := api.Sub(proof.GasFeeAssetId, proof.AssetId)
-	isSameAsset := api.IsZero(assetIdDiff)
-	IsElGamalEncEqual(api, isSameAsset, proof.C, proof.C_fee)
-	IsPointEqual(api, isSameAsset, proof.A_TDivCRprime, proof.A_T_feeC_feeRPrimeInv)
-	deltaFeeForFrom := api.Select(isSameAsset, proof.GasFee, ZeroInt)
+	checkSameAsset := api.IsZero(assetIdDiff)
+	checkSameAsset = api.Select(proof.IsEnabled, checkSameAsset, 0)
+	IsElGamalEncEqual(api, checkSameAsset, proof.C, proof.C_fee)
+	IsPointEqual(api, checkSameAsset, proof.A_TDivCRprime, proof.A_T_feeC_feeRPrimeInv)
+	deltaFeeForFrom := api.Select(checkSameAsset, proof.GasFee, ZeroInt)
 	var (
 		hNeg Point
 	)
@@ -116,7 +117,7 @@ func VerifyWithdrawProof(
 		CL: tool.ZeroPoint(),
 		CR: tool.Neg(C_fee_DeltaForGas.CR),
 	}
-	C_fee_DeltaForFrom = SelectElgamal(api, isSameAsset, C_Delta, C_fee_DeltaForFrom)
+	C_fee_DeltaForFrom = SelectElgamal(api, checkSameAsset, C_Delta, C_fee_DeltaForFrom)
 	C_feePrime := tool.EncAdd(proof.C_fee, C_fee_DeltaForFrom)
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	hFunc.Write(FixedCurveParam(api))

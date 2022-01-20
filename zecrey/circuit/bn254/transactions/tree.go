@@ -19,16 +19,41 @@ package transactions
 
 import (
 	"errors"
+	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
 )
 
 type MixedArray struct {
-	// before account merkle proof
-	MerkleProofsAccountBefore       [NbAccountsPerTx][AccountMerkleLevels]Variable
+	/*
+		hFunc.Write(
+					tx.AccountsInfoAfter[i].AccountIndex,
+					tx.AccountsInfoAfter[i].AccountName,
+				)
+				std.WritePointIntoBuf(&hFunc, tx.AccountsInfoAfter[i].AccountPk)
+				hFunc.Write(tx.AccountsInfoAfter[i].StateRoot)
+	*/
+	AccountIndex Variable
+	AccountName  Variable
+	AccountPk    Point
+	StateRoot    Variable
+	CheckRoot    Variable
 }
 
 // define tests for verifying the withdraw proof
 func (circuit MixedArray) Define(api API) error {
 	// first check if C = c_1 \oplus c_2
+	// mimc
+	hFunc, err := mimc.NewMiMC(zmimc.SEED, api)
+	if err != nil {
+		return err
+	}
+	hFunc.Write(circuit.AccountIndex)
+	hFunc.Write(circuit.AccountName)
+	std.WritePointIntoBuf(&hFunc, circuit.AccountPk)
+	hFunc.Write(circuit.StateRoot)
+	root := hFunc.Sum()
+	api.AssertIsEqual(root, circuit.CheckRoot)
 	return nil
 }
 

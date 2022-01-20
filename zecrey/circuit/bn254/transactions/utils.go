@@ -62,6 +62,65 @@ func SelectDeltas(
 	return deltasRes
 }
 
+func GetAccountDeltasFromDepositTx(
+	api API, tool *EccTool, h Point,
+	proof DepositOrLockTxConstraints,
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+	CDelta := tool.ZeroElgamalEnc()
+	CDelta.CR = tool.ScalarMul(h, proof.Amount)
+
+	// account A
+	deltas[DepositFromAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// from asset
+			CDelta,
+			CDelta,
+			CDelta,
+		},
+		// locked asset
+		LockedAssetDeltaInfo: std.ZeroInt,
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	deltas[1] = deltas[DepositFromAccount]
+	deltas[2] = deltas[DepositFromAccount]
+	deltas[3] = deltas[DepositFromAccount]
+	return deltas
+}
+
+func GetAccountDeltasFromLockTx(
+	api API, tool *EccTool,
+	proof DepositOrLockTxConstraints,
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+	// account A
+	deltas[TransferAccountA] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// from asset
+			tool.ZeroElgamalEnc(),
+			tool.ZeroElgamalEnc(),
+			tool.ZeroElgamalEnc(),
+		},
+		// locked asset
+		LockedAssetDeltaInfo: proof.Amount,
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	deltas[1] = deltas[LockFromAccount]
+	deltas[2] = deltas[LockFromAccount]
+	deltas[3] = deltas[LockFromAccount]
+	return deltas
+}
+
 func GetAccountDeltasFromUnlockProof(
 	api API, tool *EccTool,
 	proof UnlockProofConstraints,
