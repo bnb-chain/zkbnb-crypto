@@ -169,7 +169,9 @@ func VerifyRemoveLiquidityProof(
 		CR: C_feeDeltaR,
 	}
 	isSameAssetA := api.IsZero(api.Sub(proof.AssetAId, proof.GasFeeAssetId))
+	isSameAssetA = api.And(isSameAssetA, proof.IsEnabled)
 	isSameAssetB := api.IsZero(api.Sub(proof.AssetBId, proof.GasFeeAssetId))
+	isSameAssetB = api.And(isSameAssetB, proof.IsEnabled)
 	deltaA := SelectPoint(api, isSameAssetA, C_feeDeltaR, tool.ZeroPoint())
 	deltaB := SelectPoint(api, isSameAssetB, C_feeDeltaR, tool.ZeroPoint())
 	C_uA_Delta := proof.C_uA_Delta

@@ -470,7 +470,6 @@ func VerifyTransaction(
 }
 
 func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
-	oproof := oTx.OProof
 	txType := oTx.TxType
 	isEnabled := true
 	switch txType {
@@ -491,11 +490,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		break
 	case TxTypeDeposit:
 		// convert to special proof
-		tx, b := oproof.(*DepositOrLockTx)
-		if !b {
-			log.Println("[SetTxWitness] unable to convert proof to special type")
-			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
-		}
+		tx := oTx.DepositOrLockTxInfo
 		// set witness
 		witness.TxType = uint64(txType)
 		witness.DepositTxInfo, err = std.SetDepositOrLockWitness(tx, isEnabled)
@@ -515,11 +510,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		break
 	case TxTypeLock:
 		// convert to special proof
-		tx, b := oproof.(*DepositOrLockTx)
-		if !b {
-			log.Println("[SetTxWitness] unable to convert proof to special type")
-			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
-		}
+		tx := oTx.DepositOrLockTxInfo
 		// set witness
 		witness.TxType = uint64(txType)
 		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
@@ -539,11 +530,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		break
 	case TxTypeTransfer:
 		// convert to special proof
-		proof, b := oproof.(*TransferProof)
-		if !b {
-			log.Println("[SetTxWitness] unable to convert proof to special type")
-			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
-		}
+		proof := oTx.TransferProofInfo
 		proofConstraints, err := std.SetTransferProofWitness(proof, isEnabled)
 		if err != nil {
 			return witness, err
@@ -566,10 +553,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
 		break
 	case TxTypeSwap:
-		proof, b := oproof.(*SwapProof)
-		if !b {
-			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
-		}
+		proof := oTx.SwapProofInfo
 		proofConstraints, err := std.SetSwapProofWitness(proof, isEnabled)
 		if err != nil {
 			return witness, err
@@ -595,10 +579,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
 		break
 	case TxTypeAddLiquidity:
-		proof, b := oproof.(*AddLiquidityProof)
-		if !b {
-			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
-		}
+		proof := oTx.AddLiquidityProofInfo
 		proofConstraints, err := std.SetAddLiquidityProofWitness(proof, isEnabled)
 		if err != nil {
 			return witness, err
@@ -627,10 +608,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
 		break
 	case TxTypeRemoveLiquidity:
-		proof, b := oproof.(*RemoveLiquidityProof)
-		if !b {
-			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
-		}
+		proof := oTx.RemoveLiquidityProofInfo
 		proofConstraints, err := std.SetRemoveLiquidityProofWitness(proof, isEnabled)
 		if err != nil {
 			return witness, err
@@ -656,10 +634,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
 		break
 	case TxTypeUnlock:
-		proof, b := oproof.(*UnlockProof)
-		if !b {
-			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
-		}
+		proof := oTx.UnlockProofInfo
 		proofConstraints, err := std.SetUnlockProofWitness(proof, isEnabled)
 		if err != nil {
 			return witness, err
@@ -682,10 +657,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.RangeProofs[2] = witness.RangeProofs[0]
 		break
 	case TxTypeWithdraw:
-		proof, b := oproof.(*WithdrawProof)
-		if !b {
-			return witness, errors.New("[SetTxWitness] unable to convert proof to special type")
-		}
+		proof := oTx.WithdrawProofInfo
 		proofConstraints, err := std.SetWithdrawProofWitness(proof, isEnabled)
 		if err != nil {
 			return witness, err

@@ -141,6 +141,7 @@ func VerifySwapProof(
 	// check if gas fee asset id is the same as asset a
 	assetDiff := api.Sub(proof.GasFeeAssetId, proof.AssetAId)
 	isSameAsset := api.IsZero(assetDiff)
+	isSameAsset = api.And(isSameAsset, proof.IsEnabled)
 	var hNeg Point
 	hNeg.Neg(api, &h)
 	// if same, check params

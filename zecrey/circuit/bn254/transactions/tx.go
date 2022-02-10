@@ -21,7 +21,13 @@ type Tx struct {
 	// tx type
 	TxType uint8
 	// proof info
-	OProof interface{}
+	DepositOrLockTxInfo      *DepositOrLockTx
+	UnlockProofInfo          *UnlockProof
+	TransferProofInfo        *TransferProof
+	SwapProofInfo            *SwapProof
+	AddLiquidityProofInfo    *AddLiquidityProof
+	RemoveLiquidityProofInfo *RemoveLiquidityProof
+	WithdrawProofInfo        *WithdrawProof
 	// account root before
 	AccountRootBefore []byte
 	// account before info, size is 4
