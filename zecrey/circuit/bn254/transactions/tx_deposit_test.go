@@ -24,7 +24,6 @@ import (
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
-	"math/big"
 	"testing"
 )
 
@@ -34,16 +33,6 @@ func TestDeposit(t *testing.T) {
 	err := json.Unmarshal([]byte(txInfo), &oTx)
 	if err != nil {
 		t.Fatal(err)
-	}
-	accountName, _ := new(big.Int).SetString("135925929860331760849675641", 10)
-	NativeAddress, _ := new(big.Int).SetString("1334149936996857537776072022393820961622848623689", 10)
-	oTx.OProof = &DepositOrLockTx{
-		ChainId:       0,
-		AssetId:       4,
-		AccountIndex:  0,
-		AccountName:   accountName,
-		NativeAddress: NativeAddress,
-		Amount:        1000,
 	}
 	assert := test.NewAssert(t)
 	var circuit, witness TxConstraints

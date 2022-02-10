@@ -145,22 +145,22 @@ func VerifyTransaction(
 
 	isCheckAccount := api.IsZero(isNoopTx)
 	// TODO verify range proofs
-	//for i, rangeProof := range tx.RangeProofs {
-	//	// set range proof is true
-	//	isNoRangeTx := api.Or(isDepositTx, isLockTx)
-	//	isEnabled := api.IsZero(isNoRangeTx)
-	//	rangeProof.IsEnabled = isEnabled
-	//	std.VerifyCtRangeProof(tool, api, rangeProof, hFunc)
-	//	hFunc.Reset()
-	//	tx.TransferProof.SubProofs[i].Y = rangeProof.A
-	//}
+	for i, rangeProof := range tx.RangeProofs {
+		// set range proof is true
+		isNoRangeTx := api.Or(isDepositTx, isLockTx)
+		isEnabled := api.IsZero(isNoRangeTx)
+		rangeProof.IsEnabled = isEnabled
+		//std.VerifyCtRangeProof(tool, api, rangeProof, hFunc)
+		hFunc.Reset()
+		tx.TransferProof.SubProofs[i].Y = rangeProof.A
+	}
 	// set T or Y
 	// unlock proof
 	tx.UnlockProof.T_fee = tx.RangeProofs[0].A
 	// transfer proof
-	for i := 0; i < NbTransferCount; i++ {
-		tx.TransferProof.SubProofs[i].T = tx.RangeProofs[i].A
-	}
+	//for i := 0; i < NbTransferCount; i++ {
+	//	tx.TransferProof.SubProofs[i].T = tx.RangeProofs[i].A
+	//}
 	// swap proof
 	tx.SwapProof.T_uA = tx.RangeProofs[0].A
 	tx.SwapProof.T_fee = tx.RangeProofs[1].A
@@ -279,6 +279,7 @@ func VerifyTransaction(
 	// set public data
 	// set account info
 	tx.TransferProof.AssetId = tx.AccountsInfoBefore[TransferAccountA].AssetsInfo[TransferAccountTransferAsset].AssetId
+	// TODO mixing index
 	for i := 0; i < NbTransferCount; i++ {
 		tx.TransferProof.SubProofs[i].Pk = tx.AccountsInfoBefore[i].AccountPk
 		tx.TransferProof.SubProofs[i].C = tx.AccountsInfoBefore[i].AssetsInfo[TransferAccountTransferAsset].BalanceEnc

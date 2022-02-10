@@ -20,13 +20,13 @@ package zecrey
 import (
 	"bytes"
 	"errors"
-	"log"
-	"math/big"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/util"
+	"log"
+	"math/big"
 )
 
 func ProveTransfer(relation *TransferProofRelation) (proof *TransferProof, err error) {
