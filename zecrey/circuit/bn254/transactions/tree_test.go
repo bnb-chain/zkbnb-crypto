@@ -39,7 +39,7 @@ func TestSetFixed32Bytes(t *testing.T) {
 	}
 	assert := test.NewAssert(t)
 	var circuit, witness MixedArray
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs)
+	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,5 +61,5 @@ func TestSetFixed32Bytes(t *testing.T) {
 	assert.SolvingSucceeded(
 		&circuit, &witness, test.WithBackends(backend.GROTH16),
 		test.WithCurves(ecc.BN254),
-		test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs))
+		test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
 }

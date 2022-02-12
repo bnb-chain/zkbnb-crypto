@@ -3,9 +3,9 @@ module github.com/zecrey-labs/zecrey-crypto
 go 1.17
 
 require (
-	github.com/consensys/gnark v0.6.0
-	github.com/consensys/gnark-crypto v0.6.0
-	github.com/ethereum/go-ethereum v1.10.8
+	github.com/consensys/gnark v0.6.2
+	github.com/consensys/gnark-crypto v0.6.1-0.20220110145513-493bb1c180d9
+	github.com/ethereum/go-ethereum v1.10.15
 	github.com/magiconair/properties v1.8.5
 	github.com/stretchr/testify v1.7.0
 	gotest.tools v2.2.0+incompatible
@@ -22,7 +22,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.2.0 // indirect
 	github.com/go-ole/go-ole v1.2.1 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
-	github.com/golang/snappy v0.0.3 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/uuid v1.1.5 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
@@ -37,7 +37,7 @@ require (
 	github.com/prometheus/tsdb v0.7.1 // indirect
 	github.com/rjeczalik/notify v0.9.1 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
-	github.com/syndtr/goleveldb v1.0.1-0.20210305035536-64b5b1c73954 // indirect
+	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tklauser/go-sysconf v0.3.5 // indirect
 	github.com/tklauser/numcpus v0.2.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
