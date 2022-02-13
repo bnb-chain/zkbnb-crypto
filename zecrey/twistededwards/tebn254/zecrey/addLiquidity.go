@@ -20,14 +20,14 @@ package zecrey
 import (
 	"bytes"
 	"errors"
-	"log"
-	"math"
-	"math/big"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/util"
+	"log"
+	"math"
+	"math/big"
 )
 
 func ProveAddLiquidity(relation *AddLiquidityRelation) (proof *AddLiquidityProof, err error) {
@@ -348,7 +348,7 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 			log.Println("[Verify AddLiquidityProof] l3 != r3")
 			return false, nil
 		}
-		// B paart
+		// B part
 		C_uBPrime, err = twistedElgamal.EncAdd(proof.C_uB, proof.C_uB_Delta)
 		if err != nil {
 			return false, err
@@ -493,10 +493,15 @@ func (proof *AddLiquidityProof) Verify() (res bool, err error) {
 }
 
 func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
+	var (
+		B_A_Delta, B_B_Delta int64
+	)
+	B_A_Delta = -int64(proof.B_A_Delta)
+	B_B_Delta = -int64(proof.B_B_Delta)
 	// C_uA_Delta
 	C_uA_DeltaCL := curve.ScalarMul(proof.Pk_u, proof.R_DeltaA)
 	C_uA_DeltaCRL := curve.ScalarBaseMul(proof.R_DeltaA)
-	C_uA_DeltaCRR := curve.ScalarMul(H, big.NewInt(-int64(proof.B_A_Delta)))
+	C_uA_DeltaCRR := curve.ScalarMul(H, big.NewInt(B_A_Delta))
 	C_uA_DeltaCR := curve.Add(C_uA_DeltaCRL, C_uA_DeltaCRR)
 	C_uA_Delta := &ElGamalEnc{
 		CL: C_uA_DeltaCL,
@@ -505,7 +510,7 @@ func verifyAddLiquidityParams(proof *AddLiquidityProof) (res bool, err error) {
 	// C_uB_Delta
 	C_uB_DeltaCL := curve.ScalarMul(proof.Pk_u, proof.R_DeltaB)
 	C_uB_DeltaCRL := curve.ScalarBaseMul(proof.R_DeltaB)
-	C_uB_DeltaCRR := curve.ScalarMul(H, big.NewInt(-int64(proof.B_B_Delta)))
+	C_uB_DeltaCRR := curve.ScalarMul(H, big.NewInt(B_B_Delta))
 	C_uB_DeltaCR := curve.Add(C_uB_DeltaCRL, C_uB_DeltaCRR)
 	C_uB_Delta := &ElGamalEnc{
 		CL: C_uB_DeltaCL,

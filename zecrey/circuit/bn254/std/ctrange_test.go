@@ -35,7 +35,7 @@ func TestVerifyRangeProof(t *testing.T) {
 	}
 	assert := test.NewAssert(t)
 	var circuit, witness CtRangeProofConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs)
+	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,5 +45,5 @@ func TestVerifyRangeProof(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.SolvingSucceeded(&circuit, &witness, test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs))
+	assert.SolvingSucceeded(&circuit, &witness, test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
 }

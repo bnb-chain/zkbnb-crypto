@@ -129,8 +129,8 @@ func VerifyTransferProof(
 	}
 	c := hFunc.Sum()
 	// need to check XOR, api.XOR bug exists
-	ccheck := Xor(api, proof.C1, proof.C2, 256)
-	IsVariableEqual(api, proof.IsEnabled, c, ccheck)
+	cCheck := Xor(api, proof.C1, proof.C2, 256)
+	IsVariableEqual(api, proof.IsEnabled, c, cCheck)
 	//cCheck := api.Xor(proof.C1, proof.C2)
 	//IsVariableEqual(api, proof.IsEnabled, c, cCheck)
 	// verify sum proof
@@ -357,94 +357,102 @@ func SetTransferProofWitness(proof *zecrey.TransferProof, isEnabled bool) (witne
 	witness.GasFee = proof.GasFee
 	// set sub proofs
 	for i, subProof := range proof.SubProofs {
-		// define var
-		var subProofWitness TransferSubProofConstraints
-		// set values
-		// A_{C_L^{\Delta}}
-		subProofWitness.A_CLDelta, err = SetPointWitness(subProof.A_CLDelta)
-		if err != nil {
-			return witness, err
-		}
-		// A_{C_R^{\Delta}}
-		subProofWitness.A_CRDelta, err = SetPointWitness(subProof.A_CRDelta)
-		if err != nil {
-			return witness, err
-		}
-		subProofWitness.A_Y1, err = SetPointWitness(subProof.A_Y1)
-		if err != nil {
-			return witness, err
-		}
-		subProofWitness.A_Y2, err = SetPointWitness(subProof.A_Y2)
-		if err != nil {
-			return witness, err
-		}
-		// A_T
-		subProofWitness.A_T, err = SetPointWitness(subProof.A_T)
-		if err != nil {
-			return witness, err
-		}
-		// A_{pk}
-		subProofWitness.A_pk, err = SetPointWitness(subProof.A_pk)
-		if err != nil {
-			return witness, err
-		}
-		// A_{T/C'}
-		subProofWitness.A_TDivCPrime, err = SetPointWitness(subProof.A_TDivCPrime)
-		if err != nil {
-			return witness, err
-		}
-		// Z_r
-		subProofWitness.Z_r = subProof.Z_r
-		// z_{b^{\Delta}}
-		subProofWitness.Z_bDelta = subProof.Z_bDelta
-		// z_{r^{\star} - r}
-		subProofWitness.Z_rstar1 = subProof.Z_rstar1
-		subProofWitness.Z_rstar2 = subProof.Z_rstar2
-		subProofWitness.Z_bstar1 = subProof.Z_bstar1
-		subProofWitness.Z_bstar2 = subProof.Z_bstar2
-		// z_{\bar{r}}
-		subProofWitness.Z_bar_r = subProof.Z_rbar
-		// z_{b'}
-		subProofWitness.Z_bprime = subProof.Z_bprime
-		// z_{sk}
-		subProofWitness.Z_sk = subProof.Z_sk
-		// z_{sk}
-		subProofWitness.Z_skInv = subProof.Z_skInv
-		// range proof
-		//subProofWitness.BStarRangeProof, err = SetCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
-		//if err != nil {
-		//	return witness, err
-		//}
-		// C
-		subProofWitness.C, err = SetElGamalEncWitness(subProof.C)
-		if err != nil {
-			return witness, err
-		}
-		// C^{\Delta}
-		subProofWitness.CDelta, err = SetElGamalEncWitness(subProof.CDelta)
-		if err != nil {
-			return witness, err
-		}
-		// T
-		subProofWitness.T, err = SetPointWitness(subProof.T)
-		if err != nil {
-			return witness, err
-		}
-		// Y
-		subProofWitness.Y, err = SetPointWitness(subProof.Y)
-		if err != nil {
-			return witness, err
-		}
-		// Pk
-		subProofWitness.Pk, err = SetPointWitness(subProof.Pk)
-		if err != nil {
-			return witness, err
-		}
 		// set into witness
-		witness.SubProofs[i] = subProofWitness
+		witness.SubProofs[i], err = SetTransferSubProofWitness(subProof)
+		if err != nil {
+			return witness, err
+		}
 	}
 	witness.AssetId = uint64(proof.AssetId)
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
+}
+
+func SetTransferSubProofWitness(subProof *zecrey.TransferSubProof) (
+	subProofWitness TransferSubProofConstraints,
+	err error,
+) {
+	// set values
+	// A_{C_L^{\Delta}}
+	subProofWitness.A_CLDelta, err = SetPointWitness(subProof.A_CLDelta)
+	if err != nil {
+		return subProofWitness, err
+	}
+	// A_{C_R^{\Delta}}
+	subProofWitness.A_CRDelta, err = SetPointWitness(subProof.A_CRDelta)
+	if err != nil {
+		return subProofWitness, err
+	}
+	subProofWitness.A_Y1, err = SetPointWitness(subProof.A_Y1)
+	if err != nil {
+		return subProofWitness, err
+	}
+	subProofWitness.A_Y2, err = SetPointWitness(subProof.A_Y2)
+	if err != nil {
+		return subProofWitness, err
+	}
+	// A_T
+	subProofWitness.A_T, err = SetPointWitness(subProof.A_T)
+	if err != nil {
+		return subProofWitness, err
+	}
+	// A_{pk}
+	subProofWitness.A_pk, err = SetPointWitness(subProof.A_pk)
+	if err != nil {
+		return subProofWitness, err
+	}
+	// A_{T/C'}
+	subProofWitness.A_TDivCPrime, err = SetPointWitness(subProof.A_TDivCPrime)
+	if err != nil {
+		return subProofWitness, err
+	}
+	// Z_r
+	subProofWitness.Z_r = subProof.Z_r
+	// z_{b^{\Delta}}
+	subProofWitness.Z_bDelta = subProof.Z_bDelta
+	// z_{r^{\star} - r}
+	subProofWitness.Z_rstar1 = subProof.Z_rstar1
+	subProofWitness.Z_rstar2 = subProof.Z_rstar2
+	subProofWitness.Z_bstar1 = subProof.Z_bstar1
+	subProofWitness.Z_bstar2 = subProof.Z_bstar2
+	// z_{\bar{r}}
+	subProofWitness.Z_bar_r = subProof.Z_rbar
+	// z_{b'}
+	subProofWitness.Z_bprime = subProof.Z_bprime
+	// z_{sk}
+	subProofWitness.Z_sk = subProof.Z_sk
+	// z_{sk}
+	subProofWitness.Z_skInv = subProof.Z_skInv
+	// range proof
+	//subProofWitness.BStarRangeProof, err = SetCtRangeProofWitness(subProof.BStarRangeProof, isEnabled)
+	//if err != nil {
+	//	return witness, err
+	//}
+	// C
+	subProofWitness.C, err = SetElGamalEncWitness(subProof.C)
+	if err != nil {
+		return subProofWitness, err
+	}
+	// C^{\Delta}
+	subProofWitness.CDelta, err = SetElGamalEncWitness(subProof.CDelta)
+	if err != nil {
+		return subProofWitness, err
+	}
+	// T
+	subProofWitness.T, err = SetPointWitness(subProof.T)
+	if err != nil {
+		return subProofWitness, err
+	}
+	// Y
+	subProofWitness.Y, err = SetPointWitness(subProof.Y)
+	if err != nil {
+		return subProofWitness, err
+	}
+	// Pk
+	subProofWitness.Pk, err = SetPointWitness(subProof.Pk)
+	if err != nil {
+		return subProofWitness, err
+	}
+	return subProofWitness, nil
 }

@@ -34,7 +34,7 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 	assert := test.NewAssert(t)
 
 	var circuit, witness SwapProofConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs)
+	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -86,6 +86,6 @@ func TestSwapProofCircuit_Define(t *testing.T) {
 			t.Fatal(err)
 		}
 		fmt.Println("constraints:", r1cs.GetNbConstraints())
-		assert.SolvingSucceeded(&circuit, &witness, test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs))
+		assert.SolvingSucceeded(&circuit, &witness, test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
 	}
 }

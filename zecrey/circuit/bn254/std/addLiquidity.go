@@ -21,9 +21,12 @@ import (
 	"errors"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
+	"math/big"
 )
 
 type AddLiquidityProofConstraints struct {
@@ -132,7 +135,9 @@ func VerifyAddLiquidityProof(
 	assetADiff := api.Sub(proof.GasFeeAssetId, proof.AssetAId)
 	assetBDiff := api.Sub(proof.GasFeeAssetId, proof.AssetBId)
 	isSameAssetA := api.IsZero(assetADiff)
+	isSameAssetA = api.And(isSameAssetA, proof.IsEnabled)
 	isSameAssetB := api.IsZero(assetBDiff)
+	isSameAssetB = api.And(isSameAssetB, proof.IsEnabled)
 	hNeg := tool.Neg(h)
 	// if same, check params
 	IsElGamalEncEqual(api, isSameAssetA, proof.C_uA, proof.C_fee)
@@ -433,8 +438,33 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	}
 	witness.GasFeeAssetId = uint64(proof.GasFeeAssetId)
 	witness.GasFee = proof.GasFee
-	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	hFee := curve.ScalarMul(curve.H, big.NewInt(int64(proof.GasFee)))
+	if proof.GasFeeAssetId == proof.AssetAId {
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(proof.C_uA_Delta)
+		if err != nil {
+			return witness, err
+		}
+	} else if proof.GasFeeAssetId == proof.AssetBId {
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(proof.C_uB_Delta)
+		if err != nil {
+			return witness, err
+		}
+	} else {
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(&twistedElgamal.ElGamalEnc{
+			CL: curve.ZeroPoint(),
+			CR: curve.Neg(hFee),
+		})
+		if err != nil {
+			return witness, err
+		}
+	}
+	witness.C_fee_DeltaForGas, err = SetElGamalEncWitness(&twistedElgamal.ElGamalEnc{
+		CL: curve.ZeroPoint(),
+		CR: hFee,
+	})
+	if err != nil {
+		return witness, err
+	}
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

@@ -37,19 +37,9 @@ func TestSetFixed32Bytes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	accountName, _ := new(big.Int).SetString("135925929860331760849675641", 10)
-	NativeAddress, _ := new(big.Int).SetString("1334149936996857537776072022393820961622848623689", 10)
-	oTx.OProof = &DepositOrLockTx{
-		ChainId:       0,
-		AssetId:       1,
-		AccountIndex:  0,
-		AccountName:   accountName,
-		NativeAddress: NativeAddress,
-		Amount:        10,
-	}
 	assert := test.NewAssert(t)
 	var circuit, witness MixedArray
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs)
+	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,5 +61,5 @@ func TestSetFixed32Bytes(t *testing.T) {
 	assert.SolvingSucceeded(
 		&circuit, &witness, test.WithBackends(backend.GROTH16),
 		test.WithCurves(ecc.BN254),
-		test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs))
+		test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
 }

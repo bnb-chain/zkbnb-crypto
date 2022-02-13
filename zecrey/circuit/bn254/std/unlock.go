@@ -136,6 +136,7 @@ func VerifyUnlockProof(
 	}
 	C_fee_DeltaForFrom = SelectElgamal(api, isSameAsset, C_Delta, C_fee_DeltaForFrom)
 	proof.C_fee_DeltaForFrom = C_fee_DeltaForFrom
+	proof.C_Delta = C_Delta
 	return c, pkProofs, tProofs
 }
 
@@ -192,8 +193,8 @@ func SetUnlockProofWitness(proof *zecrey.UnlockProof, isEnabled bool) (witness U
 	// response
 	witness.Z_sk = proof.Z_sk
 	witness.Z_skInv = proof.Z_skInv
-	witness.ChainId = uint64(proof.ChainId)
-	witness.AssetId = uint64(proof.AssetId)
+	witness.ChainId = proof.ChainId
+	witness.AssetId = proof.AssetId
 	witness.Balance = proof.Balance
 	witness.DeltaAmount = proof.DeltaAmount
 	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)

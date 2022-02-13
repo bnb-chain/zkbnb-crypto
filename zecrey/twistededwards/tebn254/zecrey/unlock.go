@@ -20,12 +20,12 @@ package zecrey
 import (
 	"bytes"
 	"errors"
-	"log"
-	"math/big"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/util"
+	"log"
+	"math/big"
 )
 
 func ProveUnlock(
@@ -80,6 +80,7 @@ func ProveUnlock(
 		log.Println("[ProveUnlock] err info:", err)
 		return nil, err
 	}
+	log.Println(c.String())
 	// gas fee range proof
 	b_feePrime = B_fee - GasFee
 	Bar_r_fee, GasFeePrimeRangeProof, err = proveCtRange(int64(b_feePrime), G, H)

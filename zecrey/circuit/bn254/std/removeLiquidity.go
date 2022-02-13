@@ -21,9 +21,12 @@ import (
 	"errors"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
+	"math/big"
 )
 
 type RemoveLiquidityProofConstraints struct {
@@ -169,7 +172,9 @@ func VerifyRemoveLiquidityProof(
 		CR: C_feeDeltaR,
 	}
 	isSameAssetA := api.IsZero(api.Sub(proof.AssetAId, proof.GasFeeAssetId))
+	isSameAssetA = api.And(isSameAssetA, proof.IsEnabled)
 	isSameAssetB := api.IsZero(api.Sub(proof.AssetBId, proof.GasFeeAssetId))
+	isSameAssetB = api.And(isSameAssetB, proof.IsEnabled)
 	deltaA := SelectPoint(api, isSameAssetA, C_feeDeltaR, tool.ZeroPoint())
 	deltaB := SelectPoint(api, isSameAssetB, C_feeDeltaR, tool.ZeroPoint())
 	C_uA_Delta := proof.C_uA_Delta
@@ -190,7 +195,6 @@ func verifyRemoveLiquidityParams(
 	tool *EccTool,
 	h Point,
 ) {
-
 	C_uA_DeltaCL := tool.ScalarMul(proof.Pk_u, proof.R_DeltaA)
 	C_uA_DeltaCRL := tool.ScalarBaseMul(proof.R_DeltaA)
 	C_uA_DeltaCRR := tool.ScalarMul(h, proof.B_A_Delta)
@@ -220,7 +224,7 @@ func verifyRemoveLiquidityParams(
 	// verify LP
 	Delta_LPCheck := api.Mul(proof.B_A_Delta, proof.B_B_Delta)
 	LPCheck := api.Mul(proof.Delta_LP, proof.Delta_LP)
-	api.AssertIsLessOrEqual(LPCheck, Delta_LPCheck)
+	api.AssertIsLessOrEqual(Delta_LPCheck, LPCheck)
 }
 
 func SetEmptyRemoveLiquidityProofWitness() (witness RemoveLiquidityProofConstraints) {
@@ -400,8 +404,33 @@ func SetRemoveLiquidityProofWitness(proof *zecrey.RemoveLiquidityProof, isEnable
 	}
 	witness.GasFeeAssetId = uint64(proof.GasFeeAssetId)
 	witness.GasFee = proof.GasFee
-	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	hFee := curve.ScalarMul(curve.H, big.NewInt(int64(proof.GasFee)))
+	if proof.GasFeeAssetId == proof.AssetAId {
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(proof.C_uA_Delta)
+		if err != nil {
+			return witness, err
+		}
+	} else if proof.GasFeeAssetId == proof.AssetBId {
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(proof.C_uB_Delta)
+		if err != nil {
+			return witness, err
+		}
+	} else {
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(&twistedElgamal.ElGamalEnc{
+			CL: curve.ZeroPoint(),
+			CR: curve.Neg(hFee),
+		})
+		if err != nil {
+			return witness, err
+		}
+	}
+	witness.C_fee_DeltaForGas, err = SetElGamalEncWitness(&twistedElgamal.ElGamalEnc{
+		CL: curve.ZeroPoint(),
+		CR: hFee,
+	})
+	if err != nil {
+		return witness, err
+	}
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 
 	return witness, nil

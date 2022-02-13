@@ -41,6 +41,7 @@ type (
 	DepositOrLockTx      = std.DepositOrLockTx
 	UnlockProof          = zecrey.UnlockProof
 	TransferProof        = zecrey.TransferProof
+	TransferSubProof     = zecrey.TransferSubProof
 	SwapProof            = zecrey.SwapProof
 	AddLiquidityProof    = zecrey.AddLiquidityProof
 	RemoveLiquidityProof = zecrey.RemoveLiquidityProof
@@ -50,6 +51,7 @@ type (
 	DepositOrLockTxConstraints      = std.DepositOrLockTxConstraints
 	UnlockProofConstraints          = std.UnlockProofConstraints
 	TransferProofConstraints        = std.TransferProofConstraints
+	TransferSubProofConstraints        = std.TransferSubProofConstraints
 	SwapProofConstraints            = std.SwapProofConstraints
 	AddLiquidityProofConstraints    = std.AddLiquidityProofConstraints
 	RemoveLiquidityProofConstraints = std.RemoveLiquidityProofConstraints
@@ -94,9 +96,9 @@ const (
 	TxTypeWithdraw        = 8
 
 	// deposit or lock
-	DepositFromAccount      = 0
+	DepositFromAccount          = 0
 	DepositFromAccountFromAsset = 0
-	LockFromAccount         = 0
+	LockFromAccount             = 0
 	// unlock related account index
 	UnlockFromAccount            = 0
 	UnlockFromAccountUnlockAsset = 0
