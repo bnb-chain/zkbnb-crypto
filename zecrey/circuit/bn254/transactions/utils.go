@@ -133,7 +133,7 @@ func GetAccountDeltasFromUnlockProof(
 			proof.C_Delta,
 			// gas asset
 			proof.C_fee_DeltaForFrom,
-			proof.C_fee_DeltaForFrom,
+			proof.C_Delta,
 		},
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(proof.DeltaAmount),
@@ -429,8 +429,8 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 		},
 	}
 	// pool account
-	B_A_Delta := proof.B_A_Delta
-	B_B_Delta := proof.B_B_Delta
+	B_A_Delta := api.Neg(proof.B_A_Delta)
+	B_B_Delta := api.Neg(proof.B_B_Delta)
 	isSameAsset := api.IsZero(api.Sub(proof.AssetAId, poolAccount.LiquidityInfo.AssetAId))
 	Pool_A_Delta := api.Select(isSameAsset, B_A_Delta, B_B_Delta)
 	Pool_B_Delta := api.Select(isSameAsset, B_B_Delta, B_A_Delta)

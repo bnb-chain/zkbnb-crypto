@@ -438,10 +438,7 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 	}
 	witness.GasFeeAssetId = uint64(proof.GasFeeAssetId)
 	witness.GasFee = proof.GasFee
-	feeDelta := &twistedElgamal.ElGamalEnc{
-		CL: curve.ZeroPoint(),
-		CR: curve.ScalarMul(curve.H, big.NewInt(int64(proof.GasFee))),
-	}
+	hFee := curve.ScalarMul(curve.H, big.NewInt(int64(proof.GasFee)))
 	if proof.GasFeeAssetId == proof.AssetAId {
 		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(proof.C_uA_Delta)
 		if err != nil {
@@ -453,12 +450,18 @@ func SetAddLiquidityProofWitness(proof *zecrey.AddLiquidityProof, isEnabled bool
 			return witness, err
 		}
 	} else {
-		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(feeDelta)
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(&twistedElgamal.ElGamalEnc{
+			CL: curve.ZeroPoint(),
+			CR: curve.Neg(hFee),
+		})
 		if err != nil {
 			return witness, err
 		}
 	}
-	witness.C_fee_DeltaForGas, err = SetElGamalEncWitness(feeDelta)
+	witness.C_fee_DeltaForGas, err = SetElGamalEncWitness(&twistedElgamal.ElGamalEnc{
+		CL: curve.ZeroPoint(),
+		CR: hFee,
+	})
 	if err != nil {
 		return witness, err
 	}

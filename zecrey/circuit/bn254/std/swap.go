@@ -170,7 +170,7 @@ func VerifySwapProof(
 	//IsPointEqual(api, proof.IsEnabled, l3, r3)
 	// fee
 	C_fee_DeltaForFrom := ElGamalEncConstraints{CL: tool.ZeroPoint(), CR: deltaFee}
-	C_fee_DeltaForGas := ElGamalEncConstraints{CL: C_fee_DeltaForFrom.CL, CR: tool.Neg(C_fee_DeltaForFrom.CR)}
+	C_fee_DeltaForGas := ElGamalEncConstraints{CL: tool.ZeroPoint(), CR: tool.Neg(deltaFee)}
 	C_fee_DeltaForFrom = SelectElgamal(api, isSameAssetA, C_uA_Delta, C_fee_DeltaForFrom)
 	C_fee_DeltaForFrom = SelectElgamal(api, isSameAssetB, C_uB_Delta, C_fee_DeltaForFrom)
 	C_feePrime := tool.EncAdd(proof.C_fee, C_fee_DeltaForFrom)
@@ -360,10 +360,7 @@ func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapP
 	}
 	witness.GasFeeAssetId = uint64(proof.GasFeeAssetId)
 	witness.GasFee = proof.GasFee
-	feeDelta := &twistedElgamal.ElGamalEnc{
-		CL: curve.ZeroPoint(),
-		CR: curve.ScalarMul(curve.H, big.NewInt(int64(proof.GasFee))),
-	}
+	hFee := curve.ScalarMul(curve.H, big.NewInt(int64(proof.GasFee)))
 	if proof.GasFeeAssetId == proof.AssetAId {
 		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(proof.C_uA_Delta)
 		if err != nil {
@@ -375,12 +372,18 @@ func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapP
 			return witness, err
 		}
 	} else {
-		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(feeDelta)
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(&twistedElgamal.ElGamalEnc{
+			CL: curve.ZeroPoint(),
+			CR: curve.Neg(hFee),
+		})
 		if err != nil {
 			return witness, err
 		}
 	}
-	witness.C_fee_DeltaForGas, err = SetElGamalEncWitness(feeDelta)
+	witness.C_fee_DeltaForGas, err = SetElGamalEncWitness(&twistedElgamal.ElGamalEnc{
+		CL: curve.ZeroPoint(),
+		CR: hFee,
+	})
 	if err != nil {
 		return witness, err
 	}

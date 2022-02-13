@@ -224,7 +224,7 @@ func verifyRemoveLiquidityParams(
 	// verify LP
 	Delta_LPCheck := api.Mul(proof.B_A_Delta, proof.B_B_Delta)
 	LPCheck := api.Mul(proof.Delta_LP, proof.Delta_LP)
-	api.AssertIsLessOrEqual(LPCheck, Delta_LPCheck)
+	api.AssertIsLessOrEqual(Delta_LPCheck, LPCheck)
 }
 
 func SetEmptyRemoveLiquidityProofWitness() (witness RemoveLiquidityProofConstraints) {
@@ -404,10 +404,7 @@ func SetRemoveLiquidityProofWitness(proof *zecrey.RemoveLiquidityProof, isEnable
 	}
 	witness.GasFeeAssetId = uint64(proof.GasFeeAssetId)
 	witness.GasFee = proof.GasFee
-	feeDelta := &twistedElgamal.ElGamalEnc{
-		CL: curve.ZeroPoint(),
-		CR: curve.ScalarMul(curve.H, big.NewInt(int64(proof.GasFee))),
-	}
+	hFee := curve.ScalarMul(curve.H, big.NewInt(int64(proof.GasFee)))
 	if proof.GasFeeAssetId == proof.AssetAId {
 		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(proof.C_uA_Delta)
 		if err != nil {
@@ -419,12 +416,18 @@ func SetRemoveLiquidityProofWitness(proof *zecrey.RemoveLiquidityProof, isEnable
 			return witness, err
 		}
 	} else {
-		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(feeDelta)
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(&twistedElgamal.ElGamalEnc{
+			CL: curve.ZeroPoint(),
+			CR: curve.Neg(hFee),
+		})
 		if err != nil {
 			return witness, err
 		}
 	}
-	witness.C_fee_DeltaForGas, err = SetElGamalEncWitness(feeDelta)
+	witness.C_fee_DeltaForGas, err = SetElGamalEncWitness(&twistedElgamal.ElGamalEnc{
+		CL: curve.ZeroPoint(),
+		CR: hFee,
+	})
 	if err != nil {
 		return witness, err
 	}

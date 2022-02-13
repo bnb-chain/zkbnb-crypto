@@ -279,7 +279,6 @@ func VerifyTransaction(
 	// set public data
 	// set account info
 	tx.TransferProof.AssetId = tx.AccountsInfoBefore[TransferAccountA].AssetsInfo[TransferAccountTransferAsset].AssetId
-	// TODO mixing index
 	for i := 0; i < NbTransferCount; i++ {
 		tx.TransferProof.SubProofs[i].Pk = tx.AccountsInfoBefore[i].AccountPk
 		tx.TransferProof.SubProofs[i].C = tx.AccountsInfoBefore[i].AssetsInfo[TransferAccountTransferAsset].BalanceEnc
