@@ -21,9 +21,12 @@ import (
 	"errors"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
+	"math/big"
 )
 
 // SwapProof in circuit
@@ -138,25 +141,29 @@ func VerifySwapProof(
 	l1 = tool.ScalarBaseMul(proof.Z_sk_u)
 	r1 = tool.Add(proof.A_pk_u, tool.ScalarMul(proof.Pk_u, c))
 	IsPointEqual(api, proof.IsEnabled, l1, r1)
-	// check if gas fee asset id is the same as asset a
-	assetDiff := api.Sub(proof.GasFeeAssetId, proof.AssetAId)
-	isSameAsset := api.IsZero(assetDiff)
-	isSameAsset = api.And(isSameAsset, proof.IsEnabled)
+	// check if gas fee asset id is the same as asset a or b
+	// compute fee delta
 	var hNeg Point
 	hNeg.Neg(api, &h)
-	// if same, check params
-	IsElGamalEncEqual(api, isSameAsset, proof.C_uA, proof.C_fee)
-	IsPointEqual(api, isSameAsset, proof.A_T_uAC_uARPrimeInv, proof.A_T_feeC_feeRPrimeInv)
-	C_uA_Delta := proof.C_uA_Delta
-	// compute fee delta
 	deltaFee := tool.ScalarMul(hNeg, proof.GasFee)
-	// compute A delta
-	deltaA := SelectPoint(api, isSameAsset, deltaFee, zeroPoint(api))
+	isSameAssetA := api.IsZero(api.Sub(proof.AssetAId, proof.GasFeeAssetId))
+	isSameAssetA = api.And(isSameAssetA, proof.IsEnabled)
+	isSameAssetB := api.IsZero(api.Sub(proof.AssetBId, proof.GasFeeAssetId))
+	isSameAssetB = api.And(isSameAssetB, proof.IsEnabled)
+	deltaA := SelectPoint(api, isSameAssetA, deltaFee, tool.ZeroPoint())
+	deltaB := SelectPoint(api, isSameAssetB, deltaFee, tool.ZeroPoint())
+	C_uA_Delta := proof.C_uA_Delta
+	C_uB_Delta := proof.C_uB_Delta
 	C_uA_Delta.CR = tool.Add(C_uA_Delta.CR, deltaA)
+	C_uB_Delta.CR = tool.Add(C_uB_Delta.CR, deltaB)
+	// reset into proof
+	proof.C_uA_Delta = C_uA_Delta
+	proof.C_uB_Delta = C_uB_Delta
+	// if same, check params
+	IsElGamalEncEqual(api, isSameAssetA, proof.C_uA, proof.C_fee)
+	IsPointEqual(api, isSameAssetA, proof.A_T_uAC_uARPrimeInv, proof.A_T_feeC_feeRPrimeInv)
 	C_uAPrime := tool.EncAdd(proof.C_uA, proof.C_uA_Delta)
 	C_uAPrimeNeg := tool.NegElgamal(C_uAPrime)
-	// set proof delta
-	proof.C_uA_Delta = C_uA_Delta
 	//var l3, r3 Point
 	//l3 = tool.Add(tool.ScalarBaseMul(proof.Z_bar_r_A), tool.ScalarMul(C_uAPrimeNeg.CL, proof.Z_sk_uInv))
 	//r3 = tool.Add(proof.A_T_uAC_uARPrimeInv, tool.ScalarMul(tool.Add(proof.T_uA, C_uAPrimeNeg.CR), c))
@@ -164,9 +171,10 @@ func VerifySwapProof(
 	// fee
 	C_fee_DeltaForFrom := ElGamalEncConstraints{CL: tool.ZeroPoint(), CR: deltaFee}
 	C_fee_DeltaForGas := ElGamalEncConstraints{CL: C_fee_DeltaForFrom.CL, CR: tool.Neg(C_fee_DeltaForFrom.CR)}
-	C_fee_DeltaForFrom = SelectElgamal(api, isSameAsset, C_uA_Delta, C_fee_DeltaForFrom)
+	C_fee_DeltaForFrom = SelectElgamal(api, isSameAssetA, C_uA_Delta, C_fee_DeltaForFrom)
+	C_fee_DeltaForFrom = SelectElgamal(api, isSameAssetB, C_uB_Delta, C_fee_DeltaForFrom)
 	C_feePrime := tool.EncAdd(proof.C_fee, C_fee_DeltaForFrom)
-	C_feePrime = SelectElgamal(api, isSameAsset, C_uAPrime, C_feePrime)
+	C_feePrime = SelectElgamal(api, isSameAssetA, C_uAPrime, C_feePrime)
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	// set proof deltas
 	proof.C_fee_DeltaForFrom = C_fee_DeltaForFrom
@@ -352,8 +360,30 @@ func SetSwapProofWitness(proof *zecrey.SwapProof, isEnabled bool) (witness SwapP
 	}
 	witness.GasFeeAssetId = uint64(proof.GasFeeAssetId)
 	witness.GasFee = proof.GasFee
-	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
-	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	feeDelta := &twistedElgamal.ElGamalEnc{
+		CL: curve.ZeroPoint(),
+		CR: curve.ScalarMul(curve.H, big.NewInt(int64(proof.GasFee))),
+	}
+	if proof.GasFeeAssetId == proof.AssetAId {
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(proof.C_uA_Delta)
+		if err != nil {
+			return witness, err
+		}
+	} else if proof.GasFeeAssetId == proof.AssetBId {
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(proof.C_uB_Delta)
+		if err != nil {
+			return witness, err
+		}
+	} else {
+		witness.C_fee_DeltaForFrom, err = SetElGamalEncWitness(feeDelta)
+		if err != nil {
+			return witness, err
+		}
+	}
+	witness.C_fee_DeltaForGas, err = SetElGamalEncWitness(feeDelta)
+	if err != nil {
+		return witness, err
+	}
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
 }

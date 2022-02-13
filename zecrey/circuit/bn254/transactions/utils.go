@@ -87,9 +87,9 @@ func GetAccountDeltasFromDepositTx(
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
-	deltas[1] = deltas[DepositFromAccount]
-	deltas[2] = deltas[DepositFromAccount]
-	deltas[3] = deltas[DepositFromAccount]
+	deltas[1] = deltas[0]
+	deltas[2] = deltas[0]
+	deltas[3] = deltas[0]
 	return deltas
 }
 
@@ -115,9 +115,9 @@ func GetAccountDeltasFromLockTx(
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
-	deltas[1] = deltas[LockFromAccount]
-	deltas[2] = deltas[LockFromAccount]
-	deltas[3] = deltas[LockFromAccount]
+	deltas[1] = deltas[0]
+	deltas[2] = deltas[0]
+	deltas[3] = deltas[0]
 	return deltas
 }
 
@@ -162,8 +162,8 @@ func GetAccountDeltasFromUnlockProof(
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
-	deltas[2] = deltas[UnlockGasAccount]
-	deltas[3] = deltas[UnlockGasAccount]
+	deltas[2] = deltas[0]
+	deltas[3] = deltas[0]
 	return deltas
 }
 
@@ -400,7 +400,7 @@ func GetAccountDeltasFromAddLiquidityProof(
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
-	deltas[3] = deltas[AddLiquidityGasAccount]
+	deltas[3] = deltas[0]
 	return deltas
 }
 
@@ -470,7 +470,7 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
-	deltas[3] = deltas[RemoveLiquidityGasAccount]
+	deltas[3] = deltas[0]
 	return deltas
 }
 
@@ -515,8 +515,8 @@ func GetAccountDeltasFromWithdrawProof(
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
-	deltas[2] = deltas[WithdrawGasAccount]
-	deltas[3] = deltas[WithdrawGasAccount]
+	deltas[2] = deltas[0]
+	deltas[3] = deltas[0]
 	return deltas
 }
 

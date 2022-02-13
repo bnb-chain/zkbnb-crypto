@@ -23,21 +23,22 @@ import (
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
-	"log"
-	"math/big"
-	"strconv"
 	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/util"
+	"log"
+	"math/big"
+	"strconv"
 )
 
 var (
-	curve = twistededwards.GetEdwardsCurve()
-	Order = &curve.Order
-	G     = &curve.Base
-	H     *Point
-	U     *Point
-	O     = Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
+	curve   = twistededwards.GetEdwardsCurve()
+	Order   = &curve.Order
+	G       = &curve.Base
+	Modulus = fr.Modulus()
+	H       *Point
+	U       *Point
+	O       = Point{X: *new(fr.Element).SetZero(), Y: *new(fr.Element).SetOne()}
 )
 
 const (

@@ -20,13 +20,13 @@ package zecrey
 import (
 	"bytes"
 	"errors"
-	"log"
-	"math/big"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/util"
+	"log"
+	"math/big"
 )
 
 func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
@@ -144,6 +144,8 @@ func ProveSwap(relation *SwapProofRelation) (proof *SwapProof, err error) {
 
 func (proof *SwapProof) Verify() (res bool, err error) {
 	if !proof.ARangeProof.A.Equal(proof.T_uA) || !proof.GasFeePrimeRangeProof.A.Equal(proof.T_fee) || proof.Alpha != proof.B_A_Delta*OneMillion/proof.B_poolA {
+		log.Println(proof.Alpha)
+		log.Println(proof.B_A_Delta * OneMillion / proof.B_poolA)
 		log.Println("[Verify SwapProof] invalid params")
 		return false, errors.New("[Verify SwapProof] invalid params")
 	}
@@ -320,10 +322,15 @@ func verifySwapParams(proof *SwapProof) (res bool, err error) {
 	if proof.B_B_Delta < proof.MinB_B_Delta {
 		return false, errors.New("[verifySwapParams] invalid B delta")
 	}
+	var (
+		B_A_Delta, B_B_Delta int64
+	)
+	B_A_Delta = int64(proof.B_A_Delta)
+	B_B_Delta = int64(proof.B_B_Delta)
 	// pk^r
 	CL1 := curve.ScalarMul(proof.Pk_u, proof.R_DeltaA)
 	// g^r h^b
-	hb1 := curve.ScalarMul(H, big.NewInt(int64(proof.B_A_Delta)))
+	hb1 := curve.ScalarMul(H, big.NewInt(B_A_Delta))
 	B_poolA_Delta := proof.B_A_Delta - proof.B_treasuryfee_Delta
 	hbpool := curve.ScalarMul(H, big.NewInt(int64(B_poolA_Delta)))
 	gr1 := curve.ScalarBaseMul(proof.R_DeltaA)
@@ -334,7 +341,7 @@ func verifySwapParams(proof *SwapProof) (res bool, err error) {
 	// pk^r
 	CL2 := curve.ScalarMul(proof.Pk_u, proof.R_DeltaB)
 	// g^r h^b
-	hb2 := curve.ScalarMul(H, big.NewInt(int64(proof.B_B_Delta)))
+	hb2 := curve.ScalarMul(H, big.NewInt(B_B_Delta))
 	gr2 := curve.ScalarBaseMul(proof.R_DeltaB)
 	C_uB_Delta := &ElGamalEnc{
 		CL: CL2,
