@@ -22,14 +22,13 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"hash"
 	"math/big"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 )
 
 /*
 Hash is responsible for the computing a Zp element given the input string.
 */
 func HashToInt(b bytes.Buffer, h hash.Hash) (*big.Int, error) {
-	h = mimc.NewMiMC(zmimc.SEED)
+	h = mimc.NewMiMC()
 	digest := h
 	digest.Write(b.Bytes())
 	output := digest.Sum(nil)

@@ -22,7 +22,6 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
 	"log"
 )
@@ -91,7 +90,7 @@ func (circuit TxConstraints) Define(api frontend.API) error {
 	}
 
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, api)
+	hFunc, err := mimc.NewMiMC(api)
 	if err != nil {
 		return err
 	}

@@ -33,17 +33,15 @@ func (tool *EccTool) NegElgamal(C ElGamalEncConstraints) ElGamalEncConstraints {
 }
 
 func (tool *EccTool) Enc(h Point, b Variable, r Variable, pk Point) ElGamalEncConstraints {
-	var CL, gr, CR Point
-	CL.ScalarMulNonFixedBase(tool.api, &pk, r, tool.params)
-	gr.ScalarMulFixedBase(tool.api, tool.params.BaseX, tool.params.BaseY, r, tool.params)
-	CR.ScalarMulNonFixedBase(tool.api, &h, b, tool.params)
-	CR.AddGeneric(tool.api, &CR, &gr, tool.params)
+	var CL, CR Point
+	CL.ScalarMul(tool.api, &pk, r, tool.params)
+	CR.DoubleBaseScalarMul(tool.api, &tool.Base, &h, r, b, tool.params)
 	return ElGamalEncConstraints{CL: CL, CR: CR}
 }
 
 func (tool *EccTool) EncAdd(C, CDelta ElGamalEncConstraints) ElGamalEncConstraints {
-	C.CL.AddGeneric(tool.api, &C.CL, &CDelta.CL, tool.params)
-	C.CR.AddGeneric(tool.api, &C.CR, &CDelta.CR, tool.params)
+	C.CL.Add(tool.api, &C.CL, &CDelta.CL, tool.params)
+	C.CR.Add(tool.api, &C.CR, &CDelta.CR, tool.params)
 	return C
 }
 

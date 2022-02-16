@@ -21,7 +21,6 @@ import (
 	"errors"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 	"log"
 )
@@ -45,14 +44,8 @@ func (circuit CtRangeProofConstraints) Define(api API) error {
 	if err != nil {
 		return err
 	}
-	// verify H
-	H := Point{
-		X: HX,
-		Y: HY,
-	}
-	IsPointEqual(api, circuit.IsEnabled, H, circuit.H)
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, api)
+	hFunc, err := mimc.NewMiMC(api)
 	if err != nil {
 		return err
 	}
