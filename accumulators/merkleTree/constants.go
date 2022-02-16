@@ -19,11 +19,6 @@ package merkleTree
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
-)
-
-const (
-	SEED = zmimc.SEED
 )
 
 var (

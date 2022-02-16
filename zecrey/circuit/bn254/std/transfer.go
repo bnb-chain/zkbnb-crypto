@@ -21,7 +21,6 @@ import (
 	"errors"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
 )
@@ -77,7 +76,7 @@ func (circuit TransferProofConstraints) Define(api API) error {
 		Y: HY,
 	}
 	// mimc
-	hFunc, err := mimc.NewMiMC(zmimc.SEED, api)
+	hFunc, err := mimc.NewMiMC(api)
 	if err != nil {
 		return err
 	}

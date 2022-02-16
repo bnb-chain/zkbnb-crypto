@@ -3,8 +3,8 @@ module github.com/zecrey-labs/zecrey-crypto
 go 1.17
 
 require (
-	github.com/consensys/gnark v0.6.2
-	github.com/consensys/gnark-crypto v0.6.1-0.20220110145513-493bb1c180d9
+	github.com/consensys/gnark v0.6.4
+	github.com/consensys/gnark-crypto v0.6.1
 	github.com/ethereum/go-ethereum v1.10.15
 	github.com/magiconair/properties v1.8.5
 	github.com/stretchr/testify v1.7.0
