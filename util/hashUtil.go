@@ -25,7 +25,7 @@ import (
 )
 
 /*
-Hash is responsible for the computing a Zp element given the input string.
+	HashToInt: compute hash by buf and convert it to big int
 */
 func HashToInt(b bytes.Buffer, h hash.Hash) (*big.Int, error) {
 	h = mimc.NewMiMC()

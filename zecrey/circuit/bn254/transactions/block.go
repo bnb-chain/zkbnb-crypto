@@ -51,7 +51,7 @@ func (circuit BlockConstraints) Define(api API) error {
 		Y: std.HY,
 	}
 	tool := std.NewEccTool(api, params)
-	VerifyBlock(tool, api, circuit, hFunc, H)
+	VerifyBlock(tool, api, circuit, hFunc, H, NilHash)
 
 	return nil
 }
@@ -62,11 +62,18 @@ func VerifyBlock(
 	block BlockConstraints,
 	hFunc MiMC,
 	h Point,
+	nilHash Variable,
 ) {
-	for i := 0; i < len(block.Txs); i++ {
-		VerifyTransaction(tool, api, block.Txs[i], hFunc, h, 0)
+	api.AssertIsEqual(block.OldRoot, block.Txs[0].AccountRootBefore)
+	api.AssertIsEqual(block.NewRoot, block.Txs[NbTxsCountHalf-1].AccountRootAfter)
+	for i := 0; i < NbTxsCountHalf-1; i++ {
+		api.AssertIsEqual(block.Txs[i].AccountRootAfter, block.Txs[i+1].AccountRootBefore)
+		// TODO commitment
+		api.FromBinary()
+		VerifyTransaction(tool, api, block.Txs[i], hFunc, h, nilHash)
 		hFunc.Reset()
 	}
+	VerifyTransaction(tool, api, block.Txs[NbTxsCountHalf-1], hFunc, h, nilHash)
 }
 
 func SetBlockWitness(txs []TxConstraints) (witness BlockConstraints, err error) {
