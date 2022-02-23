@@ -51,7 +51,7 @@ type (
 	DepositOrLockTxConstraints      = std.DepositOrLockTxConstraints
 	UnlockProofConstraints          = std.UnlockProofConstraints
 	TransferProofConstraints        = std.TransferProofConstraints
-	TransferSubProofConstraints        = std.TransferSubProofConstraints
+	TransferSubProofConstraints     = std.TransferSubProofConstraints
 	SwapProofConstraints            = std.SwapProofConstraints
 	AddLiquidityProofConstraints    = std.AddLiquidityProofConstraints
 	RemoveLiquidityProofConstraints = std.RemoveLiquidityProofConstraints
@@ -60,6 +60,7 @@ type (
 
 const (
 	MaxRangeProofCount        = 3
+	TxsCountForTest           = 1
 	NbTxsCountHalf            = 70
 	NbTxsCountFull            = 140
 	NbAccountsPerTx           = 4

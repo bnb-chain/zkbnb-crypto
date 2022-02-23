@@ -20,12 +20,12 @@ package twistedElgamal
 import (
 	"fmt"
 	"github.com/magiconair/properties/assert"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"math"
 	"math/big"
 	"testing"
 	"time"
-	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 )
 
 func TestEncDec(t *testing.T) {

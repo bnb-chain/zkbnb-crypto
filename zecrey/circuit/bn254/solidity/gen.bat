@@ -1,0 +1,2 @@
+@echo off
+solcjs --abi --bin --optimize --base-path . ./ZecreyVerifier.sol && abigen --bin=_ZecreyVerifier_sol_Verifier.bin --abi=_ZecreyVerifier_sol_Verifier.abi --pkg=zecreyVerifier --out=zecreyVerifier.go
