@@ -21,7 +21,19 @@ import (
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
+	"log"
 )
+
+type BlockInfo struct {
+	BlockNumber     uint64
+	BlockHeaderHash []byte
+	OnChainOpsRoot  []byte
+	OldRoot         []byte
+	NewRoot         []byte
+	BlockCommitment []byte
+	CreatedAt       uint64
+	Txs             []*Tx
+}
 
 type BlockConstraints struct {
 	// public inputs
@@ -29,7 +41,7 @@ type BlockConstraints struct {
 	NewRoot         Variable `gnark:",public"`
 	BlockCommitment Variable `gnark:",public"`
 	// tx info
-	Txs [NbTxsCountHalf]TxConstraints
+	Txs [TxsCountForTest]TxConstraints
 }
 
 func (circuit BlockConstraints) Define(api API) error {
@@ -45,7 +57,6 @@ func (circuit BlockConstraints) Define(api API) error {
 		return err
 	}
 
-	// TODO verify H: need to optimize
 	H := Point{
 		X: std.HX,
 		Y: std.HY,
@@ -65,20 +76,26 @@ func VerifyBlock(
 	nilHash Variable,
 ) {
 	api.AssertIsEqual(block.OldRoot, block.Txs[0].AccountRootBefore)
-	api.AssertIsEqual(block.NewRoot, block.Txs[NbTxsCountHalf-1].AccountRootAfter)
-	for i := 0; i < NbTxsCountHalf-1; i++ {
-		api.AssertIsEqual(block.Txs[i].AccountRootAfter, block.Txs[i+1].AccountRootBefore)
+	api.AssertIsEqual(block.NewRoot, block.Txs[TxsCountForTest-1].AccountRootAfter)
+	VerifyTransaction(tool, api, block.Txs[0], hFunc, h, nilHash)
+	for i := 1; i < TxsCountForTest; i++ {
+		api.AssertIsEqual(block.Txs[i-1].AccountRootAfter, block.Txs[i].AccountRootBefore)
 		// TODO commitment
-		api.FromBinary()
 		VerifyTransaction(tool, api, block.Txs[i], hFunc, h, nilHash)
 		hFunc.Reset()
 	}
-	VerifyTransaction(tool, api, block.Txs[NbTxsCountHalf-1], hFunc, h, nilHash)
 }
 
-func SetBlockWitness(txs []TxConstraints) (witness BlockConstraints, err error) {
-	for i := 0; i < len(txs); i++ {
-		witness.Txs[i] = txs[i]
+func SetBlockWitness(blockInfo *BlockInfo) (witness BlockConstraints, err error) {
+	witness.BlockCommitment = blockInfo.BlockCommitment
+	witness.OldRoot = blockInfo.OldRoot
+	witness.NewRoot = blockInfo.NewRoot
+	for i := 0; i < len(blockInfo.Txs); i++ {
+		witness.Txs[i], err = SetTxWitness(blockInfo.Txs[i])
+		if err != nil {
+			log.Println("[SetBlockWitness] unable to set tx witness:", err)
+			return witness, err
+		}
 	}
 	return witness, nil
 }
