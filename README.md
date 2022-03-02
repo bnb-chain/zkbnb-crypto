@@ -1,23 +1,29 @@
-# github.com/zecrey-labs/zecrey-crypto
+# zecrey-crypto
 
-`github.com/zecrey-labs/zecrey-crypto` is the crypto library for Zecrey Protocol. It implements not only basic cryptography algorithms, such as `commitment scheme`, `ECC utils`, `finite field utils`, `ElGamal Encryption`, .etc, but also advanced cryptography algorithms, such as `BulletProofs`, `Twisted ElGamal Encryption`, `basic Sigma Protocols`. What's more, it provides many implementations based on different Elliptic Curves. It also includes the core crypto algorithm of the Zecrey Protocol, such as `ComRangeProof`, `Privacy Proof`, `circuit of Zecrey`. Zecrey is based on the curve which is called `baby jubjub`, so the implementation of `baby jubjub` is the core part.
+`github.com/zecrey-labs/zecrey-crypto` is the crypto library for Zecrey Protocol. It implements not only basic cryptography algorithms, such as `commitment scheme`, `ECC utils`, `finite field utils`, `ElGamal Encryption`, .etc, but also advanced cryptography algorithms, such as `BulletProofs`, `Twisted ElGamal Encryption`, `Sigma Protocols`, `Zecrey Privacy Proofs`. What's more, it provides many implementations based on different Elliptic Curves. It also includes the core crypto algorithm of the Zecrey Protocol, such as `ComRangeProof`, `Privacy Proof`, `circuit of Zecrey`. Zecrey is based on the curve which is called `baby jubjub` or `twisted bn254`, so the implementation of `baby jubjub` is the core part.
 
 ## Project Structure
 
 ```json
-├─commitment  // commitment scheme
+ZECREY-CRYPTO
+├─.github
+│  ├─ISSUE_TEMPLATE
+│  └─workflows
+├─accumulators // merkle tree implementation
+│  └─merkleTree
+├─commitment // commitment scheme
 │  ├─secp256k1
 │  │  └─pedersen
 │  └─twistededwards
 │      └─tebn254
-│          └─pedersen // pedersen commitment
-├─ecc // ECC utils
-│  ├─zbls381 // bls12-381
-│  ├─zbn254 // bn254
-│  ├─zp256 // secp256k1
-│  └─ztwistededwards 
+│          └─pedersen // perdersen commitment
+├─ecc // ellptic curves wrapper
+│  ├─zbls381
+│  ├─zbn254
+│  ├─zp256
+│  └─ztwistededwards // twisted edwards curve
 │      └─tebn254 // baby jubjub
-├─elgamal // ElGamal Encryption
+├─elgamal // elgamal algorithms
 │  ├─bls381
 │  │  ├─elgamal
 │  │  └─twistedElgamal
@@ -29,19 +35,21 @@
 │  │  └─twistedElgamal
 │  └─twistededwards
 │      └─tebn254
-│          ├─elgamal // satisfying homomorphic addition
-│          └─twistedElgamal // Twisted ElGamal Encryption
-├─ffmath // finite field math utils
-├─hash // hash utils
+│          ├─elgamal
+│          └─twistedElgamal
+├─ffmath // finite fields utils
+├─hash // hash algorithms
 │  └─bn254
-│      └─zmimc // only support MiMc
+│      └─zmimc
 ├─rangeProofs // range proofs
 │  ├─secp256k1
-│  │  └─bulletProofs
+│  │  └─bulletProofs // bullet proofs
 │  └─twistededwards
 │      └─tebn254
-│          ├─bulletProofs // BulletProofs
-│          └─commitRange // Commitment Range Proofs
+│          ├─binaryRange // binary range proofs
+│          ├─bulletProofs // bullet proofs
+│          ├─commitRange
+│          └─ctrange // confidential transaction range proof(core algorithms of Zecrey)
 ├─sigmaProtocol // basic sigma protocols
 │  ├─secp256k1
 │  │  ├─binary
@@ -51,303 +59,577 @@
 │  │  └─schnorr
 │  └─twistededwards
 │      └─tebn254
-│          ├─binary // binary proof
-│          ├─chaum-pedersen // chaum-pedersen proof
-│          ├─linear // linear equation proof
-│          ├─okamoto // okamoto proof
-│          └─schnorr // schnorr proof
-├─util // basic utils for Zecrey
-├─wasm // wasm version of Zecrey
-└─zecrey // core libs
+│          ├─binary
+│          ├─chaum-pedersen
+│          ├─linear
+│          ├─okamoto
+│          └─schnorr
+├─util // common utils
+├─wasm // wasm for Zecrey algorithms
+└─zecrey // zecrey related algorithms
     ├─circuit // circuit implementation
     │  └─bn254
     │      ├─groth16
+    │      ├─mockAccount
     │      ├─plonk
-    │      └─std // basic circuits
-    └─twistededwards
+    │      ├─solidity
+    │      ├─std // zecrey algorithms circuit
+    │      ├─transactions // core circuit
+    │      └─zsha256
+    └─twistededwards // Zecrey privacy proof implementation
         └─tebn254
-            └─zecrey // zecrey algorithms
-
+            └─zecrey
 ```
 
-## Have a try
+## Zecrey Privacy Proofs
 
-### Twisted ElGamal Encryption
+### CTRange Proof
 
-You can try the Twisted ElGamal Encryption in `elgamal/twistededwards/tebn254/twistedElgamal`.
+#### Example
 
-```go
-func TestDecByStartRoutine(t *testing.T) {
-    // generate key pair for the user
-	sk, pk := GenKeyPair()
-    // encryption value
-	b := big.NewInt(-24029)
-    // random value
-	r := curve.RandomValue()
-    // max value
-	max := int64(100000)
-    // encrypt it
-	enc, _ := Enc(b, r, pk)
-	fmt.Println(sk.String())
-	fmt.Println(enc.String())
-	elapse := time.Now()
-    // decrypt it
-	res, err := DecByStart(enc, sk, 0, max)
-	if err != nil {
-		t.Error(err)
-	}
-	fmt.Println(time.Since(elapse))
-    // assert equal
-	assert.Equal(t, res, b, "decryption works correctly")
-}
-```
-
-### Commitment Range Proofs
-
-You can try the Commitment Range Proof in `rangeProofs/twistededwards/tebn254/commitRange`.
+`rangeProofs/twistededwards/tebn254/ctrange/ctrange_test.go`:
 
 ```go
-func TestProveAndVerify(t *testing.T) {
-    // the value needs to be proved
-	b := big.NewInt(4)
-    // random value
-	r := curve.RandomValue()
-	g := curve.H
-	h := curve.G
-    // T is the commitment of b
-	T, _ := pedersen.Commit(b, r, g, h)
+func TestVerify(t *testing.T) {
+	b := int64(5)
 	elapse := time.Now()
-    // prove the correct range
-	proof, err := Prove(b, r, T, g, h, 32)
+	_, proof, err := Prove(b, curve.G, curve.H)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(time.Since(elapse))
-    // verify it
-	res, err := proof.Verify()
+	fmt.Println("1:", time.Since(elapse))
+	proofBytes := proof.Bytes()
+	proof2, err := FromBytes(proofBytes)
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, res, true, "ComRangeProof works correctly")
+	elapse = time.Now()
+	res, err := proof2.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("2:", time.Since(elapse))
+	assert.Equal(t, true, res, "invalid proof")
 }
 ```
 
-### Privacy Transfer Proof
+### Unlock
 
-You can try the Zecrey Privacy Transfer Proof in `zecrey/twistededwards/tebn254/zecrey/transfer_test.go`. For native version, it will take 40ms to generate the proof and 80ms to verify the proof. For wasm version, it will take 1.8s(700ms in Safari) to generate the proof.
+#### Example
+
+`zecrey/twistededwards/tebn254/zecrey/unlock.go`:
+
+```go
+func TestUnlockProof_Verify(t *testing.T) {
+	sk, pk := twistedElgamal.GenKeyPair()
+	chainId := uint32(0)
+	assetId := uint32(0)
+	balance := uint64(10)
+	deltaAmount := uint64(2)
+	b_fee := uint64(100)
+	feeEnc, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), curve.RandomValue(), pk)
+	proof, err := ProveUnlock(
+		sk, chainId, assetId, balance, deltaAmount,
+		feeEnc,
+		b_fee, uint32(1), 1,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("sk:", sk.String())
+	fmt.Println("pk:", curve.ToString(pk))
+	fmt.Println("fee enc:", feeEnc.String())
+	proofStr := proof.String()
+	proof2, err := ParseUnlockProofStr(proofStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := proof2.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, true, res, "invalid proof")
+}
+```
+
+### Transfer
+
+#### Example
+
+`zecrey/twistededwards/tebn254/zecrey/transfer_test.go`:
 
 ```go
 func TestCorrectInfoProve(t *testing.T) {
-    // generate the key pair for the user1
 	sk1, pk1 := twistedElgamal.GenKeyPair()
-    // user1's balance
-	b1 := big.NewInt(8)
-    // random value
+	b1 := uint64(8)
 	r1 := curve.RandomValue()
-    // generate the key pair for the user2
 	_, pk2 := twistedElgamal.GenKeyPair()
-    // user2's balance
 	b2 := big.NewInt(2)
-    // random value
 	r2 := curve.RandomValue()
-    // generate the key pair for the user3
 	_, pk3 := twistedElgamal.GenKeyPair()
-    // user3's balance
 	b3 := big.NewInt(3)
-    // random value
 	r3 := curve.RandomValue()
-    // encryption of the balance
-	b1Enc, err := twistedElgamal.Enc(b1, r1, pk1)
+	b1Enc, err := twistedElgamal.Enc(big.NewInt(int64(b1)), r1, pk1)
 	b2Enc, err := twistedElgamal.Enc(b2, r2, pk2)
 	b3Enc, err := twistedElgamal.Enc(b3, r3, pk3)
 	if err != nil {
 		t.Error(err)
 	}
+	fmt.Println("sk1:", sk1.String())
+	fmt.Println("pk1:", curve.ToString(pk1))
+	fmt.Println("pk2:", curve.ToString(pk2))
+	fmt.Println("pk3:", curve.ToString(pk3))
+	fmt.Println("b1Enc:", b1Enc.String())
+	fmt.Println("b2Enc:", b2Enc.String())
+	fmt.Println("b3Enc:", b3Enc.String())
 	elapse := time.Now()
-    // create the proof relation
-	relation, err := NewPTransferProofRelation(1)
+	fee := uint64(1)
+	relation, err := NewTransferProofRelation(1, fee)
 	if err != nil {
 		t.Error(err)
 	}
-    // add statement for user1(sender)
-	err = relation.AddStatement(b1Enc, pk1, big.NewInt(-4), sk1)
+	err = relation.AddStatement(b2Enc, pk2, 0, 2, nil)
 	if err != nil {
 		t.Error(err)
 	}
-    // add statement for user2(receiver)
-	err = relation.AddStatement(b2Enc, pk2, big.NewInt(1), nil)
+	err = relation.AddStatement(b1Enc, pk1, b1, -3, sk1)
 	if err != nil {
 		t.Error(err)
 	}
-    // add statement for user3(receiver)
-	err = relation.AddStatement(b3Enc, pk3, big.NewInt(3), nil)
+	err = relation.AddStatement(b3Enc, pk3, 0, 0, nil)
 	if err != nil {
 		t.Error(err)
 	}
-    // prove the transfer works correctly
-	transferProof, err := ProvePTransfer(relation)
+	proof, err := ProveTransfer(relation)
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Println("prove time:", time.Since(elapse))
 	elapse = time.Now()
-	var proof *PTransferProof
-    // try to marshal and unmarshal the proof
-	proofBytes, err := json.Marshal(transferProof)
+	proofStr := proof.String()
+	proof2, err := ParseTransferProofStr(proofStr)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	err = json.Unmarshal(proofBytes, &proof)
-	if err != nil {
-		t.Error(err)
-	}
-    // verify the proof
-	res, err := proof.Verify()
+	res, err := proof2.Verify()
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Println("verify time:", time.Since(elapse))
-	assert.Equal(t, res, true, "privacy proof works correctly")
+	assert.Equal(t, true, res, "invalid proof")
+}
+
+```
+
+### Swap
+
+#### Example
+
+`zecrey/twistededwards/tebn254/zecrey/swap_test.go`:
+
+```go
+func TestSwapProof2_Verify(t *testing.T) {
+	b_u_A := uint64(2000)
+	assetAId := uint32(1)
+	assetBId := uint32(2)
+	b_A_Delta := uint64(1000)
+	b_B_Delta := uint64(970)
+	MinB_B_Delta := uint64(960)
+	b_poolA := uint64(40000)
+	b_poolB := uint64(40000)
+	feeRate := uint32(30)
+	treasuryRate := uint32(10)
+	GasFee := uint64(30)
+	sk_u, Pk_u := twistedElgamal.GenKeyPair()
+	_, Pk_pool := twistedElgamal.GenKeyPair()
+	_, Pk_treasury := twistedElgamal.GenKeyPair()
+	C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_A)), curve.RandomValue(), Pk_u)
+	b_fee := uint64(1000)
+	//b_fee := b_u_A
+	C_fee, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), curve.RandomValue(), Pk_u)
+	fmt.Println("sk_u:", sk_u.String())
+	fmt.Println("C_u_A:", C_uA.String())
+	fmt.Println("pk_u:", curve.ToString(Pk_u))
+	fmt.Println("Pk_treasury:", curve.ToString(Pk_treasury))
+	fmt.Println("C_u_A:", C_uA.String())
+	fmt.Println("C_fee:", C_fee.String())
+	relation, err := NewSwapRelation(
+		C_uA,
+		Pk_u, Pk_treasury,
+		assetAId, assetBId,
+		b_A_Delta, b_u_A,
+		MinB_B_Delta,
+		feeRate, treasuryRate,
+		sk_u,
+		C_fee,
+		b_fee, uint32(2), GasFee,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	elapse := time.Now()
+	proof, err := ProveSwap(relation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// set params
+	err = proof.AddPoolInfo(Pk_pool, b_B_Delta, b_poolA, b_poolB)
+	if err != nil {
+		t.Fatal(err)
+	}
+	log.Println("prove time:", time.Since(elapse))
+	proofStr := proof.String()
+	proof2, err := ParseSwapProofStr(proofStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := proof2.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, true, res, "invalid proof")
 }
 ```
 
-### Privacy Withdraw Proof
+### Add Liquidity
 
-You can try the Zecrey Privacy Withdraw Proof in `zecrey/twistededwards/tebn254/zecrey/withdraw.go`. For native version, it will take 20ms to generate the proof and 30ms to verify the proof. For wasm version, it will take 600ms to generate the proof.
+#### Example
+
+`zecrey/twistededwards/tebn254/zecrey/addLiquidity_test.go`:
+
+```go
+func TestAddLiquidityProof_Verify(t *testing.T) {
+	b_uA := uint64(8)
+	b_uB := uint64(4)
+	assetAId := uint32(1)
+	assetBId := uint32(2)
+	b_A_Delta := uint64(1)
+	b_B_Delta := uint64(1)
+	b_Dao_A := uint64(10)
+	b_Dao_B := uint64(10)
+	sk_u, Pk_u := twistedElgamal.GenKeyPair()
+	_, Pk_pool := twistedElgamal.GenKeyPair()
+	C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_uA)), curve.RandomValue(), Pk_u)
+	C_uB, _ := twistedElgamal.Enc(big.NewInt(int64(b_uB)), curve.RandomValue(), Pk_u)
+	b_fee := uint64(100)
+	C_fee, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), curve.RandomValue(), Pk_u)
+	GasFeeAssetId := uint32(3)
+	GasFee := uint64(10)
+	fmt.Println("sk:",sk_u.String())
+	fmt.Println("Pk_u:",curve.ToString(Pk_u))
+	fmt.Println("Pk_pool:",curve.ToString(Pk_pool))
+	fmt.Println("C_u_A:",C_uA.String())
+	fmt.Println("C_u_B:",C_uB.String())
+	fmt.Println("C_fee:",C_fee.String())
+	relation, err := NewAddLiquidityRelation(
+		C_uA, C_uB,
+		Pk_pool, Pk_u,
+		assetAId, assetBId,
+		b_uA, b_uB,
+		b_A_Delta, b_B_Delta,
+		sk_u,
+		// fee part
+		C_fee, b_fee, GasFeeAssetId, GasFee,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	elapse := time.Now()
+	proof, err := ProveAddLiquidity(relation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	proof.AddPoolInfo(b_Dao_A, b_Dao_B)
+	log.Println("prove time:", time.Since(elapse))
+	proofStr := proof.String()
+	proof2, err := ParseAddLiquidityProofStr(proofStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := proof2.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, true, res, "invalid proof")
+}
+```
+
+### Remove Liquidity
+
+#### Example
+
+`zecrey/twistededwards/tebn254/zecrey/removeLiquidity_test.go`:
+
+```go
+func TestRemoveLiquidityProof_Verify(t *testing.T) {
+	//b_u_A := uint64(8)
+	//b_u_B := uint64(4)
+	B_LP := uint64(100)
+	assetAId := uint32(1)
+	assetBId := uint32(2)
+	B_A_Delta := uint64(10)
+	B_B_Delta := uint64(10)
+	MinB_A_Delta := uint64(1)
+	MinB_B_Delta := uint64(1)
+	Delta_LP := uint64(10)
+	b_pool_A := uint64(1000)
+	b_pool_B := uint64(1000)
+	Sk_u, Pk_u := twistedElgamal.GenKeyPair()
+	_, Pk_pool := twistedElgamal.GenKeyPair()
+	//C_uA, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_A)), curve.RandomValue(), Pk_u)
+	//C_uB, _ := twistedElgamal.Enc(big.NewInt(int64(b_u_B)), curve.RandomValue(), Pk_u)
+	C_u_LP, _ := twistedElgamal.Enc(big.NewInt(int64(B_LP)), curve.RandomValue(), Pk_u)
+	// fee
+	B_fee := uint64(100)
+	C_fee, _ := twistedElgamal.Enc(big.NewInt(int64(B_fee)), curve.RandomValue(), Pk_u)
+	GasFeeAssetId := uint32(1)
+	GasFee := uint64(1)
+	fmt.Println("Sk_u:", Sk_u.String())
+	fmt.Println("Pk_u:", curve.ToString(Pk_u))
+	fmt.Println("C_u_LP:", C_u_LP.String())
+	fmt.Println("C_fee:", C_fee.String())
+	relation, err := NewRemoveLiquidityRelation(
+		C_u_LP,
+		Pk_u,
+		B_LP,
+		Delta_LP,
+		MinB_A_Delta, MinB_B_Delta,
+		assetAId, assetBId,
+		Sk_u,
+		// fee part
+		C_fee, B_fee, GasFeeAssetId, GasFee,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	elapse := time.Now()
+	proof, err := ProveRemoveLiquidity(relation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = proof.AddPoolInfo(Pk_pool, B_A_Delta, B_B_Delta, b_pool_A, b_pool_B, curve.RandomValue(), curve.RandomValue())
+	if err != nil {
+		t.Fatal(err)
+	}
+	log.Println("prove time:", time.Since(elapse))
+	proofStr := proof.String()
+	proof2, err := ParseRemoveLiquidityProofStr(proofStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := proof2.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, true, res, "invalid proof")
+}
+```
+
+### Withdraw
+
+#### Example
+
+`zecrey/twistededwards/tebn254/zecrey/withdraw_test.go`:
 
 ```go
 func TestProveWithdraw(t *testing.T) {
-    // genereate the key pair for the user
 	sk, pk := twistedElgamal.GenKeyPair()
-    // user's balance
-	b := big.NewInt(8)
-    // random value
+	b := uint64(8)
 	r := curve.RandomValue()
-    // encrypt the value
-	bEnc, err := twistedElgamal.Enc(b, r, pk)
+	bEnc, err := twistedElgamal.Enc(big.NewInt(int64(b)), r, pk)
 	if err != nil {
 		t.Error(err)
 	}
-    // withdraw amount
-	bStar := big.NewInt(-2)
+	b_fee := uint64(10)
+	bEnc2, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), r, pk)
+	bStar := uint64(2)
+	fee := uint64(1)
 	fmt.Println("sk:", sk.String())
 	fmt.Println("pk:", curve.ToString(pk))
 	fmt.Println("benc:", bEnc.String())
-    // create the withdraw relation
-	relation, err := NewWithdrawRelation(bEnc, pk, bStar, sk, 1)
+	fmt.Println("benc2:", bEnc2.String())
+	addr := "0xE9b15a2D396B349ABF60e53ec66Bcf9af262D449"
+	assetId := uint32(1)
+	feeAssetId := uint32(2)
+	relation, err := NewWithdrawRelation(
+		1,
+		bEnc,
+		pk,
+		b, bStar,
+		sk,
+		assetId, addr,
+		bEnc2, b_fee, feeAssetId, fee,
+	)
 	if err != nil {
 		t.Error(err)
 	}
-    // prove withdraw
+	elapse := time.Now()
 	withdrawProof, err := ProveWithdraw(relation)
 	if err != nil {
 		t.Error(err)
 	}
-    // marshal and unmarshal withdraw proof
-	proofBytes, err := json.Marshal(withdrawProof)
+	proofStr := withdrawProof.String()
+	proof, err := ParseWithdrawProofStr(proofStr)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	var proof *WithdrawProof
-	err = json.Unmarshal(proofBytes, &proof)
-	if err != nil {
-		t.Error(err)
-	}
-    // verify the proof
+	fmt.Println("prove time:", time.Since(elapse))
 	res, err := proof.Verify()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	assert.Equal(t, res, true, "withdraw proof works correctly")
-	if res {
-        // get the new balance
-		bEnc.CR.Add(bEnc.CR, relation.CRStar)
-		decVal, err := twistedElgamal.Dec(bEnc, sk, 100)
-		if err != nil {
-			t.Error(err)
-		}
-        // new balance should be 6 = 8 - 2
-		assert.Equal(t, decVal.String(), "6", "withdraw works correctly")
-	}
 }
-
 ```
 
-### Privacy Swap Proof
+## Zecrey Proofs Circuit
 
-You can try the Zecrey Privacy Swap Proof in `zecrey/twistededwards/tebn254/zecrey/swap.go`.
+### Account Related Constraints
 
 ```go
-func TestProveSwap(t *testing.T) {
-    // create key pair for user1
-	sk1, pk1 := twistedElgamal.GenKeyPair()
-	b1 := big.NewInt(8)
-	r1 := curve.RandomValue()
-    // Chain 1 user 1 balance
-	bEnc1, err := twistedElgamal.Enc(b1, r1, pk1)
-	if err != nil {
-		t.Error(err)
-	}
-    // create keypair for user2
-	sk2, pk2 := twistedElgamal.GenKeyPair()
-	b2 := big.NewInt(3)
-	r2 := curve.RandomValue()
-    // chhain 1 user 2 balance
-	bEnc2, err := twistedElgamal.Enc(b2, r2, pk2)
-	if err != nil {
-		t.Error(err)
-	}
-    // swap amounts
-	bStarFrom := big.NewInt(1)
-	bStarTo := big.NewInt(8)
-    // swap token ids
-	fromTokenId := uint32(1)
-	toTokenId := uint32(2)
-    // create the first proof for user1
-	relationPart1, err := NewSwapRelationPart1(bEnc1, bEnc2, pk1, pk2, bStarFrom, bStarTo, sk1, fromTokenId, toTokenId)
-	if err != nil {
-		t.Error(err)
-	}
-	swapProofPart1, err := ProveSwapPart1(relationPart1, true)
-	if err != nil {
-		t.Error(err)
-	}
-	part1Res, err := swapProofPart1.Verify()
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal(t, part1Res, true, "prove swap part works correctly")
-    // chain 2 user 2 balance
-	b3 := big.NewInt(8)
-	r3 := curve.RandomValue()
-	bEnc3, err := twistedElgamal.Enc(b3, r3, pk2)
-	if err != nil {
-		t.Error(err)
-	}
-    // chain 2 user 1 balance
-	b4 := big.NewInt(8)
-	r4 := curve.RandomValue()
-	bEnc4, err := twistedElgamal.Enc(b4, r4, pk1)
-	if err != nil {
-		t.Error(err)
-	}
-    // create relation for user2
-	relationPart2, err := NewSwapRelationPart2(bEnc3, bEnc4, pk2, pk1, sk2, fromTokenId, toTokenId, swapProofPart1)
-	if err != nil {
-		t.Error(err)
-	}
-    // prove swap
-	swapProof, err := ProveSwapPart2(relationPart2, swapProofPart1)
-	if err != nil {
-		t.Error(err)
-	}
-	swapProofRes, err := swapProof.Verify()
-	if err != nil {
-		t.Error(err)
-	}
-	assert.Equal(t, swapProofRes, true, "swap proof works correctly")
+/*
+	AccountConstraints: account constraints
+*/
+type AccountConstraints struct {
+	// account index
+	AccountIndex Variable
+	// account name
+	AccountName Variable
+	// account public key
+	AccountPk Point
+	// account state tree root
+	StateRoot Variable
+	// assets info for each account per tx
+	AssetsInfo [NbAccountAssetsPerAccount]AccountAssetConstraints
+	// locked assets info for each account per tx
+	LockedAssetInfo AccountAssetLockConstraints
+	// liquidity assets info for each account per tx
+	LiquidityInfo AccountLiquidityConstraints
+	// account assets root
+	AccountAssetsRoot Variable
+	// account locked assets root
+	AccountLockedAssetsRoot Variable
+	// account liquidity root
+	AccountLiquidityRoot Variable
 }
 
+/*
+	AccountAssetConstraints: account asset tree related constraints
+*/
+type AccountAssetConstraints struct {
+	// asset id
+	AssetId Variable
+	// twisted ElGamal Encryption balance
+	BalanceEnc ElGamalEncConstraints
+}
+
+/*
+	AccountAssetLockConstraints: account locked asset tree related constraints
+*/
+type AccountAssetLockConstraints struct {
+	// chain id
+	ChainId Variable
+	// asset id
+	AssetId Variable
+	// locked amount
+	LockedAmount Variable
+}
+
+/*
+	AccountAssetLockConstraints: account liquidity asset tree related constraints
+*/
+type AccountLiquidityConstraints struct {
+	// pair index
+	PairIndex Variable
+	// asset a id
+	AssetAId Variable
+	// asset b id
+	AssetBId Variable
+	// asset a balance
+	AssetA Variable
+	// asset b balance
+	AssetB Variable
+	// asset a random value
+	AssetAR Variable
+	// asset b random value
+	AssetBR Variable
+	// LP twisted ElGamal encryption
+	LpEnc ElGamalEncConstraints
+}
+```
+
+### Tx Related Constraints
+
+```go
+type TxConstraints struct {
+	// tx type
+	TxType Variable
+	// deposit info
+	DepositTxInfo DepositOrLockTxConstraints
+	// lock info
+	LockTxInfo DepositOrLockTxConstraints
+	// unlock proof
+	UnlockProof UnlockProofConstraints
+	// transfer proof
+	TransferProof TransferProofConstraints
+	// swap proof
+	SwapProof SwapProofConstraints
+	// add liquidity proof
+	AddLiquidityProof AddLiquidityProofConstraints
+	// remove liquidity proof
+	RemoveLiquidityProof RemoveLiquidityProofConstraints
+	// withdraw proof
+	WithdrawProof WithdrawProofConstraints
+	// common verification part
+	// range proofs
+	RangeProofs [MaxRangeProofCount]CtRangeProofConstraints
+	// account root before
+	AccountRootBefore Variable
+	// account before info, size is 4
+	AccountsInfoBefore [NbAccountsPerTx]AccountConstraints
+	// before account merkle proof
+	MerkleProofsAccountBefore       [NbAccountsPerTx][AccountMerkleLevels]Variable
+	MerkleProofsHelperAccountBefore [NbAccountsPerTx][AccountMerkleHelperLevels]Variable
+	// before account asset merkle proof
+	MerkleProofsAccountAssetsBefore       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels]Variable
+	MerkleProofsHelperAccountAssetsBefore [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]Variable
+	// before account asset lock merkle proof
+	MerkleProofsAccountLockedAssetsBefore       [NbAccountsPerTx][LockedAssetMerkleLevels]Variable
+	MerkleProofsHelperAccountLockedAssetsBefore [NbAccountsPerTx][LockedAssetMerkleHelperLevels]Variable
+	// before account liquidity merkle proof
+	MerkleProofsAccountLiquidityBefore       [NbAccountsPerTx][LiquidityMerkleLevels]Variable
+	MerkleProofsHelperAccountLiquidityBefore [NbAccountsPerTx][LiquidityMerkleHelperLevels]Variable
+	// account root after
+	AccountRootAfter Variable
+	// account after info, size is 4
+	AccountsInfoAfter [NbAccountsPerTx]AccountConstraints
+	// after account merkle proof
+	MerkleProofsAccountAfter       [NbAccountsPerTx][AccountMerkleLevels]Variable
+	MerkleProofsHelperAccountAfter [NbAccountsPerTx][AccountMerkleHelperLevels]Variable
+	// after account asset merkle proof
+	MerkleProofsAccountAssetsAfter       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels]Variable
+	MerkleProofsHelperAccountAssetsAfter [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]Variable
+	// after account asset lock merkle proof
+	MerkleProofsAccountLockedAssetsAfter       [NbAccountsPerTx][LockedAssetMerkleLevels]Variable
+	MerkleProofsHelperAccountLockedAssetsAfter [NbAccountsPerTx][LockedAssetMerkleHelperLevels]Variable
+	// after account liquidity merkle proof
+	MerkleProofsAccountLiquidityAfter       [NbAccountsPerTx][LiquidityMerkleLevels]Variable
+	MerkleProofsHelperAccountLiquidityAfter [NbAccountsPerTx][LiquidityMerkleHelperLevels]Variable
+}
+```
+
+### Block Related Constraints
+
+```go
+type BlockConstraints struct {
+	// public inputs
+	OldRoot         Variable `gnark:",public"`
+	NewRoot         Variable `gnark:",public"`
+	BlockCommitment Variable `gnark:",public"`
+	// tx info
+	Txs [TxsCountPerBlock]TxConstraints
+    // TODO add basic info
+}
 ```
 
 

@@ -42,6 +42,7 @@ type BlockConstraints struct {
 	BlockCommitment Variable `gnark:",public"`
 	// tx info
 	Txs [TxsCountPerBlock]TxConstraints
+	// TODO add basic info
 }
 
 func (circuit BlockConstraints) Define(api API) error {
