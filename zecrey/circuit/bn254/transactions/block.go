@@ -41,7 +41,8 @@ type BlockConstraints struct {
 	NewRoot         Variable `gnark:",public"`
 	BlockCommitment Variable `gnark:",public"`
 	// tx info
-	Txs [TxsCountForTest]TxConstraints
+	Txs [TxsCountPerBlock]TxConstraints
+	// TODO add basic info
 }
 
 func (circuit BlockConstraints) Define(api API) error {
@@ -76,9 +77,9 @@ func VerifyBlock(
 	nilHash Variable,
 ) {
 	api.AssertIsEqual(block.OldRoot, block.Txs[0].AccountRootBefore)
-	api.AssertIsEqual(block.NewRoot, block.Txs[TxsCountForTest-1].AccountRootAfter)
+	api.AssertIsEqual(block.NewRoot, block.Txs[TxsCountPerBlock-1].AccountRootAfter)
 	VerifyTransaction(tool, api, block.Txs[0], hFunc, h, nilHash)
-	for i := 1; i < TxsCountForTest; i++ {
+	for i := 1; i < TxsCountPerBlock; i++ {
 		api.AssertIsEqual(block.Txs[i-1].AccountRootAfter, block.Txs[i].AccountRootBefore)
 		// TODO commitment
 		VerifyTransaction(tool, api, block.Txs[i], hFunc, h, nilHash)

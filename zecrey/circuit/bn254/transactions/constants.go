@@ -60,7 +60,7 @@ type (
 
 const (
 	MaxRangeProofCount        = 3
-	TxsCountForTest           = 1
+	TxsCountPerBlock          = 3
 	NbTxsCountHalf            = 70
 	NbTxsCountFull            = 140
 	NbAccountsPerTx           = 4

@@ -23,41 +23,79 @@ import (
 	"log"
 )
 
+/*
+	AccountConstraints: account constraints
+*/
 type AccountConstraints struct {
-	AccountIndex            Variable
-	AccountName             Variable
-	AccountPk               Point
-	StateRoot               Variable
-	AssetsInfo              [NbAccountAssetsPerAccount]AccountAssetConstraints
-	LockedAssetInfo         AccountAssetLockConstraints
-	LiquidityInfo           AccountLiquidityConstraints
-	AccountAssetsRoot       Variable
+	// account index
+	AccountIndex Variable
+	// account name
+	AccountName Variable
+	// account public key
+	AccountPk Point
+	// account state tree root
+	StateRoot Variable
+	// assets info for each account per tx
+	AssetsInfo [NbAccountAssetsPerAccount]AccountAssetConstraints
+	// locked assets info for each account per tx
+	LockedAssetInfo AccountAssetLockConstraints
+	// liquidity assets info for each account per tx
+	LiquidityInfo AccountLiquidityConstraints
+	// account assets root
+	AccountAssetsRoot Variable
+	// account locked assets root
 	AccountLockedAssetsRoot Variable
-	AccountLiquidityRoot    Variable
+	// account liquidity root
+	AccountLiquidityRoot Variable
 }
 
+/*
+	AccountAssetConstraints: account asset tree related constraints
+*/
 type AccountAssetConstraints struct {
-	AssetId    Variable
+	// asset id
+	AssetId Variable
+	// twisted ElGamal Encryption balance
 	BalanceEnc ElGamalEncConstraints
 }
 
+/*
+	AccountAssetLockConstraints: account locked asset tree related constraints
+*/
 type AccountAssetLockConstraints struct {
-	ChainId      Variable
-	AssetId      Variable
+	// chain id
+	ChainId Variable
+	// asset id
+	AssetId Variable
+	// locked amount
 	LockedAmount Variable
 }
 
+/*
+	AccountAssetLockConstraints: account liquidity asset tree related constraints
+*/
 type AccountLiquidityConstraints struct {
+	// pair index
 	PairIndex Variable
-	AssetAId  Variable
-	AssetBId  Variable
-	AssetA    Variable
-	AssetB    Variable
-	AssetAR   Variable
-	AssetBR   Variable
-	LpEnc     ElGamalEncConstraints
+	// asset a id
+	AssetAId Variable
+	// asset b id
+	AssetBId Variable
+	// asset a balance
+	AssetA Variable
+	// asset b balance
+	AssetB Variable
+	// asset a random value
+	AssetAR Variable
+	// asset b random value
+	AssetBR Variable
+	// LP twisted ElGamal encryption
+	LpEnc ElGamalEncConstraints
 }
 
+/*
+	IsAccountLiquidityConstraintsEqual: compare if two AccountLiquidity are the same
+*/
 func IsAccountLiquidityConstraintsEqual(api API, flag Variable, a, b AccountLiquidityConstraints) {
 	std.IsVariableEqual(api, flag, a.AssetA, b.AssetA)
 	std.IsVariableEqual(api, flag, a.AssetAR, b.AssetAR)
@@ -66,12 +104,21 @@ func IsAccountLiquidityConstraintsEqual(api API, flag Variable, a, b AccountLiqu
 	std.IsElGamalEncEqual(api, flag, a.LpEnc, b.LpEnc)
 }
 
+/*
+	AccountDeltaConstraints: delta balance for each account
+*/
 type AccountDeltaConstraints struct {
-	AssetsDeltaInfo      [NbAccountAssetsPerAccount]ElGamalEncConstraints
+	// assets delta for each asset
+	AssetsDeltaInfo [NbAccountAssetsPerAccount]ElGamalEncConstraints
+	// locked asset delta
 	LockedAssetDeltaInfo Variable
-	LiquidityDeltaInfo   AccountLiquidityDeltaConstraints
+	// liquidity delta info
+	LiquidityDeltaInfo AccountLiquidityDeltaConstraints
 }
 
+/*
+	AccountLiquidityDeltaConstraints: account liquidity asset delta constraints
+*/
 type AccountLiquidityDeltaConstraints struct {
 	AssetADelta  Variable
 	AssetBDelta  Variable
@@ -80,6 +127,9 @@ type AccountLiquidityDeltaConstraints struct {
 	LpEncDelta   ElGamalEncConstraints
 }
 
+/*
+	ComputeNewLiquidityConstraints: computation for base + delta
+*/
 func ComputeNewLiquidityConstraints(api API, tool *EccTool, balance AccountLiquidityConstraints, delta AccountLiquidityDeltaConstraints) (newBalance AccountLiquidityConstraints) {
 	newBalance.AssetAId = balance.AssetAId
 	newBalance.AssetBId = balance.AssetBId
@@ -92,6 +142,9 @@ func ComputeNewLiquidityConstraints(api API, tool *EccTool, balance AccountLiqui
 	return newBalance
 }
 
+/*
+	SetAccountWitness: set account circuit witness
+*/
 func SetAccountWitness(account *Account) (witness AccountConstraints, err error) {
 	if account == nil {
 		log.Println("[SetAccountWitness] invalid params")
@@ -132,6 +185,9 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 	return witness, nil
 }
 
+/*
+	SetAccountAssetWitness: set account asset circuit witness
+*/
 func SetAccountAssetWitness(accountAsset *AccountAsset) (witness AccountAssetConstraints, err error) {
 	if accountAsset == nil {
 		log.Println("[SetAccountAssetWitness] invalid params")
@@ -146,6 +202,9 @@ func SetAccountAssetWitness(accountAsset *AccountAsset) (witness AccountAssetCon
 	return witness, nil
 }
 
+/*
+	SetAccountLockedAssetWitness: set account locked asset circuit witness
+*/
 func SetAccountLockedAssetWitness(accountLockedAsset *AccountAssetLock) (witness AccountAssetLockConstraints, err error) {
 	if accountLockedAsset == nil {
 		log.Println("[SetAccountLockedAssetWitness] invalid params")
@@ -157,6 +216,9 @@ func SetAccountLockedAssetWitness(accountLockedAsset *AccountAssetLock) (witness
 	return witness, nil
 }
 
+/*
+	SetAccountLiquidityWitness: set account liquidity circuit witness
+*/
 func SetAccountLiquidityWitness(accountLiquidity *AccountLiquidity) (witness AccountLiquidityConstraints, err error) {
 	if accountLiquidity == nil {
 		log.Println("[SetAccountLiquidityWitness] invalid params")
