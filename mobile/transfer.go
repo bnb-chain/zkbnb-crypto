@@ -30,14 +30,19 @@ import (
 	@fee: fee
 	@segmentInfosStr: string of segmentInfo array, which are used to generate the transfer proof
 */
-func ProveTransfer(assetId uint32, gasFee uint64, memo string, segmentInfosStr string) (txInfo string, err error) {
+func ProveTransfer(assetId int, gasFee int64, memo string, segmentInfosStr string) (txInfo string, err error) {
 	// parse segmentInfo: []TransferSegment
-	segments, err := FromTransferSegmentJSON(segmentInfosStr)
+	var segments []*TransferSegment
+	segmentsStr, err := FromTransferSegmentJSON(segmentInfosStr)
 	if err != nil {
 		log.Println("[ProveTransfer] err info: ", err)
 		return "", err
 	}
-	relation, err := zecrey.NewTransferProofRelation(assetId, gasFee)
+	err = json.Unmarshal([]byte(segmentsStr), &segments)
+	if err != nil {
+		return "", err
+	}
+	relation, err := zecrey.NewTransferProofRelation(uint32(assetId), uint64(gasFee))
 	if err != nil {
 		log.Println("[ProveTransfer] err info: ", err)
 		return "", err
@@ -59,11 +64,11 @@ func ProveTransfer(assetId uint32, gasFee uint64, memo string, segmentInfosStr s
 	}
 	tx := &TransferTxInfo{
 		// token id
-		AssetId: assetId,
+		AssetId: uint32(assetId),
 		// account indexes
 		AccountsIndex: accountsIndex,
 		// GasFee
-		GasFee: gasFee,
+		GasFee: uint64(gasFee),
 		// transfer proof
 		Proof: transferProof.String(),
 		Memo:  memo,
