@@ -18,10 +18,10 @@
 package zecrey
 
 import (
-	"math/big"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
+	"math/big"
 )
 
 type (
@@ -60,8 +60,8 @@ var (
 	G           = curve.G
 	H           = curve.H
 	Order       = curve.Order
-	MaxRange    = 1099511627775 // 2^{40} - 1
-	MaxRangeNeg = -1099511627776
+	MaxRange    = int64(1099511627775) // 2^{40} - 1
+	MaxRangeNeg = int64(-1099511627776)
 	curveId     = "ZecreyBN254"
 	FixedCurve  = new(big.Int).SetBytes([]byte(curveId))
 )
