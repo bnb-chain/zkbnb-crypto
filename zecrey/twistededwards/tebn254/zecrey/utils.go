@@ -20,11 +20,11 @@ package zecrey
 import (
 	"bytes"
 	"encoding/binary"
-	"log"
-	"math/big"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
+	"log"
+	"math/big"
 )
 
 func zeroElGamal() *ElGamalEnc {
@@ -103,6 +103,19 @@ func readPointFromBuf(buf []byte, offset int) (newOffset int, p *Point, err erro
 	newOffset = offset + PointSize
 	p, err = curve.FromBytes(buf[offset : offset+PointSize])
 	return newOffset, p, err
+}
+
+func readTxTypeFromBuf(buf []byte, offset int) (newOffset int, txType uint8) {
+	newOffset = offset + OneByte
+	txType = buf[offset]
+	return newOffset, txType
+}
+
+func readHashFromBuf(buf []byte, offset int) (newOffset int, hashVal []byte) {
+	newOffset = offset + PointSize
+	hashVal = make([]byte, PointSize)
+	copy(hashVal[:], buf[offset:newOffset])
+	return newOffset, hashVal
 }
 
 func readBigIntFromBuf(buf []byte, offset int) (newOffset int, a *big.Int) {
