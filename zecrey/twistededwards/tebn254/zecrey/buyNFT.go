@@ -69,7 +69,7 @@ func ProveBuyNft(relation *BuyNftProofRelation) (proof *BuyNftProof, err error) 
 	writeUint64IntoBuf(&buf, uint64(relation.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, relation.GasFee)
 	writeUint64IntoBuf(&buf, uint64(relation.AssetId))
-	writeUint64IntoBuf(&buf, uint64(relation.ChainId))
+	writeUint64IntoBuf(&buf, relation.AssetAmount)
 	writeEncIntoBuf(&buf, relation.C)
 	writePointIntoBuf(&buf, relation.T)
 	writePointIntoBuf(&buf, relation.T_fee)
@@ -91,13 +91,12 @@ func ProveBuyNft(relation *BuyNftProofRelation) (proof *BuyNftProof, err error) 
 		Z_skInv:               z_skInv,
 		BPrimeRangeProof:      relation.BPrimeRangeProof,
 		GasFeePrimeRangeProof: relation.GasFeePrimeRangeProof,
-		BStar:                 relation.Bstar,
+		AssetAmount:           relation.AssetAmount,
 		C:                     relation.C,
 		T:                     relation.T,
 		Pk:                    relation.Pk,
 		NftContentHash:        relation.NftContentHash,
 		AssetId:               relation.AssetId,
-		ChainId:               relation.ChainId,
 		A_T_feeC_feeRPrimeInv: A_T_feeDivC_feeRprime,
 		Z_bar_r_fee:           z_bar_r_fee,
 		C_fee:                 relation.C_fee,
@@ -109,7 +108,7 @@ func ProveBuyNft(relation *BuyNftProofRelation) (proof *BuyNftProof, err error) 
 }
 
 func (proof *BuyNftProof) Verify() (bool, error) {
-	if !validUint64(proof.BStar) || !validUint64(proof.GasFee) {
+	if !validUint64(proof.AssetAmount) || !validUint64(proof.GasFee) {
 		log.Println("[Verify BuyNftProof] invalid params")
 		return false, errors.New("[Verify BuyNftProof] invalid params")
 	}
@@ -125,13 +124,13 @@ func (proof *BuyNftProof) Verify() (bool, error) {
 			log.Println("[Verify BuyNftProof] invalid params")
 			return false, errors.New("[Verify BuyNftProof] invalid params")
 		}
-		CRDelta := curve.ScalarMul(H, big.NewInt(-int64(proof.BStar+proof.GasFee)))
+		CRDelta := curve.ScalarMul(H, big.NewInt(-int64(proof.AssetAmount+proof.GasFee)))
 		CLprimeInv = curve.Neg(proof.C.CL)
 		TDivCRprime = curve.Add(proof.T, curve.Neg(curve.Add(proof.C.CR, CRDelta)))
 		C_feeLprimeInv = new(Point).Set(CLprimeInv)
 		T_feeDivC_feeRprime = new(Point).Set(TDivCRprime)
 	} else {
-		CRDelta := curve.ScalarMul(H, big.NewInt(-int64(proof.BStar)))
+		CRDelta := curve.ScalarMul(H, big.NewInt(-int64(proof.AssetAmount)))
 		C_feeDelta := curve.ScalarMul(H, big.NewInt(-int64(proof.GasFee)))
 		CLprimeInv = curve.Neg(proof.C.CL)
 		TDivCRprime = curve.Add(proof.T, curve.Neg(curve.Add(proof.C.CR, CRDelta)))
@@ -153,7 +152,7 @@ func (proof *BuyNftProof) Verify() (bool, error) {
 	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, proof.GasFee)
 	writeUint64IntoBuf(&buf, uint64(proof.AssetId))
-	writeUint64IntoBuf(&buf, uint64(proof.ChainId))
+	writeUint64IntoBuf(&buf, proof.AssetAmount)
 	writeEncIntoBuf(&buf, proof.C)
 	writePointIntoBuf(&buf, proof.T)
 	writePointIntoBuf(&buf, proof.T_fee)

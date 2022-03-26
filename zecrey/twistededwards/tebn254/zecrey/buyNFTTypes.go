@@ -35,12 +35,11 @@ type BuyNftProof struct {
 	BPrimeRangeProof      *RangeProof
 	GasFeePrimeRangeProof *RangeProof
 	// common inputs
-	BStar          uint64
 	C              *ElGamalEnc
 	T, Pk          *Point
 	NftContentHash []byte
 	AssetId        uint32
-	ChainId        uint32
+	AssetAmount    uint64
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
 	Z_bar_r_fee           *big.Int
@@ -60,13 +59,12 @@ func (proof *BuyNftProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_skInv.FillBytes(make([]byte, PointSize)))
 	offset = copyBuf(&buf, offset, RangeProofSize, proof.BPrimeRangeProof.Bytes())
 	offset = copyBuf(&buf, offset, RangeProofSize, proof.GasFeePrimeRangeProof.Bytes())
-	offset = copyBuf(&buf, offset, EightBytes, uint64ToBytes(proof.BStar))
+	offset = copyBuf(&buf, offset, EightBytes, uint64ToBytes(proof.AssetAmount))
 	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C))
 	offset = copyBuf(&buf, offset, PointSize, proof.T.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.NftContentHash)
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.AssetId))
-	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ChainId))
 	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
 	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C_fee))
@@ -104,7 +102,7 @@ func ParseBuyNftProofBytes(proofBytes []byte) (proof *BuyNftProof, err error) {
 	if err != nil {
 		return nil, err
 	}
-	offset, proof.BStar = readUint64FromBuf(proofBytes, offset)
+	offset, proof.AssetAmount = readUint64FromBuf(proofBytes, offset)
 	offset, proof.C, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
@@ -119,7 +117,6 @@ func ParseBuyNftProofBytes(proofBytes []byte) (proof *BuyNftProof, err error) {
 	}
 	offset, proof.NftContentHash = readHashFromBuf(proofBytes, offset)
 	offset, proof.AssetId = readUint32FromBuf(proofBytes, offset)
-	offset, proof.ChainId = readUint32FromBuf(proofBytes, offset)
 	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
@@ -161,10 +158,9 @@ type BuyNftProofRelation struct {
 	// public key
 	Pk *Point
 	// b^{\star}
-	Bstar          uint64
+	AssetAmount    uint64
 	NftContentHash []byte
 	AssetId        uint32
-	ChainId        uint32
 	// ----------- private ---------------------
 	Sk      *big.Int
 	B_prime uint64
@@ -179,18 +175,17 @@ type BuyNftProofRelation struct {
 }
 
 func NewBuyNftRelation(
-	chainId uint8,
 	C *ElGamalEnc,
 	pk *Point,
-	b uint64, bStar uint64,
+	b uint64,
 	sk *big.Int,
-	assetId uint32, contentHash []byte,
+	contentHash []byte, assetId uint32, assetAmount uint64,
 	// fee part
 	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
 ) (*BuyNftProofRelation, error) {
-	if !notNullElGamal(C) || !notNullElGamal(C_fee) || !curve.IsInSubGroup(pk) || sk == nil || b < bStar || B_fee < GasFee ||
-		(GasFeeAssetId == assetId && (!equalEnc(C, C_fee) || b < bStar+GasFee || b != B_fee)) ||
-		!validUint64(b) || !validUint64(bStar) || !validUint64(GasFee) {
+	if !notNullElGamal(C) || !notNullElGamal(C_fee) || !curve.IsInSubGroup(pk) || sk == nil || b < assetAmount || B_fee < GasFee ||
+		(GasFeeAssetId == assetId && (!equalEnc(C, C_fee) || b < assetAmount+GasFee || b != B_fee)) ||
+		!validUint64(b) || !validUint64(assetAmount) || !validUint64(GasFee) {
 		log.Println("[NewWithdrawRelation] invalid params")
 		return nil, ErrInvalidParams
 	}
@@ -216,7 +211,7 @@ func NewBuyNftRelation(
 	}
 	// b' = b - b^{\star} - fee
 	if assetId == GasFeeAssetId {
-		B_prime = b - bStar - GasFee
+		B_prime = b - assetAmount - GasFee
 		// T = g^{\bar{rStar}} h^{b'}
 		Bar_r, BPrimeRangeProof, err = proveCtRange(int64(B_prime), G, H)
 		if err != nil {
@@ -229,7 +224,7 @@ func NewBuyNftRelation(
 		GasFeePrimeRangeProof = BPrimeRangeProof
 	} else {
 		// prove enough balance
-		B_prime = b - bStar
+		B_prime = b - assetAmount
 		// T = g^{\bar{rStar}} h^{b'}
 		var (
 			withdrawRangeChan = make(chan int, buyNftRangeProofCount)
@@ -251,10 +246,9 @@ func NewBuyNftRelation(
 		BPrimeRangeProof:      BPrimeRangeProof,
 		GasFeePrimeRangeProof: GasFeePrimeRangeProof,
 		Pk:                    pk,
-		Bstar:                 bStar,
+		AssetAmount:           assetAmount,
 		NftContentHash:        contentHash,
 		AssetId:               assetId,
-		ChainId:               uint32(chainId),
 		Sk:                    sk,
 		B_prime:               B_prime,
 		Bar_r:                 Bar_r,

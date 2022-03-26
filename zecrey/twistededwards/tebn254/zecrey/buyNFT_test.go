@@ -38,7 +38,7 @@ func TestBuyNftProof_Verify(t *testing.T) {
 	}
 	b_fee := uint64(10)
 	bEnc2, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), r, pk)
-	bStar := uint64(2)
+	assetAmount := uint64(2)
 	fee := uint64(1)
 	fmt.Println("sk:", sk.String())
 	fmt.Println("pk:", curve.ToString(pk))
@@ -50,12 +50,11 @@ func TestBuyNftProof_Verify(t *testing.T) {
 	assetId := uint32(1)
 	//feeAssetId := uint32(2)
 	relation, err := NewBuyNftRelation(
-		1,
 		bEnc,
 		pk,
-		b, bStar,
+		b,
 		sk,
-		assetId, contentHash,
+		contentHash, assetId, assetAmount,
 		bEnc, b, assetId, fee,
 	)
 	if err != nil {
