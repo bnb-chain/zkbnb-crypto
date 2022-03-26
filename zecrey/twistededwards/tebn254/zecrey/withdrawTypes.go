@@ -238,13 +238,13 @@ func NewWithdrawRelation(
 		B_prime = b - bStar
 		// T = g^{\bar{rStar}} h^{b'}
 		var (
-			withdrawRangeChan = make(chan int, withdrawRangeProofCount)
+			withdrawRangeChan = make(chan int, buyNftRangeProofCount)
 		)
 		go proveCtRangeRoutine(int64(B_prime), G, H, Bar_r, BPrimeRangeProof, withdrawRangeChan)
 		// prove enough fee
 		b_fee_prime = B_fee - GasFee
 		go proveCtRangeRoutine(int64(b_fee_prime), G, H, Bar_r_fee, GasFeePrimeRangeProof, withdrawRangeChan)
-		for i := 0; i < withdrawRangeProofCount; i++ {
+		for i := 0; i < buyNftRangeProofCount; i++ {
 			val := <-withdrawRangeChan
 			if val == ErrCode {
 				return nil, errors.New("[NewWithdrawRelation] range proof works error")

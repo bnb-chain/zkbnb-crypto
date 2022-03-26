@@ -30,7 +30,7 @@ import (
 
 func ProveClaimNft(relation *ClaimNftRelation) (proof *ClaimNftProof, err error) {
 	if relation == nil {
-		log.Println("[ProveClaimNft] invalid params")
+		log.Println("[ProveWithdrawNft] invalid params")
 		return nil, ErrInvalidParams
 	}
 	var (
@@ -91,8 +91,8 @@ func ProveClaimNft(relation *ClaimNftRelation) (proof *ClaimNftProof, err error)
 
 func (proof *ClaimNftProof) Verify() (bool, error) {
 	if !validUint64(proof.GasFee) {
-		log.Println("[Verify ClaimNftProof] invalid params")
-		return false, errors.New("[Verify ClaimNftProof] invalid params")
+		log.Println("[Verify SetNftPriceProof] invalid params")
+		return false, errors.New("[Verify SetNftPriceProof] invalid params")
 	}
 	// generate the challenge
 	var (
@@ -105,17 +105,17 @@ func (proof *ClaimNftProof) Verify() (bool, error) {
 	T_feeDivC_feeRprime = curve.Add(proof.T_fee, curve.Neg(curve.Add(proof.C_fee.CR, C_feeDelta)))
 	// check range params
 	if !proof.GasFeePrimeRangeProof.A.Equal(proof.T_fee) {
-		log.Println("[Verify ClaimNftProof] invalid range params")
-		return false, errors.New("[Verify ClaimNftProof] invalid rage params")
+		log.Println("[Verify SetNftPriceProof] invalid range params")
+		return false, errors.New("[Verify SetNftPriceProof] invalid rage params")
 	}
 	// Verify range proof first
 	isValidProof, err := proof.GasFeePrimeRangeProof.Verify()
 	if err != nil {
-		log.Println("[Verify ClaimNftProof] unable to verify gas fee prime range proof:", err)
+		log.Println("[Verify SetNftPriceProof] unable to verify gas fee prime range proof:", err)
 		return false, err
 	}
 	if !isValidProof {
-		log.Println("[Verify ClaimNftProof] invalid range proof")
+		log.Println("[Verify SetNftPriceProof] invalid range proof")
 		return false, nil
 	}
 	buf.Write(PaddingBigIntBytes(FixedCurve))
@@ -132,7 +132,7 @@ func (proof *ClaimNftProof) Verify() (bool, error) {
 	writePointIntoBuf(&buf, proof.A_T_feeC_feeRPrimeInv)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
-		log.Println("[Verify ClaimNftProof] err: unable to compute hash:", err)
+		log.Println("[Verify SetNftPriceProof] err: unable to compute hash:", err)
 		return false, err
 	}
 	// Verify balance
@@ -140,14 +140,14 @@ func (proof *ClaimNftProof) Verify() (bool, error) {
 	l1 := curve.ScalarMul(G, proof.Z_sk)
 	r1 := curve.Add(proof.A_pk, curve.ScalarMul(proof.Pk, c))
 	if !l1.Equal(r1) {
-		log.Println("[Verify ClaimNftProof] l1!=r1")
+		log.Println("[Verify SetNftPriceProof] l1!=r1")
 		return false, nil
 	}
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
 	l2 := curve.Add(curve.ScalarMul(G, proof.Z_bar_r_fee), curve.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
 	r2 := curve.Add(proof.A_T_feeC_feeRPrimeInv, curve.ScalarMul(T_feeDivC_feeRprime, c))
 	if !l2.Equal(r2) {
-		log.Println("[Verify ClaimNftProof] l2!=r2")
+		log.Println("[Verify SetNftPriceProof] l2!=r2")
 		return false, nil
 	}
 	return true, nil

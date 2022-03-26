@@ -48,7 +48,7 @@ type ClaimNftProof struct {
 }
 
 func (proof *ClaimNftProof) Bytes() []byte {
-	buf := make([]byte, MintNftProofSize)
+	buf := make([]byte, ClaimNftProofSize)
 	offset := 0
 	offset = copyBuf(&buf, offset, PointSize, proof.A_pk.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_sk.FillBytes(make([]byte, PointSize)))
@@ -72,9 +72,9 @@ func (proof *ClaimNftProof) String() string {
 }
 
 func ParseClaimNftProofBytes(proofBytes []byte) (proof *ClaimNftProof, err error) {
-	if len(proofBytes) != MintNftProofSize {
-		log.Println("[ParseClaimNftProofBytes] invalid proof size")
-		return nil, errors.New("[ParseClaimNftProofBytes] invalid nft proof size")
+	if len(proofBytes) != ClaimNftProofSize {
+		log.Println("[ParseSetNftPriceProofBytes] invalid proof size")
+		return nil, errors.New("[ParseSetNftPriceProofBytes] invalid nft proof size")
 	}
 	proof = new(ClaimNftProof)
 	offset := 0
@@ -153,12 +153,12 @@ func NewClaimNftRelation(
 ) (*ClaimNftRelation, error) {
 	if !notNullElGamal(C_fee) || !curve.IsInSubGroup(pk) || sk == nil || B_fee < GasFee ||
 		!validUint64(GasFee) {
-		log.Println("[NewClaimNftRelation] invalid params")
+		log.Println("[NewSetNftPriceRelation] invalid params")
 		return nil, ErrInvalidParams
 	}
 	oriPk := curve.ScalarBaseMul(sk)
 	if !oriPk.Equal(pk) {
-		log.Println("[NewClaimNftRelation] inconsistent public key")
+		log.Println("[NewSetNftPriceRelation] inconsistent public key")
 		return nil, ErrInconsistentPublicKey
 	}
 	var (
@@ -171,7 +171,7 @@ func NewClaimNftRelation(
 	hb_fee := curve.Add(C_fee.CR, curve.Neg(curve.ScalarMul(C_fee.CL, ffmath.ModInverse(sk, Order))))
 	hb_feeCheck := curve.ScalarMul(H, big.NewInt(int64(B_fee)))
 	if !hb_fee.Equal(hb_feeCheck) {
-		log.Println("[NewClaimNftRelation] incorrect balance")
+		log.Println("[NewSetNftPriceRelation] incorrect balance")
 		return nil, ErrIncorrectBalance
 	}
 	// b' = b_fee - fee

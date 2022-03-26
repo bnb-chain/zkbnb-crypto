@@ -16,3 +16,65 @@
  */
 
 package zecrey
+
+import (
+	"fmt"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"gotest.tools/assert"
+	"math/big"
+	"testing"
+	"time"
+)
+
+func TestBuyNftProof_Verify(t *testing.T) {
+	sk, pk := twistedElgamal.GenKeyPair()
+	b := uint64(8)
+	r := curve.RandomValue()
+	bEnc, err := twistedElgamal.Enc(big.NewInt(int64(b)), r, pk)
+	if err != nil {
+		t.Error(err)
+	}
+	b_fee := uint64(10)
+	bEnc2, _ := twistedElgamal.Enc(big.NewInt(int64(b_fee)), r, pk)
+	bStar := uint64(2)
+	fee := uint64(1)
+	fmt.Println("sk:", sk.String())
+	fmt.Println("pk:", curve.ToString(pk))
+	fmt.Println("benc:", bEnc.String())
+	fmt.Println("benc2:", bEnc2.String())
+	hFunc := zmimc.Hmimc
+	hFunc.Write([]byte("test data"))
+	contentHash := hFunc.Sum(nil)
+	assetId := uint32(1)
+	//feeAssetId := uint32(2)
+	relation, err := NewBuyNftRelation(
+		1,
+		bEnc,
+		pk,
+		b, bStar,
+		sk,
+		assetId, contentHash,
+		bEnc, b, assetId, fee,
+	)
+	if err != nil {
+		t.Error(err)
+	}
+	elapse := time.Now()
+	withdrawProof, err := ProveBuyNft(relation)
+	if err != nil {
+		t.Error(err)
+	}
+	proofStr := withdrawProof.String()
+	proof, err := ParseBuyNftProofStr(proofStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("prove time:", time.Since(elapse))
+	res, err := proof.Verify()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, res, true, "buy nft proof works incorrectly")
+}
