@@ -79,13 +79,16 @@ func FromBuyNftSegmentJSON(segmentStr string) (*BuyNftSegment, string) {
 	var segmentFormat *BuyNftSegmentFormat
 	err := json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
-		log.Println("[FromWithdrawSegmentJSON] err info:", err)
+		log.Println("[FromBuyNftSegmentJSON] err info:", err)
 		return nil, ErrUnmarshal
 	}
 	if segmentFormat.C == "" || segmentFormat.Pk == "" ||
 		segmentFormat.Sk == "" {
-		log.Println("[FromWithdrawSegmentJSON] invalid params")
+		log.Println("[FromBuyNftSegmentJSON] invalid params")
 		return nil, ErrInvalidWithdrawParams
+	}
+	if segmentFormat.OwnerAccountIndex == segmentFormat.AccountIndex {
+		return nil, "[FromBuyNftSegmentJSON] unable to buy your nft"
 	}
 	// verify params
 	if segmentFormat.AccountIndex < 0 || segmentFormat.B < 0 ||
@@ -95,22 +98,22 @@ func FromBuyNftSegmentJSON(segmentStr string) (*BuyNftSegment, string) {
 	}
 	C, err := twistedElgamal.FromString(segmentFormat.C)
 	if err != nil {
-		log.Println("[FromWithdrawSegmentJSON] invalid params")
+		log.Println("[FromBuyNftSegmentJSON] invalid params")
 		return nil, ErrParseEnc
 	}
 	Pk, err := curve.FromString(segmentFormat.Pk)
 	if err != nil {
-		log.Println("[FromWithdrawSegmentJSON] invalid params")
+		log.Println("[FromBuyNftSegmentJSON] invalid params")
 		return nil, ErrParsePoint
 	}
 	Sk, isValid := new(big.Int).SetString(segmentFormat.Sk, 10)
 	if !isValid {
-		log.Println("[FromWithdrawSegmentJSON] invalid params")
+		log.Println("[FromBuyNftSegmentJSON] invalid params")
 		return nil, ErrParseBigInt
 	}
 	C_fee, err := twistedElgamal.FromString(segmentFormat.C_fee)
 	if err != nil {
-		log.Println("[FromWithdrawSegmentJSON] invalid params")
+		log.Println("[FromBuyNftSegmentJSON] invalid params")
 		return nil, ErrParseEnc
 	}
 	segment := &BuyNftSegment{
