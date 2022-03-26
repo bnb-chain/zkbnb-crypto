@@ -35,5 +35,10 @@ func main() {
 	js.Global().Set("proveSwap", wasm.ProveSwap())
 	js.Global().Set("proveAddLiquidity", wasm.ProveAddLiquidity())
 	js.Global().Set("proveRemoveLiquidity", wasm.ProveRemoveLiquidity())
+	js.Global().Set("proveMintNft", wasm.ProveMintNft())
+	js.Global().Set("proveTransferNft", wasm.ProveTransferNft())
+	js.Global().Set("proveSetNftPrice", wasm.ProveSetNftPrice())
+	js.Global().Set("proveBuyNft", wasm.ProveBuyNft())
+	js.Global().Set("proveWithdrawNft", wasm.ProveWithdrawNft())
 	<-make(chan bool)
 }

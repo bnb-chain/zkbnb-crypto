@@ -40,11 +40,18 @@ const (
 	TenThousand           = 10000
 	MaxFeeRate            = 40
 	MinFee                = 1
+	OneByte               = 1
 	FourBytes             = 4
 	EightBytes            = 8
 	TransferSubProofCount = 3
 	TransferSubProofSize  = 24*PointSize + RangeProofSize
 	TransferProofSize     = TransferSubProofCount*TransferSubProofSize + 4*PointSize + 1*EightBytes + 1*FourBytes
+
+	// NFT related
+	ClaimNftProofSize    = 8*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 1*EightBytes + 2*FourBytes + 1*OneByte
+	SetNftPriceProofSize = 8*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 2*EightBytes + 2*FourBytes + 1*OneByte
+	BuyNftProofSize      = 15*PointSize + 2*RangeProofSize + 2*EightBytes + 2*FourBytes
+	WithdrawNftProofSize = 8*PointSize + 1*ElGamalEncSize + 1*AddressSize + 1*RangeProofSize + 1*EightBytes + 2*FourBytes + 1*OneByte
 
 	SwapProofSize            = 32*PointSize + 2*RangeProofSize + 10*EightBytes + 4*FourBytes
 	AddLiquidityProofSize    = 35*PointSize + 6*EightBytes + 3*FourBytes + 3*RangeProofSize

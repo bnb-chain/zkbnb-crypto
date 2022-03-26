@@ -80,7 +80,6 @@ func ProveUnlock(
 		log.Println("[ProveUnlock] err info:", err)
 		return nil, err
 	}
-	log.Println(c.String())
 	// gas fee range proof
 	b_feePrime = B_fee - GasFee
 	Bar_r_fee, GasFeePrimeRangeProof, err = proveCtRange(int64(b_feePrime), G, H)

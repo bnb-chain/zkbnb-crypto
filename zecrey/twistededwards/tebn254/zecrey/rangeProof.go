@@ -18,9 +18,9 @@
 package zecrey
 
 import (
+	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 	"log"
 	"math/big"
-	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
 )
 
 func proveCtRange(b int64, g, h *Point) (r *big.Int, proof *RangeProof, err error) {
@@ -46,6 +46,7 @@ func proveCtRangeRoutine(b int64, g, h *Point, r *big.Int, proof *RangeProof, ra
 	*r = *bar_r
 	rangeChan <- 1
 }
+
 
 func verifyCtRangeRoutine(proof *RangeProof, rangeChan chan int) {
 	res, err := proof.Verify()

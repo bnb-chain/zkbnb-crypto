@@ -19,8 +19,10 @@ package zecrey
 
 import (
 	"fmt"
-	"testing"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"log"
+	"math/big"
+	"testing"
 )
 
 func TestCopyBuf(t *testing.T) {
@@ -28,5 +30,6 @@ func TestCopyBuf(t *testing.T) {
 	copyBuf(&buf, 0, PointSize, curve.ZeroPoint().Marshal())
 	fmt.Println(buf)
 
-	
+	sk, _ := new(big.Int).SetString("1145579467787228778633768930478674647292872939759547285137310086581633142460", 10)
+	log.Println(curve.ToString(curve.ScalarBaseMul(sk)))
 }

@@ -20,11 +20,12 @@ package zecrey
 import (
 	"bytes"
 	"encoding/binary"
-	"log"
-	"math/big"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
+	"log"
+	"math/big"
 )
 
 func zeroElGamal() *ElGamalEnc {
@@ -105,6 +106,19 @@ func readPointFromBuf(buf []byte, offset int) (newOffset int, p *Point, err erro
 	return newOffset, p, err
 }
 
+func readTxTypeFromBuf(buf []byte, offset int) (newOffset int, txType uint8) {
+	newOffset = offset + OneByte
+	txType = buf[offset]
+	return newOffset, txType
+}
+
+func readHashFromBuf(buf []byte, offset int) (newOffset int, hashVal []byte) {
+	newOffset = offset + PointSize
+	hashVal = make([]byte, PointSize)
+	copy(hashVal[:], buf[offset:newOffset])
+	return newOffset, hashVal
+}
+
 func readBigIntFromBuf(buf []byte, offset int) (newOffset int, a *big.Int) {
 	newOffset = offset + PointSize
 	a = new(big.Int).SetBytes(buf[offset : offset+PointSize])
@@ -143,4 +157,14 @@ func readAddressFromBuf(buf []byte, offset int) (newOffset int, a *big.Int) {
 	newOffset = offset + AddressSize
 	a = new(big.Int).SetBytes(buf[offset : offset+AddressSize])
 	return newOffset, a
+}
+
+func ComputeContentHash(nftName, nftUrl, nftIntroduction, nftAttributes string) []byte {
+	hFunc := mimc.NewMiMC()
+	hFunc.Write([]byte(nftName))
+	hFunc.Write([]byte(nftUrl))
+	hFunc.Write([]byte(nftIntroduction))
+	hFunc.Write([]byte(nftAttributes))
+	contentHash := hFunc.Sum(nil)
+	return contentHash
 }

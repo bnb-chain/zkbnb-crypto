@@ -20,12 +20,12 @@ package zecrey
 import (
 	"bytes"
 	"errors"
-	"log"
-	"math/big"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"github.com/zecrey-labs/zecrey-crypto/util"
+	"log"
+	"math/big"
 )
 
 const (
@@ -117,7 +117,7 @@ func (proof *WithdrawProof) Verify() (bool, error) {
 	var (
 		CLprimeInv, C_feeLprimeInv, TDivCRprime, T_feeDivC_feeRprime *Point
 		buf                                                          bytes.Buffer
-		rangeChan                                                    = make(chan int, 2)
+		rangeChan                                                    = make(chan int, withdrawRangeProofCount)
 	)
 	// check params
 	if proof.GasFeeAssetId == proof.AssetId {

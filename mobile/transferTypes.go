@@ -59,16 +59,16 @@ type TransferSegmentFormat struct {
 	Sk string `json:"Sk"`
 }
 
-func FromTransferSegmentJSON(segmentStr string) (segments []*TransferSegment, err error) {
+func FromTransferSegmentJSON(segmentStr string) (segmentsStr string, err error) {
 	var segmentFormats []*TransferSegmentFormat
 	err = json.Unmarshal([]byte(segmentStr), &segmentFormats)
 	if err != nil {
 		log.Println("[FromTransferSegmentJSON] err info:", err)
-		return nil, err
+		return "", err
 	}
 	if len(segmentFormats) < 2 {
 		log.Println("[FromTransferSegmentJSON] err info:", ErrInvalidTransferParams)
-		return nil, errors.New("[FromTransferSegmentJSON] invalid transfer params")
+		return "", errors.New("[FromTransferSegmentJSON] invalid transfer params")
 	}
 	skCount := 0
 	var indexExist = make(map[uint32]bool)
@@ -76,15 +76,16 @@ func FromTransferSegmentJSON(segmentStr string) (segments []*TransferSegment, er
 	rand.Shuffle(len(segmentFormats), func(i, j int) {
 		segmentFormats[i], segmentFormats[j] = segmentFormats[j], segmentFormats[i]
 	})
+	var segments []*TransferSegment
 	for _, segmentFormat := range segmentFormats {
 		if segmentFormat.BalanceEnc == "" || segmentFormat.Pk == "" {
 			log.Println("[FromTransferSegmentJSON] err info:", ErrInvalidTransferParams)
-			return nil, errors.New("[FromTransferSegmentJSON] invalid params")
+			return "", errors.New("[FromTransferSegmentJSON] invalid params")
 		}
 		// verify params
 		if segmentFormat.AccountIndex < 0 || segmentFormat.Balance < 0 {
 			log.Println("[FromTransferSegmentJSON] err info:", ErrInvalidTransferParams)
-			return nil, errors.New("[FromTransferSegmentJSON] invalid params")
+			return "", errors.New("[FromTransferSegmentJSON] invalid params")
 		}
 		// create a new segment
 		segment := new(TransferSegment)
@@ -93,7 +94,7 @@ func FromTransferSegmentJSON(segmentStr string) (segments []*TransferSegment, er
 		// each account should be different
 		if indexExist[accountIndex] == true {
 			log.Println("[FromTransferSegmentJSON] err info:", ErrReplicatedAccounts)
-			return nil, errors.New("[FromTransferSegmentJSON] " + ErrReplicatedAccounts)
+			return "", errors.New("[FromTransferSegmentJSON] " + ErrReplicatedAccounts)
 		}
 		indexExist[accountIndex] = true
 		segment.AccountIndex = accountIndex
@@ -101,13 +102,13 @@ func FromTransferSegmentJSON(segmentStr string) (segments []*TransferSegment, er
 		encBalance, err := twistedElgamal.FromString(segmentFormat.BalanceEnc)
 		if err != nil {
 			log.Println("[FromTransferSegmentJSON] err info:", err)
-			return nil, err
+			return "", err
 		}
 		// get pk
 		pk, err := curve.FromString(segmentFormat.Pk)
 		if err != nil {
 			log.Println("[FromTransferSegmentJSON] err info:", err)
-			return nil, err
+			return "", err
 		}
 		// get bDelta
 		bDelta := segmentFormat.BDelta
@@ -122,7 +123,7 @@ func FromTransferSegmentJSON(segmentStr string) (segments []*TransferSegment, er
 			sk, b := new(big.Int).SetString(segmentFormat.Sk, 10)
 			if !b {
 				log.Println("[FromTransferSegmentJSON] err info:", err)
-				return nil, err
+				return "", err
 			}
 			segment.Sk = sk
 			// get Balance
@@ -133,9 +134,13 @@ func FromTransferSegmentJSON(segmentStr string) (segments []*TransferSegment, er
 	}
 	if skCount != 1 {
 		log.Println("[FromTransferSegmentJSON] err info:", ErrInvalidTransferParams)
-		return nil, errors.New("[FromTransferSegmentJSON] invalid params")
+		return "", errors.New("[FromTransferSegmentJSON] invalid params")
 	}
-	return segments, nil
+	segmentsBytes, err := json.Marshal(segments)
+	if err != nil {
+		return "", err
+	}
+	return string(segmentsBytes), nil
 }
 
 type TransferTxInfo struct {
