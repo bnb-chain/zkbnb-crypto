@@ -22,8 +22,25 @@ import (
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
+const (
+	Noop = iota
+	Deposit
+	Lock
+	Unlock
+	Transfer
+	Swap
+	AddLiquidity
+	RemoveLiquidity
+	Withdraw
+	DepositNft
+	MintNft
+	TransferNft
+	SetNftPrice
+	BuyNft
+	WithdrawNft
+)
+
 type (
 	Point      = tebn254.Point
 	ElGamalEnc = twistedElgamal.ElGamalEnc
 )
-
