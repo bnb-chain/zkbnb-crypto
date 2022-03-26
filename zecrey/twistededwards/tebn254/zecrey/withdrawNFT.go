@@ -60,6 +60,7 @@ func ProveWithdrawNft(relation *WithdrawNftRelation) (proof *WithdrawNftProof, e
 	writeUint64IntoBuf(&buf, uint64(relation.TxType))
 	buf.Write(relation.NftContentHash)
 	buf.Write(PaddingBigIntBytes(relation.ReceiverAddr))
+	writeUint64IntoBuf(&buf, uint64(relation.ChainId))
 	writePointIntoBuf(&buf, A_pk)
 	writePointIntoBuf(&buf, A_T_feeDivC_feeRprime)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
@@ -79,6 +80,7 @@ func ProveWithdrawNft(relation *WithdrawNftRelation) (proof *WithdrawNftProof, e
 		TxType:                relation.TxType,
 		NftContentHash:        relation.NftContentHash,
 		ReceiveAddr:           relation.ReceiverAddr,
+		ChainId:               relation.ChainId,
 		A_T_feeC_feeRPrimeInv: A_T_feeDivC_feeRprime,
 		Z_bar_r_fee:           z_bar_r_fee,
 		C_fee:                 relation.C_fee,
@@ -128,6 +130,7 @@ func (proof *WithdrawNftProof) Verify() (bool, error) {
 	writeUint64IntoBuf(&buf, uint64(proof.TxType))
 	buf.Write(proof.NftContentHash)
 	buf.Write(PaddingBigIntBytes(proof.ReceiveAddr))
+	writeUint64IntoBuf(&buf, uint64(proof.ChainId))
 	writePointIntoBuf(&buf, proof.A_pk)
 	writePointIntoBuf(&buf, proof.A_T_feeC_feeRPrimeInv)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)

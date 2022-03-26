@@ -20,6 +20,7 @@ package zecrey
 import (
 	"bytes"
 	"encoding/binary"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
@@ -156,4 +157,14 @@ func readAddressFromBuf(buf []byte, offset int) (newOffset int, a *big.Int) {
 	newOffset = offset + AddressSize
 	a = new(big.Int).SetBytes(buf[offset : offset+AddressSize])
 	return newOffset, a
+}
+
+func ComputeContentHash(nftName, nftUrl, nftIntroduction, nftAttributes string) []byte {
+	hFunc := mimc.NewMiMC()
+	hFunc.Write([]byte(nftName))
+	hFunc.Write([]byte(nftUrl))
+	hFunc.Write([]byte(nftIntroduction))
+	hFunc.Write([]byte(nftAttributes))
+	contentHash := hFunc.Sum(nil)
+	return contentHash
 }

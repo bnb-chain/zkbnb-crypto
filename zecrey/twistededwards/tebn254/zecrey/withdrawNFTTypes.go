@@ -38,6 +38,7 @@ type WithdrawNftProof struct {
 	TxType         uint8
 	NftContentHash []byte
 	ReceiveAddr    *big.Int
+	ChainId        uint32
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
 	Z_bar_r_fee           *big.Int
@@ -58,6 +59,7 @@ func (proof *WithdrawNftProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, OneByte, []byte{proof.TxType})
 	offset = copyBuf(&buf, offset, PointSize, proof.NftContentHash)
 	offset = copyBuf(&buf, offset, AddressSize, proof.ReceiveAddr.FillBytes(make([]byte, AddressSize)))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ChainId))
 	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
 	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C_fee))
@@ -93,6 +95,7 @@ func ParseWithdrawNftProofBytes(proofBytes []byte) (proof *WithdrawNftProof, err
 	offset, proof.TxType = readTxTypeFromBuf(proofBytes, offset)
 	offset, proof.NftContentHash = readHashFromBuf(proofBytes, offset)
 	offset, proof.ReceiveAddr = readAddressFromBuf(proofBytes, offset)
+	offset, proof.ChainId = readUint32FromBuf(proofBytes, offset)
 	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
@@ -131,6 +134,7 @@ type WithdrawNftRelation struct {
 	TxType         uint8
 	NftContentHash []byte
 	ReceiverAddr   *big.Int
+	ChainId        uint32
 	// ----------- private ---------------------
 	Sk *big.Int
 	// gas fee
@@ -147,6 +151,7 @@ func NewWithdrawNftRelation(
 	txType uint8,
 	contentHash []byte,
 	receiverAddr string,
+	chainId uint32,
 	sk *big.Int,
 	// fee part
 	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
@@ -195,6 +200,7 @@ func NewWithdrawNftRelation(
 		TxType:                txType,
 		NftContentHash:        contentHash,
 		ReceiverAddr:          addrInt,
+		ChainId:               chainId,
 		Sk:                    sk,
 		C_fee:                 C_fee,
 		T_fee:                 new(Point).Set(GasFeePrimeRangeProof.A),
