@@ -19,6 +19,7 @@ package std
 
 import (
 	"errors"
+	tedwards "github.com/consensys/gnark-crypto/ecc/twistededwards"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
@@ -58,7 +59,7 @@ type WithdrawProofConstraints struct {
 func (circuit WithdrawProofConstraints) Define(api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(api.Curve())
+	params, err := twistededwards.NewEdCurve(api, tedwards.BN254)
 	if err != nil {
 		return err
 	}
@@ -100,7 +101,7 @@ func VerifyWithdrawProof(
 	var (
 		hNeg Point
 	)
-	hNeg.Neg(api, &h)
+	hNeg = tool.Neg(h)
 	deltaBalance := api.Add(proof.BStar, deltaFeeForFrom)
 	C_Delta := ElGamalEncConstraints{
 		CL: tool.ZeroPoint(),

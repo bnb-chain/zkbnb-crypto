@@ -19,6 +19,7 @@ package std
 
 import (
 	"errors"
+	tedwards "github.com/consensys/gnark-crypto/ecc/twistededwards"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -78,7 +79,7 @@ type SwapProofConstraints struct {
 func (circuit SwapProofConstraints) Define(api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(api.Curve())
+	params, err := twistededwards.NewEdCurve(api, tedwards.BN254)
 	if err != nil {
 		return err
 	}
@@ -143,7 +144,7 @@ func VerifySwapProof(
 	// check if gas fee asset id is the same as asset a or b
 	// compute fee delta
 	var hNeg Point
-	hNeg.Neg(api, &h)
+	hNeg = tool.Neg(h)
 	deltaFee := tool.ScalarMul(hNeg, proof.GasFee)
 	isSameAssetA := api.IsZero(api.Sub(proof.AssetAId, proof.GasFeeAssetId))
 	isSameAssetA = api.And(isSameAssetA, proof.IsEnabled)
@@ -403,7 +404,7 @@ func verifySwapParams(
 	// g^r h^b
 	var hb1Neg Point
 	hb1 := tool.ScalarMul(h, proof.B_A_Delta)
-	hb1Neg.Neg(api, &hb1)
+	hb1Neg = tool.Neg(hb1)
 	B_poolA_Delta := api.Sub(proof.B_A_Delta, proof.B_treasuryfee_Delta)
 	hbpool := tool.ScalarMul(h, B_poolA_Delta)
 	gr1 := tool.ScalarBaseMul(proof.R_DeltaA)
@@ -416,7 +417,7 @@ func verifySwapParams(
 	// g^r h^b
 	var hb2Neg Point
 	hb2 := tool.ScalarMul(h, proof.B_B_Delta)
-	hb2Neg.Neg(api, &hb2)
+	hb2Neg = tool.Neg(hb2)
 	gr2 := tool.ScalarBaseMul(proof.R_DeltaB)
 	C_uB_Delta := ElGamalEncConstraints{
 		CL: CL2,

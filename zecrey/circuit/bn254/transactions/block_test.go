@@ -23,6 +23,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/consensys/gnark/test"
 	"testing"
 )
@@ -43,11 +44,11 @@ func TestBlockConstraints_Define(t *testing.T) {
 	blockInfo.Txs = append(blockInfo.Txs, oTx)
 	assert := test.NewAssert(t)
 	var circuit, witness BlockConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs())
+	r1csRes, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("constraints:", r1cs.GetNbConstraints())
+	fmt.Println("constraints:", r1csRes.GetNbConstraints())
 	witness, err = SetBlockWitness(blockInfo)
 	if err != nil {
 		t.Fatal(err)

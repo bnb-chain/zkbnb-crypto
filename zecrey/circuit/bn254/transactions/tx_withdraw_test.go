@@ -23,6 +23,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/consensys/gnark/test"
 	"testing"
 )
@@ -36,11 +37,11 @@ func TestWithdraw(t *testing.T) {
 	}
 	assert := test.NewAssert(t)
 	var circuit, witness TxConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs())
+	matrix, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("constraints:", r1cs.GetNbConstraints())
+	fmt.Println("constraints:", matrix.GetNbConstraints())
 	witness, err = SetTxWitness(oTx)
 	if err != nil {
 		t.Fatal(err)
