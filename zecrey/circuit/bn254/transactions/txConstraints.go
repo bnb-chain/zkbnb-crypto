@@ -19,6 +19,7 @@ package transactions
 
 import (
 	"errors"
+	tedwards "github.com/consensys/gnark-crypto/ecc/twistededwards"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
@@ -84,7 +85,7 @@ type TxConstraints struct {
 
 func (circuit TxConstraints) Define(api frontend.API) error {
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(api.Curve())
+	params, err := twistededwards.NewEdCurve(api, tedwards.BN254)
 	if err != nil {
 		return err
 	}
@@ -149,7 +150,7 @@ func VerifyTransaction(
 		isNoRangeTx := api.Or(isDepositTx, isLockTx)
 		isEnabled := api.IsZero(isNoRangeTx)
 		rangeProof.IsEnabled = isEnabled
-		//std.VerifyCtRangeProof(tool, api, rangeProof, hFunc)
+		std.VerifyCtRangeProof(tool, api, rangeProof, hFunc)
 		hFunc.Reset()
 		tx.TransferProof.SubProofs[i].Y = rangeProof.A
 	}

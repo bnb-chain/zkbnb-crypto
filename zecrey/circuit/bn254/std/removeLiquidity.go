@@ -19,6 +19,7 @@ package std
 
 import (
 	"errors"
+	tedwards "github.com/consensys/gnark-crypto/ecc/twistededwards"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
@@ -68,7 +69,7 @@ type RemoveLiquidityProofConstraints struct {
 func (circuit RemoveLiquidityProofConstraints) Define(api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(api.Curve())
+	params, err := twistededwards.NewEdCurve(api, tedwards.BN254)
 	if err != nil {
 		return err
 	}

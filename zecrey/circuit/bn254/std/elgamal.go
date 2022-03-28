@@ -27,21 +27,21 @@ type ElGamalEncConstraints struct {
 
 func (tool *EccTool) NegElgamal(C ElGamalEncConstraints) ElGamalEncConstraints {
 	return ElGamalEncConstraints{
-		CL: *C.CL.Neg(tool.api, &C.CL),
-		CR: *C.CR.Neg(tool.api, &C.CR),
+		CL: tool.params.Neg(C.CL),
+		CR: tool.params.Neg(C.CR),
 	}
 }
 
 func (tool *EccTool) Enc(h Point, b Variable, r Variable, pk Point) ElGamalEncConstraints {
 	var CL, CR Point
-	CL.ScalarMul(tool.api, &pk, r, tool.params)
-	CR.DoubleBaseScalarMul(tool.api, &tool.Base, &h, r, b, tool.params)
+	CL = tool.params.ScalarMul(pk, r)
+	CR = tool.params.DoubleBaseScalarMul(tool.Base, h, r, b)
 	return ElGamalEncConstraints{CL: CL, CR: CR}
 }
 
 func (tool *EccTool) EncAdd(C, CDelta ElGamalEncConstraints) ElGamalEncConstraints {
-	C.CL.Add(tool.api, &C.CL, &CDelta.CL, tool.params)
-	C.CR.Add(tool.api, &C.CR, &CDelta.CR, tool.params)
+	C.CL = tool.params.Add(C.CL, CDelta.CL)
+	C.CR = tool.params.Add(C.CR, CDelta.CR)
 	return C
 }
 

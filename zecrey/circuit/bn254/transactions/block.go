@@ -18,6 +18,7 @@
 package transactions
 
 import (
+	tedwards "github.com/consensys/gnark-crypto/ecc/twistededwards"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
@@ -47,7 +48,7 @@ type BlockConstraints struct {
 
 func (circuit BlockConstraints) Define(api API) error {
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(api.Curve())
+	params, err := twistededwards.NewEdCurve(api, tedwards.BN254)
 	if err != nil {
 		return err
 	}

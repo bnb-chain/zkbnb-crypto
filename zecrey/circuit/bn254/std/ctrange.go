@@ -19,6 +19,7 @@ package std
 
 import (
 	"errors"
+	tedwards "github.com/consensys/gnark-crypto/ecc/twistededwards"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	"github.com/consensys/gnark/std/hash/mimc"
 	"github.com/zecrey-labs/zecrey-crypto/rangeProofs/twistededwards/tebn254/ctrange"
@@ -40,7 +41,7 @@ type CtRangeProofConstraints struct {
 // define for range proof test
 func (circuit CtRangeProofConstraints) Define(api API) error {
 	// get edwards curve params
-	params, err := twistededwards.NewEdCurve(api.Curve())
+	params, err := twistededwards.NewEdCurve(api, tedwards.BN254)
 	if err != nil {
 		return err
 	}
@@ -60,19 +61,19 @@ func VerifyCtRangeProof(tool *EccTool, api API, proof CtRangeProofConstraints, h
 		Y: 1,
 	}
 	var current Point
-	current.Neg(api, &proof.H)
+	current = tool.Neg(proof.H)
 	var A_As [RangeMaxBits]Point
 	for i := 0; i < RangeMaxBits; i++ {
 		var com, AihNegNeg Point
 		AihNegNeg = tool.Add(proof.As[i], current)
-		AihNegNeg.Neg(api, &AihNegNeg)
+		AihNegNeg = tool.Neg(AihNegNeg)
 		AihNegNeg = tool.ScalarMul(AihNegNeg, proof.C)
 		com = tool.ScalarBaseMul(proof.Zs[i])
 		com = tool.Add(com, AihNegNeg)
 		hFunc.Write(com.X, com.Y)
 		ci := hFunc.Sum()
 		A_As[i] = tool.ScalarMul(proof.As[i], ci)
-		current.Double(api, &current, tool.params)
+		current = tool.params.Double(current)
 		hFunc.Reset()
 	}
 	for _, A_Ai := range A_As {
