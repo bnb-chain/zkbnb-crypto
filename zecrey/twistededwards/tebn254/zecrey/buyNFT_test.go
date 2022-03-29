@@ -56,6 +56,7 @@ func TestBuyNftProof_Verify(t *testing.T) {
 		sk,
 		contentHash, assetId, assetAmount,
 		bEnc, b, assetId, fee,
+		20,
 	)
 	if err != nil {
 		t.Error(err)

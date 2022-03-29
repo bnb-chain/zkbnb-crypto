@@ -58,7 +58,7 @@ func TestBlockConstraints_Define(t *testing.T) {
 		test.WithCurves(ecc.BN254),
 		test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
 
-	assert.ProverSucceeded(&circuit, &witness, test.WithBackends(backend.GROTH16),
-		test.WithCurves(ecc.BN254),
-		test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
+	//assert.ProverSucceeded(&circuit, &witness, test.WithBackends(backend.GROTH16),
+	//	test.WithCurves(ecc.BN254),
+	//	test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
 }

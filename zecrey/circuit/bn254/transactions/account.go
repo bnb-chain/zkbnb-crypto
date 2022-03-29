@@ -93,7 +93,7 @@ func EmptyAccount(nilHash []byte) *Account {
 		AccountAssetsRoot:       nilHash,
 		AccountLockedAssetsRoot: nilHash,
 		AccountLiquidityRoot:    nilHash,
-		AssetsInfo: [3]*AccountAsset{
+		AssetsInfo: [NbAccountAssetsPerAccount]*AccountAsset{
 			EmptyAccountAsset(),
 			EmptyAccountAsset(),
 			EmptyAccountAsset(),

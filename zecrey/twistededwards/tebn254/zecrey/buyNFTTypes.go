@@ -40,6 +40,7 @@ type BuyNftProof struct {
 	NftContentHash []byte
 	AssetId        uint32
 	AssetAmount    uint64
+	FeeRate        uint32
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
 	Z_bar_r_fee           *big.Int
@@ -60,6 +61,7 @@ func (proof *BuyNftProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, RangeProofSize, proof.BPrimeRangeProof.Bytes())
 	offset = copyBuf(&buf, offset, RangeProofSize, proof.GasFeePrimeRangeProof.Bytes())
 	offset = copyBuf(&buf, offset, EightBytes, uint64ToBytes(proof.AssetAmount))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.FeeRate))
 	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C))
 	offset = copyBuf(&buf, offset, PointSize, proof.T.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
@@ -103,6 +105,7 @@ func ParseBuyNftProofBytes(proofBytes []byte) (proof *BuyNftProof, err error) {
 		return nil, err
 	}
 	offset, proof.AssetAmount = readUint64FromBuf(proofBytes, offset)
+	offset, proof.FeeRate = readUint32FromBuf(proofBytes, offset)
 	offset, proof.C, err = readElGamalEncFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
@@ -161,6 +164,7 @@ type BuyNftProofRelation struct {
 	AssetAmount    uint64
 	NftContentHash []byte
 	AssetId        uint32
+	FeeRate        uint32
 	// ----------- private ---------------------
 	Sk      *big.Int
 	B_prime uint64
@@ -182,6 +186,7 @@ func NewBuyNftRelation(
 	contentHash []byte, assetId uint32, assetAmount uint64,
 	// fee part
 	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
+	feeRate uint32,
 ) (*BuyNftProofRelation, error) {
 	if !notNullElGamal(C) || !notNullElGamal(C_fee) || !curve.IsInSubGroup(pk) || sk == nil || b < assetAmount || B_fee < GasFee ||
 		(GasFeeAssetId == assetId && (!equalEnc(C, C_fee) || b < assetAmount+GasFee || b != B_fee)) ||
@@ -249,6 +254,7 @@ func NewBuyNftRelation(
 		AssetAmount:           assetAmount,
 		NftContentHash:        contentHash,
 		AssetId:               assetId,
+		FeeRate:               feeRate,
 		Sk:                    sk,
 		B_prime:               B_prime,
 		Bar_r:                 Bar_r,

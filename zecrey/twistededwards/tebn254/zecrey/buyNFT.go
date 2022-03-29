@@ -70,6 +70,7 @@ func ProveBuyNft(relation *BuyNftProofRelation) (proof *BuyNftProof, err error) 
 	writeUint64IntoBuf(&buf, relation.GasFee)
 	writeUint64IntoBuf(&buf, uint64(relation.AssetId))
 	writeUint64IntoBuf(&buf, relation.AssetAmount)
+	writeUint64IntoBuf(&buf, uint64(relation.FeeRate))
 	writeEncIntoBuf(&buf, relation.C)
 	writePointIntoBuf(&buf, relation.T)
 	writePointIntoBuf(&buf, relation.T_fee)
@@ -91,12 +92,13 @@ func ProveBuyNft(relation *BuyNftProofRelation) (proof *BuyNftProof, err error) 
 		Z_skInv:               z_skInv,
 		BPrimeRangeProof:      relation.BPrimeRangeProof,
 		GasFeePrimeRangeProof: relation.GasFeePrimeRangeProof,
-		AssetAmount:           relation.AssetAmount,
 		C:                     relation.C,
 		T:                     relation.T,
 		Pk:                    relation.Pk,
 		NftContentHash:        relation.NftContentHash,
 		AssetId:               relation.AssetId,
+		AssetAmount:           relation.AssetAmount,
+		FeeRate:               relation.FeeRate,
 		A_T_feeC_feeRPrimeInv: A_T_feeDivC_feeRprime,
 		Z_bar_r_fee:           z_bar_r_fee,
 		C_fee:                 relation.C_fee,
@@ -153,6 +155,7 @@ func (proof *BuyNftProof) Verify() (bool, error) {
 	writeUint64IntoBuf(&buf, proof.GasFee)
 	writeUint64IntoBuf(&buf, uint64(proof.AssetId))
 	writeUint64IntoBuf(&buf, proof.AssetAmount)
+	writeUint64IntoBuf(&buf, uint64(proof.FeeRate))
 	writeEncIntoBuf(&buf, proof.C)
 	writePointIntoBuf(&buf, proof.T)
 	writePointIntoBuf(&buf, proof.T_fee)
