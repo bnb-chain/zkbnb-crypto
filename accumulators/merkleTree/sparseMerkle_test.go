@@ -230,28 +230,22 @@ func TestNewTreeByMapAndUpdate(t *testing.T) {
 	hashVal := hFunc.Sum(nil)
 	node := CreateLeafNode(hashVal)
 	leavesMap := make(map[int64]*Node)
-	leavesMap[4] = node
-	treeByMap, err := NewTreeByMap(leavesMap, 3, NilHash, mimc.NewMiMC())
+	leavesMap[2] = node
+	treeByMap, err := NewTreeByMap(leavesMap, 2, NilHash, mimc.NewMiMC())
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println(common.Bytes2Hex(treeByMap.RootNode.Value))
 	fmt.Println(len(treeByMap.Leaves))
 
-	emptyTree, err := NewEmptyTree(3, NilHash, mimc.NewMiMC())
+	emptyTree, err := NewEmptyTree(2, NilHash, mimc.NewMiMC())
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = emptyTree.Update(4, hashVal)
+	err = emptyTree.Update(2, hashVal)
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println(common.Bytes2Hex(emptyTree.RootNode.Value))
 	fmt.Println(len(emptyTree.Leaves))
-
-	level2 := emptyTree.HashSubTrees(hashVal, emptyTree.NilHashValueConst[0])
-	level3 := emptyTree.HashSubTrees(level2, emptyTree.NilHashValueConst[1])
-	level4 := emptyTree.HashSubTrees(emptyTree.NilHashValueConst[2], level3)
-	fmt.Println(common.Bytes2Hex(level4))
-
 }
