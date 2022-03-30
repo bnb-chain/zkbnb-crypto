@@ -19,10 +19,10 @@ package binary
 
 import (
 	"fmt"
-	"math/big"
-	"testing"
 	"github.com/zecrey-labs/zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"math/big"
+	"testing"
 )
 
 var (
@@ -37,8 +37,6 @@ func TestProveAndVerify(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(curve.Count)
 	isValid, _ := Verify(c, ca, cb, f, za, zb)
-	fmt.Println(curve.Count)
 	fmt.Println(isValid)
 }

@@ -38,6 +38,7 @@ type BuyNftSegment struct {
 	NftContentHash    string
 	AssetId           uint32
 	AssetAmount       uint64
+	FeeRate           uint32
 	// fee part
 	C_fee         *ElGamalEnc
 	B_fee         uint64
@@ -64,6 +65,7 @@ type BuyNftSegmentFormat struct {
 	NftContentHash    string `json:"nft_content_hash"`
 	AssetId           int    `json:"asset_id"`
 	AssetAmount       int64  `json:"asset_amount"`
+	FeeRate           int    `json:"fee_rate"`
 	// fee part
 	// encryption of balance of the gas fee asset
 	C_fee string `json:"c_fee"`
@@ -126,6 +128,7 @@ func FromBuyNftSegmentJSON(segmentStr string) (*BuyNftSegment, string) {
 		NftContentHash:    segmentFormat.NftContentHash,
 		AssetId:           uint32(segmentFormat.AssetId),
 		AssetAmount:       uint64(segmentFormat.AssetAmount),
+		FeeRate:           uint32(segmentFormat.FeeRate),
 		C_fee:             C_fee,
 		B_fee:             uint64(segmentFormat.B_fee),
 		GasFeeAssetId:     uint32(segmentFormat.GasFeeAssetId),
@@ -145,6 +148,7 @@ type BuyNftTxInfo struct {
 	AssetId uint32
 	// nft price
 	AssetAmount uint64
+	FeeRate     uint32
 	// gas fee part
 	GasFeeAssetId uint32
 	GasFee        uint64

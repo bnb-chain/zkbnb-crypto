@@ -55,6 +55,7 @@ func ProveBuyNft() js.Func {
 			common.FromHex(segment.NftContentHash),
 			segment.AssetId, segment.AssetAmount,
 			segment.C_fee, segment.B_fee, segment.GasFeeAssetId, segment.GasFee,
+			segment.FeeRate,
 		)
 		if err != nil {
 			log.Println("[ProveBuyNft] err info:", err)

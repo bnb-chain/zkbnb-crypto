@@ -45,7 +45,7 @@ type WithdrawNftSegment struct {
 }
 
 /*
-	WithdrawNftSegmentFormat: format version of SetNftPriceSegment
+	WithdrawNftSegmentFormat: format version of WithdrawNftSegment
 */
 type WithdrawNftSegmentFormat struct {
 	// account index
