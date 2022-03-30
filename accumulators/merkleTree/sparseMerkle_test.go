@@ -54,7 +54,7 @@ func TestNewTree(t *testing.T) {
 	fmt.Println(time.Since(elapse))
 	leaves := CreateLeaves(hashState)
 	elapse = time.Now()
-	h := mimc.NewMiMC(SEED)
+	h := mimc.NewMiMC()
 	nilHash := h.Sum([]byte{})
 	fmt.Println("nil hash:", common.Bytes2Hex(nilHash))
 	h.Reset()
@@ -143,7 +143,7 @@ func TestNewTree(t *testing.T) {
 }
 
 func TestNewTreeByMap(t *testing.T) {
-	h := mimc.NewMiMC(SEED)
+	h := mimc.NewMiMC()
 	h.Write([]byte("1"))
 	hashVal1 := h.Sum(nil)
 	h.Reset()
@@ -199,7 +199,7 @@ func TestNewTreeByMap(t *testing.T) {
 }
 
 func TestNewEmptyTree(t *testing.T) {
-	h := mimc.NewMiMC(SEED)
+	h := mimc.NewMiMC()
 	nilHash := h.Sum([]byte{})
 	tree, err := NewEmptyTree(5, nilHash, zmimc.Hmimc)
 	if err != nil {
@@ -221,4 +221,37 @@ func TestNewEmptyTree(t *testing.T) {
 	merkleProofs, merkleProofsHelper, err = tree.BuildMerkleProofs(0)
 	isValid = tree.VerifyMerkleProofs(merkleProofs, merkleProofsHelper)
 	assert.Equal(t, true, isValid, "invalid proof")
+}
+
+func TestNewTreeByMapAndUpdate(t *testing.T) {
+	// by map
+	hFunc := mimc.NewMiMC()
+	hFunc.Write([]byte("1111"))
+	hashVal := hFunc.Sum(nil)
+	node := CreateLeafNode(hashVal)
+	leavesMap := make(map[int64]*Node)
+	leavesMap[4] = node
+	treeByMap, err := NewTreeByMap(leavesMap, 3, NilHash, mimc.NewMiMC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(common.Bytes2Hex(treeByMap.RootNode.Value))
+	fmt.Println(len(treeByMap.Leaves))
+
+	emptyTree, err := NewEmptyTree(3, NilHash, mimc.NewMiMC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = emptyTree.Update(4, hashVal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(common.Bytes2Hex(emptyTree.RootNode.Value))
+	fmt.Println(len(emptyTree.Leaves))
+
+	level2 := emptyTree.HashSubTrees(hashVal, emptyTree.NilHashValueConst[0])
+	level3 := emptyTree.HashSubTrees(level2, emptyTree.NilHashValueConst[1])
+	level4 := emptyTree.HashSubTrees(emptyTree.NilHashValueConst[2], level3)
+	fmt.Println(common.Bytes2Hex(level4))
+
 }
