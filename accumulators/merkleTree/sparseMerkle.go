@@ -478,21 +478,39 @@ func (t *Tree) updateExistOrNext(index int64, nVal []byte) (err error) {
 				node = node.Parent
 			}
 		} else { // odd
-			node = node.Parent.Parent
+			// Create new Node and append Leaves
 			nNode := &Node{
 				Value:  nVal,
 				Parent: nil,
 				Height: 0,
 			}
-			parentNode := &Node{
-				Value:  t.HashSubTrees(nVal, t.NilHashValueConst[0]),
-				Left:   nNode,
-				Parent: node,
-				Height: nNode.Height + 1,
-			}
-			nNode.Parent = parentNode
-			node.Right = parentNode
 			t.Leaves = append(t.Leaves, nNode)
+			// search common Parent
+			var indexV = index
+			for indexV != 0 {
+				// divide index(reduce tree height iterator)
+				indexV = indexV / 2
+
+				// handle searching common parentNode
+				node = node.Parent
+
+				if indexV != 0{	// if find common parentNode, then there is no need to create a new parentNode.
+					// handle parentNode creation
+					parentNode := &Node{
+						Value:  t.HashSubTrees(nNode.Value, t.NilHashValueConst[nNode.Height]),
+						Left:   nNode,
+						Height: nNode.Height + 1,
+					}
+
+					nNode.Parent = parentNode
+					nNode = nNode.Parent
+				}
+
+			}
+			// connect common parent with nNode
+			node.Right = nNode
+			nNode.Parent = node
+
 			for node != nil {
 				if node.Right != nil {
 					node.Value = t.HashSubTrees(node.Left.Value, node.Right.Value)
