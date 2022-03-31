@@ -19,10 +19,12 @@ package transactions
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
+	"github.com/ethereum/go-ethereum/common"
 	"testing"
 )
 
@@ -33,7 +35,7 @@ func TestBlockConstraints_Define(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-
+	fmt.Println(common.Bytes2Hex(cryptoBlocks[0].NewRoot))
 	assert := test.NewAssert(t)
 	var circuit, witness BlockConstraints
 	witness, err = SetBlockWitness(cryptoBlocks[0])

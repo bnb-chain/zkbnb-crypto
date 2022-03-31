@@ -486,7 +486,7 @@ func GetAccountDeltasFromWithdrawProof(
 			proof.C_Delta,
 			// gas asset
 			proof.C_fee_DeltaForFrom,
-			proof.C_fee_DeltaForFrom,
+			proof.C_Delta,
 		},
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
