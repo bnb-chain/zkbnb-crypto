@@ -216,6 +216,15 @@ func (t *ExportSolidityTestSuite) TestVerifyProof() {
 	c[0] = new(big.Int).SetBytes(proofBytes[fpSize*6 : fpSize*7])
 	c[1] = new(big.Int).SetBytes(proofBytes[fpSize*7 : fpSize*8])
 
+	fmt.Println(a[0].String())
+	fmt.Println(a[1].String())
+	fmt.Println(b[0][0].String())
+	fmt.Println(b[0][1].String())
+	fmt.Println(b[1][0].String())
+	fmt.Println(b[1][1].String())
+	fmt.Println(c[0].String())
+	fmt.Println(c[1].String())
+
 	// public witness
 	input[0] = new(big.Int).SetBytes(blockInfo.OldRoot)
 	input[1] = new(big.Int).SetBytes(blockInfo.NewRoot)
