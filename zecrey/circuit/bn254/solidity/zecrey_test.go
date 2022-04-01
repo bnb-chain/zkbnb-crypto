@@ -22,9 +22,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/core"
@@ -42,7 +42,7 @@ import (
 func TestExportSol(t *testing.T) {
 	var circuit transactions.BlockConstraints
 
-	r1cs, err := frontend.Compile(ecc.BN254, backend.GROTH16, &circuit, frontend.IgnoreUnconstrainedInputs())
+	r1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		panic(err)
 	}
@@ -121,7 +121,7 @@ func (t *ExportSolidityTestSuite) SetupTest() {
 	t.verifierContract = v
 	t.backend.Commit()
 
-	t.r1cs, err = frontend.Compile(ecc.BN254, backend.GROTH16, &t.circuit, frontend.IgnoreUnconstrainedInputs())
+	t.r1cs, err = frontend.Compile(ecc.BN254, r1cs.NewBuilder, &t.circuit, frontend.IgnoreUnconstrainedInputs())
 	t.NoError(err, "compiling R1CS failed")
 
 	fmt.Println("constraints:", t.r1cs.GetNbConstraints())
