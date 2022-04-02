@@ -479,6 +479,15 @@ func (t *Tree) updateExistOrNext(index int64, nVal []byte) (err error) {
 			}
 		} else { // odd
 			// Create new Node and append Leaves
+			var (
+				commonLength = 0
+				nearValue    = index ^ (index - 1)
+			)
+			for nearValue != 0 {
+				nearValue /= 2
+				commonLength += 1
+			}
+			// Create new Node and append Leaves
 			nNode := &Node{
 				Value:  nVal,
 				Parent: nil,
@@ -486,15 +495,12 @@ func (t *Tree) updateExistOrNext(index int64, nVal []byte) (err error) {
 			}
 			t.Leaves = append(t.Leaves, nNode)
 			// search common Parent
-			var indexV = index
-			for indexV != 0 {
-				// divide index(reduce tree height iterator)
-				indexV = indexV / 2
-
+			for commonLength != 0 {
+				commonLength--
 				// handle searching common parentNode
 				node = node.Parent
 
-				if indexV != 0{	// if find common parentNode, then there is no need to create a new parentNode.
+				if commonLength != 0 { // if find common parentNode, then there is no need to create a new parentNode.
 					// handle parentNode creation
 					parentNode := &Node{
 						Value:  t.HashSubTrees(nNode.Value, t.NilHashValueConst[nNode.Height]),

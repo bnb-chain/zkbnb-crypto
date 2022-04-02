@@ -150,7 +150,7 @@ func VerifyTransaction(
 		isNoRangeTx := api.Or(isDepositTx, isLockTx)
 		isEnabled := api.IsZero(isNoRangeTx)
 		rangeProof.IsEnabled = isEnabled
-		//std.VerifyCtRangeProof(tool, api, rangeProof, hFunc)
+		std.VerifyCtRangeProof(tool, api, rangeProof, hFunc)
 		hFunc.Reset()
 		tx.TransferProof.SubProofs[i].Y = rangeProof.A
 	}

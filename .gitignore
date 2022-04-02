@@ -20,3 +20,7 @@
 
 *.pk
 *.vk
+
+.DS_Store
+*/.DS_Store
+**/.DS_Store
