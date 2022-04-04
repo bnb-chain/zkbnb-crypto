@@ -42,12 +42,12 @@ func TestBlockConstraints_Define(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	//assert.SolvingSucceeded(
-	//	&circuit, &witness, test.WithBackends(backend.GROTH16),
-	//	test.WithCurves(ecc.BN254),
-	//	test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
-
-	assert.ProverSucceeded(&circuit, &witness, test.WithBackends(backend.GROTH16),
+	assert.SolvingSucceeded(
+		&circuit, &witness, test.WithBackends(backend.GROTH16),
 		test.WithCurves(ecc.BN254),
 		test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
+
+	//assert.ProverSucceeded(&circuit, &witness, test.WithBackends(backend.GROTH16),
+	//	test.WithCurves(ecc.BN254),
+	//	test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
 }
