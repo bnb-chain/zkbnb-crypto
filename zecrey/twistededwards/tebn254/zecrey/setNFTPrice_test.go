@@ -50,11 +50,11 @@ func TestSetNftPriceProof_Verify(t *testing.T) {
 		t.Error(err)
 	}
 	elapse := time.Now()
-	withdrawProof, err := ProveSetNftPrice(relation)
+	oProof, err := ProveSetNftPrice(relation)
 	if err != nil {
 		t.Error(err)
 	}
-	proofStr := withdrawProof.String()
+	proofStr := oProof.String()
 	proof, err := ParseSetNftPriceProofStr(proofStr)
 	if err != nil {
 		t.Fatal(err)

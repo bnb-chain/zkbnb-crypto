@@ -190,7 +190,7 @@ func VerifySwapProof(
 	}
 	tProofs[0] = SetTProof(C_uAPrimeNeg, proof.A_T_uAC_uARPrimeInv, proof.Z_bar_r_A, proof.T_uA)
 	tProofs[1] = SetTProof(C_feePrimeNeg, proof.A_T_feeC_feeRPrimeInv, proof.Z_bar_r_fee, proof.T_fee)
-	for i := 1; i < MaxRangeProofCount; i++ {
+	for i := 2; i < MaxRangeProofCount; i++ {
 		tProofs[i] = tProofs[0]
 	}
 	return c, pkProofs, tProofs

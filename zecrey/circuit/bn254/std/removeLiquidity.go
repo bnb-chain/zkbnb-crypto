@@ -159,7 +159,7 @@ func VerifyRemoveLiquidityProof(
 	}
 	tProofs[0] = SetTProof(C_uLPPrimeNeg, proof.A_T_uLPC_uLPRPrimeInv, proof.Z_bar_r_LP, proof.T_uLP)
 	tProofs[1] = SetTProof(C_feePrimeNeg, proof.A_T_feeC_feeRPrimeInv, proof.Z_bar_r_fee, proof.T_fee)
-	for i := 1; i < MaxRangeProofCount; i++ {
+	for i := 2; i < MaxRangeProofCount; i++ {
 		tProofs[i] = tProofs[0]
 	}
 	// set proof deltas

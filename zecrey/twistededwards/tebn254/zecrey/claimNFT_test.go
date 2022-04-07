@@ -49,11 +49,11 @@ func TestMintNftProof_Verify(t *testing.T) {
 		t.Error(err)
 	}
 	elapse := time.Now()
-	withdrawProof, err := ProveClaimNft(relation)
+	oProof, err := ProveClaimNft(relation)
 	if err != nil {
 		t.Error(err)
 	}
-	proofStr := withdrawProof.String()
+	proofStr := oProof.String()
 	proof, err := ParseClaimNftProofStr(proofStr)
 	if err != nil {
 		t.Fatal(err)

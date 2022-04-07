@@ -144,7 +144,7 @@ func VerifyTransaction(
 	tx.WithdrawProof.IsEnabled = isWithdrawTx
 
 	isCheckAccount := api.IsZero(isNoopTx)
-	// TODO verify range proofs
+	// verify range proofs
 	for i, rangeProof := range tx.RangeProofs {
 		// set range proof is true
 		isNoRangeTx := api.Or(isDepositTx, isLockTx)

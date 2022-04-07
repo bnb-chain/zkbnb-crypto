@@ -1,20 +1,3 @@
-/*
- * Copyright © 2021 Zecrey Protocol
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package std
 
 import (
@@ -26,8 +9,7 @@ import (
 	"log"
 )
 
-// WithdrawProof in circuit
-type WithdrawProofConstraints struct {
+type BuyNftProofConstraints struct {
 	// commitments
 	A_pk, A_TDivCRprime Point
 	// response
@@ -36,27 +18,27 @@ type WithdrawProofConstraints struct {
 	//BPrimeRangeProof      CtRangeProofConstraints
 	//GasFeePrimeRangeProof CtRangeProofConstraints
 	// common inputs
-	BStar       Variable
-	C           ElGamalEncConstraints
-	T, Pk       Point
-	ReceiveAddr Variable
-	AssetId     Variable
-	ChainId     Variable
-	C_Delta     ElGamalEncConstraints
+	C              ElGamalEncConstraints
+	T, Pk          Point
+	NftContentHash Variable
+	AssetId        Variable
+	AssetAmount    Variable
+	FeeRate        Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
 	C_fee                 ElGamalEncConstraints
-	C_fee_DeltaForFrom    ElGamalEncConstraints
-	C_fee_DeltaForGas     ElGamalEncConstraints
 	T_fee                 Point
 	GasFeeAssetId         Variable
 	GasFee                Variable
+	C_Delta               ElGamalEncConstraints
+	C_fee_DeltaForFrom    ElGamalEncConstraints
+	C_fee_DeltaForGas     ElGamalEncConstraints
 	IsEnabled             Variable
 }
 
 // define tests for verifying the withdraw proof
-func (circuit WithdrawProofConstraints) Define(api API) error {
+func (circuit BuyNftProofConstraints) Define(api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(api, tedwards.BN254)
@@ -74,7 +56,7 @@ func (circuit WithdrawProofConstraints) Define(api API) error {
 		return err
 	}
 	tool := NewEccTool(api, params)
-	VerifyWithdrawProof(tool, api, &circuit, hFunc, H)
+	VerifyBuyNftProof(tool, api, &circuit, hFunc, H)
 	return nil
 }
 
@@ -84,10 +66,10 @@ func (circuit WithdrawProofConstraints) Define(api API) error {
 	@proof: withdraw proof circuit
 	@params: params for the curve tebn254
 */
-func VerifyWithdrawProof(
+func VerifyBuyNftProof(
 	tool *EccTool,
 	api API,
-	proof *WithdrawProofConstraints,
+	proof *BuyNftProofConstraints,
 	hFunc MiMC,
 	h Point,
 ) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
@@ -102,7 +84,7 @@ func VerifyWithdrawProof(
 		hNeg Point
 	)
 	hNeg = tool.Neg(h)
-	deltaBalance := api.Add(proof.BStar, deltaFeeForFrom)
+	deltaBalance := api.Add(proof.AssetAmount, deltaFeeForFrom)
 	C_Delta := ElGamalEncConstraints{
 		CL: tool.ZeroPoint(),
 		CR: tool.ScalarMul(hNeg, deltaBalance),
@@ -121,12 +103,13 @@ func VerifyWithdrawProof(
 	C_feePrime := tool.EncAdd(proof.C_fee, C_fee_DeltaForFrom)
 	C_feePrimeNeg := tool.NegElgamal(C_feePrime)
 	hFunc.Write(FixedCurveParam(api))
-	hFunc.Write(proof.ReceiveAddr)
 	WriteEncIntoBuf(&hFunc, proof.C_fee)
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
+	hFunc.Write(proof.NftContentHash)
 	hFunc.Write(proof.AssetId)
-	hFunc.Write(proof.ChainId)
+	hFunc.Write(proof.AssetAmount)
+	hFunc.Write(proof.FeeRate)
 	// gas fee
 	WriteEncIntoBuf(&hFunc, proof.C)
 	WritePointIntoBuf(&hFunc, proof.T)
@@ -170,8 +153,7 @@ func VerifyWithdrawProof(
 	return c, pkProofs, tProofs
 }
 
-func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
-
+func SetEmptyBuyNftProofWitness() (witness BuyNftProofConstraints) {
 	// commitments
 	witness.A_pk, _ = SetPointWitness(BasePoint)
 	witness.A_TDivCRprime, _ = SetPointWitness(BasePoint)
@@ -180,14 +162,13 @@ func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
 	witness.Z_sk = ZeroInt
 	witness.Z_skInv = ZeroInt
 	// common inputs
-	witness.BStar = ZeroInt
 	witness.C, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.T, _ = SetPointWitness(BasePoint)
 	witness.Pk, _ = SetPointWitness(BasePoint)
-	witness.ReceiveAddr = ZeroInt
-	witness.ChainId = ZeroInt
+	witness.NftContentHash = ZeroInt
 	witness.AssetId = ZeroInt
-	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.AssetAmount = ZeroInt
+	witness.FeeRate = ZeroInt
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, _ = SetPointWitness(BasePoint)
 	witness.Z_bar_r_fee = ZeroInt
@@ -202,21 +183,21 @@ func SetEmptyWithdrawProofWitness() (witness WithdrawProofConstraints) {
 }
 
 // set the witness for withdraw proof
-func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witness WithdrawProofConstraints, err error) {
+func SetBuyNftProofWitness(proof *zecrey.BuyNftProof, isEnabled bool) (witness BuyNftProofConstraints, err error) {
 	if proof == nil {
-		log.Println("[SetWithdrawProofWitness] invalid params")
+		log.Println("[SetBuyNftProofWitness] invalid params")
 		return witness, err
 	}
 
 	// proof must be correct
 	verifyRes, err := proof.Verify()
 	if err != nil {
-		log.Println("[SetWithdrawProofWitness] invalid proof:", err)
+		log.Println("[SetBuyNftProofWitness] invalid proof:", err)
 		return witness, err
 	}
 	if !verifyRes {
-		log.Println("[SetWithdrawProofWitness] invalid proof")
-		return witness, errors.New("[SetWithdrawProofWitness] invalid proof")
+		log.Println("[SetBuyNftProofWitness] invalid proof")
+		return witness, errors.New("[SetBuyNftProofWitness] invalid proof")
 	}
 	// commitments
 	witness.A_pk, err = SetPointWitness(proof.A_pk)
@@ -232,7 +213,6 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	witness.Z_sk = proof.Z_sk
 	witness.Z_skInv = proof.Z_skInv
 	// common inputs
-	witness.BStar = proof.BStar
 	witness.C, err = SetElGamalEncWitness(proof.C)
 	if err != nil {
 		return witness, err
@@ -245,10 +225,10 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	if err != nil {
 		return witness, err
 	}
-	witness.ReceiveAddr = proof.ReceiveAddr
+	witness.NftContentHash = proof.NftContentHash
 	witness.AssetId = uint64(proof.AssetId)
-	witness.ChainId = uint64(proof.ChainId)
-	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
+	witness.AssetAmount = proof.AssetAmount
+	witness.FeeRate = proof.FeeRate
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
 	if err != nil {
@@ -270,6 +250,7 @@ func SetWithdrawProofWitness(proof *zecrey.WithdrawProof, isEnabled bool) (witne
 	//	return witness, err
 	//}
 	// common inputs
+	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
