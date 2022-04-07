@@ -46,6 +46,10 @@ type (
 	AddLiquidityProof    = zecrey.AddLiquidityProof
 	RemoveLiquidityProof = zecrey.RemoveLiquidityProof
 	WithdrawProof        = zecrey.WithdrawProof
+	ClaimNftProof        = zecrey.ClaimNftProof
+	SetNftPriceProof     = zecrey.SetNftPriceProof
+	BuyNftProof          = zecrey.BuyNftProof
+	WithdrawNftProof     = zecrey.WithdrawNftProof
 
 	CtRangeProofConstraints         = std.CtRangeProofConstraints
 	DepositOrLockTxConstraints      = std.DepositOrLockTxConstraints

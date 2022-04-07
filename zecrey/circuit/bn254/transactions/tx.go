@@ -28,6 +28,10 @@ type Tx struct {
 	AddLiquidityProofInfo    *AddLiquidityProof
 	RemoveLiquidityProofInfo *RemoveLiquidityProof
 	WithdrawProofInfo        *WithdrawProof
+	ClaimNftProofInfo        *ClaimNftProof
+	SetNftPriceProofInfo     *SetNftPriceProof
+	BuyNftProofInfo          *BuyNftProof
+	WithdrawNftProofInfo     *WithdrawNftProof
 	// account root before
 	AccountRootBefore []byte
 	// account before info, size is 4

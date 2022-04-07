@@ -71,6 +71,26 @@ func EmptyAccountLiquidity() *AccountLiquidity {
 	}
 }
 
+type AccountNft struct {
+	NftIndex       uint64
+	CreatorIndex   uint64
+	NftContentHash []byte
+	AssetId        uint64
+	AssetAmount    uint64
+	ChainId        uint64
+}
+
+func EmptyAccountNft() *AccountNft {
+	return &AccountNft{
+		NftIndex:       std.ZeroInt,
+		CreatorIndex:   std.ZeroInt,
+		NftContentHash: []byte{},
+		AssetId:        std.ZeroInt,
+		AssetAmount:    std.ZeroInt,
+		ChainId:        std.ZeroInt,
+	}
+}
+
 type Account struct {
 	AccountIndex            uint64
 	AccountName             *big.Int
@@ -82,6 +102,7 @@ type Account struct {
 	AssetsInfo              [NbAccountAssetsPerAccount]*AccountAsset
 	LockedAssetInfo         *AccountAssetLock
 	LiquidityInfo           *AccountLiquidity
+	NftInfo                 *AccountNft
 }
 
 func EmptyAccount(nilHash []byte) *Account {
@@ -100,5 +121,6 @@ func EmptyAccount(nilHash []byte) *Account {
 		},
 		LockedAssetInfo: EmptyAccountAssetLock(),
 		LiquidityInfo:   EmptyAccountLiquidity(),
+		NftInfo:         EmptyAccountNft(),
 	}
 }
