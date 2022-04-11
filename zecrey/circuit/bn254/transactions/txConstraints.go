@@ -462,8 +462,12 @@ func VerifyTransaction(
 	deltas = SelectDeltas(api, isRemoveLiquidityTx, deltasCheck, deltas)
 	deltasCheck = GetAccountDeltasFromWithdrawProof(api, tool, tx.WithdrawProof)
 	deltas = SelectDeltas(api, isWithdrawTx, deltasCheck, deltas)
-	deltasCheck, nftDeltas = GetAccountDeltasFromMintNftProof(api, tool, tx.MintNftProof)
+	// nft related
+	deltasCheck, nftDeltas = GetAccountDeltasFromDepositNftProof(api, tool, tx.DepositNftTxInfo)
+	deltas = SelectDeltas(api, isDepositNftTx, deltasCheck, deltas)
+	deltasCheck, nftDeltasCheck = GetAccountDeltasFromMintNftProof(api, tool, tx.MintNftProof)
 	deltas = SelectDeltas(api, isMintNftTx, deltasCheck, deltas)
+	nftDeltas = SelectNftDeltas(api, isMintNftTx, nftDeltasCheck, nftDeltas)
 	deltasCheck, nftDeltasCheck = GetAccountDeltasFromTransferNftProof(api, tool, tx.TransferNftProof)
 	deltas = SelectDeltas(api, isTransferNftTx, deltasCheck, deltas)
 	nftDeltas = SelectNftDeltas(api, isTransferNftTx, nftDeltasCheck, nftDeltas)

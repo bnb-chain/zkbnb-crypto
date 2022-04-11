@@ -532,6 +532,43 @@ func GetAccountDeltasFromWithdrawProof(
 	return deltas
 }
 
+func GetAccountDeltasFromDepositNftProof(
+	api API, tool *EccTool,
+	proof DepositNftTxConstraints,
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+	// from account
+	// from asset
+	deltas[0] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			tool.ZeroElgamalEnc(),
+			tool.ZeroElgamalEnc(),
+			tool.ZeroElgamalEnc(),
+		},
+		// locked asset
+		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	deltas[1] = deltas[0]
+	deltas[2] = deltas[0]
+	deltas[3] = deltas[0]
+	nftDeltas[0] = NftDeltaConstraints{
+		NftContentHash: proof.NftContentHash,
+		AssetId:        std.DefaultInt,
+		AssetAmount:    std.DefaultInt,
+	}
+	for i := 1; i < NbAccountsPerTx; i++ {
+		nftDeltas[i] = nftDeltas[0]
+	}
+	return deltas, nftDeltas
+}
+
 func GetAccountDeltasFromMintNftProof(
 	api API, tool *EccTool,
 	proof ClaimNftProofConstraints,
