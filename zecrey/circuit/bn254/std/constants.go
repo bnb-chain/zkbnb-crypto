@@ -48,6 +48,7 @@ var (
 	HY, _          = new(big.Int).SetString(curve.H.Y.String(), 10)
 	BasePoint      = curve.G
 	ZeroInt        = uint64(0)
+	DefaultInt     = int64(-1)
 	ZeroBigInt     = big.NewInt(0)
 	ZeroElgamalEnc = &ElgamalEnc{CL: BasePoint, CR: BasePoint}
 	ZeroPoint      = curve.ZeroPoint()

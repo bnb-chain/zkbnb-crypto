@@ -26,7 +26,6 @@ import (
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
-	"math/big"
 )
 
 type (
@@ -84,6 +83,8 @@ const (
 	LockedAssetMerkleHelperLevels = LockedAssetMerkleLevels - 1
 	LiquidityMerkleLevels         = 17
 	LiquidityMerkleHelperLevels   = LiquidityMerkleLevels - 1
+	NftMerkleLevels               = 33
+	NftMerkleHelperLevels         = NftMerkleLevels - 1
 	NbTransferCount               = std.NbTransferCount
 	NbTransferCountAndFee         = NbTransferCount + 1
 	NbSwapCount                   = 2
@@ -155,9 +156,32 @@ const (
 	WithdrawFromAccountAsset    = 0
 	WithdrawFromAccountGasAsset = 1
 	WithdrawGasAccount          = 1
+	// deposit nft related account index
+	// mint nft related account index
+	MintNftFromAccount         = 0
+	MintNftFromAccountGasAsset = 0
+	MintNftGasAccount          = 1
+	MintNftToAccount           = 2
+	// transfer nft related account index
+	TransferNftFromAccount         = 0
+	TransferNftFromAccountGasAsset = 0
+	TransferNftGasAccount          = 1
+	// set nft price related account index
+	SetNftPriceFromAccount         = 0
+	SetNftPriceFromAccountGasAsset = 0
+	SetNftPriceGasAccount          = 1
+	// buy nft related account index
+	BuyNftFromAccount         = 0
+	BuyNftFromAccountAsset    = 0
+	BuyNftFromAccountGasAsset = 1
+	BuyNftGasAccount          = 1
+	BuyNftToAccount           = 2
+	// withdraw nft related account index
+	WithdrawNftFromAccount         = 0
+	WithdrawNftFromAccountGasAsset = 0
+	WithdrawNftGasAccount          = 1
 )
 
 var (
-	NilHash     = merkleTree.NilHash
-	NilHashFull = new(big.Int).SetBytes(NilHash).FillBytes(make([]byte, PointSize))
+	NilHash = merkleTree.NilHash
 )

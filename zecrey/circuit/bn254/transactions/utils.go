@@ -19,7 +19,6 @@ package transactions
 
 import (
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
-	"math/big"
 )
 
 func SelectCommonPart(
@@ -60,6 +59,19 @@ func SelectDeltas(
 			std.SelectElgamal(api, flag, deltas[i].LiquidityDeltaInfo.LpEncDelta, deltasCheck[i].LiquidityDeltaInfo.LpEncDelta)
 	}
 	return deltasRes
+}
+
+func SelectNftDeltas(
+	api API,
+	flag Variable,
+	deltas, deltasCheck [NbAccountsPerTx]NftDeltaConstraints,
+) (nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+	for i := 0; i < NbAccountsPerTx; i++ {
+		nftDeltas[i].NftContentHash = api.Select(flag, deltas[i].NftContentHash, deltasCheck[i].NftContentHash)
+		nftDeltas[i].AssetId = api.Select(flag, deltas[i].AssetId, deltasCheck[i].AssetId)
+		nftDeltas[i].AssetAmount = api.Select(flag, deltas[i].AssetAmount, deltasCheck[i].AssetAmount)
+	}
+	return nftDeltas
 }
 
 func GetAccountDeltasFromDepositTx(
@@ -520,11 +532,305 @@ func GetAccountDeltasFromWithdrawProof(
 	return deltas
 }
 
-func SetFixed32Bytes(buf []byte) [32]byte {
-	newBuf := new(big.Int).SetBytes(buf).FillBytes(make([]byte, 32))
-	var res [32]byte
-	if len(buf) != 0 {
-		copy(res[:], newBuf[:])
+func GetAccountDeltasFromMintNftProof(
+	api API, tool *EccTool,
+	proof ClaimNftProofConstraints,
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+	// from account
+	// from asset
+	deltas[MintNftFromAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			proof.C_fee_DeltaForFrom,
+			proof.C_fee_DeltaForFrom,
+			proof.C_fee_DeltaForFrom,
+		},
+		// locked asset
+		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
 	}
-	return res
+	// gas account
+	deltas[MintNftGasAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			proof.C_fee_DeltaForGas,
+			proof.C_fee_DeltaForGas,
+			proof.C_fee_DeltaForGas,
+		},
+		LockedAssetDeltaInfo: std.ZeroInt,
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	deltas[2] = deltas[0]
+	deltas[3] = deltas[0]
+	nftDeltas[MintNftFromAccount] = NftDeltaConstraints{
+		NftContentHash: proof.NftContentHash,
+		AssetId:        std.DefaultInt,
+		AssetAmount:    std.DefaultInt,
+	}
+	for i := MintNftFromAccount + 1; i < NbAccountsPerTx; i++ {
+		nftDeltas[i] = nftDeltas[0]
+	}
+	return deltas, nftDeltas
+}
+
+func GetAccountDeltasFromTransferNftProof(
+	api API, tool *EccTool,
+	proof ClaimNftProofConstraints,
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+	// from account
+	// from asset
+	deltas[MintNftFromAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			proof.C_fee_DeltaForFrom,
+			proof.C_fee_DeltaForFrom,
+			proof.C_fee_DeltaForFrom,
+		},
+		// locked asset
+		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	// gas account
+	deltas[MintNftGasAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			proof.C_fee_DeltaForGas,
+			proof.C_fee_DeltaForGas,
+			proof.C_fee_DeltaForGas,
+		},
+		LockedAssetDeltaInfo: std.ZeroInt,
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	deltas[MintNftToAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			tool.ZeroElgamalEnc(),
+			tool.ZeroElgamalEnc(),
+			tool.ZeroElgamalEnc(),
+		},
+		LockedAssetDeltaInfo: std.ZeroInt,
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	deltas[3] = deltas[0]
+	nftDeltas[MintNftFromAccount] = NftDeltaConstraints{
+		NftContentHash: NilHash,
+		AssetId:        std.DefaultInt,
+		AssetAmount:    std.DefaultInt,
+	}
+	nftDeltas[MintNftGasAccount] = nftDeltas[0]
+	nftDeltas[MintNftToAccount] = NftDeltaConstraints{
+		NftContentHash: proof.NftContentHash,
+		AssetId:        std.DefaultInt,
+		AssetAmount:    std.DefaultInt,
+	}
+	nftDeltas[3] = nftDeltas[0]
+	return deltas, nftDeltas
+}
+
+func GetAccountDeltasFromSetNftPriceProof(
+	api API, tool *EccTool,
+	proof SetNftPriceProofConstraints,
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+	// from account
+	// from asset
+	deltas[SetNftPriceFromAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			proof.C_fee_DeltaForFrom,
+			proof.C_fee_DeltaForFrom,
+			proof.C_fee_DeltaForFrom,
+		},
+		// locked asset
+		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	// gas account
+	deltas[SetNftPriceGasAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			proof.C_fee_DeltaForGas,
+			proof.C_fee_DeltaForGas,
+			proof.C_fee_DeltaForGas,
+		},
+		LockedAssetDeltaInfo: std.ZeroInt,
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	deltas[2] = deltas[0]
+	deltas[3] = deltas[0]
+	nftDeltas[SetNftPriceFromAccount] = NftDeltaConstraints{
+		NftContentHash: proof.NftContentHash,
+		AssetId:        proof.AssetId,
+		AssetAmount:    proof.AssetAmount,
+	}
+	for i := SetNftPriceFromAccount + 1; i < NbAccountsPerTx; i++ {
+		nftDeltas[i] = nftDeltas[0]
+	}
+	return deltas, nftDeltas
+}
+
+func GetAccountDeltasFromBuyNftProof(
+	api API, tool *EccTool,
+	proof BuyNftProofConstraints,
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+	// from account
+	// from asset
+	deltas[BuyNftFromAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			proof.C_Delta,
+			proof.C_fee_DeltaForFrom,
+			proof.C_Delta,
+		},
+		// locked asset
+		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	// gas account
+	deltas[BuyNftGasAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			proof.C_fee_DeltaForGas,
+			proof.C_fee_DeltaForGas,
+			proof.C_fee_DeltaForGas,
+		},
+		LockedAssetDeltaInfo: std.ZeroInt,
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	deltas[BuyNftToAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			tool.ZeroElgamalEnc(),
+			tool.ZeroElgamalEnc(),
+			tool.ZeroElgamalEnc(),
+		},
+		LockedAssetDeltaInfo: std.ZeroInt,
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	deltas[3] = deltas[0]
+	nftDeltas[BuyNftFromAccount] = NftDeltaConstraints{
+		NftContentHash: NilHash,
+		AssetId:        std.DefaultInt,
+		AssetAmount:    std.DefaultInt,
+	}
+	nftDeltas[BuyNftToAccount] = NftDeltaConstraints{
+		NftContentHash: proof.NftContentHash,
+		AssetId:        std.DefaultInt,
+		AssetAmount:    std.DefaultInt,
+	}
+	nftDeltas[2] = nftDeltas[0]
+	nftDeltas[3] = nftDeltas[0]
+	return deltas, nftDeltas
+}
+
+func GetAccountDeltasFromWithdrawNftProof(
+	api API, tool *EccTool,
+	proof WithdrawNftProofConstraints,
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+	// from account
+	// from asset
+	deltas[WithdrawNftFromAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			proof.C_fee_DeltaForFrom,
+			proof.C_fee_DeltaForFrom,
+			proof.C_fee_DeltaForFrom,
+		},
+		// locked asset
+		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	// gas account
+	deltas[WithdrawNftGasAccount] = AccountDeltaConstraints{
+		AssetsDeltaInfo: [3]ElGamalEncConstraints{
+			// gas asset
+			proof.C_fee_DeltaForGas,
+			proof.C_fee_DeltaForGas,
+			proof.C_fee_DeltaForGas,
+		},
+		LockedAssetDeltaInfo: std.ZeroInt,
+		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+			AssetADelta:  std.ZeroInt,
+			AssetBDelta:  std.ZeroInt,
+			AssetARDelta: std.ZeroInt,
+			AssetBRDelta: std.ZeroInt,
+			LpEncDelta:   tool.ZeroElgamalEnc(),
+		},
+	}
+	deltas[2] = deltas[0]
+	deltas[3] = deltas[0]
+	nftDeltas[WithdrawNftFromAccount] = NftDeltaConstraints{
+		NftContentHash: NilHash,
+		AssetId:        std.DefaultInt,
+		AssetAmount:    std.DefaultInt,
+	}
+	for i := 1; i < NbAccountsPerTx; i++ {
+		nftDeltas[i] = nftDeltas[0]
+	}
+	return deltas, nftDeltas
 }

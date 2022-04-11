@@ -29,7 +29,6 @@ type WithdrawNftProofConstraints struct {
 	T_fee                 Point
 	GasFeeAssetId         Variable
 	GasFee                Variable
-	C_Delta               ElGamalEncConstraints
 	C_fee_DeltaForFrom    ElGamalEncConstraints
 	C_fee_DeltaForGas     ElGamalEncConstraints
 	IsEnabled             Variable
@@ -146,7 +145,6 @@ func SetEmptyWithdrawNftProofWitness() (witness WithdrawNftProofConstraints) {
 	witness.T_fee, _ = SetPointWitness(BasePoint)
 	witness.GasFeeAssetId = ZeroInt
 	witness.GasFee = ZeroInt
-	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)
@@ -207,7 +205,6 @@ func SetWithdrawNftProofWitness(proof *zecrey.WithdrawNftProof, isEnabled bool) 
 	//	return witness, err
 	//}
 	// common inputs
-	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)

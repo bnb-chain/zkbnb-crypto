@@ -99,6 +99,7 @@ type Account struct {
 	AccountAssetsRoot       []byte
 	AccountLockedAssetsRoot []byte
 	AccountLiquidityRoot    []byte
+	AccountNftRoot          []byte
 	AssetsInfo              [NbAccountAssetsPerAccount]*AccountAsset
 	LockedAssetInfo         *AccountAssetLock
 	LiquidityInfo           *AccountLiquidity
@@ -114,6 +115,7 @@ func EmptyAccount(nilHash []byte) *Account {
 		AccountAssetsRoot:       nilHash,
 		AccountLockedAssetsRoot: nilHash,
 		AccountLiquidityRoot:    nilHash,
+		AccountNftRoot:          nilHash,
 		AssetsInfo: [NbAccountAssetsPerAccount]*AccountAsset{
 			EmptyAccountAsset(),
 			EmptyAccountAsset(),

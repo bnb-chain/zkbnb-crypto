@@ -46,6 +46,9 @@ type Tx struct {
 	// before account liquidity merkle proof
 	MerkleProofsAccountLiquidityBefore       [NbAccountsPerTx][LiquidityMerkleLevels][]byte
 	MerkleProofsHelperAccountLiquidityBefore [NbAccountsPerTx][LiquidityMerkleHelperLevels]int
+	// before account nft tree merkle proof
+	MerkleProofsAccountNftBefore       [NbAccountsPerTx][NftMerkleLevels][]byte
+	MerkleProofsHelperAccountNftBefore [NbAccountsPerTx][NftMerkleHelperLevels]int
 	// before account merkle proof
 	MerkleProofsAccountBefore       [NbAccountsPerTx][AccountMerkleLevels][]byte
 	MerkleProofsHelperAccountBefore [NbAccountsPerTx][AccountMerkleHelperLevels]int
@@ -62,6 +65,9 @@ type Tx struct {
 	// after account liquidity merkle proof
 	MerkleProofsAccountLiquidityAfter       [NbAccountsPerTx][LiquidityMerkleLevels][]byte
 	MerkleProofsHelperAccountLiquidityAfter [NbAccountsPerTx][LiquidityMerkleHelperLevels]int
+	// after account nft tree merkle proof
+	MerkleProofsAccountNftAfter       [NbAccountsPerTx][NftMerkleLevels][]byte
+	MerkleProofsHelperAccountNftAfter [NbAccountsPerTx][NftMerkleHelperLevels]int
 	// after account merkle proof
 	MerkleProofsAccountAfter       [NbAccountsPerTx][AccountMerkleLevels][]byte
 	MerkleProofsHelperAccountAfter [NbAccountsPerTx][AccountMerkleHelperLevels]int

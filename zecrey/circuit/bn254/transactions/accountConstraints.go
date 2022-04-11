@@ -41,12 +41,17 @@ type AccountConstraints struct {
 	LockedAssetInfo AccountAssetLockConstraints
 	// liquidity assets info for each account per tx
 	LiquidityInfo AccountLiquidityConstraints
+	// nft info
+	NftInfo AccountNftConstraints
+
 	// account assets root
 	AccountAssetsRoot Variable
 	// account locked assets root
 	AccountLockedAssetsRoot Variable
 	// account liquidity root
 	AccountLiquidityRoot Variable
+	// nft tree root
+	AccountNftRoot Variable
 }
 
 /*
@@ -104,6 +109,24 @@ func IsAccountLiquidityConstraintsEqual(api API, flag Variable, a, b AccountLiqu
 	std.IsElGamalEncEqual(api, flag, a.LpEnc, b.LpEnc)
 }
 
+type AccountNftConstraints struct {
+	NftIndex       Variable
+	CreatorIndex   Variable
+	NftContentHash Variable
+	AssetId        Variable
+	AssetAmount    Variable
+	ChainId        Variable
+}
+
+/*
+	IsAccountNftConstraintsEqual: TODO compare if two IsAccountNftConstraints are the same
+*/
+func IsAccountNftConstraintsEqual(api API, flag Variable, a, b AccountNftConstraints) {
+	std.IsVariableEqual(api, flag, a.NftContentHash, b.NftContentHash)
+	std.IsVariableEqual(api, flag, a.AssetId, b.AssetId)
+	std.IsVariableEqual(api, flag, a.AssetAmount, b.AssetAmount)
+}
+
 /*
 	AccountDeltaConstraints: delta balance for each account
 */
@@ -125,6 +148,13 @@ type AccountLiquidityDeltaConstraints struct {
 	AssetARDelta Variable
 	AssetBRDelta Variable
 	LpEncDelta   ElGamalEncConstraints
+}
+
+type NftDeltaConstraints struct {
+	NftContentHash Variable
+	AssetId        Variable
+	AssetAmount    Variable
+	ChainId        Variable
 }
 
 /*
@@ -162,6 +192,7 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 	witness.AccountAssetsRoot = account.AccountAssetsRoot
 	witness.AccountLockedAssetsRoot = account.AccountLockedAssetsRoot
 	witness.AccountLiquidityRoot = account.AccountLiquidityRoot
+	witness.AccountNftRoot = account.AccountNftRoot
 	// set asset info
 	for i, asset := range account.AssetsInfo {
 		witness.AssetsInfo[i], err = SetAccountAssetWitness(asset)
