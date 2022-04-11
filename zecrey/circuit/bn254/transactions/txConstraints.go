@@ -46,6 +46,13 @@ type TxConstraints struct {
 	RemoveLiquidityProof RemoveLiquidityProofConstraints
 	// withdraw proof
 	WithdrawProof WithdrawProofConstraints
+	// nft proof
+	DepositNftTxInfo DepositNftTxConstraints
+	MintNftProof     ClaimNftProofConstraints
+	TransferNftProof ClaimNftProofConstraints
+	SetNftPriceProof SetNftPriceProofConstraints
+	BuyNftProof      BuyNftProofConstraints
+	WithdrawNftProof WithdrawNftProofConstraints
 	// common verification part
 	// range proofs
 	RangeProofs [MaxRangeProofCount]CtRangeProofConstraints
@@ -113,35 +120,36 @@ func VerifyTransaction(
 	h Point,
 	nilHash Variable,
 ) {
-	// txType constants
-	txTypeNoop := uint64(TxTypeNoop)
-	txTypeDeposit := uint64(TxTypeDeposit)
-	txTypeLock := uint64(TxTypeLock)
-	txTypeUnlock := uint64(TxTypeUnlock)
-	txTypeTransfer := uint64(TxTypeTransfer)
-	txTypeSwap := uint64(TxTypeSwap)
-	txTypeAddLiquidity := uint64(TxTypeAddLiquidity)
-	txTypeRemoveLiquidity := uint64(TxTypeRemoveLiquidity)
-	txTypeWithdraw := uint64(TxTypeWithdraw)
-
 	// compute tx type
-	isNoopTx := api.IsZero(api.Sub(tx.TxType, txTypeNoop))
-	isDepositTx := api.IsZero(api.Sub(tx.TxType, txTypeDeposit))
+	isNoopTx := api.IsZero(api.Sub(tx.TxType, TxTypeNoop))
+	isDepositTx := api.IsZero(api.Sub(tx.TxType, TxTypeDeposit))
 	tx.DepositTxInfo.IsEnabled = isDepositTx
-	isLockTx := api.IsZero(api.Sub(tx.TxType, txTypeLock))
+	isLockTx := api.IsZero(api.Sub(tx.TxType, TxTypeLock))
 	tx.LockTxInfo.IsEnabled = isLockTx
-	isUnlockTx := api.IsZero(api.Sub(tx.TxType, txTypeUnlock))
+	isUnlockTx := api.IsZero(api.Sub(tx.TxType, TxTypeUnlock))
 	tx.UnlockProof.IsEnabled = isUnlockTx
-	isTransferTx := api.IsZero(api.Sub(tx.TxType, txTypeTransfer))
+	isTransferTx := api.IsZero(api.Sub(tx.TxType, TxTypeTransfer))
 	tx.TransferProof.IsEnabled = isTransferTx
-	isSwapTx := api.IsZero(api.Sub(tx.TxType, txTypeSwap))
+	isSwapTx := api.IsZero(api.Sub(tx.TxType, TxTypeSwap))
 	tx.SwapProof.IsEnabled = isSwapTx
-	isAddLiquidityTx := api.IsZero(api.Sub(tx.TxType, txTypeAddLiquidity))
+	isAddLiquidityTx := api.IsZero(api.Sub(tx.TxType, TxTypeAddLiquidity))
 	tx.AddLiquidityProof.IsEnabled = isAddLiquidityTx
-	isRemoveLiquidityTx := api.IsZero(api.Sub(tx.TxType, txTypeRemoveLiquidity))
+	isRemoveLiquidityTx := api.IsZero(api.Sub(tx.TxType, TxTypeRemoveLiquidity))
 	tx.RemoveLiquidityProof.IsEnabled = isRemoveLiquidityTx
-	isWithdrawTx := api.IsZero(api.Sub(tx.TxType, txTypeWithdraw))
+	isWithdrawTx := api.IsZero(api.Sub(tx.TxType, TxTypeWithdraw))
 	tx.WithdrawProof.IsEnabled = isWithdrawTx
+	isDepositNftTx := api.IsZero(api.Sub(tx.TxType, TxTypeDepositNft))
+	tx.DepositNftTxInfo.IsEnabled = isDepositNftTx
+	isMintNftTx := api.IsZero(api.Sub(tx.TxType, TxTypeMintNft))
+	tx.MintNftProof.IsEnabled = isMintNftTx
+	isTransferNftTx := api.IsZero(api.Sub(tx.TxType, TxTypeTransferNft))
+	tx.TransferNftProof.IsEnabled = isTransferNftTx
+	isSetNftPriceTx := api.IsZero(api.Sub(tx.TxType, TxTypeSetNftPrice))
+	tx.SetNftPriceProof.IsEnabled = isSetNftPriceTx
+	isBuyNftTx := api.IsZero(api.Sub(tx.TxType, TxTypeBuyNft))
+	tx.BuyNftProof.IsEnabled = isBuyNftTx
+	isWithdrawNftTx := api.IsZero(api.Sub(tx.TxType, TxTypeWithdrawNft))
+	tx.WithdrawNftProof.IsEnabled = isWithdrawNftTx
 
 	isCheckAccount := api.IsZero(isNoopTx)
 	// verify range proofs
@@ -351,6 +359,29 @@ func VerifyTransaction(
 	cCheck, pkProofsCheck, tProofsCheck = std.VerifyWithdrawProof(tool, api, &tx.WithdrawProof, hFunc, h)
 	hFunc.Reset()
 	c, pkProofs, tProofs = SelectCommonPart(api, isWithdrawTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
+
+	// TODO verify deposit nft tx
+	// TODO verify mint nft proof
+	cCheck, pkProofsCheck, tProofsCheck = std.VerifyClaimNftProof(tool, api, &tx.MintNftProof, hFunc, h)
+	hFunc.Reset()
+	c, pkProofs, tProofs = SelectCommonPart(api, isMintNftTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
+	// TODO verify transfer nft proof
+	cCheck, pkProofsCheck, tProofsCheck = std.VerifyClaimNftProof(tool, api, &tx.TransferNftProof, hFunc, h)
+	hFunc.Reset()
+	c, pkProofs, tProofs = SelectCommonPart(api, isTransferNftTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
+	// TODO verify set nft price proof
+	cCheck, pkProofsCheck, tProofsCheck = std.VerifySetNftPriceProof(tool, api, &tx.SetNftPriceProof, hFunc, h)
+	hFunc.Reset()
+	c, pkProofs, tProofs = SelectCommonPart(api, isSetNftPriceTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
+	// TODO verify buy nft proof
+	cCheck, pkProofsCheck, tProofsCheck = std.VerifyBuyNftProof(tool, api, &tx.BuyNftProof, hFunc, h)
+	hFunc.Reset()
+	c, pkProofs, tProofs = SelectCommonPart(api, isBuyNftTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
+	// TODO verify withdraw nft proof
+	cCheck, pkProofsCheck, tProofsCheck = std.VerifyWithdrawNftProof(tool, api, &tx.WithdrawNftProof, hFunc, h)
+	hFunc.Reset()
+	c, pkProofs, tProofs = SelectCommonPart(api, isWithdrawNftTx, cCheck, c, pkProofsCheck, pkProofs, tProofsCheck, tProofs)
+
 	// if it's deposit or lock tx, no need to check this part
 	notDepositOrLockTx := api.IsZero(api.Or(isDepositTx, isLockTx))
 	for i := 0; i < MaxRangeProofCount; i++ {
@@ -487,6 +518,12 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.RangeProofs[0] = std.SetEmptyCtRangeProofWitness()
 		witness.RangeProofs[1] = std.SetEmptyCtRangeProofWitness()
 		witness.RangeProofs[2] = std.SetEmptyCtRangeProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
 		break
 	case TxTypeDeposit:
 		// convert to special proof
@@ -507,6 +544,12 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.RangeProofs[0] = std.SetEmptyCtRangeProofWitness()
 		witness.RangeProofs[1] = std.SetEmptyCtRangeProofWitness()
 		witness.RangeProofs[2] = std.SetEmptyCtRangeProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
 		break
 	case TxTypeLock:
 		// convert to special proof
@@ -527,6 +570,12 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.RangeProofs[0] = std.SetEmptyCtRangeProofWitness()
 		witness.RangeProofs[1] = std.SetEmptyCtRangeProofWitness()
 		witness.RangeProofs[2] = std.SetEmptyCtRangeProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
 		break
 	case TxTypeTransfer:
 		// convert to special proof
@@ -551,6 +600,12 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
 		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
 		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
 		break
 	case TxTypeSwap:
 		proof := oTx.SwapProofInfo
@@ -577,6 +632,12 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
 		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
 		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
 		break
 	case TxTypeAddLiquidity:
 		proof := oTx.AddLiquidityProofInfo
@@ -606,6 +667,12 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		}
 		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
 		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
 		break
 	case TxTypeRemoveLiquidity:
 		proof := oTx.RemoveLiquidityProofInfo
@@ -632,6 +699,12 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		}
 		witness.RangeProofs[2] = witness.RangeProofs[0]
 		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
 		break
 	case TxTypeUnlock:
 		proof := oTx.UnlockProofInfo
@@ -655,6 +728,12 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		}
 		witness.RangeProofs[1] = witness.RangeProofs[0]
 		witness.RangeProofs[2] = witness.RangeProofs[0]
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
 		break
 	case TxTypeWithdraw:
 		proof := oTx.WithdrawProofInfo
@@ -680,6 +759,186 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		if err != nil {
 			return witness, err
 		}
+		witness.RangeProofs[2] = witness.RangeProofs[0]
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
+		break
+	case TxTypeDepositNft:
+		proof := oTx.DepositNftTxInfo
+		proofConstraints, err := std.SetDepositNftWitness(proof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		// set witness
+		witness.TxType = uint64(txType)
+		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
+		witness.TransferProof = std.SetEmptyTransferProofWitness()
+		witness.SwapProof = std.SetEmptySwapProofWitness()
+		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
+		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
+		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		witness.RangeProofs[0] = std.SetEmptyCtRangeProofWitness()
+		witness.RangeProofs[1] = witness.RangeProofs[0]
+		witness.RangeProofs[2] = witness.RangeProofs[0]
+		witness.DepositNftTxInfo = proofConstraints
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
+		break
+	case TxTypeMintNft:
+		proof := oTx.MintOrTransferNftProofInfo
+		proofConstraints, err := std.SetClaimNftProofWitness(proof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		// set witness
+		witness.TxType = uint64(txType)
+		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
+		witness.TransferProof = std.SetEmptyTransferProofWitness()
+		witness.SwapProof = std.SetEmptySwapProofWitness()
+		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
+		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
+		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = proofConstraints
+		witness.RangeProofs[0], err = std.SetCtRangeProofWitness(proof.GasFeePrimeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[1] = witness.RangeProofs[0]
+		witness.RangeProofs[2] = witness.RangeProofs[0]
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
+		break
+	case TxTypeTransferNft:
+		proof := oTx.MintOrTransferNftProofInfo
+		proofConstraints, err := std.SetClaimNftProofWitness(proof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		// set witness
+		witness.TxType = uint64(txType)
+		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
+		witness.TransferProof = std.SetEmptyTransferProofWitness()
+		witness.SwapProof = std.SetEmptySwapProofWitness()
+		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
+		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
+		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = proofConstraints
+		witness.RangeProofs[0], err = std.SetCtRangeProofWitness(proof.GasFeePrimeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[1] = witness.RangeProofs[0]
+		witness.RangeProofs[2] = witness.RangeProofs[0]
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
+		break
+	case TxTypeSetNftPrice:
+		proof := oTx.SetNftPriceProofInfo
+		proofConstraints, err := std.SetSetNftPriceProofWitness(proof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		// set witness
+		witness.TxType = uint64(txType)
+		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
+		witness.TransferProof = std.SetEmptyTransferProofWitness()
+		witness.SwapProof = std.SetEmptySwapProofWitness()
+		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
+		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
+		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = proofConstraints
+		witness.RangeProofs[0], err = std.SetCtRangeProofWitness(proof.GasFeePrimeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[1] = witness.RangeProofs[0]
+		witness.RangeProofs[2] = witness.RangeProofs[0]
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
+		break
+	case TxTypeBuyNft:
+		proof := oTx.BuyNftProofInfo
+		proofConstraints, err := std.SetBuyNftProofWitness(proof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		// set witness
+		witness.TxType = uint64(txType)
+		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
+		witness.TransferProof = std.SetEmptyTransferProofWitness()
+		witness.SwapProof = std.SetEmptySwapProofWitness()
+		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
+		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
+		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = proofConstraints
+		witness.RangeProofs[0], err = std.SetCtRangeProofWitness(proof.BPrimeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[1], err = std.SetCtRangeProofWitness(proof.GasFeePrimeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[2] = witness.RangeProofs[0]
+		witness.WithdrawNftProof = std.SetEmptyWithdrawNftProofWitness()
+		break
+	case TxTypeWithdrawNft:
+		proof := oTx.WithdrawNftProofInfo
+		proofConstraints, err := std.SetWithdrawNftProofWitness(proof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		// set witness
+		witness.TxType = uint64(txType)
+		witness.DepositTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.LockTxInfo = std.SetEmptyDepositOrLockWitness()
+		witness.UnlockProof = std.SetEmptyUnlockProofWitness()
+		witness.TransferProof = std.SetEmptyTransferProofWitness()
+		witness.SwapProof = std.SetEmptySwapProofWitness()
+		witness.AddLiquidityProof = std.SetEmptyAddLiquidityProofWitness()
+		witness.RemoveLiquidityProof = std.SetEmptyRemoveLiquidityProofWitness()
+		witness.WithdrawProof = std.SetEmptyWithdrawProofWitness()
+		witness.DepositNftTxInfo = std.SetEmptyDepositNftWitness()
+		witness.MintNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.TransferNftProof = std.SetEmptyClaimNftProofWitness()
+		witness.SetNftPriceProof = std.SetEmptySetNftProofWitness()
+		witness.BuyNftProof = std.SetEmptyBuyNftProofWitness()
+		witness.WithdrawNftProof = proofConstraints
+		witness.RangeProofs[0], err = std.SetCtRangeProofWitness(proof.GasFeePrimeRangeProof, isEnabled)
+		if err != nil {
+			return witness, err
+		}
+		witness.RangeProofs[1] = witness.RangeProofs[0]
 		witness.RangeProofs[2] = witness.RangeProofs[0]
 		break
 	default:

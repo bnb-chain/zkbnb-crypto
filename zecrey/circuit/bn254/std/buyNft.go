@@ -176,6 +176,7 @@ func SetEmptyBuyNftProofWitness() (witness BuyNftProofConstraints) {
 	witness.T_fee, _ = SetPointWitness(BasePoint)
 	witness.GasFeeAssetId = ZeroInt
 	witness.GasFee = ZeroInt
+	witness.C_Delta, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForFrom, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(false)

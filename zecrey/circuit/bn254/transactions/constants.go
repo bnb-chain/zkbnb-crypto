@@ -39,6 +39,7 @@ type (
 	MiMC                  = mimc.MiMC
 
 	DepositOrLockTx      = std.DepositOrLockTx
+	DepositNftTx         = std.DepositNftTx
 	UnlockProof          = zecrey.UnlockProof
 	TransferProof        = zecrey.TransferProof
 	TransferSubProof     = zecrey.TransferSubProof
@@ -60,6 +61,11 @@ type (
 	AddLiquidityProofConstraints    = std.AddLiquidityProofConstraints
 	RemoveLiquidityProofConstraints = std.RemoveLiquidityProofConstraints
 	WithdrawProofConstraints        = std.WithdrawProofConstraints
+	DepositNftTxConstraints         = std.DepositNftTxConstraints
+	ClaimNftProofConstraints        = std.ClaimNftProofConstraints
+	SetNftPriceProofConstraints     = std.SetNftPriceProofConstraints
+	BuyNftProofConstraints          = std.BuyNftProofConstraints
+	WithdrawNftProofConstraints     = std.WithdrawNftProofConstraints
 )
 
 const (
@@ -99,6 +105,12 @@ const (
 	TxTypeAddLiquidity    = 6
 	TxTypeRemoveLiquidity = 7
 	TxTypeWithdraw        = 8
+	TxTypeDepositNft      = 9
+	TxTypeMintNft         = 10
+	TxTypeTransferNft     = 11
+	TxTypeSetNftPrice     = 12
+	TxTypeBuyNft          = 13
+	TxTypeWithdrawNft     = 14
 
 	// deposit or lock
 	DepositFromAccount          = 0

@@ -21,17 +21,18 @@ type Tx struct {
 	// tx type
 	TxType uint8
 	// proof info
-	DepositOrLockTxInfo      *DepositOrLockTx
-	UnlockProofInfo          *UnlockProof
-	TransferProofInfo        *TransferProof
-	SwapProofInfo            *SwapProof
-	AddLiquidityProofInfo    *AddLiquidityProof
-	RemoveLiquidityProofInfo *RemoveLiquidityProof
-	WithdrawProofInfo        *WithdrawProof
-	ClaimNftProofInfo        *ClaimNftProof
-	SetNftPriceProofInfo     *SetNftPriceProof
-	BuyNftProofInfo          *BuyNftProof
-	WithdrawNftProofInfo     *WithdrawNftProof
+	DepositOrLockTxInfo        *DepositOrLockTx
+	UnlockProofInfo            *UnlockProof
+	TransferProofInfo          *TransferProof
+	SwapProofInfo              *SwapProof
+	AddLiquidityProofInfo      *AddLiquidityProof
+	RemoveLiquidityProofInfo   *RemoveLiquidityProof
+	WithdrawProofInfo          *WithdrawProof
+	DepositNftTxInfo           *DepositNftTx
+	MintOrTransferNftProofInfo *ClaimNftProof
+	SetNftPriceProofInfo       *SetNftPriceProof
+	BuyNftProofInfo            *BuyNftProof
+	WithdrawNftProofInfo       *WithdrawNftProof
 	// account root before
 	AccountRootBefore []byte
 	// account before info, size is 4
