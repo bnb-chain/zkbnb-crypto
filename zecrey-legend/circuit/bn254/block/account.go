@@ -15,8 +15,51 @@
  *
  */
 
-package transactions
+package block
 
+import (
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	"math/big"
+)
+
+/*
+	Account: account info
+*/
 type Account struct {
-	
+	AccountIndex      uint64
+	AccountName       *big.Int
+	AccountPk         *eddsa.PublicKey
+	Nonce             uint64
+	StateRoot         []byte
+	AccountAssetsRoot []byte
+	AccountNftRoot    []byte
+	AssetsInfo        [NbAccountAssetsPerAccount]*AccountAsset
+	NftInfo           *AccountNft
+}
+
+/*
+	AccountAsset: asset info
+*/
+type AccountAsset struct {
+	Index      uint64
+	BalanceEnc *big.Int
+	AssetAId   uint64
+	AssetBId   uint64
+	AssetA     *big.Int
+	AssetB     *big.Int
+	LpAmount   *big.Int
+}
+
+/*
+	AccountNft: nft info
+*/
+type AccountNft struct {
+	NftIndex       uint64
+	CreatorIndex   uint64
+	NftContentHash []byte
+	AssetId        uint64
+	AssetAmount    uint64
+	ChainId        uint64
+	L1Address      string
+	L1TokenId      uint64
 }
