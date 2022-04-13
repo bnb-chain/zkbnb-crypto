@@ -163,7 +163,7 @@ func (t *ExportSolidityTestSuite) TestVerifyProof() {
 	// create a valid proof
 	var blockWitness transactions.BlockConstraints
 
-	//tx := transactions.PrepareBlockSmall()
+	//tx := block.PrepareBlockSmall()
 	blockWitness, err = transactions.SetBlockWitness(blockInfo)
 	if err != nil {
 		panic(err)
