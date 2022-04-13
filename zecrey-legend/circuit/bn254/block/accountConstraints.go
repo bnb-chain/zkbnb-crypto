@@ -29,7 +29,6 @@ type AccountConstraints struct {
 	AccountName       Variable
 	AccountPk         eddsa.PublicKey
 	Nonce             Variable
-	StateRoot         Variable
 	AccountAssetsRoot Variable
 	AccountNftRoot    Variable
 	// at most 4 assets changed in one transaction
@@ -38,13 +37,13 @@ type AccountConstraints struct {
 }
 
 type AccountAssetConstraints struct {
-	Index      Variable
-	BalanceEnc Variable
-	AssetAId   Variable
-	AssetBId   Variable
-	AssetA     Variable
-	AssetB     Variable
-	LpAmount   Variable
+	Index    Variable
+	Balance  Variable
+	AssetAId Variable
+	AssetBId Variable
+	AssetA   Variable
+	AssetB   Variable
+	LpAmount Variable
 }
 
 func SetAccountAssetWitness(asset *AccountAsset) (witness AccountAssetConstraints, err error) {
@@ -53,7 +52,7 @@ func SetAccountAssetWitness(asset *AccountAsset) (witness AccountAssetConstraint
 		return witness, errors.New("[SetAccountAssetWitness] invalid params")
 	}
 	witness.Index = asset.Index
-	witness.BalanceEnc = asset.BalanceEnc
+	witness.Balance = asset.BalanceEnc
 	witness.AssetAId = asset.AssetAId
 	witness.AssetBId = asset.AssetBId
 	witness.AssetA = asset.AssetA
@@ -92,9 +91,9 @@ func SetAccountNftWitness(nft *AccountNft) (witness AccountNftConstraints, err e
 }
 
 /*
-	SetAccountConstraints: set account witness
+	SetAccountWitness: set account witness
 */
-func SetAccountConstraints(account *Account) (witness AccountConstraints, err error) {
+func SetAccountWitness(account *Account) (witness AccountConstraints, err error) {
 	if account == nil {
 		log.Println("[SetAccountConstraints] invalid params")
 		return witness, errors.New("[SetAccountConstraints] invalid params")
@@ -117,7 +116,6 @@ func SetAccountConstraints(account *Account) (witness AccountConstraints, err er
 		AccountName:       account.AccountName,
 		AccountPk:         std.SetPubKeyWitness(account.AccountPk),
 		Nonce:             account.Nonce,
-		StateRoot:         account.StateRoot,
 		AccountAssetsRoot: account.AccountAssetsRoot,
 		AccountNftRoot:    account.AccountNftRoot,
 	}

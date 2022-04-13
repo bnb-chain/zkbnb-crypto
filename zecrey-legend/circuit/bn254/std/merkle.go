@@ -17,15 +17,6 @@
 
 package std
 
-// nodeSum returns the hash created from data inserted to form a leaf.
-// Without domain separation.
-func nodeSum(h MiMC, a, b Variable) Variable {
-	h.Write(a)
-	h.Write(b)
-	res := h.Sum()
-	return res
-}
-
 /*
 	VerifyMerkleProof: takes a Merkle root, a proofSet, and a proofIndex and returns
 	 true if the first element of the proof set is a leaf of data in the Merkle
@@ -44,18 +35,11 @@ func VerifyMerkleProof(api API, isEnabled Variable, h MiMC, merkleRoot Variable,
 	IsVariableEqual(api, isEnabled, node, merkleRoot)
 }
 
-func SetMerkleProofsWitness(proofs [][]byte, level int) (witness []Variable) {
-	witness = make([]Variable, level)
-	for i := 0; i < level; i++ {
-		witness[i] = proofs[i]
-	}
-	return witness
-}
-
-func SetMerkleProofsHelperWitness(proofs []int, level int) (witness []Variable) {
-	witness = make([]Variable, level)
-	for i := 0; i < level-1; i++ {
-		witness[i] = proofs[i]
-	}
-	return witness
+// nodeSum returns the hash created from data inserted to form a leaf.
+// Without domain separation.
+func nodeSum(h MiMC, a, b Variable) Variable {
+	h.Write(a)
+	h.Write(b)
+	res := h.Sum()
+	return res
 }

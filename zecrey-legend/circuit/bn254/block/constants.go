@@ -20,7 +20,9 @@ package block
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/hash/mimc"
 	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
+	"github.com/zecrey-labs/zecrey-crypto/accumulators/merkleTree"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
 )
 
@@ -29,6 +31,8 @@ type (
 
 	Signature            = eddsa.Signature
 	SignatureConstraints = eddsaConstraints.Signature
+	API                  = frontend.API
+	MiMC                 = mimc.MiMC
 
 	RegisterZnsTx     = std.RegisterZnsTx
 	DepositTx         = std.DepositTx
@@ -58,6 +62,22 @@ type (
 )
 
 const (
+	TxTypeEmptyTx = iota
+	TxTypeRegisterZns
+	TxTypeDeposit
+	TxTypeDepositNft
+	TxTypeGenericTransfer
+	TxTypeSwap
+	TxTypeAddLiquidity
+	TxTypeRemoveLiquidity
+	TxTypeWithdraw
+	TxTypeMintNft
+	TxTypeSetNftPrice
+	TxTypeBuyNft
+	TxTypeWithdrawNft
+)
+
+const (
 	NbAccountAssetsPerAccount = 4
 	NbAccountsPerTx           = 4
 	AssetMerkleLevels         = 17
@@ -66,4 +86,8 @@ const (
 	NftMerkleHelperLevels     = NftMerkleLevels - 1
 	AccountMerkleLevels       = 33
 	AccountMerkleHelperLevels = AccountMerkleLevels - 1
+)
+
+var (
+	NilHash = merkleTree.NilHash
 )
