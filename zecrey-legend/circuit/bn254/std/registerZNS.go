@@ -58,3 +58,16 @@ func SetRegisterZnsTxWitness(tx *RegisterZnsTx) (witness RegisterZnsTxConstraint
 	}
 	return witness
 }
+
+/*
+	VerifyRegisterZnsTx:
+	accounts order is:
+	- FromAccount
+		- Assets
+			- AssetA
+*/
+func VerifyRegisterZnsTx(api API, flag Variable, tx RegisterZnsTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.AssetId, accountsAfter[0].AssetsInfo[0].AssetId)
+}

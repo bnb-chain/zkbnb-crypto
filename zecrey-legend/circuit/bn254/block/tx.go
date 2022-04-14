@@ -17,6 +17,8 @@
 
 package block
 
+import "github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
+
 type Tx struct {
 	// tx type
 	TxType uint8
@@ -38,10 +40,13 @@ type Tx struct {
 	// account root before
 	AccountRootBefore []byte
 	// account before info, size is 4
-	AccountsInfoBefore [NbAccountsPerTx]*Account
+	AccountsInfoBefore [NbAccountsPerTx]*std.Account
 	// before account asset merkle proof
 	MerkleProofsAccountAssetsBefore       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
 	MerkleProofsHelperAccountAssetsBefore [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]int
+	// before account liquidity merkle proof
+	MerkleProofsAccountLiquidityBefore       [NbAccountsPerTx][LiquidityMerkleLevels][]byte
+	MerkleProofsHelperAccountLiquidityBefore [NbAccountsPerTx][LiquidityMerkleHelperLevels]int
 	// before account nft tree merkle proof
 	MerkleProofsAccountNftBefore       [NbAccountsPerTx][NftMerkleLevels][]byte
 	MerkleProofsHelperAccountNftBefore [NbAccountsPerTx][NftMerkleHelperLevels]int
@@ -51,10 +56,13 @@ type Tx struct {
 	// account root after
 	AccountRootAfter []byte
 	// account after info, size is 4
-	AccountsInfoAfter [NbAccountsPerTx]*Account
+	AccountsInfoAfter [NbAccountsPerTx]*std.Account
 	// after account asset merkle proof
 	MerkleProofsAccountAssetsAfter       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
 	MerkleProofsHelperAccountAssetsAfter [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]int
+	// after account liquidity merkle proof
+	MerkleProofsAccountLiquidityAfter       [NbAccountsPerTx][LiquidityMerkleLevels][]byte
+	MerkleProofsHelperAccountLiquidityAfter [NbAccountsPerTx][LiquidityMerkleHelperLevels]int
 	// after account nft tree merkle proof
 	MerkleProofsAccountNftAfter       [NbAccountsPerTx][NftMerkleLevels][]byte
 	MerkleProofsHelperAccountNftAfter [NbAccountsPerTx][NftMerkleHelperLevels]int

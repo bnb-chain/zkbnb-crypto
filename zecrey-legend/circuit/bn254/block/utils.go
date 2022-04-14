@@ -19,18 +19,12 @@ package block
 
 import "github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
 
-func CompareAccountBeforeAndAfterParams(api API, accountBefore, accountAfter AccountConstraints) {
+func CompareAccountBeforeAndAfterParams(api API, accountBefore, accountAfter std.AccountConstraints) {
 	/*
 		AccountIndex      Variable
 		AccountName       Variable
 		AccountPk         eddsa.PublicKey
 		Nonce             Variable
-		StateRoot         Variable
-		AccountAssetsRoot Variable
-		AccountNftRoot    Variable
-		// at most 4 assets changed in one transaction
-		AssetsInfo [NbAccountAssetsPerAccount]AccountAssetConstraints
-		NftInfo    AccountNftConstraints
 	*/
 	// basic info
 	api.AssertIsEqual(accountBefore.AccountIndex, accountAfter.AccountIndex)
@@ -40,19 +34,15 @@ func CompareAccountBeforeAndAfterParams(api API, accountBefore, accountAfter Acc
 	api.AssertIsEqual(updatedNonce, accountAfter.Nonce)
 	// account assets basic info
 	/*
-		Index    Variable
+		AssetId    Variable
 		Balance  Variable
-		AssetAId Variable
-		AssetBId Variable
-		AssetA   Variable
-		AssetB   Variable
-		LpAmount Variable
 	*/
 	for i := 0; i < NbAccountAssetsPerAccount; i++ {
-		api.AssertIsEqual(accountBefore.AssetsInfo[i].Index, accountAfter.AssetsInfo[i].Index)
-		api.AssertIsEqual(accountBefore.AssetsInfo[i].AssetAId, accountAfter.AssetsInfo[i].AssetAId)
-		api.AssertIsEqual(accountBefore.AssetsInfo[i].AssetBId, accountAfter.AssetsInfo[i].AssetBId)
+		api.AssertIsEqual(accountBefore.AssetsInfo[i].AssetId, accountAfter.AssetsInfo[i].AssetId)
 	}
+	// account liquidity basic info
+	api.AssertIsEqual(accountBefore.LiquidityInfo.AssetAId, accountAfter.LiquidityInfo.AssetAId)
+	api.AssertIsEqual(accountBefore.LiquidityInfo.AssetBId, accountAfter.LiquidityInfo.AssetBId)
 	// account nft basic info
 	/*
 		NftIndex       Variable
@@ -67,4 +57,24 @@ func CompareAccountBeforeAndAfterParams(api API, accountBefore, accountAfter Acc
 	api.AssertIsEqual(accountBefore.NftInfo.ChainId, accountAfter.NftInfo.ChainId)
 	api.AssertIsEqual(accountBefore.NftInfo.L1Address, accountAfter.NftInfo.L1Address)
 	api.AssertIsEqual(accountBefore.NftInfo.L1TokenId, accountAfter.NftInfo.L1TokenId)
+}
+
+func SelectDeltas(
+	api API,
+	flag Variable,
+	deltas, deltasCheck [NbAccountsPerTx]AccountDeltaConstraints,
+) (deltasRes [NbAccountsPerTx]AccountDeltaConstraints) {
+	for i := 0; i < NbAccountsPerTx; i++ {
+		for j := 0; j < NbAccountAssetsPerAccount; j++ {
+			deltasRes[i].AssetDeltas[j] =
+				api.Select(flag, deltas[i].AssetDeltas[j], deltasCheck[i].AssetDeltas[j])
+		}
+		deltasRes[i].LiquidityDelta.AssetADelta =
+			api.Select(flag, deltas[i].LiquidityDelta.AssetADelta, deltasCheck[i].LiquidityDelta.AssetADelta)
+		deltasRes[i].LiquidityDelta.AssetBDelta =
+			api.Select(flag, deltas[i].LiquidityDelta.AssetBDelta, deltasCheck[i].LiquidityDelta.AssetBDelta)
+		deltasRes[i].LiquidityDelta.LpDelta =
+			api.Select(flag, deltas[i].LiquidityDelta.LpDelta, deltasCheck[i].LiquidityDelta.LpDelta)
+	}
+	return deltasRes
 }

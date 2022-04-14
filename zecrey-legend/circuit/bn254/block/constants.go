@@ -78,14 +78,16 @@ const (
 )
 
 const (
-	NbAccountAssetsPerAccount = 4
-	NbAccountsPerTx           = 4
-	AssetMerkleLevels         = 17
-	AssetMerkleHelperLevels   = AssetMerkleLevels - 1
-	NftMerkleLevels           = 33
-	NftMerkleHelperLevels     = NftMerkleLevels - 1
-	AccountMerkleLevels       = 33
-	AccountMerkleHelperLevels = AccountMerkleLevels - 1
+	NbAccountAssetsPerAccount   = std.NbAccountAssetsPerAccount
+	NbAccountsPerTx             = std.NbAccountsPerTx
+	AssetMerkleLevels           = 17
+	AssetMerkleHelperLevels     = AssetMerkleLevels - 1
+	LiquidityMerkleLevels       = 17
+	LiquidityMerkleHelperLevels = LiquidityMerkleLevels - 1
+	NftMerkleLevels             = 33
+	NftMerkleHelperLevels       = NftMerkleLevels - 1
+	AccountMerkleLevels         = 33
+	AccountMerkleHelperLevels   = AccountMerkleLevels - 1
 )
 
 var (

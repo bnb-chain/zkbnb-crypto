@@ -87,3 +87,31 @@ func ComputeHashFromWithdrawNftTx(tx WithdrawNftTxConstraints, nonce Variable, h
 	hashVal = hFunc.Sum()
 	return hashVal
 }
+
+/*
+	VerifyWithdrawNftTx:
+	accounts order is:
+	- FromAccount
+		- Assets:
+			- AssetGas
+		- Nft
+			- nft index
+	- GasAccount
+		- Assets:
+			- AssetGas
+*/
+func VerifyWithdrawNftTx(api API, flag Variable, nilHash Variable, tx WithdrawNftTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
+	// gas
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+	// should confirm if the user owns the nft
+	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[0].NftInfo.NftIndex)
+	// after withdraw nft should be empty
+	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.NftContentHash, nilHash)
+	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.AssetId, DefaultInt)
+	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.AssetAmount, DefaultInt)
+}

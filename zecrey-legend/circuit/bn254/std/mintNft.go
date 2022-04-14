@@ -98,3 +98,41 @@ func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, hFunc MiM
 	hashVal = hFunc.Sum()
 	return hashVal
 }
+
+/*
+	VerifyMintNftTx:
+	accounts order is:
+	- FromAccount
+		- Assets
+			- AssetGas
+		- Nft
+			- empty
+	- ToAccount
+		- Nft
+			- empty
+	- GasAccount
+		- Assets
+			- AssetGas
+*/
+func VerifyMintNftTx(api API, flag Variable, nilHash Variable, tx MintNftTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	// nft index
+	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[0].NftInfo.NftIndex)
+	// before account nft should be empty
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
+	// new nft info should be right
+	IsVariableEqual(api, flag, tx.NftContentHash, accountsAfter[1].NftInfo.NftContentHash)
+	IsVariableEqual(api, flag, tx.AssetId, accountsAfter[1].NftInfo.AssetId)
+	IsVariableEqual(api, flag, tx.AssetAmount, accountsAfter[1].NftInfo.AssetAmount)
+	// from account index
+	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[0].AccountIndex)
+	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
+	// gas asset id
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+	// should have enough balance
+	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+}

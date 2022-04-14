@@ -15,7 +15,7 @@
  *
  */
 
-package block
+package std
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -26,28 +26,34 @@ import (
 	Account: account info
 */
 type Account struct {
-	AccountIndex      uint64
-	AccountName       *big.Int
-	AccountPk         *eddsa.PublicKey
-	Nonce             uint64
-	StateRoot         []byte
-	AccountAssetsRoot []byte
-	AccountNftRoot    []byte
-	AssetsInfo        [NbAccountAssetsPerAccount]*AccountAsset
-	NftInfo           *AccountNft
+	AccountIndex         uint64
+	AccountName          *big.Int
+	AccountPk            *eddsa.PublicKey
+	Nonce                uint64
+	StateRoot            []byte
+	AccountAssetsRoot    []byte
+	AccountNftRoot       []byte
+	AccountLiquidityRoot []byte
+	AssetsInfo           [NbAccountAssetsPerAccount]*AccountAsset
+	LiquidityInfo        *AccountLiquidity
+	NftInfo              *AccountNft
 }
 
 /*
 	AccountAsset: asset info
 */
 type AccountAsset struct {
-	Index      uint64
-	BalanceEnc *big.Int
-	AssetAId   uint64
-	AssetBId   uint64
-	AssetA     *big.Int
-	AssetB     *big.Int
-	LpAmount   *big.Int
+	AssetId uint64
+	Balance uint64
+}
+
+type AccountLiquidity struct {
+	PairIndex    uint64
+	AssetAId     uint32
+	AssetAAmount uint64
+	AssetBId     uint32
+	AssetBAmount uint64
+	LpAmount     uint64
 }
 
 /*

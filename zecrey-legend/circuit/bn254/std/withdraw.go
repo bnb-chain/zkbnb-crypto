@@ -87,3 +87,26 @@ func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, hFunc M
 	hashVal = hFunc.Sum()
 	return hashVal
 }
+
+/*
+	VerifyWithdrawTx:
+	accounts order is:
+	- FromAccount
+		- Assets:
+			- AssetA
+			- AssetGas
+	- GasAccount
+		- Assets:
+			- AssetGas
+*/
+func VerifyWithdrawTx(api API, flag Variable, tx WithdrawTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	// gas
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+	// should have enough assets
+	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+}

@@ -106,3 +106,42 @@ func ComputeHashFromGenericTransferTx(tx GenericTransferTxConstraints, nonce Var
 	hashVal = hFunc.Sum()
 	return hashVal
 }
+
+/*
+	VerifyGenericTransferTx:
+	accounts order is:
+	- FromAccount
+		- Assets
+			- AssetA
+			- AssetGas
+		- Nft
+			- nft index
+	- ToAccount
+		- Assets
+			- AssetA
+		- Nft
+			- nft index
+	- GasAccount
+		- Assets
+			- AssetGas
+*/
+func VerifyGenericTransferTx(api API, flag Variable, nilHash Variable, tx GenericTransferTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	// nft index
+	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[0].NftInfo.NftIndex)
+	// before account nft should be empty
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
+	// from account index
+	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
+	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
+	// asset id
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+	// gas asset id
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
+	// should have enough balance
+	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+}

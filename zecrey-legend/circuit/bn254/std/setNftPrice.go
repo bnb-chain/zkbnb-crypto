@@ -86,3 +86,29 @@ func ComputeHashFromSetNftPriceTx(tx SetNftPriceTxConstraints, nonce Variable, h
 	hashVal = hFunc.Sum()
 	return hashVal
 }
+
+/*
+	VerifySetNftPriceTx:
+	accounts order is:
+	- FromAccount
+		- Assets:
+			- AssetGas
+		- Nft
+			- nft index
+	- GasAccount
+		- Assets:
+			- AssetGas
+*/
+func VerifySetNftPriceTx(api API, flag Variable, tx SetNftPriceTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
+	IsVariableEqual(api, flag, tx.AssetId, accountsAfter[0].NftInfo.AssetId)
+	IsVariableEqual(api, flag, tx.AssetAmount, accountsAfter[0].NftInfo.AssetAmount)
+	// gas
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	// should have enough assets
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+}

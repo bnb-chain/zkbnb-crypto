@@ -47,3 +47,15 @@ func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints) {
 	}
 	return witness
 }
+
+/*
+	VerifyDepositTx:
+	accounts order is:
+	- FromAccount
+		- Assets
+			- AssetA
+ */
+func VerifyDepositTx(api API, flag Variable, tx DepositTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+}
