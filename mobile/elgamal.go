@@ -30,21 +30,21 @@ import (
 	@pkStr: string of pk
 	@b: enc amount
 */
-func ElgamalEnc(pkStr string, b int64) (CStr string, err error) {
-	// parse pk
-	pk, err := curve.FromString(pkStr)
-	if err != nil {
-		return "", err
-	}
-	// r \gets_R \mathbb{Z}_p
-	r := curve.RandomValue()
-	// call elgamal enc
-	C, err := twistedElgamal.Enc(big.NewInt(b), r, pk)
-	if err != nil {
-		return "", err
-	}
-	return C.String(), nil
-}
+//func ElgamalEnc(pkStr string, b int64) (CStr string, err error) {
+//	// parse pk
+//	pk, err := curve.FromString(pkStr)
+//	if err != nil {
+//		return "", err
+//	}
+//	// r \gets_R \mathbb{Z}_p
+//	r := curve.RandomValue()
+//	// call elgamal enc
+//	C, err := twistedElgamal.Enc(big.NewInt(b), r, pk)
+//	if err != nil {
+//		return "", err
+//	}
+//	return C.String(), nil
+//}
 
 /*
 	ElgamalDec: dec function for ElGamalEnc
@@ -53,42 +53,42 @@ func ElgamalEnc(pkStr string, b int64) (CStr string, err error) {
 	@start: start value
 	@end: max value of dec
 */
-func ElgamalDec(CStr string, skStr string, start, end int64) (res int64, err error) {
-	if start < 0 || end < 0 || start > end {
-		return 0, errors.New("[ElgamalDec] invalid start or end")
-	}
-	// parse C
-	C, err := twistedElgamal.FromString(CStr)
-	if err != nil {
-		return 0, err
-	}
-	// parse Sk
-	sk, b := new(big.Int).SetString(skStr, 10)
-	if !b {
-		return 0, errors.New("[ElgamalDec] invalid encryption string")
-	}
-	// if CL is zero point, just dec CR
-	if C.CL.Equal(curve.ZeroPoint()) {
-		base := curve.H
-		current := curve.ZeroPoint()
-		for i := start; i < end; i++ {
-			if current.Equal(C.CR) {
-				return i, nil
-			}
-			if curve.Neg(current).Equal(C.CR) {
-				return -i, nil
-			}
-			current.Add(current, base)
-		}
-		return 0, errors.New("[ElgamalDec] unable to decrypt")
-	}
-	// call elgamal dec
-	decVal, err := twistedElgamal.DecByStart(C, sk, int64(start), int64(end))
-	if err != nil {
-		return 0, err
-	}
-	return decVal.Int64(), nil
-}
+//func ElgamalDec(CStr string, skStr string, start, end int64) (res int64, err error) {
+//	if start < 0 || end < 0 || start > end {
+//		return 0, errors.New("[ElgamalDec] invalid start or end")
+//	}
+//	// parse C
+//	C, err := twistedElgamal.FromString(CStr)
+//	if err != nil {
+//		return 0, err
+//	}
+//	// parse Sk
+//	sk, b := new(big.Int).SetString(skStr, 10)
+//	if !b {
+//		return 0, errors.New("[ElgamalDec] invalid encryption string")
+//	}
+//	// if CL is zero point, just dec CR
+//	if C.CL.Equal(curve.ZeroPoint()) {
+//		base := curve.H
+//		current := curve.ZeroPoint()
+//		for i := start; i < end; i++ {
+//			if current.Equal(C.CR) {
+//				return i, nil
+//			}
+//			if curve.Neg(current).Equal(C.CR) {
+//				return -i, nil
+//			}
+//			current.Add(current, base)
+//		}
+//		return 0, errors.New("[ElgamalDec] unable to decrypt")
+//	}
+//	// call elgamal dec
+//	decVal, err := twistedElgamal.DecByStart(C, sk, int64(start), int64(end))
+//	if err != nil {
+//		return 0, err
+//	}
+//	return decVal.Int64(), nil
+//}
 
 /*
 	ElgamalRawDec: raw dec function for ElGamalEnc

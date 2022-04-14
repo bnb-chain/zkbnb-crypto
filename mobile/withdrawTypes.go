@@ -37,7 +37,7 @@ type WithdrawSegment struct {
 	BStar        uint64
 	Sk           *big.Int
 	AssetId      uint32
-	ChainId      uint8
+	ChainId      uint32
 	ReceiveAddr  string
 	// fee part
 	C_fee         *ElGamalEnc
@@ -125,7 +125,7 @@ func FromWithdrawSegmentJSON(segmentStr string) (segment *WithdrawSegment, err e
 		BStar:         uint64(segmentFormat.BStar),
 		Sk:            Sk,
 		AssetId:       uint32(segmentFormat.AssetId),
-		ChainId:       uint8(segmentFormat.ChainId),
+		ChainId:       uint32(segmentFormat.ChainId),
 		ReceiveAddr:   segmentFormat.ReceiveAddr,
 		C_fee:         C_fee,
 		B_fee:         uint64(segmentFormat.B_fee),
@@ -137,7 +137,7 @@ func FromWithdrawSegmentJSON(segmentStr string) (segment *WithdrawSegment, err e
 
 type WithdrawTxInfo struct {
 	// chain id
-	ChainId uint8
+	ChainId uint32
 	// token id
 	AssetId uint32
 	// zecrey index
