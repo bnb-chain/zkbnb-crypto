@@ -1,10 +1,27 @@
+/*
+ * Copyright © 2021 Zecrey Protocol
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package zbn254
 
 import (
-	"github.com/consensys/gurvy/bn256"
+	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"math/big"
-	"zecrey-crypto/ffmath"
-	"zecrey-crypto/util"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/util"
 )
 
 var (
@@ -12,10 +29,10 @@ var (
 	SeedH    = "ZecreyBN128SetupH"
 )
 
-type G1Affine = bn256.G1Affine
+type G1Affine = bn254.G1Affine
 
 func HashToG1(m string) (*G1Affine, error) {
-	p, err := bn256.HashToCurveG1Svdw([]byte(m), []byte(m))
+	p, err := bn254.HashToCurveG1Svdw([]byte(m), []byte(m))
 	return &p, err
 }
 
@@ -27,7 +44,7 @@ func GetG1InfinityPoint() *G1Affine {
 }
 
 func G1Add(a, b *G1Affine) *G1Affine {
-	aJac := new(bn256.G1Jac).FromAffine(a)
+	aJac := new(bn254.G1Jac).FromAffine(a)
 	p := new(G1Affine).FromJacobian(aJac.AddMixed(b))
 	return p
 }
@@ -47,12 +64,12 @@ func G1ScalarBaseMul(s *big.Int) *G1Affine {
 }
 
 func G1BaseAffine() (*G1Affine) {
-	_, _, G1Affine, _ := bn256.Generators()
+	_, _, G1Affine, _ := bn254.Generators()
 	return &G1Affine
 }
 
 func GetG1TwoBaseAffine() (g *G1Affine, h *G1Affine) {
-	_, _, G1Affine, _ := bn256.Generators()
+	_, _, G1Affine, _ := bn254.Generators()
 	HAffine, _ := HashToG1(SeedH)
 	return &G1Affine, HAffine
 }

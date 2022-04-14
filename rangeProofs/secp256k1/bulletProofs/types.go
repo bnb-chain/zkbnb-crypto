@@ -1,17 +1,34 @@
+/*
+ * Copyright © 2021 Zecrey Protocol
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/zp256"
 	"math/big"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
 )
 
 type P256 = zp256.P256
 
 /*
-BulletProofSetupParams is the structure that stores the parameters for
+BPSetupParams is the structure that stores the parameters for
 the Zero Knowledge Proof system.
 */
-type BulletProofSetupParams struct {
+type BPSetupParams struct {
 	// N is the bit-length of the range.
 	N int64
 	// G is the Elliptic Curve generator.
@@ -42,7 +59,7 @@ type BulletProof struct {
 	That              *big.Int
 	InnerProductProof *InnerProductProof
 	Commit            *P256
-	Params            *BulletProofSetupParams
+	Params            *BPSetupParams
 }
 
 /*
@@ -60,7 +77,7 @@ type AggBulletProof struct {
 	That              *big.Int
 	InnerProductProof *InnerProductProof
 	Commit            *P256
-	Params            *BulletProofSetupParams
+	Params            *BPSetupParams
 }
 
 /*

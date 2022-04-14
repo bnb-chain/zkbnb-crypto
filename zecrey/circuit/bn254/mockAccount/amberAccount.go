@@ -1,0 +1,4 @@
+package mockAccount
+
+var(
+)

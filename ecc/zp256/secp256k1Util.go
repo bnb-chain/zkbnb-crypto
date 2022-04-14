@@ -1,14 +1,31 @@
+/*
+ * Copyright © 2021 Zecrey Protocol
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package zp256
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"math/big"
 	"strconv"
-	"zecrey-crypto/ffmath"
-	"zecrey-crypto/util"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/util"
 )
 
 const (
@@ -68,7 +85,7 @@ func InfinityPoint() *P256 {
 	return res
 }
 
-func RandomValue() (*big.Int) {
+func RandomValue() *big.Int {
 	r, _ := ffmath.RandomValue(Curve.N)
 	return r
 }
@@ -93,7 +110,7 @@ func MapToGroup(m string) (*P256, error) {
 		buffer.Reset()
 		buffer.WriteString(strconv.Itoa(i))
 		buffer.WriteString(m)
-		x, _ := util.HashToInt(buffer, sha256.New)
+		x, _ := util.HashToInt(buffer, zmimc.Hmimc)
 		x = ffmath.Mod(x, Curve.P)
 		fx, _ := F(x)
 		fx = ffmath.Mod(fx, Curve.P)

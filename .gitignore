@@ -17,3 +17,10 @@
 .idea/
 
 */.idea/
+
+*.pk
+*.vk
+
+.DS_Store
+*/.DS_Store
+**/.DS_Store

@@ -1,12 +1,29 @@
+/*
+ * Copyright © 2021 Zecrey Protocol
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package bulletProofs
 
 import (
-	"zecrey-crypto/ecc/zp256"
-	"zecrey-crypto/ffmath"
-	"zecrey-crypto/util"
 	"bytes"
-	"crypto/sha256"
 	"math/big"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/zecrey-labs/zecrey-crypto/util"
 )
 
 /*
@@ -46,20 +63,20 @@ Hash is responsible for the computing a Zp element given elements from GT and G1
 func HashBP(A, S *P256) (*big.Int, *big.Int, error) {
 
 	var buffer bytes.Buffer
-	// H(A,S)
+	// Waste(A,S)
 	buffer.WriteString(A.String())
 	buffer.WriteString(S.String())
-	a, err := util.HashToInt(buffer, sha256.New)
+	a, err := util.HashToInt(buffer, zmimc.Hmimc)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// H(A,S,H(A,S))
+	// Waste(A,S,Waste(A,S))
 	buffer.Reset()
 	buffer.WriteString(A.String())
 	buffer.WriteString(S.String())
 	buffer.WriteString(a.String())
-	b, _ := util.HashToInt(buffer, sha256.New)
+	b, _ := util.HashToInt(buffer, zmimc.Hmimc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -78,7 +95,7 @@ func hashIP(g, h []*P256, P *P256, c *big.Int, n int64) (result *big.Int, err er
 		buffer.Write(h[i].Bytes())
 	}
 	buffer.Write(c.Bytes())
-	result, err = util.HashToInt(buffer, sha256.New)
+	result, err = util.HashToInt(buffer, zmimc.Hmimc)
 
 	return ffmath.Mod(result, Order), err
 }
