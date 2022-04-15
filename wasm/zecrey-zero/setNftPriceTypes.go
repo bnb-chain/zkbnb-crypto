@@ -27,19 +27,16 @@ import (
 )
 
 /*
-	MintNftSegment: which is used to construct mint nft proof
+	SetNftPriceSegment: which is used to construct set nft price proof
 */
-type MintNftSegment struct {
+type SetNftPriceSegment struct {
 	AccountIndex uint32
 	Pk           *Point
 	Sk           *big.Int
 	// common input part
-	NftName              string
-	NftUrl               string
-	NftCollectionId      uint32
-	NftIntroduction      string
-	NftAttributes        string
-	ReceiverAccountIndex uint32
+	NftContentHash string
+	AssetId        uint32
+	AssetAmount    uint64
 	// fee part
 	C_fee         *ElGamalEnc
 	B_fee         uint64
@@ -48,9 +45,9 @@ type MintNftSegment struct {
 }
 
 /*
-	WithdrawSegmentFormat: format version of MintNftSegment
+	SetNftPriceSegmentFormat: format version of SetNftPriceSegment
 */
-type MintNftSegmentFormat struct {
+type SetNftPriceSegmentFormat struct {
 	// account index
 	AccountIndex int `json:"account_index"`
 	// public key
@@ -58,12 +55,9 @@ type MintNftSegmentFormat struct {
 	// private key
 	Sk string `json:"sk"`
 	// common input part
-	NftName              string `json:"nft_name"`
-	NftUrl               string `json:"nft_url"`
-	NftCollectionId      uint32 `json:"nft_collection_id"`
-	NftIntroduction      string `json:"nft_introduction"`
-	NftAttributes        string `json:"nft_attributes"`
-	ReceiverAccountIndex int    `json:"receiver_account_index"`
+	NftContentHash string `json:"nft_content_hash"`
+	AssetId        int    `json:"asset_id"`
+	AssetAmount    int64  `json:"asset_amount"`
 	// fee part
 	// encryption of balance of the gas fee asset
 	C_fee string `json:"c_fee"`
@@ -75,66 +69,59 @@ type MintNftSegmentFormat struct {
 	GasFee int64 `json:"gas_fee"`
 }
 
-func FromMintNftSegmentJSON(segmentStr string) (*MintNftSegment, string) {
-	var segmentFormat *MintNftSegmentFormat
+func FromSetNftPriceSegmentJSON(segmentStr string) (*SetNftPriceSegment, string) {
+	var segmentFormat *SetNftPriceSegmentFormat
 	err := json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
-		log.Println("[FromMintNftSegmentJSON] err info:", err)
+		log.Println("[FromTransferNftSegmentJSON] err info:", err)
 		return nil, ErrUnmarshal
 	}
 	if segmentFormat.Pk == "" || segmentFormat.Sk == "" {
-		log.Println("[FromMintNftSegmentJSON] invalid params")
-		return nil, errors.New("[FromMintNftSegmentJSON] invalid params").Error()
+		log.Println("[FromTransferNftSegmentJSON] invalid params")
+		return nil, errors.New("[FromTransferNftSegmentJSON] invalid params").Error()
 	}
 	// verify params
 	if segmentFormat.AccountIndex < 0 || segmentFormat.B_fee < 0 ||
 		segmentFormat.GasFeeAssetId < 0 || segmentFormat.GasFee < 0 {
-		return nil, errors.New("[FromMintNftSegmentJSON] invalid params").Error()
+		return nil, errors.New("[FromTransferNftSegmentJSON] invalid params").Error()
 	}
 	Pk, err := curve.FromString(segmentFormat.Pk)
 	if err != nil {
-		log.Println("[FromMintNftSegmentJSON] invalid params")
+		log.Println("[FromTransferNftSegmentJSON] invalid params")
 		return nil, ErrParsePoint
 	}
 	Sk, isValid := new(big.Int).SetString(segmentFormat.Sk, 10)
 	if !isValid {
-		log.Println("[FromMintNftSegmentJSON] invalid params")
+		log.Println("[FromTransferNftSegmentJSON] invalid params")
 		return nil, ErrParseBigInt
 	}
 	C_fee, err := twistedElgamal.FromString(segmentFormat.C_fee)
 	if err != nil {
-		log.Println("[FromMintNftSegmentJSON] invalid params")
+		log.Println("[FromTransferNftSegmentJSON] invalid params")
 		return nil, ErrParseEnc
 	}
-	segment := &MintNftSegment{
-		AccountIndex:         uint32(segmentFormat.AccountIndex),
-		Pk:                   Pk,
-		Sk:                   Sk,
-		NftName:              segmentFormat.NftName,
-		NftUrl:               segmentFormat.NftUrl,
-		NftCollectionId:      segmentFormat.NftCollectionId,
-		NftIntroduction:      segmentFormat.NftIntroduction,
-		NftAttributes:        segmentFormat.NftAttributes,
-		ReceiverAccountIndex: uint32(segmentFormat.ReceiverAccountIndex),
-		C_fee:                C_fee,
-		B_fee:                uint64(segmentFormat.B_fee),
-		GasFeeAssetId:        uint32(segmentFormat.GasFeeAssetId),
-		GasFee:               uint64(segmentFormat.GasFee),
+	segment := &SetNftPriceSegment{
+		AccountIndex:   uint32(segmentFormat.AccountIndex),
+		Pk:             Pk,
+		Sk:             Sk,
+		NftContentHash: segmentFormat.NftContentHash,
+		AssetId:        uint32(segmentFormat.AssetId),
+		AssetAmount:    uint64(segmentFormat.AssetAmount),
+		C_fee:          C_fee,
+		B_fee:          uint64(segmentFormat.B_fee),
+		GasFeeAssetId:  uint32(segmentFormat.GasFeeAssetId),
+		GasFee:         uint64(segmentFormat.GasFee),
 	}
 	return segment, Success
 }
 
-type MintNftTxInfo struct {
-	// zecrey index
+type SetNftPriceTxInfo struct {
+	// zecrey-legend index
 	AccountIndex uint32
 	// common input part
-	NftName                 string
-	NftUrl                  string
-	NftCollectionId         uint32
-	NftIntroduction         string
-	NftContentHash          string
-	NftAttributes           string
-	ReceiverAccountIndex uint32
+	NftContentHash string
+	AssetId        uint32
+	AssetAmount    uint64
 	// gas fee part
 	GasFeeAssetId uint32
 	GasFee        uint64

@@ -138,7 +138,7 @@ func FromBuyNftSegmentJSON(segmentStr string) (*BuyNftSegment, string) {
 }
 
 type BuyNftTxInfo struct {
-	// zecrey index
+	// zecrey-legend index
 	AccountIndex uint32
 	// nft owner
 	OwnerAccountIndex uint32

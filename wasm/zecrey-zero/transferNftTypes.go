@@ -27,16 +27,15 @@ import (
 )
 
 /*
-	WithdrawNftSegment: which is used to construct withdraw nft proof
+	MintNftSegment: which is used to construct mint nft proof
 */
-type WithdrawNftSegment struct {
+type TransferNftSegment struct {
 	AccountIndex uint32
 	Pk           *Point
 	Sk           *big.Int
 	// common input part
-	NftContentHash string
-	ReceiverAddr   string
-	ChainId        uint32
+	NftContentHash       string
+	ReceiverAccountIndex uint32
 	// fee part
 	C_fee         *ElGamalEnc
 	B_fee         uint64
@@ -45,9 +44,9 @@ type WithdrawNftSegment struct {
 }
 
 /*
-	WithdrawNftSegmentFormat: format version of WithdrawNftSegment
+	TransferNftSegmentFormat: format version of TransferNftSegment
 */
-type WithdrawNftSegmentFormat struct {
+type TransferNftSegmentFormat struct {
 	// account index
 	AccountIndex int `json:"account_index"`
 	// public key
@@ -55,9 +54,8 @@ type WithdrawNftSegmentFormat struct {
 	// private key
 	Sk string `json:"sk"`
 	// common input part
-	NftContentHash string `json:"nft_content_hash"`
-	ReceiverAddr   string `json:"receiver_addr"`
-	ChainId        int    `json:"chain_id"`
+	NftContentHash       string `json:"nft_content_hash"`
+	ReceiverAccountIndex int    `json:"receiver_account_index"`
 	// fee part
 	// encryption of balance of the gas fee asset
 	C_fee string `json:"c_fee"`
@@ -69,8 +67,8 @@ type WithdrawNftSegmentFormat struct {
 	GasFee int64 `json:"gas_fee"`
 }
 
-func FromWithdrawNftSegmentJSON(segmentStr string) (*WithdrawNftSegment, string) {
-	var segmentFormat *WithdrawNftSegmentFormat
+func FromTransferNftSegmentJSON(segmentStr string) (*TransferNftSegment, string) {
+	var segmentFormat *TransferNftSegmentFormat
 	err := json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
 		log.Println("[FromTransferNftSegmentJSON] err info:", err)
@@ -100,28 +98,26 @@ func FromWithdrawNftSegmentJSON(segmentStr string) (*WithdrawNftSegment, string)
 		log.Println("[FromTransferNftSegmentJSON] invalid params")
 		return nil, ErrParseEnc
 	}
-	segment := &WithdrawNftSegment{
-		AccountIndex:   uint32(segmentFormat.AccountIndex),
-		Pk:             Pk,
-		Sk:             Sk,
-		NftContentHash: segmentFormat.NftContentHash,
-		ReceiverAddr:   segmentFormat.ReceiverAddr,
-		ChainId:        uint32(segmentFormat.ChainId),
-		C_fee:          C_fee,
-		B_fee:          uint64(segmentFormat.B_fee),
-		GasFeeAssetId:  uint32(segmentFormat.GasFeeAssetId),
-		GasFee:         uint64(segmentFormat.GasFee),
+	segment := &TransferNftSegment{
+		AccountIndex:         uint32(segmentFormat.AccountIndex),
+		Pk:                   Pk,
+		Sk:                   Sk,
+		NftContentHash:       segmentFormat.NftContentHash,
+		ReceiverAccountIndex: uint32(segmentFormat.ReceiverAccountIndex),
+		C_fee:                C_fee,
+		B_fee:                uint64(segmentFormat.B_fee),
+		GasFeeAssetId:        uint32(segmentFormat.GasFeeAssetId),
+		GasFee:               uint64(segmentFormat.GasFee),
 	}
 	return segment, Success
 }
 
-type WithdrawNftTxInfo struct {
-	// zecrey index
+type TransferNftTxInfo struct {
+	// zecrey-legend index
 	AccountIndex uint32
 	// common input part
-	NftContentHash string
-	ReceiverAddr   string
-	ChainId        uint32
+	NftContentHash       string
+	ReceiverAccountIndex uint32
 	// gas fee part
 	GasFeeAssetId uint32
 	GasFee        uint64
