@@ -8,7 +8,7 @@ import (
 
 var (
 	JasonIndex         = uint32(5)
-	JasonName          = "jason.zecrey"
+	JasonName          = "jason.zecrey-legend"
 	JasonSk, _         = new(big.Int).SetString("1212515942558314278513678451807728016147025009624690004795762586901554004071", 10)
 	JasonPk, _         = curve.FromString("XxTFgJ0ckxApWHLtIGG/FAtiQ93osbuvlfcJWrN2mQU=")
 	JasonAssetABalance = uint64(1000)

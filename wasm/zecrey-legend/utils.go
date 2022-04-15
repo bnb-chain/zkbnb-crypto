@@ -15,32 +15,19 @@
  *
  */
 
-package zecrey_zero
+package zecrey_legend
 
 import (
-	"github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
+	"bytes"
+	"math/big"
 )
 
-const (
-	Noop = iota
-	Deposit
-	Lock
-	Unlock
-	Transfer
-	Swap
-	AddLiquidity
-	RemoveLiquidity
-	Withdraw
-	DepositNft
-	MintNft
-	TransferNft
-	SetNftPrice
-	BuyNft
-	WithdrawNft
-)
+func writeUint64IntoBuf(buf *bytes.Buffer, a uint64) {
+	buf.Write(new(big.Int).SetUint64(a).FillBytes(make([]byte, 32)))
+}
 
-type (
-	Point      = tebn254.Point
-	ElGamalEnc = twistedElgamal.ElGamalEnc
-)
+func AccountNameToFullByte(name string) []byte {
+	buf := make([]byte, 32)
+	copy(buf, name)
+	return buf
+}

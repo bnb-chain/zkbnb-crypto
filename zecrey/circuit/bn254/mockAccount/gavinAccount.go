@@ -8,7 +8,7 @@ import (
 
 var (
 	GavinIndex         = uint32(4)
-	GavinName          = "gavin.zecrey"
+	GavinName          = "gavin.zecrey-legend"
 	GavinSk, _         = new(big.Int).SetString("2715501719737389726909271559236769082041033466084720448102229307207566255757", 10)
 	GavinPk, _         = curve.FromString("Y1M+SobGyZKJMOvIfm8c9qlzlRNDYVU2b+N4xCG0tKw=")
 	GavinAssetABalance = uint64(1000)

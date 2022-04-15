@@ -8,7 +8,7 @@ import (
 
 var (
 	GasIndex         = uint32(2)
-	GasName          = "gas.zecrey"
+	GasName          = "gas.zecrey-legend"
 	GasSk, _         = new(big.Int).SetString("389992331087627035440267920964763609290946838805756116258006273558956629436", 10)
 	GasPk, _         = curve.FromString("pdil66Onf37BlB68K2eqwafGBd1GS12w6Zm6OfG1mAQ=")
 	GasAssetABalance = uint64(100)

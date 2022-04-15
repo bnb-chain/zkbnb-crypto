@@ -1,1 +1,113 @@
+/*
+ * Copyright © 2021 Zecrey Protocol
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package zecrey_legend
+
+import (
+	"encoding/hex"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"syscall/js"
+)
+
+func GetEddsaPublicKey() js.Func {
+	helperFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		if len(args) != 1 {
+			return "invalid params"
+		}
+		// read seed
+		seed := args[0].String()
+		sk, err := curve.GenerateEddsaPrivateKey(seed)
+		if err != nil {
+			return err.Error()
+		}
+		return hex.EncodeToString(sk.PublicKey.Bytes())
+	})
+	return helperFunc
+}
+
+func GenerateEddsaKey() js.Func {
+	helperFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		if len(args) != 1 {
+			return "invalid params"
+		}
+		// read seed
+		seed := args[0].String()
+		sk, err := curve.GenerateEddsaPrivateKey(seed)
+		if err != nil {
+			return err.Error()
+		}
+		return hex.EncodeToString(sk.Bytes())
+	})
+	return helperFunc
+}
+
+func EddsaSign() js.Func {
+	helperFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		if len(args) != 2 {
+			return "invalid params"
+		}
+		// read seed
+		seed := args[0].String()
+		sk, err := curve.GenerateEddsaPrivateKey(seed)
+		if err != nil {
+			return err.Error()
+		}
+		msg := args[1].String()
+		signature, err := sk.Sign([]byte(msg), mimc.NewMiMC())
+		if err != nil {
+			return err.Error()
+		}
+		return hex.EncodeToString(signature)
+	})
+	return helperFunc
+}
+
+func EddsaVerify() js.Func {
+	helperFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		if len(args) != 3 {
+			return "invalid params"
+		}
+		// read seed
+		pkStr := args[0].String()
+		signatureStr := args[1].String()
+		msgStr := args[2].String()
+		pkBytes, err := hex.DecodeString(pkStr)
+		if err != nil {
+			return err.Error()
+		}
+		pk := eddsa.PublicKey{}
+		size, err := pk.SetBytes(pkBytes)
+		if err != nil {
+			return err.Error()
+		}
+		if size != 32 {
+			return "invalid public key"
+		}
+		signature, err := hex.DecodeString(signatureStr)
+		if err != nil {
+			return err.Error()
+		}
+		isValid, err := pk.Verify(signature, []byte(msgStr), mimc.NewMiMC())
+		if err != nil {
+			return err.Error()
+		}
+		return isValid
+	})
+	return helperFunc
+}

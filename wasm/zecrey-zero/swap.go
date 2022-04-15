@@ -15,13 +15,13 @@
  *
  */
 
-package wasm
+package zecrey_zero
 
 import (
 	"encoding/base64"
 	"encoding/json"
-	"syscall/js"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
+	"syscall/js"
 )
 
 /*

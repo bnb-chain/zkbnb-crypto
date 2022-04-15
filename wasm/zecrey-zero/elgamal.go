@@ -15,14 +15,14 @@
  *
  */
 
-package wasm
+package zecrey_zero
 
 import (
-	"math/big"
-	"syscall/js"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"math/big"
+	"syscall/js"
 )
 
 /*

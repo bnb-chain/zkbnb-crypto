@@ -140,7 +140,7 @@ type WithdrawTxInfo struct {
 	ChainId uint32
 	// token id
 	AssetId uint32
-	// zecrey index
+	// zecrey-legend index
 	AccountIndex uint32
 	// L1 address
 	ReceiveAddr string

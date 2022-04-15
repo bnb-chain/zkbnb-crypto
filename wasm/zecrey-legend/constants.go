@@ -15,32 +15,11 @@
  *
  */
 
-package zecrey_zero
+package zecrey_legend
 
-import (
-	"github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-)
-
-const (
-	Noop = iota
-	Deposit
-	Lock
-	Unlock
-	Transfer
-	Swap
-	AddLiquidity
-	RemoveLiquidity
-	Withdraw
-	DepositNft
-	MintNft
-	TransferNft
-	SetNftPrice
-	BuyNft
-	WithdrawNft
-)
+import "github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 
 type (
-	Point      = tebn254.Point
-	ElGamalEnc = twistedElgamal.ElGamalEnc
+	Signature  = eddsa.Signature
+	PrivateKey = eddsa.PrivateKey
 )

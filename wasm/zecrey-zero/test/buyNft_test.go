@@ -18,14 +18,30 @@
 package test
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/ethereum/go-ethereum/common"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"math/big"
 	"testing"
 )
 
 func TestBuyNft(t *testing.T) {
+	sk, err := curve.GenerateEddsaPrivateKey("01000001")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(hex.EncodeToString(sk.Bytes()[64:]))
+	fmt.Println(hex.EncodeToString(sk.Bytes()[32:64]))
+	fmt.Println(new(big.Int).SetBytes(sk.Bytes()[32:64]).BitLen())
+	pk := curve.ScalarBaseMul(new(big.Int).SetBytes(sk.Bytes()[32:64])).Bytes()
+	fmt.Println(hex.EncodeToString(sk.Bytes()[:32]))
+	fmt.Println(hex.EncodeToString(pk[:]))
+	fmt.Println(new(big.Int).SetBytes(sk.Bytes()).String())
+	fmt.Println(sk.Public())
+
 	type BuyNftSegmentFormat struct {
 		// account index
 		AccountIndex int `json:"account_index"`

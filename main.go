@@ -19,26 +19,29 @@ package main
 
 import (
 	"fmt"
-	"github.com/zecrey-labs/zecrey-crypto/wasm"
+	"github.com/zecrey-labs/zecrey-crypto/wasm/zecrey-zero"
 	"syscall/js"
 )
 
+/*
+	zecrey-zero wasm libraries
+*/
 func main() {
-	fmt.Println("Zecrey Crypto Assembly")
-	js.Global().Set("getL2PublicKey", wasm.GetL2PublicKey())
-	js.Global().Set("elgamalEnc", wasm.ElgamalEnc())
-	js.Global().Set("elgamalDec", wasm.ElgamalDec())
-	js.Global().Set("elgamalRawDec", wasm.ElgamalRawDec())
-	js.Global().Set("proveWithdraw", wasm.ProveWithdraw())
-	js.Global().Set("proveUnlock", wasm.ProveUnlock())
-	js.Global().Set("proveTransfer", wasm.ProveTransfer())
-	js.Global().Set("proveSwap", wasm.ProveSwap())
-	js.Global().Set("proveAddLiquidity", wasm.ProveAddLiquidity())
-	js.Global().Set("proveRemoveLiquidity", wasm.ProveRemoveLiquidity())
-	js.Global().Set("proveMintNft", wasm.ProveMintNft())
-	js.Global().Set("proveTransferNft", wasm.ProveTransferNft())
-	js.Global().Set("proveSetNftPrice", wasm.ProveSetNftPrice())
-	js.Global().Set("proveBuyNft", wasm.ProveBuyNft())
-	js.Global().Set("proveWithdrawNft", wasm.ProveWithdrawNft())
+	fmt.Println("Zecrey-zero Crypto Assembly")
+	js.Global().Set("getL2PublicKey", zecrey_zero.GetL2PublicKey())
+	js.Global().Set("elgamalEnc", zecrey_zero.ElgamalEnc())
+	js.Global().Set("elgamalDec", zecrey_zero.ElgamalDec())
+	js.Global().Set("elgamalRawDec", zecrey_zero.ElgamalRawDec())
+	js.Global().Set("proveWithdraw", zecrey_zero.ProveWithdraw())
+	js.Global().Set("proveUnlock", zecrey_zero.ProveUnlock())
+	js.Global().Set("proveTransfer", zecrey_zero.ProveTransfer())
+	js.Global().Set("proveSwap", zecrey_zero.ProveSwap())
+	js.Global().Set("proveAddLiquidity", zecrey_zero.ProveAddLiquidity())
+	js.Global().Set("proveRemoveLiquidity", zecrey_zero.ProveRemoveLiquidity())
+	js.Global().Set("proveMintNft", zecrey_zero.ProveMintNft())
+	js.Global().Set("proveTransferNft", zecrey_zero.ProveTransferNft())
+	js.Global().Set("proveSetNftPrice", zecrey_zero.ProveSetNftPrice())
+	js.Global().Set("proveBuyNft", zecrey_zero.ProveBuyNft())
+	js.Global().Set("proveWithdrawNft", zecrey_zero.ProveWithdrawNft())
 	<-make(chan bool)
 }

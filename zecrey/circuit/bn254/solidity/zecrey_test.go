@@ -52,7 +52,7 @@ func TestExportSol(t *testing.T) {
 		panic(err)
 	}
 	{
-		f, err := os.Create("zecrey.vk")
+		f, err := os.Create("zecrey-legend.vk")
 		if err != nil {
 			panic(err)
 		}
@@ -62,7 +62,7 @@ func TestExportSol(t *testing.T) {
 		}
 	}
 	{
-		f, err := os.Create("zecrey.pk")
+		f, err := os.Create("zecrey-legend.pk")
 		if err != nil {
 			panic(err)
 		}
@@ -129,14 +129,14 @@ func (t *ExportSolidityTestSuite) SetupTest() {
 	// read proving and verifying keys
 	t.pk = groth16.NewProvingKey(ecc.BN254)
 	{
-		f, _ := os.Open("zecrey.pk")
+		f, _ := os.Open("zecrey-legend.pk")
 		_, err = t.pk.ReadFrom(f)
 		f.Close()
 		t.NoError(err, "reading proving key failed")
 	}
 	t.vk = groth16.NewVerifyingKey(ecc.BN254)
 	{
-		f, _ := os.Open("zecrey.vk")
+		f, _ := os.Open("zecrey-legend.vk")
 		_, err = t.vk.ReadFrom(f)
 		f.Close()
 		t.NoError(err, "reading verifying key failed")

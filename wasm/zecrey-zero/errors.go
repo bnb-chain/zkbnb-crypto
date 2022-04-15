@@ -15,7 +15,7 @@
  *
  */
 
-package wasm
+package zecrey_zero
 
 const (
 	ErrUnmarshal                     = "ErrUnmarshal"

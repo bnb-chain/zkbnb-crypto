@@ -15,7 +15,7 @@
  *
  */
 
-package wasm
+package zecrey_zero
 
 import (
 	"encoding/json"
