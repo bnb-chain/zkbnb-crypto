@@ -35,13 +35,13 @@ func TestClaimNftProofCircuit_Define(t *testing.T) {
 	hFunc.Write([]byte("test data"))
 	contentHash := hFunc.Sum(nil)
 	receiverAccountIndex := uint32(3)
-	relation, err := zecrey.NewClaimNftRelation(
+	relation, err := zecrey.NewMintNftRelation(
 		pk, 9, contentHash, receiverAccountIndex, sk, bEnc2, b_fee, 1, fee,
 	)
 	if err != nil {
 		t.Error(err)
 	}
-	oProof, err := zecrey.ProveClaimNft(relation)
+	oProof, err := zecrey.ProveMintNft(relation)
 	if err != nil {
 		t.Error(err)
 	}

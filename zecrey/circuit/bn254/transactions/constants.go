@@ -46,7 +46,7 @@ type (
 	AddLiquidityProof    = zecrey.AddLiquidityProof
 	RemoveLiquidityProof = zecrey.RemoveLiquidityProof
 	WithdrawProof        = zecrey.WithdrawProof
-	ClaimNftProof        = zecrey.ClaimNftProof
+	ClaimNftProof        = zecrey.MintNftProof
 	SetNftPriceProof     = zecrey.SetNftPriceProof
 	BuyNftProof          = zecrey.BuyNftProof
 	WithdrawNftProof     = zecrey.WithdrawNftProof

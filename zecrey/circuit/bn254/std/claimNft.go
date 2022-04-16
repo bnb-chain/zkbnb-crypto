@@ -150,7 +150,7 @@ func SetEmptyClaimNftProofWitness() (witness ClaimNftProofConstraints) {
 }
 
 // set the witness for withdraw proof
-func SetClaimNftProofWitness(proof *zecrey.ClaimNftProof, isEnabled bool) (witness ClaimNftProofConstraints, err error) {
+func SetClaimNftProofWitness(proof *zecrey.MintNftProof, isEnabled bool) (witness ClaimNftProofConstraints, err error) {
 	if proof == nil {
 		log.Println("[SetClaimNftProofWitness] invalid params")
 		return witness, err

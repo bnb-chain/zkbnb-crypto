@@ -26,7 +26,7 @@ import (
 	"math/big"
 )
 
-type WithdrawNftProof struct {
+type MintNftProof struct {
 	// commitments
 	A_pk *Point
 	// response
@@ -34,11 +34,10 @@ type WithdrawNftProof struct {
 	// Commitment Range Proofs
 	GasFeePrimeRangeProof *RangeProof
 	// common inputs
-	Pk          *Point
-	TxType      uint32
-	NftIndex    uint32
-	ReceiveAddr *big.Int
-	ChainId     uint32
+	Pk                   *Point
+	TxType               uint32
+	NftContentHash       []byte
+	ReceiverAccountIndex uint32
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
 	Z_bar_r_fee           *big.Int
@@ -48,8 +47,8 @@ type WithdrawNftProof struct {
 	GasFee                uint64
 }
 
-func (proof *WithdrawNftProof) Bytes() []byte {
-	buf := make([]byte, WithdrawNftProofSize)
+func (proof *MintNftProof) Bytes() []byte {
+	buf := make([]byte, MintNftProofSize)
 	offset := 0
 	offset = copyBuf(&buf, offset, PointSize, proof.A_pk.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_sk.FillBytes(make([]byte, PointSize)))
@@ -57,9 +56,8 @@ func (proof *WithdrawNftProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, RangeProofSize, proof.GasFeePrimeRangeProof.Bytes())
 	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.TxType))
-	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftIndex))
-	offset = copyBuf(&buf, offset, AddressSize, proof.ReceiveAddr.FillBytes(make([]byte, AddressSize)))
-	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ChainId))
+	offset = copyBuf(&buf, offset, PointSize, proof.NftContentHash)
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ReceiverAccountIndex))
 	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
 	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C_fee))
@@ -69,16 +67,16 @@ func (proof *WithdrawNftProof) Bytes() []byte {
 	return buf
 }
 
-func (proof *WithdrawNftProof) String() string {
+func (proof *MintNftProof) String() string {
 	return base64.StdEncoding.EncodeToString(proof.Bytes())
 }
 
-func ParseWithdrawNftProofBytes(proofBytes []byte) (proof *WithdrawNftProof, err error) {
-	if len(proofBytes) != WithdrawNftProofSize {
+func ParseMintNftProofBytes(proofBytes []byte) (proof *MintNftProof, err error) {
+	if len(proofBytes) != MintNftProofSize {
 		log.Println("[ParseSetNftPriceProofBytes] invalid proof size")
 		return nil, errors.New("[ParseSetNftPriceProofBytes] invalid nft proof size")
 	}
-	proof = new(WithdrawNftProof)
+	proof = new(MintNftProof)
 	offset := 0
 
 	offset, proof.A_pk, err = readPointFromBuf(proofBytes, offset)
@@ -93,9 +91,8 @@ func ParseWithdrawNftProofBytes(proofBytes []byte) (proof *WithdrawNftProof, err
 		return nil, err
 	}
 	offset, proof.TxType = readUint32FromBuf(proofBytes, offset)
-	offset, proof.NftIndex = readUint32FromBuf(proofBytes, offset)
-	offset, proof.ReceiveAddr = readAddressFromBuf(proofBytes, offset)
-	offset, proof.ChainId = readUint32FromBuf(proofBytes, offset)
+	offset, proof.NftContentHash = readHashFromBuf(proofBytes, offset)
+	offset, proof.ReceiverAccountIndex = readUint32FromBuf(proofBytes, offset)
 	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
@@ -118,23 +115,22 @@ func ParseWithdrawNftProofBytes(proofBytes []byte) (proof *WithdrawNftProof, err
 	return proof, nil
 }
 
-func ParseWithdrawNftProofStr(mintNftProofStr string) (*WithdrawNftProof, error) {
+func ParseMintNftProofStr(mintNftProofStr string) (*MintNftProof, error) {
 	proofBytes, err := base64.StdEncoding.DecodeString(mintNftProofStr)
 	if err != nil {
 		return nil, err
 	}
-	return ParseWithdrawNftProofBytes(proofBytes)
+	return ParseMintNftProofBytes(proofBytes)
 }
 
-type WithdrawNftRelation struct {
+type MintNftRelation struct {
 	// ------------- public ---------------------
 	GasFeePrimeRangeProof *RangeProof
 	// public key
-	Pk           *Point
-	TxType       uint32
-	NftIndex     uint32
-	ReceiverAddr *big.Int
-	ChainId      uint32
+	Pk                   *Point
+	TxType               uint32
+	NftContentHash       []byte
+	ReceiverAccountIndex uint32
 	// ----------- private ---------------------
 	Sk *big.Int
 	// gas fee
@@ -146,18 +142,17 @@ type WithdrawNftRelation struct {
 	Bar_r_fee     *big.Int
 }
 
-func NewWithdrawNftRelation(
+func NewMintNftRelation(
 	pk *Point,
 	txType uint32,
-	nftIndex uint32,
-	receiverAddr string,
-	chainId uint32,
+	contentHash []byte,
+	receiverAccountIndex uint32,
 	sk *big.Int,
 	// fee part
 	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
-) (*WithdrawNftRelation, error) {
+) (*MintNftRelation, error) {
 	if !notNullElGamal(C_fee) || !curve.IsInSubGroup(pk) || sk == nil || B_fee < GasFee ||
-		!validUint64(GasFee) || receiverAddr == "" {
+		!validUint64(GasFee) {
 		log.Println("[NewSetNftPriceRelation] invalid params")
 		return nil, ErrInvalidParams
 	}
@@ -171,7 +166,6 @@ func NewWithdrawNftRelation(
 		Bar_r_fee             = new(big.Int)
 		GasFeePrimeRangeProof = new(RangeProof)
 		err                   error
-		addrInt               *big.Int
 	)
 	// check if the b is correct
 	hb_fee := curve.Add(C_fee.CR, curve.Neg(curve.ScalarMul(C_fee.CL, ffmath.ModInverse(sk, Order))))
@@ -188,19 +182,12 @@ func NewWithdrawNftRelation(
 		log.Println("[NewWithdrawRelation] err range proof:", err)
 		return nil, err
 	}
-	addrBytes, err := DecodeAddress(receiverAddr)
-	if err != nil {
-		log.Println("[NewWithdrawRelation] err info:", err)
-		return nil, err
-	}
-	addrInt = new(big.Int).SetBytes(addrBytes)
-	relation := &WithdrawNftRelation{
+	relation := &MintNftRelation{
 		GasFeePrimeRangeProof: GasFeePrimeRangeProof,
 		Pk:                    pk,
 		TxType:                txType,
-		NftIndex:              nftIndex,
-		ReceiverAddr:          addrInt,
-		ChainId:               chainId,
+		NftContentHash:        contentHash,
+		ReceiverAccountIndex:  receiverAccountIndex,
 		Sk:                    sk,
 		C_fee:                 C_fee,
 		T_fee:                 new(Point).Set(GasFeePrimeRangeProof.A),
