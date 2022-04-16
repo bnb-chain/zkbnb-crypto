@@ -21,7 +21,6 @@ import (
 	"fmt"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"gotest.tools/assert"
 	"math/big"
 	"testing"
@@ -44,9 +43,7 @@ func TestBuyNftProof_Verify(t *testing.T) {
 	fmt.Println("pk:", curve.ToString(pk))
 	fmt.Println("benc:", bEnc.String())
 	fmt.Println("benc2:", bEnc2.String())
-	hFunc := zmimc.Hmimc
-	hFunc.Write([]byte("test data"))
-	contentHash := hFunc.Sum(nil)
+	nftIndex := uint32(1)
 	assetId := uint32(1)
 	//feeAssetId := uint32(2)
 	relation, err := NewBuyNftRelation(
@@ -54,7 +51,7 @@ func TestBuyNftProof_Verify(t *testing.T) {
 		pk,
 		b,
 		sk,
-		contentHash, assetId, assetAmount,
+		nftIndex, assetId, assetAmount,
 		bEnc, b, assetId, fee,
 		20,
 	)

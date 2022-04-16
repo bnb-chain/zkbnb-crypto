@@ -17,11 +17,11 @@ type SetNftPriceProofConstraints struct {
 	// Commitment Range Proofs
 	//GasFeePrimeRangeProof CtRangeProofConstraints
 	// common inputs
-	Pk             Point
-	TxType         Variable
-	NftContentHash Variable
-	AssetId        Variable
-	AssetAmount    Variable
+	Pk          Point
+	TxType      Variable
+	NftIndex    Variable
+	AssetId     Variable
+	AssetAmount Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
@@ -88,7 +88,7 @@ func VerifySetNftPriceProof(
 	WritePointIntoBuf(&hFunc, proof.T_fee)
 	WritePointIntoBuf(&hFunc, proof.Pk)
 	hFunc.Write(proof.TxType)
-	hFunc.Write(proof.NftContentHash)
+	hFunc.Write(proof.NftIndex)
 	hFunc.Write(proof.AssetId)
 	hFunc.Write(proof.AssetAmount)
 	WritePointIntoBuf(&hFunc, proof.A_pk)
@@ -136,7 +136,7 @@ func SetEmptySetNftProofWitness() (witness SetNftPriceProofConstraints) {
 	// common inputs
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.TxType = ZeroInt
-	witness.NftContentHash = ZeroInt
+	witness.NftIndex = ZeroInt
 	witness.AssetId = ZeroInt
 	witness.AssetAmount = ZeroInt
 	// gas fee
@@ -155,19 +155,19 @@ func SetEmptySetNftProofWitness() (witness SetNftPriceProofConstraints) {
 // set the witness for withdraw proof
 func SetSetNftPriceProofWitness(proof *zecrey.SetNftPriceProof, isEnabled bool) (witness SetNftPriceProofConstraints, err error) {
 	if proof == nil {
-		log.Println("[SetClaimNftProofWitness] invalid params")
+		log.Println("[SetMintNftProofWitness] invalid params")
 		return witness, err
 	}
 
 	// proof must be correct
 	verifyRes, err := proof.Verify()
 	if err != nil {
-		log.Println("[SetClaimNftProofWitness] invalid proof:", err)
+		log.Println("[SetMintNftProofWitness] invalid proof:", err)
 		return witness, err
 	}
 	if !verifyRes {
-		log.Println("[SetClaimNftProofWitness] invalid proof")
-		return witness, errors.New("[SetClaimNftProofWitness] invalid proof")
+		log.Println("[SetMintNftProofWitness] invalid proof")
+		return witness, errors.New("[SetMintNftProofWitness] invalid proof")
 	}
 	// commitments
 	witness.A_pk, err = SetPointWitness(proof.A_pk)
@@ -182,7 +182,7 @@ func SetSetNftPriceProofWitness(proof *zecrey.SetNftPriceProof, isEnabled bool) 
 		return witness, err
 	}
 	witness.TxType = uint64(proof.TxType)
-	witness.NftContentHash = proof.NftContentHash
+	witness.NftIndex = proof.NftIndex
 	witness.AssetId = proof.AssetId
 	witness.AssetAmount = proof.AssetAmount
 	// gas fee

@@ -61,7 +61,7 @@ type (
 	RemoveLiquidityProofConstraints = std.RemoveLiquidityProofConstraints
 	WithdrawProofConstraints        = std.WithdrawProofConstraints
 	DepositNftTxConstraints         = std.DepositNftTxConstraints
-	ClaimNftProofConstraints        = std.ClaimNftProofConstraints
+	ClaimNftProofConstraints        = std.MintNftProofConstraints
 	SetNftPriceProofConstraints     = std.SetNftPriceProofConstraints
 	BuyNftProofConstraints          = std.BuyNftProofConstraints
 	WithdrawNftProofConstraints     = std.WithdrawNftProofConstraints

@@ -36,7 +36,7 @@ func ProveMintNft() js.Func {
 		// length of args should be 1
 		if len(args) != 1 {
 			log.Println("[ProveMintNft] invalid size")
-			return errors.New("[PorveMintNft] invalid size").Error()
+			return errors.New("[ProveMintNft] invalid size").Error()
 		}
 		// read segmentInfo JSON str
 		segmentInfo := args[0].String()
@@ -49,7 +49,7 @@ func ProveMintNft() js.Func {
 		// compute content hash
 		contentHash := zecrey.ComputeContentHash(segment.NftName, segment.NftUrl, segment.NftIntroduction, segment.NftAttributes)
 		// create withdraw relation
-		relation, err := zecrey.NewClaimNftRelation(
+		relation, err := zecrey.NewMintNftRelation(
 			segment.Pk,
 			MintNft,
 			contentHash,
@@ -62,7 +62,7 @@ func ProveMintNft() js.Func {
 			return ErrInvalidWithdrawRelationParams
 		}
 		// create withdraw proof
-		proof, err := zecrey.ProveClaimNft(relation)
+		proof, err := zecrey.ProveMintNft(relation)
 		if err != nil {
 			log.Println("[ProveMintNft] err info:", err)
 			return err.Error()

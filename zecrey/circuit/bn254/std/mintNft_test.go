@@ -16,7 +16,7 @@ import (
 
 func TestClaimNftProofCircuit_Define(t *testing.T) {
 	assert := test.NewAssert(t)
-	var circuit, witness ClaimNftProofConstraints
+	var circuit, witness MintNftProofConstraints
 	r1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		t.Fatal(err)
@@ -45,7 +45,7 @@ func TestClaimNftProofCircuit_Define(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	witness, err = SetClaimNftProofWitness(oProof, true)
+	witness, err = SetMintNftProofWitness(oProof, true)
 	if err != nil {
 		t.Fatal(err)
 	}

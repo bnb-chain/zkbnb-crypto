@@ -38,6 +38,7 @@ type WithdrawNftProof struct {
 	TxType      uint32
 	NftIndex    uint32
 	ReceiveAddr *big.Int
+	ProxyAddr   *big.Int
 	ChainId     uint32
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
@@ -59,6 +60,7 @@ func (proof *WithdrawNftProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.TxType))
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftIndex))
 	offset = copyBuf(&buf, offset, AddressSize, proof.ReceiveAddr.FillBytes(make([]byte, AddressSize)))
+	offset = copyBuf(&buf, offset, AddressSize, proof.ProxyAddr.FillBytes(make([]byte, AddressSize)))
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ChainId))
 	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
@@ -75,8 +77,8 @@ func (proof *WithdrawNftProof) String() string {
 
 func ParseWithdrawNftProofBytes(proofBytes []byte) (proof *WithdrawNftProof, err error) {
 	if len(proofBytes) != WithdrawNftProofSize {
-		log.Println("[ParseSetNftPriceProofBytes] invalid proof size")
-		return nil, errors.New("[ParseSetNftPriceProofBytes] invalid nft proof size")
+		log.Println("[ParseWithdrawNftProofBytes] invalid proof size")
+		return nil, errors.New("[ParseWithdrawNftProofBytes] invalid nft proof size")
 	}
 	proof = new(WithdrawNftProof)
 	offset := 0
@@ -95,6 +97,7 @@ func ParseWithdrawNftProofBytes(proofBytes []byte) (proof *WithdrawNftProof, err
 	offset, proof.TxType = readUint32FromBuf(proofBytes, offset)
 	offset, proof.NftIndex = readUint32FromBuf(proofBytes, offset)
 	offset, proof.ReceiveAddr = readAddressFromBuf(proofBytes, offset)
+	offset, proof.ProxyAddr = readAddressFromBuf(proofBytes, offset)
 	offset, proof.ChainId = readUint32FromBuf(proofBytes, offset)
 	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
@@ -134,6 +137,7 @@ type WithdrawNftRelation struct {
 	TxType       uint32
 	NftIndex     uint32
 	ReceiverAddr *big.Int
+	ProxyAddr    *big.Int
 	ChainId      uint32
 	// ----------- private ---------------------
 	Sk *big.Int
@@ -150,14 +154,14 @@ func NewWithdrawNftRelation(
 	pk *Point,
 	txType uint32,
 	nftIndex uint32,
-	receiverAddr string,
+	receiverAddr, proxyAddr string,
 	chainId uint32,
 	sk *big.Int,
 	// fee part
 	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
 ) (*WithdrawNftRelation, error) {
 	if !notNullElGamal(C_fee) || !curve.IsInSubGroup(pk) || sk == nil || B_fee < GasFee ||
-		!validUint64(GasFee) || receiverAddr == "" {
+		!validUint64(GasFee) || receiverAddr == "" || proxyAddr == "" {
 		log.Println("[NewSetNftPriceRelation] invalid params")
 		return nil, ErrInvalidParams
 	}
@@ -194,12 +198,19 @@ func NewWithdrawNftRelation(
 		return nil, err
 	}
 	addrInt = new(big.Int).SetBytes(addrBytes)
+	proxyAddrBytes, err := DecodeAddress(receiverAddr)
+	if err != nil {
+		log.Println("[NewWithdrawRelation] err info:", err)
+		return nil, err
+	}
+	proxyInt := new(big.Int).SetBytes(proxyAddrBytes)
 	relation := &WithdrawNftRelation{
 		GasFeePrimeRangeProof: GasFeePrimeRangeProof,
 		Pk:                    pk,
 		TxType:                txType,
 		NftIndex:              nftIndex,
 		ReceiverAddr:          addrInt,
+		ProxyAddr:             proxyInt,
 		ChainId:               chainId,
 		Sk:                    sk,
 		C_fee:                 C_fee,

@@ -21,7 +21,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
 	"syscall/js"
@@ -52,7 +51,7 @@ func ProveBuyNft() js.Func {
 			segment.Pk,
 			segment.B,
 			segment.Sk,
-			common.FromHex(segment.NftContentHash),
+			segment.NftIndex,
 			segment.AssetId, segment.AssetAmount,
 			segment.C_fee, segment.B_fee, segment.GasFeeAssetId, segment.GasFee,
 			segment.FeeRate,
@@ -70,7 +69,7 @@ func ProveBuyNft() js.Func {
 		withdrawTx := &BuyNftTxInfo{
 			AccountIndex:      segment.AccountIndex,
 			OwnerAccountIndex: segment.OwnerAccountIndex,
-			NftContentHash:    segment.NftContentHash,
+			NftIndex:          segment.NftIndex,
 			AssetId:           segment.AssetId,
 			AssetAmount:       segment.AssetAmount,
 			GasFeeAssetId:     segment.GasFeeAssetId,
