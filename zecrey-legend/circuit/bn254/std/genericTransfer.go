@@ -17,8 +17,6 @@
 
 package std
 
-import "math/big"
-
 type GenericTransferTx struct {
 	/*
 		- from account index
@@ -36,12 +34,12 @@ type GenericTransferTx struct {
 	ToAccountIndex    uint32
 	ToAccountName     string
 	AssetId           uint32
-	AssetAmount       *big.Int
+	AssetAmount       uint64
 	GasAccountIndex   uint32
 	GasFeeAssetId     uint32
 	GasFeeAssetAmount uint64
 	CallDataHash      []byte
-	NftIndex          uint32
+	NftIndex          int
 }
 
 type GenericTransferTxConstraints struct {

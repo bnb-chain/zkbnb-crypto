@@ -49,3 +49,13 @@ func SelectPoint(api API, flag Variable, a, b Point) Point {
 	y := api.Select(flag, a.Y, b.Y)
 	return Point{X: x, Y: y}
 }
+
+func Max(api API, a, b Variable) Variable {
+	maxAB := api.Select(api.IsZero(api.Sub(1, api.Cmp(a, b))), a, b)
+	return maxAB
+}
+
+func Min(api API, a, b Variable) Variable {
+	minAB := api.Select(api.IsZero(api.Add(1, api.Cmp(a, b))), a, b)
+	return minAB
+}

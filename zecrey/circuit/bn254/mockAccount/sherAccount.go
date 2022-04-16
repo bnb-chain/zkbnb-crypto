@@ -8,7 +8,7 @@ import (
 
 var (
 	SherIndex         = uint32(3)
-	SherName          = "sher.zecrey"
+	SherName          = "sher.zecrey-legend"
 	SherSk, _         = new(big.Int).SetString("1764340744225673614081856977301968708477688328010640838035450327471358028288", 10)
 	SherPk, _         = curve.FromString("8Br57XNRstvIc4KUXNcDaRrk33rGsaY4em9js708FRg=")
 	SherLockedAssetA  = uint64(100)

@@ -171,7 +171,7 @@ func VerifyAddLiquidityTx(api API, flag Variable, tx AddLiquidityTxConstraints, 
 	// verify LP
 	Delta_LPCheck := api.Mul(tx.AssetAAmount, tx.AssetBAmount)
 	LPCheck := api.Mul(tx.LpAmount, tx.LpAmount)
-	api.AssertIsLessOrEqual(Delta_LPCheck, LPCheck)
+	api.AssertIsLessOrEqual(LPCheck, Delta_LPCheck)
 	// verify AMM info
 	l := api.Mul(tx.PoolBAmount, tx.AssetAAmount)
 	r := api.Mul(tx.PoolAAmount, tx.AssetBAmount)

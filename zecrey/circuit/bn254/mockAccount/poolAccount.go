@@ -7,7 +7,7 @@ import (
 
 var (
 	PoolIndex             = uint32(0)
-	PoolName              = "pool.zecrey"
+	PoolName              = "pool.zecrey-legend"
 	PoolSk, _             = new(big.Int).SetString("14920211685767618838764344529549360512929912103991001716704990292355229543", 10)
 	PoolPk, _             = curve.FromString("Qj7JKBoBeYviSGgH+owFRaRC9i5ZFiqCwnzqDBsCVg4=")
 	PoolLiquidityABalance = uint64(40000)

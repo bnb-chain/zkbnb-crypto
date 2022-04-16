@@ -21,10 +21,10 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"log"
-	"math/big"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"log"
+	"math/big"
 )
 
 type WithdrawProof struct {
@@ -180,7 +180,7 @@ type WithdrawProofRelation struct {
 }
 
 func NewWithdrawRelation(
-	chainId uint8,
+	chainId uint32,
 	C *ElGamalEnc,
 	pk *Point,
 	b uint64, bStar uint64,

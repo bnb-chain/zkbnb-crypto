@@ -32,6 +32,7 @@ type RemoveLiquidityTx struct {
 	*/
 	FromAccountIndex  uint32
 	ToAccountIndex    uint32
+	PairIndex         uint32
 	AssetAId          uint32
 	AssetAMinAmount   uint64
 	AssetBId          uint32
@@ -47,6 +48,7 @@ type RemoveLiquidityTx struct {
 type RemoveLiquidityTxConstraints struct {
 	FromAccountIndex  Variable
 	ToAccountIndex    Variable
+	PairIndex         Variable
 	AssetAId          Variable
 	AssetAMinAmount   Variable
 	AssetBId          Variable
@@ -63,6 +65,7 @@ func EmptyRemoveLiquidityTxWitness() (witness RemoveLiquidityTxConstraints) {
 	return RemoveLiquidityTxConstraints{
 		FromAccountIndex:  ZeroInt,
 		ToAccountIndex:    ZeroInt,
+		PairIndex:         ZeroInt,
 		AssetAId:          ZeroInt,
 		AssetAMinAmount:   ZeroInt,
 		AssetBId:          ZeroInt,
@@ -80,6 +83,7 @@ func SetRemoveLiquidityTxWitness(tx *RemoveLiquidityTx) (witness RemoveLiquidity
 	witness = RemoveLiquidityTxConstraints{
 		FromAccountIndex:  tx.FromAccountIndex,
 		ToAccountIndex:    tx.ToAccountIndex,
+		PairIndex:         tx.PairIndex,
 		AssetAId:          tx.AssetAId,
 		AssetAMinAmount:   tx.AssetAMinAmount,
 		AssetBId:          tx.AssetBId,
@@ -99,6 +103,7 @@ func ComputeHashFromRemoveLiquidityTx(tx RemoveLiquidityTxConstraints, nonce Var
 	hFunc.Write(
 		tx.FromAccountIndex,
 		tx.ToAccountIndex,
+		tx.PairIndex,
 		tx.AssetAId,
 		tx.AssetAMinAmount,
 		tx.AssetBId,

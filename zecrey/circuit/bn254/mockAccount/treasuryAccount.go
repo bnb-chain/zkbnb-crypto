@@ -8,7 +8,7 @@ import (
 
 var (
 	TreasuryIndex         = uint32(1)
-	TreasuryName          = "treasury.zecrey"
+	TreasuryName          = "treasury.zecrey-legend"
 	TreasurySk, _         = new(big.Int).SetString("2698126873495378862712283557894415700665308711050547649798144006601306535070", 10)
 	TreasuryPk, _         = curve.FromString("LvLgPxleUCIeU4ZzHA8v2+3jWj3DILnP1eOw3/8B3iA=")
 	TreasuryAssetABalance = uint64(100)
