@@ -16,7 +16,7 @@ import (
 
 func TestClaimNftProofCircuit_Define(t *testing.T) {
 	assert := test.NewAssert(t)
-	var circuit, witness ClaimNftProofConstraints
+	var circuit, witness MintNftProofConstraints
 	r1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		t.Fatal(err)
@@ -35,17 +35,17 @@ func TestClaimNftProofCircuit_Define(t *testing.T) {
 	hFunc.Write([]byte("test data"))
 	contentHash := hFunc.Sum(nil)
 	receiverAccountIndex := uint32(3)
-	relation, err := zecrey.NewClaimNftRelation(
+	relation, err := zecrey.NewMintNftRelation(
 		pk, 9, contentHash, receiverAccountIndex, sk, bEnc2, b_fee, 1, fee,
 	)
 	if err != nil {
 		t.Error(err)
 	}
-	oProof, err := zecrey.ProveClaimNft(relation)
+	oProof, err := zecrey.ProveMintNft(relation)
 	if err != nil {
 		t.Error(err)
 	}
-	witness, err = SetClaimNftProofWitness(oProof, true)
+	witness, err = SetMintNftProofWitness(oProof, true)
 	if err != nil {
 		t.Fatal(err)
 	}

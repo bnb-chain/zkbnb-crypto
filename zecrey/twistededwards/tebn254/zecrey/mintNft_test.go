@@ -42,19 +42,19 @@ func TestMintNftProof_Verify(t *testing.T) {
 	hFunc.Write([]byte("test data"))
 	contentHash := hFunc.Sum(nil)
 	receiverAccountIndex := uint32(3)
-	relation, err := NewClaimNftRelation(
+	relation, err := NewMintNftRelation(
 		pk, 9, contentHash, receiverAccountIndex, sk, bEnc2, b_fee, 1, fee,
 	)
 	if err != nil {
 		t.Error(err)
 	}
 	elapse := time.Now()
-	oProof, err := ProveClaimNft(relation)
+	oProof, err := ProveMintNft(relation)
 	if err != nil {
 		t.Error(err)
 	}
 	proofStr := oProof.String()
-	proof, err := ParseClaimNftProofStr(proofStr)
+	proof, err := ParseMintNftProofStr(proofStr)
 	if err != nil {
 		t.Fatal(err)
 	}

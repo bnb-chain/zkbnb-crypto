@@ -34,7 +34,7 @@ type TransferNftSegment struct {
 	Pk           *Point
 	Sk           *big.Int
 	// common input part
-	NftContentHash       string
+	NftIndex             uint32
 	ReceiverAccountIndex uint32
 	// fee part
 	C_fee         *ElGamalEnc
@@ -54,8 +54,8 @@ type TransferNftSegmentFormat struct {
 	// private key
 	Sk string `json:"sk"`
 	// common input part
-	NftContentHash       string `json:"nft_content_hash"`
-	ReceiverAccountIndex int    `json:"receiver_account_index"`
+	NftIndex             int `json:"nft_index"`
+	ReceiverAccountIndex int `json:"receiver_account_index"`
 	// fee part
 	// encryption of balance of the gas fee asset
 	C_fee string `json:"c_fee"`
@@ -102,7 +102,7 @@ func FromTransferNftSegmentJSON(segmentStr string) (*TransferNftSegment, string)
 		AccountIndex:         uint32(segmentFormat.AccountIndex),
 		Pk:                   Pk,
 		Sk:                   Sk,
-		NftContentHash:       segmentFormat.NftContentHash,
+		NftIndex:             uint32(segmentFormat.NftIndex),
 		ReceiverAccountIndex: uint32(segmentFormat.ReceiverAccountIndex),
 		C_fee:                C_fee,
 		B_fee:                uint64(segmentFormat.B_fee),
@@ -116,7 +116,7 @@ type TransferNftTxInfo struct {
 	// zecrey-legend index
 	AccountIndex uint32
 	// common input part
-	NftContentHash       string
+	NftIndex             uint32
 	ReceiverAccountIndex uint32
 	// gas fee part
 	GasFeeAssetId uint32

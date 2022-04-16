@@ -63,7 +63,7 @@ func ProveBuyNft(relation *BuyNftProofRelation) (proof *BuyNftProof, err error) 
 	// write common inputs into buf
 	// then generate the challenge c
 	buf.Write(PaddingBigIntBytes(FixedCurve))
-	buf.Write(relation.NftContentHash)
+	writeUint64IntoBuf(&buf, uint64(proof.NftIndex))
 	// gas fee
 	writeEncIntoBuf(&buf, relation.C_fee)
 	writeUint64IntoBuf(&buf, uint64(relation.GasFeeAssetId))
@@ -95,7 +95,7 @@ func ProveBuyNft(relation *BuyNftProofRelation) (proof *BuyNftProof, err error) 
 		C:                     relation.C,
 		T:                     relation.T,
 		Pk:                    relation.Pk,
-		NftContentHash:        relation.NftContentHash,
+		NftIndex:              relation.NftIndex,
 		AssetId:               relation.AssetId,
 		AssetAmount:           relation.AssetAmount,
 		FeeRate:               relation.FeeRate,
@@ -148,7 +148,7 @@ func (proof *BuyNftProof) Verify() (bool, error) {
 	go verifyCtRangeRoutine(proof.BPrimeRangeProof, rangeChan)
 	go verifyCtRangeRoutine(proof.GasFeePrimeRangeProof, rangeChan)
 	buf.Write(PaddingBigIntBytes(FixedCurve))
-	buf.Write(proof.NftContentHash)
+	writeUint64IntoBuf(&buf, uint64(proof.NftIndex))
 	// gas fee
 	writeEncIntoBuf(&buf, proof.C_fee)
 	writeUint64IntoBuf(&buf, uint64(proof.GasFeeAssetId))

@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-type ClaimNftProofConstraints struct {
+type MintNftProofConstraints struct {
 	// commitments
 	A_pk Point
 	// response
@@ -34,7 +34,7 @@ type ClaimNftProofConstraints struct {
 }
 
 // define tests for verifying the claim nft proof
-func (circuit ClaimNftProofConstraints) Define(api API) error {
+func (circuit MintNftProofConstraints) Define(api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(api, tedwards.BN254)
@@ -52,20 +52,20 @@ func (circuit ClaimNftProofConstraints) Define(api API) error {
 		return err
 	}
 	tool := NewEccTool(api, params)
-	VerifyClaimNftProof(tool, api, &circuit, hFunc, H)
+	VerifyMintNftProof(tool, api, &circuit, hFunc, H)
 	return nil
 }
 
 /*
-	VerifyClaimNftProof verify the claim nft proof in circuit
+	VerifyMintNftProof verify the claim nft proof in circuit
 	@api: the constraint system
 	@proof: claim nft proof circuit
 	@params: params for the curve tebn254
 */
-func VerifyClaimNftProof(
+func VerifyMintNftProof(
 	tool *EccTool,
 	api API,
-	proof *ClaimNftProofConstraints,
+	proof *MintNftProofConstraints,
 	hFunc MiMC,
 	h Point,
 ) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
@@ -125,7 +125,7 @@ func VerifyClaimNftProof(
 	return c, pkProofs, tProofs
 }
 
-func SetEmptyClaimNftProofWitness() (witness ClaimNftProofConstraints) {
+func SetEmptyMintNftProofWitness() (witness MintNftProofConstraints) {
 	// commitments
 	witness.A_pk, _ = SetPointWitness(BasePoint)
 	// response
@@ -150,21 +150,21 @@ func SetEmptyClaimNftProofWitness() (witness ClaimNftProofConstraints) {
 }
 
 // set the witness for withdraw proof
-func SetClaimNftProofWitness(proof *zecrey.ClaimNftProof, isEnabled bool) (witness ClaimNftProofConstraints, err error) {
+func SetMintNftProofWitness(proof *zecrey.MintNftProof, isEnabled bool) (witness MintNftProofConstraints, err error) {
 	if proof == nil {
-		log.Println("[SetClaimNftProofWitness] invalid params")
+		log.Println("[SetMintNftProofWitness] invalid params")
 		return witness, err
 	}
 
 	// proof must be correct
 	verifyRes, err := proof.Verify()
 	if err != nil {
-		log.Println("[SetClaimNftProofWitness] invalid proof:", err)
+		log.Println("[SetMintNftProofWitness] invalid proof:", err)
 		return witness, err
 	}
 	if !verifyRes {
-		log.Println("[SetClaimNftProofWitness] invalid proof")
-		return witness, errors.New("[SetClaimNftProofWitness] invalid proof")
+		log.Println("[SetMintNftProofWitness] invalid proof")
+		return witness, errors.New("[SetMintNftProofWitness] invalid proof")
 	}
 	// commitments
 	witness.A_pk, err = SetPointWitness(proof.A_pk)

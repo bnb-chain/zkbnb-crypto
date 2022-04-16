@@ -34,9 +34,10 @@ type WithdrawNftSegment struct {
 	Pk           *Point
 	Sk           *big.Int
 	// common input part
-	NftContentHash string
-	ReceiverAddr   string
-	ChainId        uint32
+	NftIndex     uint32
+	ReceiverAddr string
+	ProxyAddr    string
+	ChainId      uint32
 	// fee part
 	C_fee         *ElGamalEnc
 	B_fee         uint64
@@ -55,9 +56,10 @@ type WithdrawNftSegmentFormat struct {
 	// private key
 	Sk string `json:"sk"`
 	// common input part
-	NftContentHash string `json:"nft_content_hash"`
-	ReceiverAddr   string `json:"receiver_addr"`
-	ChainId        int    `json:"chain_id"`
+	NftIndex     int    `json:"nft_index"`
+	ReceiverAddr string `json:"receiver_addr"`
+	ProxyAddr    string `json:"proxy_addr"`
+	ChainId      int    `json:"chain_id"`
 	// fee part
 	// encryption of balance of the gas fee asset
 	C_fee string `json:"c_fee"`
@@ -101,16 +103,17 @@ func FromWithdrawNftSegmentJSON(segmentStr string) (*WithdrawNftSegment, string)
 		return nil, ErrParseEnc
 	}
 	segment := &WithdrawNftSegment{
-		AccountIndex:   uint32(segmentFormat.AccountIndex),
-		Pk:             Pk,
-		Sk:             Sk,
-		NftContentHash: segmentFormat.NftContentHash,
-		ReceiverAddr:   segmentFormat.ReceiverAddr,
-		ChainId:        uint32(segmentFormat.ChainId),
-		C_fee:          C_fee,
-		B_fee:          uint64(segmentFormat.B_fee),
-		GasFeeAssetId:  uint32(segmentFormat.GasFeeAssetId),
-		GasFee:         uint64(segmentFormat.GasFee),
+		AccountIndex:  uint32(segmentFormat.AccountIndex),
+		Pk:            Pk,
+		Sk:            Sk,
+		NftIndex:      uint32(segmentFormat.NftIndex),
+		ReceiverAddr:  segmentFormat.ReceiverAddr,
+		ProxyAddr:     segmentFormat.ProxyAddr,
+		ChainId:       uint32(segmentFormat.ChainId),
+		C_fee:         C_fee,
+		B_fee:         uint64(segmentFormat.B_fee),
+		GasFeeAssetId: uint32(segmentFormat.GasFeeAssetId),
+		GasFee:        uint64(segmentFormat.GasFee),
 	}
 	return segment, Success
 }
@@ -119,9 +122,10 @@ type WithdrawNftTxInfo struct {
 	// zecrey-legend index
 	AccountIndex uint32
 	// common input part
-	NftContentHash string
-	ReceiverAddr   string
-	ChainId        uint32
+	NftIndex     uint32
+	ReceiverAddr string
+	ProxyAddr    string
+	ChainId      uint32
 	// gas fee part
 	GasFeeAssetId uint32
 	GasFee        uint64

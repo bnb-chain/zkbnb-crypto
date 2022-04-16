@@ -28,7 +28,7 @@ import (
 	"math/big"
 )
 
-func ProveWithdrawNft(relation *WithdrawNftRelation) (proof *WithdrawNftProof, err error) {
+func ProveTransferNft(relation *TransferNftRelation) (proof *TransferNftProof, err error) {
 	if relation == nil {
 		log.Println("[ProveWithdrawNft] invalid params")
 		return nil, ErrInvalidParams
@@ -58,10 +58,8 @@ func ProveWithdrawNft(relation *WithdrawNftRelation) (proof *WithdrawNftProof, e
 	writePointIntoBuf(&buf, relation.T_fee)
 	writePointIntoBuf(&buf, relation.Pk)
 	writeUint64IntoBuf(&buf, uint64(relation.TxType))
-	writeUint64IntoBuf(&buf, uint64(relation.NftIndex))
-	buf.Write(PaddingBigIntBytes(relation.ReceiverAddr))
-	buf.Write(PaddingBigIntBytes(relation.ProxyAddr))
-	writeUint64IntoBuf(&buf, uint64(relation.ChainId))
+	writeUint64IntoBuf(&buf, uint64(proof.NftIndex))
+	writeUint64IntoBuf(&buf, uint64(relation.ReceiverAccountIndex))
 	writePointIntoBuf(&buf, A_pk)
 	writePointIntoBuf(&buf, A_T_feeDivC_feeRprime)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
@@ -72,7 +70,7 @@ func ProveWithdrawNft(relation *WithdrawNftRelation) (proof *WithdrawNftProof, e
 	skInv := ffmath.ModInverse(relation.Sk, Order)
 	z_skInv = ffmath.AddMod(alpha_skInv, ffmath.Multiply(c, skInv), Order)
 	z_bar_r_fee = ffmath.AddMod(alpha_bar_r_fee, ffmath.Multiply(c, relation.Bar_r_fee), Order)
-	proof = &WithdrawNftProof{
+	proof = &TransferNftProof{
 		A_pk:                  A_pk,
 		Z_sk:                  z_sk,
 		Z_skInv:               z_skInv,
@@ -80,9 +78,7 @@ func ProveWithdrawNft(relation *WithdrawNftRelation) (proof *WithdrawNftProof, e
 		Pk:                    relation.Pk,
 		TxType:                relation.TxType,
 		NftIndex:              relation.NftIndex,
-		ReceiveAddr:           relation.ReceiverAddr,
-		ProxyAddr:             relation.ProxyAddr,
-		ChainId:               relation.ChainId,
+		ReceiverAccountIndex:  relation.ReceiverAccountIndex,
 		A_T_feeC_feeRPrimeInv: A_T_feeDivC_feeRprime,
 		Z_bar_r_fee:           z_bar_r_fee,
 		C_fee:                 relation.C_fee,
@@ -93,10 +89,10 @@ func ProveWithdrawNft(relation *WithdrawNftRelation) (proof *WithdrawNftProof, e
 	return proof, nil
 }
 
-func (proof *WithdrawNftProof) Verify() (bool, error) {
+func (proof *TransferNftProof) Verify() (bool, error) {
 	if !validUint64(proof.GasFee) {
-		log.Println("[Verify WithdrawNftProof] invalid params")
-		return false, errors.New("[Verify WithdrawNftProof] invalid params")
+		log.Println("[Verify TransferNftProof] invalid params")
+		return false, errors.New("[Verify TransferNftProof] invalid params")
 	}
 	// generate the challenge
 	var (
@@ -109,17 +105,17 @@ func (proof *WithdrawNftProof) Verify() (bool, error) {
 	T_feeDivC_feeRprime = curve.Add(proof.T_fee, curve.Neg(curve.Add(proof.C_fee.CR, C_feeDelta)))
 	// check range params
 	if !proof.GasFeePrimeRangeProof.A.Equal(proof.T_fee) {
-		log.Println("[Verify WithdrawNftProof] invalid range params")
-		return false, errors.New("[Verify WithdrawNftProof] invalid rage params")
+		log.Println("[Verify TransferNftProof] invalid range params")
+		return false, errors.New("[Verify TransferNftProof] invalid rage params")
 	}
 	// Verify range proof first
 	isValidProof, err := proof.GasFeePrimeRangeProof.Verify()
 	if err != nil {
-		log.Println("[Verify WithdrawNftProof] unable to verify gas fee prime range proof:", err)
+		log.Println("[Verify TransferNftProof] unable to verify gas fee prime range proof:", err)
 		return false, err
 	}
 	if !isValidProof {
-		log.Println("[Verify WithdrawNftProof] invalid range proof")
+		log.Println("[Verify TransferNftProof] invalid range proof")
 		return false, nil
 	}
 	buf.Write(PaddingBigIntBytes(FixedCurve))
@@ -131,14 +127,12 @@ func (proof *WithdrawNftProof) Verify() (bool, error) {
 	writePointIntoBuf(&buf, proof.Pk)
 	writeUint64IntoBuf(&buf, uint64(proof.TxType))
 	writeUint64IntoBuf(&buf, uint64(proof.NftIndex))
-	buf.Write(PaddingBigIntBytes(proof.ReceiveAddr))
-	buf.Write(PaddingBigIntBytes(proof.ProxyAddr))
-	writeUint64IntoBuf(&buf, uint64(proof.ChainId))
+	writeUint64IntoBuf(&buf, uint64(proof.ReceiverAccountIndex))
 	writePointIntoBuf(&buf, proof.A_pk)
 	writePointIntoBuf(&buf, proof.A_T_feeC_feeRPrimeInv)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
 	if err != nil {
-		log.Println("[Verify WithdrawNftProof] err: unable to compute hash:", err)
+		log.Println("[Verify TransferNftProof] err: unable to compute hash:", err)
 		return false, err
 	}
 	// Verify balance
@@ -146,14 +140,14 @@ func (proof *WithdrawNftProof) Verify() (bool, error) {
 	l1 := curve.ScalarMul(G, proof.Z_sk)
 	r1 := curve.Add(proof.A_pk, curve.ScalarMul(proof.Pk, c))
 	if !l1.Equal(r1) {
-		log.Println("[Verify WithdrawNftProof] l1!=r1")
+		log.Println("[Verify TransferNftProof] l1!=r1")
 		return false, nil
 	}
 	// Verify T(C_R - C_R^{\star})^{-1} = (C_L - C_L^{\star})^{-sk^{-1}} g^{\bar{r}}
 	l2 := curve.Add(curve.ScalarMul(G, proof.Z_bar_r_fee), curve.ScalarMul(C_feeLprimeInv, proof.Z_skInv))
 	r2 := curve.Add(proof.A_T_feeC_feeRPrimeInv, curve.ScalarMul(T_feeDivC_feeRprime, c))
 	if !l2.Equal(r2) {
-		log.Println("[Verify WithdrawNftProof] l2!=r2")
+		log.Println("[Verify TransferNftProof] l2!=r2")
 		return false, nil
 	}
 	return true, nil

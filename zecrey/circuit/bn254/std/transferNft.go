@@ -1,3 +1,20 @@
+/*
+ * Copyright © 2021 Zecrey Protocol
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package std
 
 import (
@@ -9,7 +26,7 @@ import (
 	"log"
 )
 
-type WithdrawNftProofConstraints struct {
+type TransferNftProofConstraints struct {
 	// commitments
 	A_pk Point
 	// response
@@ -17,12 +34,10 @@ type WithdrawNftProofConstraints struct {
 	// Commitment Range Proofs
 	//GasFeePrimeRangeProof CtRangeProofConstraints
 	// common inputs
-	Pk          Point
-	TxType      Variable
-	NftIndex    Variable
-	ReceiveAddr Variable
-	ProxyAddr   Variable
-	ChainId     Variable
+	Pk                   Point
+	TxType               Variable
+	NftIndex             Variable
+	ReceiverAccountIndex Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
@@ -36,7 +51,7 @@ type WithdrawNftProofConstraints struct {
 }
 
 // define tests for verifying the claim nft proof
-func (circuit WithdrawNftProofConstraints) Define(api API) error {
+func (circuit TransferNftProofConstraints) Define(api API) error {
 	// first check if C = c_1 \oplus c_2
 	// get edwards curve params
 	params, err := twistededwards.NewEdCurve(api, tedwards.BN254)
@@ -54,20 +69,20 @@ func (circuit WithdrawNftProofConstraints) Define(api API) error {
 		return err
 	}
 	tool := NewEccTool(api, params)
-	VerifyWithdrawNftProof(tool, api, &circuit, hFunc, H)
+	VerifyTransferNftProof(tool, api, &circuit, hFunc, H)
 	return nil
 }
 
 /*
-	VerifyWithdrawNftProof verify the claim nft proof in circuit
+	VerifyTransferNftProof verify the claim nft proof in circuit
 	@api: the constraint system
 	@proof: claim nft proof circuit
 	@params: params for the curve tebn254
 */
-func VerifyWithdrawNftProof(
+func VerifyTransferNftProof(
 	tool *EccTool,
 	api API,
-	proof *WithdrawNftProofConstraints,
+	proof *TransferNftProofConstraints,
 	hFunc MiMC,
 	h Point,
 ) (c Variable, pkProofs [MaxRangeProofCount]CommonPkProof, tProofs [MaxRangeProofCount]CommonTProof) {
@@ -90,9 +105,7 @@ func VerifyWithdrawNftProof(
 	WritePointIntoBuf(&hFunc, proof.Pk)
 	hFunc.Write(proof.TxType)
 	hFunc.Write(proof.NftIndex)
-	hFunc.Write(proof.ReceiveAddr)
-	hFunc.Write(proof.ProxyAddr)
-	hFunc.Write(proof.ChainId)
+	hFunc.Write(proof.ReceiverAccountIndex)
 	WritePointIntoBuf(&hFunc, proof.A_pk)
 	WritePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
 	c = hFunc.Sum()
@@ -125,10 +138,11 @@ func VerifyWithdrawNftProof(
 	// set proof deltas
 	proof.C_fee_DeltaForGas = C_fee_DeltaForGas
 	proof.C_fee_DeltaForFrom = C_fee_DeltaForFrom
+	// set proof deltas
 	return c, pkProofs, tProofs
 }
 
-func SetEmptyWithdrawNftProofWitness() (witness WithdrawNftProofConstraints) {
+func SetEmptyTransferNftProofWitness() (witness TransferNftProofConstraints) {
 	// commitments
 	witness.A_pk, _ = SetPointWitness(BasePoint)
 	// response
@@ -138,9 +152,7 @@ func SetEmptyWithdrawNftProofWitness() (witness WithdrawNftProofConstraints) {
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.TxType = ZeroInt
 	witness.NftIndex = ZeroInt
-	witness.ReceiveAddr = ZeroInt
-	witness.ProxyAddr = ZeroInt
-	witness.ChainId = ZeroInt
+	witness.ReceiverAccountIndex = ZeroInt
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, _ = SetPointWitness(BasePoint)
 	witness.Z_bar_r_fee = ZeroInt
@@ -155,21 +167,21 @@ func SetEmptyWithdrawNftProofWitness() (witness WithdrawNftProofConstraints) {
 }
 
 // set the witness for withdraw proof
-func SetWithdrawNftProofWitness(proof *zecrey.WithdrawNftProof, isEnabled bool) (witness WithdrawNftProofConstraints, err error) {
+func SetTransferNftProofWitness(proof *zecrey.TransferNftProof, isEnabled bool) (witness TransferNftProofConstraints, err error) {
 	if proof == nil {
-		log.Println("[SetWithdrawNftProofWitness] invalid params")
+		log.Println("[SetTransferNftProofWitness] invalid params")
 		return witness, err
 	}
 
 	// proof must be correct
 	verifyRes, err := proof.Verify()
 	if err != nil {
-		log.Println("[SetWithdrawNftProofWitness] invalid proof:", err)
+		log.Println("[SetTransferNftProofWitness] invalid proof:", err)
 		return witness, err
 	}
 	if !verifyRes {
-		log.Println("[SetWithdrawNftProofWitness] invalid proof")
-		return witness, errors.New("[SetWithdrawNftProofWitness] invalid proof")
+		log.Println("[SetTransferNftProofWitness] invalid proof")
+		return witness, errors.New("[SetTransferNftProofWitness] invalid proof")
 	}
 	// commitments
 	witness.A_pk, err = SetPointWitness(proof.A_pk)
@@ -185,9 +197,7 @@ func SetWithdrawNftProofWitness(proof *zecrey.WithdrawNftProof, isEnabled bool) 
 	}
 	witness.TxType = uint64(proof.TxType)
 	witness.NftIndex = proof.NftIndex
-	witness.ReceiveAddr = proof.ReceiveAddr
-	witness.ProxyAddr = proof.ProxyAddr
-	witness.ChainId = proof.ChainId
+	witness.ReceiverAccountIndex = proof.ReceiverAccountIndex
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
 	if err != nil {

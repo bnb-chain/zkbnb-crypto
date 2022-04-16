@@ -46,7 +46,7 @@ type (
 	AddLiquidityProof    = zecrey.AddLiquidityProof
 	RemoveLiquidityProof = zecrey.RemoveLiquidityProof
 	WithdrawProof        = zecrey.WithdrawProof
-	ClaimNftProof        = zecrey.ClaimNftProof
+	ClaimNftProof        = zecrey.MintNftProof
 	SetNftPriceProof     = zecrey.SetNftPriceProof
 	BuyNftProof          = zecrey.BuyNftProof
 	WithdrawNftProof     = zecrey.WithdrawNftProof
@@ -61,7 +61,7 @@ type (
 	RemoveLiquidityProofConstraints = std.RemoveLiquidityProofConstraints
 	WithdrawProofConstraints        = std.WithdrawProofConstraints
 	DepositNftTxConstraints         = std.DepositNftTxConstraints
-	ClaimNftProofConstraints        = std.ClaimNftProofConstraints
+	ClaimNftProofConstraints        = std.MintNftProofConstraints
 	SetNftPriceProofConstraints     = std.SetNftPriceProofConstraints
 	BuyNftProofConstraints          = std.BuyNftProofConstraints
 	WithdrawNftProofConstraints     = std.WithdrawNftProofConstraints

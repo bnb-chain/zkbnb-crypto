@@ -26,7 +26,7 @@ import (
 	"math/big"
 )
 
-type ClaimNftProof struct {
+type TransferNftProof struct {
 	// commitments
 	A_pk *Point
 	// response
@@ -35,8 +35,8 @@ type ClaimNftProof struct {
 	GasFeePrimeRangeProof *RangeProof
 	// common inputs
 	Pk                   *Point
-	TxType               uint8
-	NftContentHash       []byte
+	TxType               uint32
+	NftIndex             uint32
 	ReceiverAccountIndex uint32
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
@@ -47,16 +47,16 @@ type ClaimNftProof struct {
 	GasFee                uint64
 }
 
-func (proof *ClaimNftProof) Bytes() []byte {
-	buf := make([]byte, ClaimNftProofSize)
+func (proof *TransferNftProof) Bytes() []byte {
+	buf := make([]byte, TransferNftProofSize)
 	offset := 0
 	offset = copyBuf(&buf, offset, PointSize, proof.A_pk.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_sk.FillBytes(make([]byte, PointSize)))
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_skInv.FillBytes(make([]byte, PointSize)))
 	offset = copyBuf(&buf, offset, RangeProofSize, proof.GasFeePrimeRangeProof.Bytes())
 	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
-	offset = copyBuf(&buf, offset, OneByte, []byte{proof.TxType})
-	offset = copyBuf(&buf, offset, PointSize, proof.NftContentHash)
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.TxType))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftIndex))
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ReceiverAccountIndex))
 	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
@@ -67,16 +67,16 @@ func (proof *ClaimNftProof) Bytes() []byte {
 	return buf
 }
 
-func (proof *ClaimNftProof) String() string {
+func (proof *TransferNftProof) String() string {
 	return base64.StdEncoding.EncodeToString(proof.Bytes())
 }
 
-func ParseClaimNftProofBytes(proofBytes []byte) (proof *ClaimNftProof, err error) {
-	if len(proofBytes) != ClaimNftProofSize {
-		log.Println("[ParseSetNftPriceProofBytes] invalid proof size")
-		return nil, errors.New("[ParseSetNftPriceProofBytes] invalid nft proof size")
+func ParseTransferNftProofBytes(proofBytes []byte) (proof *TransferNftProof, err error) {
+	if len(proofBytes) != TransferNftProofSize {
+		log.Println("[ParseTransferNftProofBytes] invalid proof size")
+		return nil, errors.New("[ParseTransferNftProofBytes] invalid nft proof size")
 	}
-	proof = new(ClaimNftProof)
+	proof = new(TransferNftProof)
 	offset := 0
 
 	offset, proof.A_pk, err = readPointFromBuf(proofBytes, offset)
@@ -90,8 +90,8 @@ func ParseClaimNftProofBytes(proofBytes []byte) (proof *ClaimNftProof, err error
 	if err != nil {
 		return nil, err
 	}
-	offset, proof.TxType = readTxTypeFromBuf(proofBytes, offset)
-	offset, proof.NftContentHash = readHashFromBuf(proofBytes, offset)
+	offset, proof.TxType = readUint32FromBuf(proofBytes, offset)
+	offset, proof.NftIndex = readUint32FromBuf(proofBytes, offset)
 	offset, proof.ReceiverAccountIndex = readUint32FromBuf(proofBytes, offset)
 	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
@@ -115,21 +115,21 @@ func ParseClaimNftProofBytes(proofBytes []byte) (proof *ClaimNftProof, err error
 	return proof, nil
 }
 
-func ParseClaimNftProofStr(mintNftProofStr string) (*ClaimNftProof, error) {
+func ParseTransferNftProofStr(mintNftProofStr string) (*TransferNftProof, error) {
 	proofBytes, err := base64.StdEncoding.DecodeString(mintNftProofStr)
 	if err != nil {
 		return nil, err
 	}
-	return ParseClaimNftProofBytes(proofBytes)
+	return ParseTransferNftProofBytes(proofBytes)
 }
 
-type ClaimNftRelation struct {
+type TransferNftRelation struct {
 	// ------------- public ---------------------
 	GasFeePrimeRangeProof *RangeProof
 	// public key
 	Pk                   *Point
-	TxType               uint8
-	NftContentHash       []byte
+	TxType               uint32
+	NftIndex             uint32
 	ReceiverAccountIndex uint32
 	// ----------- private ---------------------
 	Sk *big.Int
@@ -142,15 +142,15 @@ type ClaimNftRelation struct {
 	Bar_r_fee     *big.Int
 }
 
-func NewClaimNftRelation(
+func NewTransferNftRelation(
 	pk *Point,
-	txType uint8,
-	contentHash []byte,
+	txType uint32,
+	nftIndex uint32,
 	receiverAccountIndex uint32,
 	sk *big.Int,
-	// fee part
+// fee part
 	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
-) (*ClaimNftRelation, error) {
+) (*TransferNftRelation, error) {
 	if !notNullElGamal(C_fee) || !curve.IsInSubGroup(pk) || sk == nil || B_fee < GasFee ||
 		!validUint64(GasFee) {
 		log.Println("[NewSetNftPriceRelation] invalid params")
@@ -182,11 +182,11 @@ func NewClaimNftRelation(
 		log.Println("[NewWithdrawRelation] err range proof:", err)
 		return nil, err
 	}
-	relation := &ClaimNftRelation{
+	relation := &TransferNftRelation{
 		GasFeePrimeRangeProof: GasFeePrimeRangeProof,
 		Pk:                    pk,
 		TxType:                txType,
-		NftContentHash:        contentHash,
+		NftIndex:              nftIndex,
 		ReceiverAccountIndex:  receiverAccountIndex,
 		Sk:                    sk,
 		C_fee:                 C_fee,

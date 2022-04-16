@@ -35,7 +35,7 @@ type BuyNftSegment struct {
 	B                 uint64
 	Sk                *big.Int
 	OwnerAccountIndex uint32
-	NftContentHash    string
+	NftIndex          uint32
 	AssetId           uint32
 	AssetAmount       uint64
 	FeeRate           uint32
@@ -61,11 +61,11 @@ type BuyNftSegmentFormat struct {
 	// private key
 	Sk string `json:"sk"`
 	// owner index
-	OwnerAccountIndex int    `json:"owner_account_index"`
-	NftContentHash    string `json:"nft_content_hash"`
-	AssetId           int    `json:"asset_id"`
-	AssetAmount       int64  `json:"asset_amount"`
-	FeeRate           int    `json:"fee_rate"`
+	OwnerAccountIndex int   `json:"owner_account_index"`
+	NftIndex          int   `json:"nft_index"`
+	AssetId           int   `json:"asset_id"`
+	AssetAmount       int64 `json:"asset_amount"`
+	FeeRate           int   `json:"fee_rate"`
 	// fee part
 	// encryption of balance of the gas fee asset
 	C_fee string `json:"c_fee"`
@@ -125,7 +125,7 @@ func FromBuyNftSegmentJSON(segmentStr string) (*BuyNftSegment, string) {
 		B:                 uint64(segmentFormat.B),
 		Sk:                Sk,
 		OwnerAccountIndex: uint32(segmentFormat.OwnerAccountIndex),
-		NftContentHash:    segmentFormat.NftContentHash,
+		NftIndex:          uint32(segmentFormat.NftIndex),
 		AssetId:           uint32(segmentFormat.AssetId),
 		AssetAmount:       uint64(segmentFormat.AssetAmount),
 		FeeRate:           uint32(segmentFormat.FeeRate),
@@ -142,8 +142,8 @@ type BuyNftTxInfo struct {
 	AccountIndex uint32
 	// nft owner
 	OwnerAccountIndex uint32
-	// nft content hash
-	NftContentHash string
+	// nft index
+	NftIndex uint32
 	// nft asset id
 	AssetId uint32
 	// nft price

@@ -21,7 +21,6 @@ import (
 	"fmt"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
 	"gotest.tools/assert"
 	"math/big"
 	"testing"
@@ -38,12 +37,10 @@ func TestWithdrawNftProof_Verify(t *testing.T) {
 	fmt.Println("pk:", curve.ToString(pk))
 	fmt.Println("benc2:", bEnc2.String())
 	//feeAssetId := uint32(2)
-	hFunc := zmimc.Hmimc
-	hFunc.Write([]byte("test data"))
-	contentHash := hFunc.Sum(nil)
+	nftIndex := uint32(1)
 	receiverAddr := "0xd5Aa3B56a2E2139DB315CdFE3b34149c8ed09171"
 	relation, err := NewWithdrawNftRelation(
-		pk, 9, contentHash, receiverAddr, 1, sk, bEnc2, b_fee, 1, fee,
+		pk, 9, nftIndex, receiverAddr, receiverAddr, 1, sk, bEnc2, b_fee, 1, fee,
 	)
 	if err != nil {
 		t.Error(err)

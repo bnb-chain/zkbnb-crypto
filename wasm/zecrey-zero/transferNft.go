@@ -21,7 +21,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
 	"syscall/js"
@@ -47,10 +46,10 @@ func ProveTransferNft() js.Func {
 			return errStr
 		}
 		// create withdraw relation
-		relation, err := zecrey.NewClaimNftRelation(
+		relation, err := zecrey.NewTransferNftRelation(
 			segment.Pk,
 			TransferNft,
-			common.FromHex(segment.NftContentHash),
+			segment.NftIndex,
 			segment.ReceiverAccountIndex,
 			segment.Sk,
 			segment.C_fee, segment.B_fee, segment.GasFeeAssetId, segment.GasFee,
@@ -60,14 +59,14 @@ func ProveTransferNft() js.Func {
 			return ErrInvalidWithdrawRelationParams
 		}
 		// create withdraw proof
-		proof, err := zecrey.ProveClaimNft(relation)
+		proof, err := zecrey.ProveTransferNft(relation)
 		if err != nil {
 			log.Println("[ProveTransferNft] err info:", err)
 			return err.Error()
 		}
 		tx := &TransferNftTxInfo{
 			AccountIndex:         segment.AccountIndex,
-			NftContentHash:       segment.NftContentHash,
+			NftIndex:             segment.NftIndex,
 			ReceiverAccountIndex: segment.ReceiverAccountIndex,
 			GasFeeAssetId:        segment.GasFeeAssetId,
 			GasFee:               segment.GasFee,

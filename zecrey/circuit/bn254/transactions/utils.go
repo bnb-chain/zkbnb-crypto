@@ -737,9 +737,8 @@ func GetAccountDeltasFromSetNftPriceProof(
 	deltas[2] = deltas[0]
 	deltas[3] = deltas[0]
 	nftDeltas[SetNftPriceFromAccount] = NftDeltaConstraints{
-		NftContentHash: proof.NftContentHash,
-		AssetId:        proof.AssetId,
-		AssetAmount:    proof.AssetAmount,
+		AssetId:     proof.AssetId,
+		AssetAmount: proof.AssetAmount,
 	}
 	for i := SetNftPriceFromAccount + 1; i < NbAccountsPerTx; i++ {
 		nftDeltas[i] = nftDeltas[0]
@@ -810,9 +809,8 @@ func GetAccountDeltasFromBuyNftProof(
 		AssetAmount:    std.DefaultInt,
 	}
 	nftDeltas[BuyNftToAccount] = NftDeltaConstraints{
-		NftContentHash: proof.NftContentHash,
-		AssetId:        std.DefaultInt,
-		AssetAmount:    std.DefaultInt,
+		AssetId:     std.DefaultInt,
+		AssetAmount: std.DefaultInt,
 	}
 	nftDeltas[2] = nftDeltas[0]
 	nftDeltas[3] = nftDeltas[0]

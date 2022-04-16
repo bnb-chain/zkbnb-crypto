@@ -29,7 +29,7 @@ import (
 )
 
 func TestBuyNft(t *testing.T) {
-	sk, err := curve.GenerateEddsaPrivateKey("01000001")
+	sk, err := curve.GenerateEddsaPrivateKey("00000000888888888888888888888888")
 	if err != nil {
 		t.Fatal(err)
 	}
