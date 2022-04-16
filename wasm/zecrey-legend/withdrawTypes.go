@@ -25,94 +25,84 @@ import (
 	"log"
 )
 
-type GenericTransferSegmentFormat struct {
+type WithdrawSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
-	ToAccountIndex    int64  `json:"to_account_index"`
-	ToAccountName     string `json:"to_account_name"`
 	AssetId           int64  `json:"asset_id"`
 	AssetAmount       int64  `json:"asset_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
-	CallData          string `json:"call_data"`
-	NftIndex          int    `json:"nft_index"`
+	ToAddress         string `json:"to_address"`
 	Nonce             int64  `json:"nonce"`
 }
 
-/*
-	ConstructGenericTransferTxInfo: construct generic transfer tx, sign txInfo
-*/
-func ConstructGenericTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *GenericTransferTxInfo, err error) {
-	var segmentFormat *GenericTransferSegmentFormat
+func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *WithdrawTxInfo, err error) {
+	var segmentFormat *WithdrawSegmentFormat
 	err = json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
-		log.Println("[ConstructGenericTransferTxInfo] err info:", err)
+		log.Println("[ConstructRemoveLiquidityTxInfo] err info:", err)
 		return nil, err
 	}
-	txInfo = &GenericTransferTxInfo{
+	txInfo = &WithdrawTxInfo{
 		FromAccountIndex:  uint32(segmentFormat.FromAccountIndex),
-		ToAccountIndex:    uint32(segmentFormat.ToAccountIndex),
-		ToAccountName:     segmentFormat.ToAccountName,
 		AssetId:           uint32(segmentFormat.AssetId),
 		AssetAmount:       uint64(segmentFormat.AssetAmount),
 		GasAccountIndex:   uint32(segmentFormat.GasAccountIndex),
 		GasFeeAssetId:     uint32(segmentFormat.GasFeeAssetId),
 		GasFeeAssetAmount: uint64(segmentFormat.GasFeeAssetAmount),
-		CallData:          segmentFormat.CallData,
-		CallDataHash:      nil,
-		NftIndex:          segmentFormat.NftIndex,
+		ToAddress:         segmentFormat.ToAddress,
 		Nonce:             uint64(segmentFormat.Nonce),
 		Sig:               nil,
 	}
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
-	hFunc.Write([]byte(txInfo.CallData))
-	callDataHash := hFunc.Sum(nil)
-	txInfo.CallDataHash = callDataHash
-	hFunc.Reset()
 	// compute msg hash
-	msgHash := ComputeGenericTransferMsgHash(txInfo, hFunc)
+	msgHash := ComputeWithdrawMsgHash(txInfo, hFunc)
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
 	if err != nil {
-		log.Println("[ConstructGenericTransferTxInfo] unable to sign:", err)
+		log.Println("[ConstructRemoveLiquidityTxInfo] unable to sign:", err)
 		return nil, err
 	}
 	txInfo.Sig = sigBytes
 	return txInfo, nil
 }
 
-type GenericTransferTxInfo struct {
+type WithdrawTxInfo struct {
 	FromAccountIndex  uint32
-	ToAccountIndex    uint32
-	ToAccountName     string
 	AssetId           uint32
 	AssetAmount       uint64
 	GasAccountIndex   uint32
 	GasFeeAssetId     uint32
 	GasFeeAssetAmount uint64
-	CallData          string
-	CallDataHash      []byte
-	NftIndex          int
+	ToAddress         string
 	Nonce             uint64
 	Sig               []byte
 }
 
-func ComputeGenericTransferMsgHash(txInfo *GenericTransferTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeWithdrawMsgHash(txInfo *WithdrawTxInfo, hFunc hash.Hash) (msgHash []byte) {
+	/*
+		hFunc.Write(
+			tx.FromAccountIndex,
+			tx.AssetId,
+			tx.AssetAmount,
+			tx.GasAccountIndex,
+			tx.GasFeeAssetId,
+			tx.GasFeeAssetAmount,
+			tx.ToAddress,
+		)
+		hFunc.Write(nonce)
+	*/
 	hFunc.Reset()
 	var buf bytes.Buffer
 	writeUint64IntoBuf(&buf, uint64(txInfo.FromAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.ToAccountIndex))
-	accountNameBytes := PaddingStringToBytes32(txInfo.ToAccountName)
-	buf.Write(accountNameBytes)
 	writeUint64IntoBuf(&buf, uint64(txInfo.AssetId))
 	writeUint64IntoBuf(&buf, uint64(txInfo.AssetAmount))
 	writeUint64IntoBuf(&buf, uint64(txInfo.GasAccountIndex))
 	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetAmount))
-	buf.Write(txInfo.CallDataHash)
-	writeUint64IntoBuf(&buf, uint64(txInfo.NftIndex))
+	buf.Write(PaddingStringToBytes32(txInfo.ToAddress))
 	writeUint64IntoBuf(&buf, uint64(txInfo.Nonce))
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

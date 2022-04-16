@@ -26,8 +26,9 @@ func writeUint64IntoBuf(buf *bytes.Buffer, a uint64) {
 	buf.Write(new(big.Int).SetUint64(a).FillBytes(make([]byte, 32)))
 }
 
-func AccountNameToFullByte(name string) []byte {
+func PaddingStringToBytes32(name string) []byte {
 	buf := make([]byte, 32)
 	copy(buf, name)
 	return buf
 }
+
