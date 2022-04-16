@@ -266,9 +266,13 @@ func verifyAddLiquidityParams(
 	LPCheck := api.Mul(proof.Delta_LP, proof.Delta_LP)
 	api.AssertIsLessOrEqual(LPCheck, Delta_LPCheck)
 	// verify AMM info & DAO balance info
+	maxPoolAB := Max(api, proof.B_poolA, proof.B_poolB)
 	l := api.Mul(proof.B_poolB, proof.B_A_Delta)
 	r := api.Mul(proof.B_poolA, proof.B_B_Delta)
-	api.AssertIsEqual(l, r)
+	max := Max(api, l, r)
+	min := Min(api, l, r)
+	delta := api.Sub(max, min)
+	api.AssertIsLessOrEqual(delta, maxPoolAB)
 }
 
 func SetEmptyAddLiquidityProofWitness() (witness AddLiquidityProofConstraints) {

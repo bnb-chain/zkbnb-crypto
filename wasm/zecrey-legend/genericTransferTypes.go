@@ -39,6 +39,9 @@ type GenericTransferSegmentFormat struct {
 	Nonce             int64  `json:"nonce"`
 }
 
+/*
+	ConstructGenericTransferTxInfo: construct generic transfer tx, sign txInfo
+*/
 func ConstructGenericTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *GenericTransferTxInfo, err error) {
 	var segmentFormat *GenericTransferSegmentFormat
 	err = json.Unmarshal([]byte(segmentStr), &segmentFormat)
