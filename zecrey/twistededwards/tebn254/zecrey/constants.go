@@ -48,7 +48,7 @@ const (
 	TransferProofSize     = TransferSubProofCount*TransferSubProofSize + 4*PointSize + 1*EightBytes + 1*FourBytes
 
 	// NFT related
-	MintNftProofSize     = 8*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 2*EightBytes + 4*FourBytes
+	MintNftProofSize     = 8*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 2*EightBytes + 5*FourBytes
 	TransferNftProofSize = 8*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 2*EightBytes + 4*FourBytes
 	SetNftPriceProofSize = 8*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 3*EightBytes + 4*FourBytes
 	BuyNftProofSize      = 15*PointSize + 2*RangeProofSize + 3*EightBytes + 4*FourBytes

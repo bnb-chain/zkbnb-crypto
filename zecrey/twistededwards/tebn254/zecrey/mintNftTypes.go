@@ -34,12 +34,13 @@ type MintNftProof struct {
 	// Commitment Range Proofs
 	GasFeePrimeRangeProof *RangeProof
 	// common inputs
-	Pk                   *Point
-	TxType               uint32
-	NftAccountIndex      uint32
-	NftIndex             uint64
-	NftContentHash       []byte
-	ReceiverAccountIndex uint32
+	Pk                  *Point
+	TxType              uint32
+	NftAccountIndex     uint32
+	NftIndex            uint64
+	NftContentHash      []byte
+	CreatorAccountIndex uint32
+	ToAccountIndex      uint32
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
 	Z_bar_r_fee           *big.Int
@@ -61,7 +62,8 @@ func (proof *MintNftProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftAccountIndex))
 	offset = copyBuf(&buf, offset, FourBytes, uint64ToBytes(proof.NftIndex))
 	offset = copyBuf(&buf, offset, PointSize, proof.NftContentHash)
-	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ReceiverAccountIndex))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.CreatorAccountIndex))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ToAccountIndex))
 	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
 	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C_fee))
@@ -98,7 +100,8 @@ func ParseMintNftProofBytes(proofBytes []byte) (proof *MintNftProof, err error) 
 	offset, proof.NftAccountIndex = readUint32FromBuf(proofBytes, offset)
 	offset, proof.NftIndex = readUint64FromBuf(proofBytes, offset)
 	offset, proof.NftContentHash = readHashFromBuf(proofBytes, offset)
-	offset, proof.ReceiverAccountIndex = readUint32FromBuf(proofBytes, offset)
+	offset, proof.CreatorAccountIndex = readUint32FromBuf(proofBytes, offset)
+	offset, proof.ToAccountIndex = readUint32FromBuf(proofBytes, offset)
 	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
 		return nil, err
@@ -133,12 +136,13 @@ type MintNftRelation struct {
 	// ------------- public ---------------------
 	GasFeePrimeRangeProof *RangeProof
 	// public key
-	Pk                   *Point
-	TxType               uint32
-	NftAccountIndex      uint32
-	NftIndex             uint64
-	NftContentHash       []byte
-	ReceiverAccountIndex uint32
+	Pk                  *Point
+	TxType              uint32
+	NftAccountIndex     uint32
+	NftIndex            uint64
+	NftContentHash      []byte
+	CreatorAccountIndex uint32
+	ToAccountIndex      uint32
 	// ----------- private ---------------------
 	Sk *big.Int
 	// gas fee
@@ -154,7 +158,7 @@ func NewMintNftRelation(
 	pk *Point,
 	txType uint32,
 	contentHash []byte,
-	receiverAccountIndex uint32,
+	creatorAccountIndex, toAccountIndex uint32,
 	sk *big.Int,
 	// fee part
 	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
@@ -195,7 +199,8 @@ func NewMintNftRelation(
 		Pk:                    pk,
 		TxType:                txType,
 		NftContentHash:        contentHash,
-		ReceiverAccountIndex:  receiverAccountIndex,
+		CreatorAccountIndex:   creatorAccountIndex,
+		ToAccountIndex:        toAccountIndex,
 		Sk:                    sk,
 		C_fee:                 C_fee,
 		T_fee:                 new(Point).Set(GasFeePrimeRangeProof.A),
