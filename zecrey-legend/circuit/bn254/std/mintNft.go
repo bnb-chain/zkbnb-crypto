@@ -31,6 +31,7 @@ type MintNftTx struct {
 	*/
 	CreatorAccountIndex uint32
 	ToAccountIndex      uint32
+	NftAccountIndex     uint32
 	NftIndex            uint32
 	NftContentHash      string
 	AssetId             uint32
@@ -43,6 +44,7 @@ type MintNftTx struct {
 type MintNftTxConstraints struct {
 	CreatorAccountIndex Variable
 	ToAccountIndex      Variable
+	NftAccountIndex     Variable
 	NftIndex            Variable
 	NftContentHash      Variable
 	AssetId             Variable
@@ -56,6 +58,7 @@ func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 	return MintNftTxConstraints{
 		CreatorAccountIndex: ZeroInt,
 		ToAccountIndex:      ZeroInt,
+		NftAccountIndex:     ZeroInt,
 		NftIndex:            ZeroInt,
 		NftContentHash:      ZeroInt,
 		AssetId:             ZeroInt,
@@ -70,6 +73,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 	witness = MintNftTxConstraints{
 		CreatorAccountIndex: tx.CreatorAccountIndex,
 		ToAccountIndex:      tx.ToAccountIndex,
+		NftAccountIndex:     tx.NftAccountIndex,
 		NftIndex:            tx.NftIndex,
 		NftContentHash:      tx.NftContentHash,
 		AssetId:             tx.AssetId,
@@ -86,6 +90,7 @@ func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, hFunc MiM
 	hFunc.Write(
 		tx.CreatorAccountIndex,
 		tx.ToAccountIndex,
+		tx.NftAccountIndex,
 		tx.NftIndex,
 		tx.NftContentHash,
 		tx.AssetId,
@@ -117,9 +122,10 @@ func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, hFunc MiM
 func VerifyMintNftTx(api API, flag Variable, nilHash Variable, tx MintNftTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	// nft index
-	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
-	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[0].NftInfo.NftIndex)
+	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[1].NftInfo.NftIndex)
 	// before account nft should be empty
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftIndex, DefaultInt)
 	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
 	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
 	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)

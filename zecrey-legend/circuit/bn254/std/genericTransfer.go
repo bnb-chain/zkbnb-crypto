@@ -39,6 +39,7 @@ type GenericTransferTx struct {
 	GasFeeAssetId     uint32
 	GasFeeAssetAmount uint64
 	CallDataHash      []byte
+	NftAccountIndex   uint32
 	NftIndex          int
 }
 
@@ -52,6 +53,7 @@ type GenericTransferTxConstraints struct {
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
 	CallDataHash      Variable
+	NftAccountIndex   Variable
 	NftIndex          Variable
 }
 
@@ -66,6 +68,7 @@ func EmptyGenericTransferTxWitness() (witness GenericTransferTxConstraints) {
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
 		CallDataHash:      ZeroInt,
+		NftAccountIndex:   ZeroInt,
 		NftIndex:          ZeroInt,
 	}
 }
@@ -81,6 +84,7 @@ func SetGenericTransferTxWitness(tx *GenericTransferTx) (witness GenericTransfer
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
 		CallDataHash:      tx.CallDataHash,
+		NftAccountIndex:   tx.NftAccountIndex,
 		NftIndex:          tx.NftIndex,
 	}
 	return witness
@@ -98,6 +102,7 @@ func ComputeHashFromGenericTransferTx(tx GenericTransferTxConstraints, nonce Var
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
 		tx.CallDataHash,
+		tx.NftAccountIndex,
 		tx.NftIndex,
 	)
 	hFunc.Write(nonce)
@@ -126,8 +131,9 @@ func ComputeHashFromGenericTransferTx(tx GenericTransferTxConstraints, nonce Var
 func VerifyGenericTransferTx(api API, flag Variable, nilHash Variable, tx GenericTransferTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	// nft index
+	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
-	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[0].NftInfo.NftIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[1].NftInfo.NftIndex)
 	// before account nft should be empty
 	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
 	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)

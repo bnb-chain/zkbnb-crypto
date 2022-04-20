@@ -29,6 +29,7 @@ type WithdrawNftTx struct {
 		- nonce
 	*/
 	AccountIndex      uint32
+	NftAccountIndex   uint32
 	NftIndex          uint32
 	ToAddress         string
 	ProxyAddress      string
@@ -39,6 +40,7 @@ type WithdrawNftTx struct {
 
 type WithdrawNftTxConstraints struct {
 	AccountIndex      Variable
+	NftAccountIndex   Variable
 	NftIndex          Variable
 	ToAddress         Variable
 	ProxyAddress      Variable
@@ -50,6 +52,7 @@ type WithdrawNftTxConstraints struct {
 func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
 	return WithdrawNftTxConstraints{
 		AccountIndex:      ZeroInt,
+		NftAccountIndex:   ZeroInt,
 		NftIndex:          ZeroInt,
 		ToAddress:         ZeroInt,
 		ProxyAddress:      ZeroInt,
@@ -62,6 +65,7 @@ func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
 func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraints) {
 	witness = WithdrawNftTxConstraints{
 		AccountIndex:      tx.AccountIndex,
+		NftAccountIndex:   tx.NftAccountIndex,
 		NftIndex:          tx.NftIndex,
 		ToAddress:         tx.ToAddress,
 		ProxyAddress:      tx.ProxyAddress,
@@ -76,6 +80,7 @@ func ComputeHashFromWithdrawNftTx(tx WithdrawNftTxConstraints, nonce Variable, h
 	hFunc.Reset()
 	hFunc.Write(
 		tx.AccountIndex,
+		tx.NftAccountIndex,
 		tx.NftIndex,
 		tx.ToAddress,
 		tx.ProxyAddress,
@@ -108,9 +113,10 @@ func VerifyWithdrawNftTx(api API, flag Variable, nilHash Variable, tx WithdrawNf
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// should confirm if the user owns the nft
+	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
-	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[0].NftInfo.NftIndex)
 	// after withdraw nft should be empty
+	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.NftIndex, DefaultInt)
 	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.NftContentHash, nilHash)
 	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.AssetId, DefaultInt)
 	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.AssetAmount, DefaultInt)

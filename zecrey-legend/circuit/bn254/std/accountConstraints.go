@@ -85,26 +85,26 @@ func SetAccountLiquidityWitness(info *AccountLiquidity) (witness AccountLiquidit
 }
 
 type AccountNftConstraints struct {
-	NftIndex       Variable
-	CreatorIndex   Variable
-	NftContentHash Variable
-	AssetId        Variable
-	AssetAmount    Variable
-	ChainId        Variable
-	L1Address      Variable
-	L1TokenId      Variable
+	NftAccountIndex Variable
+	NftIndex        Variable
+	CreatorIndex    Variable
+	NftContentHash  Variable
+	AssetId         Variable
+	AssetAmount     Variable
+	L1Address       Variable
+	L1TokenId       Variable
 }
 
 func SetAccountNftWitness(nft *AccountNft) (witness AccountNftConstraints) {
 	witness = AccountNftConstraints{
-		NftIndex:       nft.NftIndex,
-		CreatorIndex:   nft.CreatorIndex,
-		NftContentHash: nft.NftContentHash,
-		AssetId:        nft.AssetId,
-		AssetAmount:    nft.AssetAmount,
-		ChainId:        nft.ChainId,
-		L1Address:      nft.L1Address,
-		L1TokenId:      nft.L1TokenId,
+		NftAccountIndex: nft.NftAccountIndex,
+		NftIndex:        nft.NftIndex,
+		CreatorIndex:    nft.CreatorIndex,
+		NftContentHash:  nft.NftContentHash,
+		AssetId:         nft.AssetId,
+		AssetAmount:     nft.AssetAmount,
+		L1Address:       nft.L1Address,
+		L1TokenId:       nft.L1TokenId,
 	}
 	return witness
 }
