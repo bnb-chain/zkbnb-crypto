@@ -37,7 +37,7 @@ func TestSetNftPriceProofCircuit_Define(t *testing.T) {
 	assetId := uint32(1)
 	assetAmount := uint64(100)
 	relation, err := zecrey.NewSetNftPriceRelation(
-		pk, 9, contentHash, assetId, assetAmount, sk, bEnc2, b_fee, 1, fee,
+		pk, 9, 1, 1, contentHash, assetId, assetAmount, sk, bEnc2, b_fee, 1, fee,
 	)
 	if err != nil {
 		t.Error(err)

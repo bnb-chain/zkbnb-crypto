@@ -108,5 +108,10 @@ func VerifyWithdrawTx(api API, flag Variable, tx WithdrawTxConstraints, accounts
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// should have enough assets
-	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	isSameAsset := api.IsZero(api.Sub(tx.AssetId, tx.GasFeeAssetId))
+	totalDelta := api.Add(tx.AssetAmount, tx.GasFeeAssetAmount)
+	assetADelta := api.Select(isSameAsset, totalDelta, tx.AssetAmount)
+	assetFeeDelta := api.Select(isSameAsset, totalDelta, tx.GasFeeAssetAmount)
+	IsVariableLessOrEqual(api, flag, tx.AssetAmount, assetADelta)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, assetFeeDelta)
 }

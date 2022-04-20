@@ -59,7 +59,8 @@ func ProveMintNft(relation *MintNftRelation) (proof *MintNftProof, err error) {
 	writePointIntoBuf(&buf, relation.Pk)
 	writeUint64IntoBuf(&buf, uint64(relation.TxType))
 	buf.Write(relation.NftContentHash)
-	writeUint64IntoBuf(&buf, uint64(relation.ReceiverAccountIndex))
+	writeUint64IntoBuf(&buf, uint64(relation.CreatorAccountIndex))
+	writeUint64IntoBuf(&buf, uint64(relation.ToAccountIndex))
 	writePointIntoBuf(&buf, A_pk)
 	writePointIntoBuf(&buf, A_T_feeDivC_feeRprime)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)
@@ -78,7 +79,7 @@ func ProveMintNft(relation *MintNftRelation) (proof *MintNftProof, err error) {
 		Pk:                    relation.Pk,
 		TxType:                relation.TxType,
 		NftContentHash:        relation.NftContentHash,
-		ReceiverAccountIndex:  relation.ReceiverAccountIndex,
+		ToAccountIndex:        relation.ToAccountIndex,
 		A_T_feeC_feeRPrimeInv: A_T_feeDivC_feeRprime,
 		Z_bar_r_fee:           z_bar_r_fee,
 		C_fee:                 relation.C_fee,
@@ -127,7 +128,8 @@ func (proof *MintNftProof) Verify() (bool, error) {
 	writePointIntoBuf(&buf, proof.Pk)
 	writeUint64IntoBuf(&buf, uint64(proof.TxType))
 	buf.Write(proof.NftContentHash)
-	writeUint64IntoBuf(&buf, uint64(proof.ReceiverAccountIndex))
+	writeUint64IntoBuf(&buf, uint64(proof.CreatorAccountIndex))
+	writeUint64IntoBuf(&buf, uint64(proof.ToAccountIndex))
 	writePointIntoBuf(&buf, proof.A_pk)
 	writePointIntoBuf(&buf, proof.A_T_feeC_feeRPrimeInv)
 	c, err := util.HashToInt(buf, zmimc.Hmimc)

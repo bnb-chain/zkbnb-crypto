@@ -15,10 +15,9 @@
  *
  */
 
-package transactions
+package std
 
 import (
-	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"math/big"
 )
@@ -30,8 +29,8 @@ type AccountAsset struct {
 
 func EmptyAccountAsset() *AccountAsset {
 	return &AccountAsset{
-		AssetId:    std.ZeroInt,
-		BalanceEnc: std.ZeroElgamalEnc,
+		AssetId:    ZeroInt,
+		BalanceEnc: ZeroElgamalEnc,
 	}
 }
 
@@ -43,9 +42,9 @@ type AccountAssetLock struct {
 
 func EmptyAccountAssetLock() *AccountAssetLock {
 	return &AccountAssetLock{
-		ChainId:      std.ZeroInt,
-		AssetId:      std.ZeroInt,
-		LockedAmount: std.ZeroInt,
+		ChainId:      ZeroInt,
+		AssetId:      ZeroInt,
+		LockedAmount: ZeroInt,
 	}
 }
 
@@ -62,32 +61,38 @@ type AccountLiquidity struct {
 
 func EmptyAccountLiquidity() *AccountLiquidity {
 	return &AccountLiquidity{
-		PairIndex: std.ZeroInt,
-		AssetA:    std.ZeroInt,
-		AssetB:    std.ZeroInt,
-		AssetAR:   std.ZeroBigInt,
-		AssetBR:   std.ZeroBigInt,
-		LpEnc:     std.ZeroElgamalEnc,
+		PairIndex: ZeroInt,
+		AssetA:    ZeroInt,
+		AssetB:    ZeroInt,
+		AssetAR:   ZeroBigInt,
+		AssetBR:   ZeroBigInt,
+		LpEnc:     ZeroElgamalEnc,
 	}
 }
 
 type AccountNft struct {
-	NftIndex       uint64
-	CreatorIndex   uint64
-	NftContentHash []byte
-	AssetId        uint64
-	AssetAmount    uint64
-	ChainId        uint64
+	NftAccountIndex uint64
+	NftIndex        uint64
+	CreatorIndex    uint64
+	NftContentHash  []byte
+	AssetId         uint64
+	AssetAmount     uint64
+	ChainId         uint64
+	L1Address       string
+	L1TokenId       *big.Int
 }
 
 func EmptyAccountNft() *AccountNft {
 	return &AccountNft{
-		NftIndex:       std.ZeroInt,
-		CreatorIndex:   std.ZeroInt,
-		NftContentHash: []byte{},
-		AssetId:        std.ZeroInt,
-		AssetAmount:    std.ZeroInt,
-		ChainId:        std.ZeroInt,
+		NftAccountIndex: ZeroInt,
+		NftIndex:        ZeroInt,
+		CreatorIndex:    ZeroInt,
+		NftContentHash:  []byte{},
+		AssetId:         ZeroInt,
+		AssetAmount:     ZeroInt,
+		ChainId:         ZeroInt,
+		L1Address:       "",
+		L1TokenId:       ZeroBigInt,
 	}
 }
 
@@ -108,9 +113,9 @@ type Account struct {
 
 func EmptyAccount(nilHash []byte) *Account {
 	return &Account{
-		AccountIndex:            std.ZeroInt,
-		AccountName:             std.ZeroBigInt,
-		AccountPk:               std.ZeroPoint,
+		AccountIndex:            ZeroInt,
+		AccountName:             ZeroBigInt,
+		AccountPk:               ZeroPoint,
 		StateRoot:               nilHash,
 		AccountAssetsRoot:       nilHash,
 		AccountLockedAssetsRoot: nilHash,

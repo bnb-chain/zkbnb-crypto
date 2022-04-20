@@ -40,6 +40,9 @@ const (
 	NbTransferCount = 3
 	RangeMaxBits    = ctrange.RangeMaxBits
 
+	NbAccountsPerTx           = 4
+	NbAccountAssetsPerAccount = 3
+
 	MaxRangeProofCount = 3
 )
 

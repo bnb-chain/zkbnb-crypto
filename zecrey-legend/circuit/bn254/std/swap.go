@@ -170,7 +170,12 @@ func VerifySwapTx(api API, flag Variable, tx SwapTxConstraints, accountsBefore [
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[3].AccountIndex)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[3].AssetsInfo[0].AssetId)
 	// should have enough assets
-	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	isSameAsset := api.IsZero(api.Sub(tx.AssetAId, tx.GasFeeAssetId))
+	totalDelta := api.Add(tx.AssetAAmount, tx.GasFeeAssetAmount)
+	assetADelta := api.Select(isSameAsset, totalDelta, tx.AssetAAmount)
+	assetFeeDelta := api.Select(isSameAsset, totalDelta, tx.GasFeeAssetAmount)
+	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, assetADelta)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, assetFeeDelta)
 	IsVariableLessOrEqual(api, flag, tx.AssetBMinAmount, tx.AssetBAmountDelta)
 	// verify AMM
 	k := api.Mul(tx.PoolAAmount, tx.PoolBAmount)

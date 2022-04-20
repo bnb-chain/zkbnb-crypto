@@ -36,7 +36,9 @@ type TransferNftProofConstraints struct {
 	// common inputs
 	Pk                   Point
 	TxType               Variable
+	NftAssetId           Variable
 	NftIndex             Variable
+	NftContentHash       Variable
 	ReceiverAccountIndex Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
@@ -104,7 +106,9 @@ func VerifyTransferNftProof(
 	WritePointIntoBuf(&hFunc, proof.T_fee)
 	WritePointIntoBuf(&hFunc, proof.Pk)
 	hFunc.Write(proof.TxType)
+	hFunc.Write(proof.NftAssetId)
 	hFunc.Write(proof.NftIndex)
+	hFunc.Write(proof.NftContentHash)
 	hFunc.Write(proof.ReceiverAccountIndex)
 	WritePointIntoBuf(&hFunc, proof.A_pk)
 	WritePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
@@ -151,7 +155,9 @@ func SetEmptyTransferNftProofWitness() (witness TransferNftProofConstraints) {
 	// common inputs
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.TxType = ZeroInt
+	witness.NftAssetId = ZeroInt
 	witness.NftIndex = ZeroInt
+	witness.NftContentHash = ZeroInt
 	witness.ReceiverAccountIndex = ZeroInt
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, _ = SetPointWitness(BasePoint)
@@ -196,7 +202,9 @@ func SetTransferNftProofWitness(proof *zecrey.TransferNftProof, isEnabled bool) 
 		return witness, err
 	}
 	witness.TxType = uint64(proof.TxType)
+	witness.NftAssetId = proof.NftAssetId
 	witness.NftIndex = proof.NftIndex
+	witness.NftContentHash = proof.NftContentHash
 	witness.ReceiverAccountIndex = proof.ReceiverAccountIndex
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
@@ -223,4 +231,33 @@ func SetTransferNftProofWitness(proof *zecrey.TransferNftProof, isEnabled bool) 
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
+}
+
+/*
+	VerifyTransferNftTxParams:
+	accounts order is:
+	- FromAccount
+		- Assets
+			- AssetGas
+		- Nft
+			- nft index
+	- ToAccount
+		- Nft
+			- nft index
+	- GasAccount
+		- Assets
+			- AssetGas
+*/
+func VerifyTransferNftTxParams(api API, flag Variable, nilHash Variable, tx TransferNftProofConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	// nft index
+	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[1].NftInfo.NftIndex)
+	// before account nft should be empty
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
+	// gas asset id
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
 }

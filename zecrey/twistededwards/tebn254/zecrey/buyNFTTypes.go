@@ -35,12 +35,14 @@ type BuyNftProof struct {
 	BPrimeRangeProof      *RangeProof
 	GasFeePrimeRangeProof *RangeProof
 	// common inputs
-	C           *ElGamalEnc
-	T, Pk       *Point
-	NftIndex    uint32
-	AssetId     uint32
-	AssetAmount uint64
-	FeeRate     uint32
+	C              *ElGamalEnc
+	T, Pk          *Point
+	NftAssetId     uint32
+	NftIndex       uint64
+	NftContentHash []byte
+	AssetId        uint32
+	AssetAmount    uint64
+	FeeRate        uint32
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
 	Z_bar_r_fee           *big.Int
@@ -65,7 +67,9 @@ func (proof *BuyNftProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, ElGamalEncSize, elgamalToBytes(proof.C))
 	offset = copyBuf(&buf, offset, PointSize, proof.T.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
-	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftIndex))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftAssetId))
+	offset = copyBuf(&buf, offset, EightBytes, uint64ToBytes(proof.NftIndex))
+	offset = copyBuf(&buf, offset, PointSize, proof.NftContentHash)
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.AssetId))
 	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
 	offset = copyBuf(&buf, offset, PointSize, proof.Z_bar_r_fee.FillBytes(make([]byte, PointSize)))
@@ -118,7 +122,9 @@ func ParseBuyNftProofBytes(proofBytes []byte) (proof *BuyNftProof, err error) {
 	if err != nil {
 		return nil, err
 	}
-	offset, proof.NftIndex = readUint32FromBuf(proofBytes, offset)
+	offset, proof.NftAssetId = readUint32FromBuf(proofBytes, offset)
+	offset, proof.NftIndex = readUint64FromBuf(proofBytes, offset)
+	offset, proof.NftContentHash = readHashFromBuf(proofBytes, offset)
 	offset, proof.AssetId = readUint32FromBuf(proofBytes, offset)
 	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
 	if err != nil {
@@ -161,10 +167,12 @@ type BuyNftProofRelation struct {
 	// public key
 	Pk *Point
 	// b^{\star}
-	AssetAmount uint64
-	NftIndex    uint32
-	AssetId     uint32
-	FeeRate     uint32
+	AssetAmount    uint64
+	NftAssetId     uint32
+	NftIndex       uint64
+	NftContentHash []byte
+	AssetId        uint32
+	FeeRate        uint32
 	// ----------- private ---------------------
 	Sk      *big.Int
 	B_prime uint64
@@ -183,8 +191,9 @@ func NewBuyNftRelation(
 	pk *Point,
 	b uint64,
 	sk *big.Int,
-	nftIndex uint32, assetId uint32, assetAmount uint64,
-// fee part
+	nftAccountIndex uint32, nftIndex uint64, nftContentHash []byte,
+	assetId uint32, assetAmount uint64,
+	// fee part
 	C_fee *ElGamalEnc, B_fee uint64, GasFeeAssetId uint32, GasFee uint64,
 	feeRate uint32,
 ) (*BuyNftProofRelation, error) {
@@ -252,7 +261,9 @@ func NewBuyNftRelation(
 		GasFeePrimeRangeProof: GasFeePrimeRangeProof,
 		Pk:                    pk,
 		AssetAmount:           assetAmount,
+		NftAssetId:            nftAccountIndex,
 		NftIndex:              nftIndex,
+		NftContentHash:        nftContentHash,
 		AssetId:               assetId,
 		FeeRate:               feeRate,
 		Sk:                    sk,

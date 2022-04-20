@@ -37,10 +37,10 @@ func TestWithdrawNftProof_Verify(t *testing.T) {
 	fmt.Println("pk:", curve.ToString(pk))
 	fmt.Println("benc2:", bEnc2.String())
 	//feeAssetId := uint32(2)
-	nftIndex := uint32(1)
+	nftIndex := uint64(1)
 	receiverAddr := "0xd5Aa3B56a2E2139DB315CdFE3b34149c8ed09171"
 	relation, err := NewWithdrawNftRelation(
-		pk, 9, nftIndex, receiverAddr, receiverAddr, 1, sk, bEnc2, b_fee, 1, fee,
+		pk, 9, 1, nftIndex, make([]byte, 32), receiverAddr, receiverAddr, 1, sk, bEnc2, b_fee, 1, fee,
 	)
 	if err != nil {
 		t.Error(err)

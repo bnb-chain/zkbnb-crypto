@@ -41,7 +41,7 @@ func TestSetNftPriceProof_Verify(t *testing.T) {
 	assetId := uint32(1)
 	assetAmount := uint64(100)
 	relation, err := NewSetNftPriceRelation(
-		pk, 9, nftIndex, assetId, assetAmount, sk, bEnc2, b_fee, 1, fee,
+		pk, 9, nftIndex, 1, make([]byte, 32), assetId, assetAmount, sk, bEnc2, b_fee, 1, fee,
 	)
 	if err != nil {
 		t.Error(err)

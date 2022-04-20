@@ -48,11 +48,11 @@ const (
 	TransferProofSize     = TransferSubProofCount*TransferSubProofSize + 4*PointSize + 1*EightBytes + 1*FourBytes
 
 	// NFT related
-	MintNftProofSize     = 8*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 1*EightBytes + 3*FourBytes
-	TransferNftProofSize = 7*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 1*EightBytes + 4*FourBytes
-	SetNftPriceProofSize = 7*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 2*EightBytes + 4*FourBytes
-	BuyNftProofSize      = 14*PointSize + 2*RangeProofSize + 2*EightBytes + 4*FourBytes
-	WithdrawNftProofSize = 8*PointSize + 1*ElGamalEncSize + 1*AddressSize + 1*RangeProofSize + 1*EightBytes + 4*FourBytes
+	MintNftProofSize     = 8*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 2*EightBytes + 5*FourBytes
+	TransferNftProofSize = 8*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 2*EightBytes + 4*FourBytes
+	SetNftPriceProofSize = 8*PointSize + 1*ElGamalEncSize + 1*RangeProofSize + 3*EightBytes + 4*FourBytes
+	BuyNftProofSize      = 15*PointSize + 2*RangeProofSize + 3*EightBytes + 4*FourBytes
+	WithdrawNftProofSize = 9*PointSize + 1*ElGamalEncSize + 1*AddressSize + 1*RangeProofSize + 2*EightBytes + 4*FourBytes
 
 	SwapProofSize            = 32*PointSize + 2*RangeProofSize + 10*EightBytes + 4*FourBytes
 	AddLiquidityProofSize    = 35*PointSize + 6*EightBytes + 3*FourBytes + 3*RangeProofSize

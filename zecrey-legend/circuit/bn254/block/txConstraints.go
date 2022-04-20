@@ -219,18 +219,17 @@ func VerifyTransaction(
 			NftContentHash Variable
 			AssetId        Variable
 			AssetAmount    Variable
-			ChainId        Variable
-			L1Address      Variable
-			L1TokenId      Variable
+			NftL1Address      Variable
+			NftTokenId      Variable
 		*/
 		hFunc.Reset()
 		hFunc.Write(
+			tx.AccountsInfoBefore[i].NftInfo.NftAccountIndex,
 			tx.AccountsInfoBefore[i].NftInfo.NftIndex,
 			tx.AccountsInfoBefore[i].NftInfo.CreatorIndex,
 			tx.AccountsInfoBefore[i].NftInfo.NftContentHash,
 			tx.AccountsInfoBefore[i].NftInfo.AssetId,
 			tx.AccountsInfoBefore[i].NftInfo.AssetAmount,
-			tx.AccountsInfoBefore[i].NftInfo.ChainId,
 			tx.AccountsInfoBefore[i].NftInfo.L1Address,
 			tx.AccountsInfoBefore[i].NftInfo.L1TokenId,
 		)
@@ -383,12 +382,12 @@ func VerifyTransaction(
 		// verify updated account nft node hash
 		hFunc.Reset()
 		hFunc.Write(
+			tx.AccountsInfoAfter[i].NftInfo.NftAccountIndex,
 			tx.AccountsInfoAfter[i].NftInfo.NftIndex,
 			tx.AccountsInfoAfter[i].NftInfo.CreatorIndex,
 			tx.AccountsInfoAfter[i].NftInfo.NftContentHash,
 			tx.AccountsInfoAfter[i].NftInfo.AssetId,
 			tx.AccountsInfoAfter[i].NftInfo.AssetAmount,
-			tx.AccountsInfoAfter[i].NftInfo.ChainId,
 			tx.AccountsInfoAfter[i].NftInfo.L1Address,
 			tx.AccountsInfoAfter[i].NftInfo.L1TokenId,
 		)

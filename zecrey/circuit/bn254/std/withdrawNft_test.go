@@ -36,7 +36,7 @@ func TestWithdrawNftProofCircuit_Define(t *testing.T) {
 	contentHash := hFunc.Sum(nil)
 	receiverAddr := "0xd5Aa3B56a2E2139DB315CdFE3b34149c8ed09171"
 	relation, err := zecrey.NewWithdrawNftRelation(
-		pk, 9, contentHash, receiverAddr, 1, sk, bEnc2, b_fee, 1, fee,
+		pk, 9, 1, 1, contentHash, receiverAddr, receiverAddr, 1, sk, bEnc2, b_fee, 1, fee,
 	)
 	if err != nil {
 		t.Error(err)
