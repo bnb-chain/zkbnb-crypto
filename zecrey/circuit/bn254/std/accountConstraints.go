@@ -15,11 +15,10 @@
  *
  */
 
-package transactions
+package std
 
 import (
 	"errors"
-	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
 	"log"
 )
 
@@ -102,11 +101,11 @@ type AccountLiquidityConstraints struct {
 	IsAccountLiquidityConstraintsEqual: compare if two AccountLiquidity are the same
 */
 func IsAccountLiquidityConstraintsEqual(api API, flag Variable, a, b AccountLiquidityConstraints) {
-	std.IsVariableEqual(api, flag, a.AssetA, b.AssetA)
-	std.IsVariableEqual(api, flag, a.AssetAR, b.AssetAR)
-	std.IsVariableEqual(api, flag, a.AssetB, b.AssetB)
-	std.IsVariableEqual(api, flag, a.AssetBR, b.AssetBR)
-	std.IsElGamalEncEqual(api, flag, a.LpEnc, b.LpEnc)
+	IsVariableEqual(api, flag, a.AssetA, b.AssetA)
+	IsVariableEqual(api, flag, a.AssetAR, b.AssetAR)
+	IsVariableEqual(api, flag, a.AssetB, b.AssetB)
+	IsVariableEqual(api, flag, a.AssetBR, b.AssetBR)
+	IsElGamalEncEqual(api, flag, a.LpEnc, b.LpEnc)
 }
 
 type AccountNftConstraints struct {
@@ -138,9 +137,9 @@ func SetAccountNftWitness(nftInfo *AccountNft) (witness AccountNftConstraints) {
 	IsAccountNftConstraintsEqual: TODO compare if two IsAccountNftConstraints are the same
 */
 func IsAccountNftConstraintsEqual(api API, flag Variable, a, b AccountNftConstraints) {
-	std.IsVariableEqual(api, flag, a.NftContentHash, b.NftContentHash)
-	std.IsVariableEqual(api, flag, a.AssetId, b.AssetId)
-	std.IsVariableEqual(api, flag, a.AssetAmount, b.AssetAmount)
+	IsVariableEqual(api, flag, a.NftContentHash, b.NftContentHash)
+	IsVariableEqual(api, flag, a.AssetId, b.AssetId)
+	IsVariableEqual(api, flag, a.AssetAmount, b.AssetAmount)
 }
 
 /*
@@ -191,7 +190,7 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 	}
 	witness.AccountIndex = account.AccountIndex
 	witness.AccountName = account.AccountName
-	witness.AccountPk, err = std.SetPointWitness(account.AccountPk)
+	witness.AccountPk, err = SetPointWitness(account.AccountPk)
 	if err != nil {
 		log.Println("[SetAccountWitness] err info:", err)
 		return witness, err
@@ -235,7 +234,7 @@ func SetAccountAssetWitness(accountAsset *AccountAsset) (witness AccountAssetCon
 		return witness, errors.New("[SetAccountAssetWitness] invalid params")
 	}
 	witness.AssetId = accountAsset.AssetId
-	witness.BalanceEnc, err = std.SetElGamalEncWitness(accountAsset.BalanceEnc)
+	witness.BalanceEnc, err = SetElGamalEncWitness(accountAsset.BalanceEnc)
 	if err != nil {
 		log.Println("[SetAccountAssetWitness] err info:", err)
 		return witness, err
@@ -272,7 +271,7 @@ func SetAccountLiquidityWitness(accountLiquidity *AccountLiquidity) (witness Acc
 	witness.AssetAR = accountLiquidity.AssetAR
 	witness.AssetB = accountLiquidity.AssetB
 	witness.AssetBR = accountLiquidity.AssetBR
-	witness.LpEnc, err = std.SetElGamalEncWitness(accountLiquidity.LpEnc)
+	witness.LpEnc, err = SetElGamalEncWitness(accountLiquidity.LpEnc)
 	if err != nil {
 		log.Println("[SetAccountAssetWitness] err info:", err)
 		return witness, err

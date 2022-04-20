@@ -17,26 +17,29 @@
 
 package transactions
 
+import "github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
+
 type Tx struct {
 	// tx type
 	TxType uint8
 	// proof info
-	DepositOrLockTxInfo        *DepositOrLockTx
-	UnlockProofInfo            *UnlockProof
-	TransferProofInfo          *TransferProof
-	SwapProofInfo              *SwapProof
-	AddLiquidityProofInfo      *AddLiquidityProof
-	RemoveLiquidityProofInfo   *RemoveLiquidityProof
-	WithdrawProofInfo          *WithdrawProof
-	DepositNftTxInfo           *DepositNftTx
-	MintOrTransferNftProofInfo *ClaimNftProof
-	SetNftPriceProofInfo       *SetNftPriceProof
-	BuyNftProofInfo            *BuyNftProof
-	WithdrawNftProofInfo       *WithdrawNftProof
+	DepositOrLockTxInfo      *DepositOrLockTx
+	UnlockProofInfo          *UnlockProof
+	TransferProofInfo        *TransferProof
+	SwapProofInfo            *SwapProof
+	AddLiquidityProofInfo    *AddLiquidityProof
+	RemoveLiquidityProofInfo *RemoveLiquidityProof
+	WithdrawProofInfo        *WithdrawProof
+	DepositNftTxInfo         *DepositNftTx
+	MintNftTxInfo            *MintNftProof
+	TransferNftTxInfo        *TransferNftProof
+	SetNftPriceProofInfo     *SetNftPriceProof
+	BuyNftProofInfo          *BuyNftProof
+	WithdrawNftProofInfo     *WithdrawNftProof
 	// account root before
 	AccountRootBefore []byte
 	// account before info, size is 4
-	AccountsInfoBefore [NbAccountsPerTx]*Account
+	AccountsInfoBefore [NbAccountsPerTx]*std.Account
 	// before account asset merkle proof
 	MerkleProofsAccountAssetsBefore       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
 	MerkleProofsHelperAccountAssetsBefore [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]int
@@ -55,7 +58,7 @@ type Tx struct {
 	// account root after
 	AccountRootAfter []byte
 	// account after info, size is 4
-	AccountsInfoAfter [NbAccountsPerTx]*Account
+	AccountsInfoAfter [NbAccountsPerTx]*std.Account
 	// after account asset merkle proof
 	MerkleProofsAccountAssetsAfter       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
 	MerkleProofsHelperAccountAssetsAfter [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]int

@@ -18,12 +18,14 @@ type BuyNftProofConstraints struct {
 	//BPrimeRangeProof      CtRangeProofConstraints
 	//GasFeePrimeRangeProof CtRangeProofConstraints
 	// common inputs
-	C           ElGamalEncConstraints
-	T, Pk       Point
-	NftIndex    Variable
-	AssetId     Variable
-	AssetAmount Variable
-	FeeRate     Variable
+	C               ElGamalEncConstraints
+	T, Pk           Point
+	NftAccountIndex Variable
+	NftIndex        Variable
+	NftContentHash  Variable
+	AssetId         Variable
+	AssetAmount     Variable
+	FeeRate         Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
@@ -106,7 +108,9 @@ func VerifyBuyNftProof(
 	WriteEncIntoBuf(&hFunc, proof.C_fee)
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
+	hFunc.Write(proof.NftAccountIndex)
 	hFunc.Write(proof.NftIndex)
+	hFunc.Write(proof.NftContentHash)
 	hFunc.Write(proof.AssetId)
 	hFunc.Write(proof.AssetAmount)
 	hFunc.Write(proof.FeeRate)
@@ -165,7 +169,9 @@ func SetEmptyBuyNftProofWitness() (witness BuyNftProofConstraints) {
 	witness.C, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.T, _ = SetPointWitness(BasePoint)
 	witness.Pk, _ = SetPointWitness(BasePoint)
+	witness.NftAccountIndex = ZeroInt
 	witness.NftIndex = ZeroInt
+	witness.NftContentHash = ZeroInt
 	witness.AssetId = ZeroInt
 	witness.AssetAmount = ZeroInt
 	witness.FeeRate = ZeroInt
@@ -226,7 +232,9 @@ func SetBuyNftProofWitness(proof *zecrey.BuyNftProof, isEnabled bool) (witness B
 	if err != nil {
 		return witness, err
 	}
+	witness.NftAccountIndex = proof.NftAccountIndex
 	witness.NftIndex = proof.NftIndex
+	witness.NftContentHash = proof.NftContentHash
 	witness.AssetId = uint64(proof.AssetId)
 	witness.AssetAmount = proof.AssetAmount
 	witness.FeeRate = proof.FeeRate
@@ -256,4 +264,41 @@ func SetBuyNftProofWitness(proof *zecrey.BuyNftProof, isEnabled bool) (witness B
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
+}
+
+/*
+	VerifyBuyNftTxParams:
+	accounts order is:
+	- BuyerAccount
+		- Assets
+			- AssetA
+			- AssetGas
+		- Nft
+			- empty
+	- OwnerAccount
+		- Nft
+			- nft index
+	- TreasuryAccount
+		- Assets
+			- AssetA
+	- GasAccount
+		- Assets
+			- AssetGas
+*/
+func VerifyBuyNftTxParams(api API, flag Variable, nilHash Variable, tx BuyNftProofConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	// nft index
+	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[1].NftInfo.NftIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[0].NftInfo.NftIndex)
+	// buyer nft should be empty
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
+	// owner nft asset id and amount
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[1].NftInfo.AssetId)
+	IsVariableEqual(api, flag, tx.AssetAmount, accountsBefore[1].NftInfo.AssetAmount)
+	// treasury asset id
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[3].AssetsInfo[0].AssetId)
 }

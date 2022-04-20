@@ -46,7 +46,8 @@ type (
 	AddLiquidityProof    = zecrey.AddLiquidityProof
 	RemoveLiquidityProof = zecrey.RemoveLiquidityProof
 	WithdrawProof        = zecrey.WithdrawProof
-	ClaimNftProof        = zecrey.MintNftProof
+	MintNftProof         = zecrey.MintNftProof
+	TransferNftProof     = zecrey.TransferNftProof
 	SetNftPriceProof     = zecrey.SetNftPriceProof
 	BuyNftProof          = zecrey.BuyNftProof
 	WithdrawNftProof     = zecrey.WithdrawNftProof
@@ -61,7 +62,8 @@ type (
 	RemoveLiquidityProofConstraints = std.RemoveLiquidityProofConstraints
 	WithdrawProofConstraints        = std.WithdrawProofConstraints
 	DepositNftTxConstraints         = std.DepositNftTxConstraints
-	ClaimNftProofConstraints        = std.MintNftProofConstraints
+	MintNftProofConstraints         = std.MintNftProofConstraints
+	TransferNftProofConstraints     = std.TransferNftProofConstraints
 	SetNftPriceProofConstraints     = std.SetNftPriceProofConstraints
 	BuyNftProofConstraints          = std.BuyNftProofConstraints
 	WithdrawNftProofConstraints     = std.WithdrawNftProofConstraints
@@ -72,8 +74,8 @@ const (
 	TxsCountPerBlock          = 3
 	NbTxsCountHalf            = 70
 	NbTxsCountFull            = 140
-	NbAccountsPerTx           = 4
-	NbAccountAssetsPerAccount = 3
+	NbAccountsPerTx           = std.NbAccountsPerTx
+	NbAccountAssetsPerAccount = std.NbAccountAssetsPerAccount
 	AccountMerkleLevels       = 33
 	AccountMerkleHelperLevels = AccountMerkleLevels - 1
 	AssetMerkleLevels         = 17

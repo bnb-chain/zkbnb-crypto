@@ -39,8 +39,8 @@ func SelectCommonPart(
 func SelectDeltas(
 	api API,
 	flag Variable,
-	deltas, deltasCheck [NbAccountsPerTx]AccountDeltaConstraints,
-) (deltasRes [NbAccountsPerTx]AccountDeltaConstraints) {
+	deltas, deltasCheck [NbAccountsPerTx]std.AccountDeltaConstraints,
+) (deltasRes [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	for i := 0; i < NbAccountsPerTx; i++ {
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
 			deltasRes[i].AssetsDeltaInfo[j] =
@@ -61,28 +61,15 @@ func SelectDeltas(
 	return deltasRes
 }
 
-func SelectNftDeltas(
-	api API,
-	flag Variable,
-	deltas, deltasCheck [NbAccountsPerTx]NftDeltaConstraints,
-) (nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
-	for i := 0; i < NbAccountsPerTx; i++ {
-		nftDeltas[i].NftContentHash = api.Select(flag, deltas[i].NftContentHash, deltasCheck[i].NftContentHash)
-		nftDeltas[i].AssetId = api.Select(flag, deltas[i].AssetId, deltasCheck[i].AssetId)
-		nftDeltas[i].AssetAmount = api.Select(flag, deltas[i].AssetAmount, deltasCheck[i].AssetAmount)
-	}
-	return nftDeltas
-}
-
 func GetAccountDeltasFromDepositTx(
 	api API, tool *EccTool, h Point,
 	proof DepositOrLockTxConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	CDelta := tool.ZeroElgamalEnc()
 	CDelta.CR = tool.ScalarMul(h, proof.Amount)
 
 	// account A
-	deltas[DepositFromAccount] = AccountDeltaConstraints{
+	deltas[DepositFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			CDelta,
@@ -91,7 +78,7 @@ func GetAccountDeltasFromDepositTx(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -108,9 +95,9 @@ func GetAccountDeltasFromDepositTx(
 func GetAccountDeltasFromLockTx(
 	api API, tool *EccTool,
 	proof DepositOrLockTxConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// account A
-	deltas[TransferAccountA] = AccountDeltaConstraints{
+	deltas[TransferAccountA] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			tool.ZeroElgamalEnc(),
@@ -119,7 +106,7 @@ func GetAccountDeltasFromLockTx(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: proof.Amount,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -136,10 +123,10 @@ func GetAccountDeltasFromLockTx(
 func GetAccountDeltasFromUnlockProof(
 	api API, tool *EccTool,
 	proof UnlockProofConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
 	// from asset
-	deltas[UnlockFromAccount] = AccountDeltaConstraints{
+	deltas[UnlockFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.C_Delta,
@@ -149,7 +136,7 @@ func GetAccountDeltasFromUnlockProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(proof.DeltaAmount),
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -158,7 +145,7 @@ func GetAccountDeltasFromUnlockProof(
 		},
 	}
 	// gas account
-	deltas[UnlockGasAccount] = AccountDeltaConstraints{
+	deltas[UnlockGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForGas,
@@ -166,7 +153,7 @@ func GetAccountDeltasFromUnlockProof(
 			proof.C_fee_DeltaForGas,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -182,9 +169,9 @@ func GetAccountDeltasFromUnlockProof(
 func GetAccountDeltasFromTransferProof(
 	api API, tool *EccTool,
 	proof TransferProofConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// account A
-	deltas[TransferAccountA] = AccountDeltaConstraints{
+	deltas[TransferAccountA] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.SubProofs[TransferAccountA].CDelta,
@@ -193,7 +180,7 @@ func GetAccountDeltasFromTransferProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -202,7 +189,7 @@ func GetAccountDeltasFromTransferProof(
 		},
 	}
 	// account B
-	deltas[TransferAccountB] = AccountDeltaConstraints{
+	deltas[TransferAccountB] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.SubProofs[TransferAccountB].CDelta,
@@ -211,7 +198,7 @@ func GetAccountDeltasFromTransferProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -220,7 +207,7 @@ func GetAccountDeltasFromTransferProof(
 		},
 	}
 	// account C
-	deltas[TransferAccountC] = AccountDeltaConstraints{
+	deltas[TransferAccountC] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.SubProofs[TransferAccountC].CDelta,
@@ -229,7 +216,7 @@ func GetAccountDeltasFromTransferProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -238,7 +225,7 @@ func GetAccountDeltasFromTransferProof(
 		},
 	}
 	// gas account
-	deltas[TransferGasAccount] = AccountDeltaConstraints{
+	deltas[TransferGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForGas,
@@ -247,7 +234,7 @@ func GetAccountDeltasFromTransferProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -260,10 +247,10 @@ func GetAccountDeltasFromTransferProof(
 
 func GetAccountDeltasFromSwapProof(
 	api API, tool *EccTool,
-	proof SwapProofConstraints, poolAccount AccountConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+	proof SwapProofConstraints, poolAccount std.AccountConstraints,
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
-	deltas[SwapFromAccount] = AccountDeltaConstraints{
+	deltas[SwapFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.C_uA_Delta,
@@ -274,7 +261,7 @@ func GetAccountDeltasFromSwapProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -292,7 +279,7 @@ func GetAccountDeltasFromSwapProof(
 	Pool_B_Delta := api.Select(isSameAsset, api.Neg(B_B_Delta), B_A_Delta)
 	Pool_A_R := api.Select(isSameAsset, A_R, B_R)
 	Pool_B_R := api.Select(isSameAsset, B_R, A_R)
-	deltas[SwapPoolAccount] = AccountDeltaConstraints{
+	deltas[SwapPoolAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			tool.ZeroElgamalEnc(),
 			tool.ZeroElgamalEnc(),
@@ -301,7 +288,7 @@ func GetAccountDeltasFromSwapProof(
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
 		// pool info
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  Pool_A_Delta,
 			AssetBDelta:  Pool_B_Delta,
 			AssetARDelta: Pool_A_R,
@@ -310,7 +297,7 @@ func GetAccountDeltasFromSwapProof(
 		},
 	}
 	// treasury account
-	deltas[SwapTreasuryAccount] = AccountDeltaConstraints{
+	deltas[SwapTreasuryAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.C_treasuryfee_Delta,
@@ -318,7 +305,7 @@ func GetAccountDeltasFromSwapProof(
 			proof.C_treasuryfee_Delta,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -327,7 +314,7 @@ func GetAccountDeltasFromSwapProof(
 		},
 	}
 	// gas account
-	deltas[SwapGasAccount] = AccountDeltaConstraints{
+	deltas[SwapGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForGas,
@@ -335,7 +322,7 @@ func GetAccountDeltasFromSwapProof(
 			proof.C_fee_DeltaForGas,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -348,10 +335,10 @@ func GetAccountDeltasFromSwapProof(
 
 func GetAccountDeltasFromAddLiquidityProof(
 	api API, tool *EccTool,
-	proof AddLiquidityProofConstraints, poolAccount AccountConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+	proof AddLiquidityProofConstraints, poolAccount std.AccountConstraints,
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
-	deltas[AddLiquidityFromAccount] = AccountDeltaConstraints{
+	deltas[AddLiquidityFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.C_uA_Delta,
@@ -362,7 +349,7 @@ func GetAccountDeltasFromAddLiquidityProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -378,7 +365,7 @@ func GetAccountDeltasFromAddLiquidityProof(
 	Pool_B_Delta := api.Select(isSameAsset, B_B_Delta, B_A_Delta)
 	Pool_A_R := api.Select(isSameAsset, proof.R_DeltaA, proof.R_DeltaB)
 	Pool_B_R := api.Select(isSameAsset, proof.R_DeltaB, proof.R_DeltaA)
-	deltas[AddLiquidityPoolAccount] = AccountDeltaConstraints{
+	deltas[AddLiquidityPoolAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			tool.ZeroElgamalEnc(),
 			tool.ZeroElgamalEnc(),
@@ -387,7 +374,7 @@ func GetAccountDeltasFromAddLiquidityProof(
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
 		// pool info
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  Pool_A_Delta,
 			AssetBDelta:  Pool_B_Delta,
 			AssetARDelta: Pool_A_R,
@@ -396,7 +383,7 @@ func GetAccountDeltasFromAddLiquidityProof(
 		},
 	}
 	// gas account
-	deltas[AddLiquidityGasAccount] = AccountDeltaConstraints{
+	deltas[AddLiquidityGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.C_fee_DeltaForGas,
@@ -404,7 +391,7 @@ func GetAccountDeltasFromAddLiquidityProof(
 			proof.C_fee_DeltaForGas,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -418,10 +405,10 @@ func GetAccountDeltasFromAddLiquidityProof(
 
 func GetAccountDeltasFromRemoveLiquidityProof(
 	api API, tool *EccTool,
-	proof RemoveLiquidityProofConstraints, poolAccount AccountConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+	proof RemoveLiquidityProofConstraints, poolAccount std.AccountConstraints,
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
-	deltas[RemoveLiquidityFromAccount] = AccountDeltaConstraints{
+	deltas[RemoveLiquidityFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.C_uA_Delta,
@@ -432,7 +419,7 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -448,7 +435,7 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 	Pool_B_Delta := api.Select(isSameAsset, B_B_Delta, B_A_Delta)
 	Pool_A_R := api.Select(isSameAsset, proof.R_DeltaA, proof.R_DeltaB)
 	Pool_B_R := api.Select(isSameAsset, proof.R_DeltaB, proof.R_DeltaA)
-	deltas[RemoveLiquidityPoolAccount] = AccountDeltaConstraints{
+	deltas[RemoveLiquidityPoolAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			tool.ZeroElgamalEnc(),
 			tool.ZeroElgamalEnc(),
@@ -457,7 +444,7 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 		// locked asset
 		LockedAssetDeltaInfo: std.ZeroInt,
 		// pool info
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  Pool_A_Delta,
 			AssetBDelta:  Pool_B_Delta,
 			AssetARDelta: Pool_A_R,
@@ -466,7 +453,7 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 		},
 	}
 	// gas account
-	deltas[RemoveLiquidityGasAccount] = AccountDeltaConstraints{
+	deltas[RemoveLiquidityGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.C_fee_DeltaForGas,
@@ -474,7 +461,7 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 			proof.C_fee_DeltaForGas,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -489,10 +476,10 @@ func GetAccountDeltasFromRemoveLiquidityProof(
 func GetAccountDeltasFromWithdrawProof(
 	api API, tool *EccTool,
 	proof WithdrawProofConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
 	// from asset
-	deltas[WithdrawFromAccount] = AccountDeltaConstraints{
+	deltas[WithdrawFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// from asset
 			proof.C_Delta,
@@ -502,7 +489,7 @@ func GetAccountDeltasFromWithdrawProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -511,7 +498,7 @@ func GetAccountDeltasFromWithdrawProof(
 		},
 	}
 	// gas account
-	deltas[WithdrawGasAccount] = AccountDeltaConstraints{
+	deltas[WithdrawGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForGas,
@@ -519,7 +506,7 @@ func GetAccountDeltasFromWithdrawProof(
 			proof.C_fee_DeltaForGas,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -535,10 +522,10 @@ func GetAccountDeltasFromWithdrawProof(
 func GetAccountDeltasFromDepositNftProof(
 	api API, tool *EccTool,
 	proof DepositNftTxConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
 	// from asset
-	deltas[0] = AccountDeltaConstraints{
+	deltas[0] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			tool.ZeroElgamalEnc(),
@@ -547,7 +534,7 @@ func GetAccountDeltasFromDepositNftProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -558,24 +545,16 @@ func GetAccountDeltasFromDepositNftProof(
 	deltas[1] = deltas[0]
 	deltas[2] = deltas[0]
 	deltas[3] = deltas[0]
-	nftDeltas[0] = NftDeltaConstraints{
-		NftContentHash: proof.NftContentHash,
-		AssetId:        std.DefaultInt,
-		AssetAmount:    std.DefaultInt,
-	}
-	for i := 1; i < NbAccountsPerTx; i++ {
-		nftDeltas[i] = nftDeltas[0]
-	}
-	return deltas, nftDeltas
+	return deltas
 }
 
 func GetAccountDeltasFromMintNftProof(
 	api API, tool *EccTool,
 	proof ClaimNftProofConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
 	// from asset
-	deltas[MintNftFromAccount] = AccountDeltaConstraints{
+	deltas[MintNftFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForFrom,
@@ -584,7 +563,7 @@ func GetAccountDeltasFromMintNftProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -593,7 +572,7 @@ func GetAccountDeltasFromMintNftProof(
 		},
 	}
 	// gas account
-	deltas[MintNftGasAccount] = AccountDeltaConstraints{
+	deltas[MintNftGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForGas,
@@ -601,7 +580,7 @@ func GetAccountDeltasFromMintNftProof(
 			proof.C_fee_DeltaForGas,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -611,24 +590,16 @@ func GetAccountDeltasFromMintNftProof(
 	}
 	deltas[2] = deltas[0]
 	deltas[3] = deltas[0]
-	nftDeltas[MintNftFromAccount] = NftDeltaConstraints{
-		NftContentHash: proof.NftContentHash,
-		AssetId:        std.DefaultInt,
-		AssetAmount:    std.DefaultInt,
-	}
-	for i := MintNftFromAccount + 1; i < NbAccountsPerTx; i++ {
-		nftDeltas[i] = nftDeltas[0]
-	}
-	return deltas, nftDeltas
+	return deltas
 }
 
 func GetAccountDeltasFromTransferNftProof(
 	api API, tool *EccTool,
 	proof ClaimNftProofConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
 	// from asset
-	deltas[MintNftFromAccount] = AccountDeltaConstraints{
+	deltas[MintNftFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForFrom,
@@ -637,7 +608,7 @@ func GetAccountDeltasFromTransferNftProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -646,7 +617,7 @@ func GetAccountDeltasFromTransferNftProof(
 		},
 	}
 	// gas account
-	deltas[MintNftGasAccount] = AccountDeltaConstraints{
+	deltas[MintNftGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForGas,
@@ -654,7 +625,7 @@ func GetAccountDeltasFromTransferNftProof(
 			proof.C_fee_DeltaForGas,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -662,7 +633,7 @@ func GetAccountDeltasFromTransferNftProof(
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
-	deltas[MintNftToAccount] = AccountDeltaConstraints{
+	deltas[MintNftToAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			tool.ZeroElgamalEnc(),
@@ -670,7 +641,7 @@ func GetAccountDeltasFromTransferNftProof(
 			tool.ZeroElgamalEnc(),
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -679,28 +650,16 @@ func GetAccountDeltasFromTransferNftProof(
 		},
 	}
 	deltas[3] = deltas[0]
-	nftDeltas[MintNftFromAccount] = NftDeltaConstraints{
-		NftContentHash: NilHash,
-		AssetId:        std.DefaultInt,
-		AssetAmount:    std.DefaultInt,
-	}
-	nftDeltas[MintNftGasAccount] = nftDeltas[0]
-	nftDeltas[MintNftToAccount] = NftDeltaConstraints{
-		NftContentHash: proof.NftContentHash,
-		AssetId:        std.DefaultInt,
-		AssetAmount:    std.DefaultInt,
-	}
-	nftDeltas[3] = nftDeltas[0]
-	return deltas, nftDeltas
+	return deltas
 }
 
 func GetAccountDeltasFromSetNftPriceProof(
 	api API, tool *EccTool,
 	proof SetNftPriceProofConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
 	// from asset
-	deltas[SetNftPriceFromAccount] = AccountDeltaConstraints{
+	deltas[SetNftPriceFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForFrom,
@@ -709,7 +668,7 @@ func GetAccountDeltasFromSetNftPriceProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -718,7 +677,7 @@ func GetAccountDeltasFromSetNftPriceProof(
 		},
 	}
 	// gas account
-	deltas[SetNftPriceGasAccount] = AccountDeltaConstraints{
+	deltas[SetNftPriceGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForGas,
@@ -726,7 +685,7 @@ func GetAccountDeltasFromSetNftPriceProof(
 			proof.C_fee_DeltaForGas,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -736,23 +695,16 @@ func GetAccountDeltasFromSetNftPriceProof(
 	}
 	deltas[2] = deltas[0]
 	deltas[3] = deltas[0]
-	nftDeltas[SetNftPriceFromAccount] = NftDeltaConstraints{
-		AssetId:     proof.AssetId,
-		AssetAmount: proof.AssetAmount,
-	}
-	for i := SetNftPriceFromAccount + 1; i < NbAccountsPerTx; i++ {
-		nftDeltas[i] = nftDeltas[0]
-	}
-	return deltas, nftDeltas
+	return deltas
 }
 
 func GetAccountDeltasFromBuyNftProof(
 	api API, tool *EccTool,
 	proof BuyNftProofConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
 	// from asset
-	deltas[BuyNftFromAccount] = AccountDeltaConstraints{
+	deltas[BuyNftFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_Delta,
@@ -761,7 +713,7 @@ func GetAccountDeltasFromBuyNftProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -770,7 +722,7 @@ func GetAccountDeltasFromBuyNftProof(
 		},
 	}
 	// gas account
-	deltas[BuyNftGasAccount] = AccountDeltaConstraints{
+	deltas[BuyNftGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForGas,
@@ -778,7 +730,7 @@ func GetAccountDeltasFromBuyNftProof(
 			proof.C_fee_DeltaForGas,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -786,7 +738,7 @@ func GetAccountDeltasFromBuyNftProof(
 			LpEncDelta:   tool.ZeroElgamalEnc(),
 		},
 	}
-	deltas[BuyNftToAccount] = AccountDeltaConstraints{
+	deltas[BuyNftToAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			tool.ZeroElgamalEnc(),
@@ -794,7 +746,7 @@ func GetAccountDeltasFromBuyNftProof(
 			tool.ZeroElgamalEnc(),
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -803,27 +755,16 @@ func GetAccountDeltasFromBuyNftProof(
 		},
 	}
 	deltas[3] = deltas[0]
-	nftDeltas[BuyNftFromAccount] = NftDeltaConstraints{
-		NftContentHash: NilHash,
-		AssetId:        std.DefaultInt,
-		AssetAmount:    std.DefaultInt,
-	}
-	nftDeltas[BuyNftToAccount] = NftDeltaConstraints{
-		AssetId:     std.DefaultInt,
-		AssetAmount: std.DefaultInt,
-	}
-	nftDeltas[2] = nftDeltas[0]
-	nftDeltas[3] = nftDeltas[0]
-	return deltas, nftDeltas
+	return deltas
 }
 
 func GetAccountDeltasFromWithdrawNftProof(
 	api API, tool *EccTool,
 	proof WithdrawNftProofConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]NftDeltaConstraints) {
+) (deltas [NbAccountsPerTx]std.AccountDeltaConstraints) {
 	// from account
 	// from asset
-	deltas[WithdrawNftFromAccount] = AccountDeltaConstraints{
+	deltas[WithdrawNftFromAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForFrom,
@@ -832,7 +773,7 @@ func GetAccountDeltasFromWithdrawNftProof(
 		},
 		// locked asset
 		LockedAssetDeltaInfo: api.Neg(std.ZeroInt),
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -841,7 +782,7 @@ func GetAccountDeltasFromWithdrawNftProof(
 		},
 	}
 	// gas account
-	deltas[WithdrawNftGasAccount] = AccountDeltaConstraints{
+	deltas[WithdrawNftGasAccount] = std.AccountDeltaConstraints{
 		AssetsDeltaInfo: [3]ElGamalEncConstraints{
 			// gas asset
 			proof.C_fee_DeltaForGas,
@@ -849,7 +790,7 @@ func GetAccountDeltasFromWithdrawNftProof(
 			proof.C_fee_DeltaForGas,
 		},
 		LockedAssetDeltaInfo: std.ZeroInt,
-		LiquidityDeltaInfo: AccountLiquidityDeltaConstraints{
+		LiquidityDeltaInfo: std.AccountLiquidityDeltaConstraints{
 			AssetADelta:  std.ZeroInt,
 			AssetBDelta:  std.ZeroInt,
 			AssetARDelta: std.ZeroInt,
@@ -859,13 +800,5 @@ func GetAccountDeltasFromWithdrawNftProof(
 	}
 	deltas[2] = deltas[0]
 	deltas[3] = deltas[0]
-	nftDeltas[WithdrawNftFromAccount] = NftDeltaConstraints{
-		NftContentHash: NilHash,
-		AssetId:        std.DefaultInt,
-		AssetAmount:    std.DefaultInt,
-	}
-	for i := 1; i < NbAccountsPerTx; i++ {
-		nftDeltas[i] = nftDeltas[0]
-	}
-	return deltas, nftDeltas
+	return deltas
 }

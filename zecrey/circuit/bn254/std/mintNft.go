@@ -17,10 +17,13 @@ type MintNftProofConstraints struct {
 	// Commitment Range Proofs
 	//GasFeePrimeRangeProof CtRangeProofConstraints
 	// common inputs
-	Pk                   Point
-	TxType               Variable
-	NftContentHash       Variable
-	ReceiverAccountIndex Variable
+	Pk                  Point
+	TxType              Variable
+	NftAccountIndex     Variable
+	NftIndex            Variable
+	NftContentHash      Variable
+	CreatorAccountIndex Variable
+	ToAccountIndex      Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
@@ -88,7 +91,8 @@ func VerifyMintNftProof(
 	WritePointIntoBuf(&hFunc, proof.Pk)
 	hFunc.Write(proof.TxType)
 	hFunc.Write(proof.NftContentHash)
-	hFunc.Write(proof.ReceiverAccountIndex)
+	hFunc.Write(proof.CreatorAccountIndex)
+	hFunc.Write(proof.ToAccountIndex)
 	WritePointIntoBuf(&hFunc, proof.A_pk)
 	WritePointIntoBuf(&hFunc, proof.A_T_feeC_feeRPrimeInv)
 	c = hFunc.Sum()
@@ -134,8 +138,11 @@ func SetEmptyMintNftProofWitness() (witness MintNftProofConstraints) {
 	// common inputs
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.TxType = ZeroInt
+	witness.NftAccountIndex = ZeroInt
+	witness.NftIndex = ZeroInt
 	witness.NftContentHash = ZeroInt
-	witness.ReceiverAccountIndex = ZeroInt
+	witness.CreatorAccountIndex = ZeroInt
+	witness.ToAccountIndex = ZeroInt
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, _ = SetPointWitness(BasePoint)
 	witness.Z_bar_r_fee = ZeroInt
@@ -179,8 +186,11 @@ func SetMintNftProofWitness(proof *zecrey.MintNftProof, isEnabled bool) (witness
 		return witness, err
 	}
 	witness.TxType = uint64(proof.TxType)
+	witness.NftAccountIndex = uint64(proof.NftAccountIndex)
+	witness.NftIndex = proof.NftIndex
 	witness.NftContentHash = proof.NftContentHash
-	witness.ReceiverAccountIndex = proof.ReceiverAccountIndex
+	witness.CreatorAccountIndex = proof.CreatorAccountIndex
+	witness.ToAccountIndex = proof.ToAccountIndex
 	// gas fee
 	witness.A_T_feeC_feeRPrimeInv, err = SetPointWitness(proof.A_T_feeC_feeRPrimeInv)
 	if err != nil {
@@ -206,4 +216,39 @@ func SetMintNftProofWitness(proof *zecrey.MintNftProof, isEnabled bool) (witness
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
+}
+
+/*
+	VerifyMintNftTxParams:
+	accounts order is:
+	- FromAccount
+		- Assets
+			- AssetGas
+		- Nft
+			- empty
+	- ToAccount
+		- Nft
+			- empty
+	- GasAccount
+		- Assets
+			- AssetGas
+*/
+func VerifyMintNftTxParams(api API, flag Variable, nilHash Variable, tx MintNftProofConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	// nft index
+	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[1].NftInfo.NftIndex)
+	// before account nft should be empty
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftIndex, DefaultInt)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
+	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
+	// new nft info should be right
+	IsVariableEqual(api, flag, tx.NftContentHash, accountsAfter[1].NftInfo.NftContentHash)
+	// from account index
+	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[0].AccountIndex)
+	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
+	// gas asset id
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 }

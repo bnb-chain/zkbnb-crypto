@@ -17,11 +17,13 @@ type SetNftPriceProofConstraints struct {
 	// Commitment Range Proofs
 	//GasFeePrimeRangeProof CtRangeProofConstraints
 	// common inputs
-	Pk          Point
-	TxType      Variable
-	NftIndex    Variable
-	AssetId     Variable
-	AssetAmount Variable
+	Pk              Point
+	TxType          Variable
+	NftAccountIndex Variable
+	NftIndex        Variable
+	NftContentHash  Variable
+	AssetId         Variable
+	AssetAmount     Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
@@ -88,7 +90,9 @@ func VerifySetNftPriceProof(
 	WritePointIntoBuf(&hFunc, proof.T_fee)
 	WritePointIntoBuf(&hFunc, proof.Pk)
 	hFunc.Write(proof.TxType)
+	hFunc.Write(proof.NftAccountIndex)
 	hFunc.Write(proof.NftIndex)
+	hFunc.Write(proof.NftContentHash)
 	hFunc.Write(proof.AssetId)
 	hFunc.Write(proof.AssetAmount)
 	WritePointIntoBuf(&hFunc, proof.A_pk)
@@ -136,7 +140,9 @@ func SetEmptySetNftProofWitness() (witness SetNftPriceProofConstraints) {
 	// common inputs
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.TxType = ZeroInt
+	witness.NftAccountIndex = ZeroInt
 	witness.NftIndex = ZeroInt
+	witness.NftContentHash = ZeroInt
 	witness.AssetId = ZeroInt
 	witness.AssetAmount = ZeroInt
 	// gas fee
@@ -182,7 +188,9 @@ func SetSetNftPriceProofWitness(proof *zecrey.SetNftPriceProof, isEnabled bool) 
 		return witness, err
 	}
 	witness.TxType = uint64(proof.TxType)
+	witness.NftAccountIndex = proof.NftAccountIndex
 	witness.NftIndex = proof.NftIndex
+	witness.NftContentHash = proof.NftContentHash
 	witness.AssetId = proof.AssetId
 	witness.AssetAmount = proof.AssetAmount
 	// gas fee
@@ -210,4 +218,27 @@ func SetSetNftPriceProofWitness(proof *zecrey.SetNftPriceProof, isEnabled bool) 
 	witness.C_fee_DeltaForGas, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.IsEnabled = SetBoolWitness(isEnabled)
 	return witness, nil
+}
+
+/*
+	VerifySetNftPriceTxParams:
+	accounts order is:
+	- FromAccount
+		- Assets:
+			- AssetGas
+		- Nft
+			- nft index
+	- GasAccount
+		- Assets:
+			- AssetGas
+*/
+func VerifySetNftPriceTxParams(api API, flag Variable, tx SetNftPriceProofConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+	// verify params
+	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
+	IsVariableEqual(api, flag, tx.AssetId, accountsAfter[0].NftInfo.AssetId)
+	IsVariableEqual(api, flag, tx.AssetAmount, accountsAfter[0].NftInfo.AssetAmount)
+	// gas
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 }
