@@ -31,7 +31,7 @@ type MintNftSegmentFormat struct {
 	ToAccountIndex      int64  `json:"to_account_index"`
 	NftIndex            int64  `json:"nft_index"`
 	NftContentHash      string `json:"nft_content_hash"`
-	NftTitle            string `json:"nft_title"`
+	NftName             string `json:"nft_name"`
 	NftIntroduction     string `json:"nft_introduction"`
 	NftCollectionId     int64  `json:"nft_collection_id"`
 	NftAttributes       string `json:"nft_attributes"`
@@ -56,12 +56,9 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 	txInfo = &MintNftTxInfo{
 		CreatorAccountIndex: uint32(segmentFormat.CreatorAccountIndex),
 		ToAccountIndex:      uint32(segmentFormat.ToAccountIndex),
-		NftIndex:            uint32(segmentFormat.NftIndex),
+		NftIndex:            uint64(segmentFormat.NftIndex),
 		NftContentHash:      segmentFormat.NftContentHash,
-		NftTitle:            segmentFormat.NftTitle,
-		NftIntroduction:     segmentFormat.NftIntroduction,
 		NftCollectionId:     uint32(segmentFormat.NftCollectionId),
-		NftAttributes:       segmentFormat.NftAttributes,
 		AssetId:             uint32(segmentFormat.AssetId),
 		AssetAmount:         uint64(segmentFormat.AssetAmount),
 		GasAccountIndex:     uint32(segmentFormat.GasAccountIndex),
@@ -88,12 +85,10 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 type MintNftTxInfo struct {
 	CreatorAccountIndex uint32
 	ToAccountIndex      uint32
-	NftIndex            uint32
+	NftAssetId          uint32
+	NftIndex            uint64
 	NftContentHash      string
-	NftTitle            string
-	NftIntroduction     string
 	NftCollectionId     uint32
-	NftAttributes       string
 	AssetId             uint32
 	AssetAmount         uint64
 	GasAccountIndex     uint32

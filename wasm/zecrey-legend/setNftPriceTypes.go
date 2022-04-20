@@ -21,19 +21,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 )
 
 type SetNftPriceSegmentFormat struct {
-	AccountIndex      int64 `json:"account_index"`
-	NftIndex          int64 `json:"nft_index"`
-	AssetId           int64 `json:"asset_id"`
-	AssetAmount       int64 `json:"asset_amount"`
-	GasAccountIndex   int64 `json:"gas_account_index"`
-	GasFeeAssetId     int64 `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount int64 `json:"gas_fee_asset_amount"`
-	Nonce             int64 `json:"nonce"`
+	AccountIndex      int64  `json:"account_index"`
+	NftAssetId        int64  `json:"nft_asset_id"`
+	NftIndex          int64  `json:"nft_index"`
+	NftContentHash    string `json:"nft_content_hash"`
+	AssetId           int64  `json:"asset_id"`
+	AssetAmount       int64  `json:"asset_amount"`
+	GasAccountIndex   int64  `json:"gas_account_index"`
+	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
+	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	Nonce             int64  `json:"nonce"`
 }
 
 /*
@@ -48,7 +51,9 @@ func ConstructSetNftPriceTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SetN
 	}
 	txInfo = &SetNftPriceTxInfo{
 		AccountIndex:      uint32(segmentFormat.AccountIndex),
-		NftIndex:          uint32(segmentFormat.NftIndex),
+		NftAssetId:        uint32(segmentFormat.NftAssetId),
+		NftIndex:          uint64(segmentFormat.NftIndex),
+		NftContentHash:    common.FromHex(segmentFormat.NftContentHash),
 		AssetId:           uint32(segmentFormat.AssetId),
 		AssetAmount:       uint64(segmentFormat.AssetAmount),
 		GasAccountIndex:   uint32(segmentFormat.GasAccountIndex),
@@ -74,7 +79,9 @@ func ConstructSetNftPriceTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SetN
 
 type SetNftPriceTxInfo struct {
 	AccountIndex      uint32
-	NftIndex          uint32
+	NftAssetId        uint32
+	NftIndex          uint64
+	NftContentHash    []byte
 	AssetId           uint32
 	AssetAmount       uint64
 	GasAccountIndex   uint32
@@ -100,7 +107,9 @@ func ComputeSetNftPriceMsgHash(txInfo *SetNftPriceTxInfo, hFunc hash.Hash) (msgH
 	*/
 	var buf bytes.Buffer
 	writeUint64IntoBuf(&buf, uint64(txInfo.AccountIndex))
+	writeUint64IntoBuf(&buf, uint64(txInfo.NftAssetId))
 	writeUint64IntoBuf(&buf, uint64(txInfo.NftIndex))
+	buf.Write(txInfo.NftContentHash)
 	writeUint64IntoBuf(&buf, uint64(txInfo.AssetId))
 	writeUint64IntoBuf(&buf, uint64(txInfo.AssetAmount))
 	writeUint64IntoBuf(&buf, uint64(txInfo.GasAccountIndex))

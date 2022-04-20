@@ -26,17 +26,19 @@ import (
 )
 
 type BuyNftSegmentFormat struct {
-	AccountIndex         int64
-	OwnerAccountIndex    int64
-	NftIndex             int64
-	AssetId              int64
-	AssetAmount          int64
-	TreasuryFeeRate      int64
-	TreasuryAccountIndex int64
-	GasAccountIndex      int64
-	GasFeeAssetId        int64
-	GasFeeAssetAmount    int64
-	Nonce                int64 `json:"nonce"`
+	AccountIndex         int64  `json:"account_index"`
+	OwnerAccountIndex    int64  `json:"owner_account_index"`
+	NftAssetId           int64  `json:"nft_asset_id"`
+	NftIndex             int64  `json:"nft_index"`
+	NftContentHash       string `json:"nft_content_hash"`
+	AssetId              int64  `json:"asset_id"`
+	AssetAmount          int64  `json:"asset_amount"`
+	TreasuryFeeRate      int64  `json:"treasury_fee_rate"`
+	TreasuryAccountIndex int64  `json:"treasury_account_index"`
+	GasAccountIndex      int64  `json:"gas_account_index"`
+	GasFeeAssetId        int64  `json:"gas_fee_asset_id"`
+	GasFeeAssetAmount    int64  `json:"gas_fee_asset_amount"`
+	Nonce                int64  `json:"nonce"`
 }
 
 /*
@@ -81,7 +83,9 @@ func ConstructBuyNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *BuyNftTxI
 type BuyNftTxInfo struct {
 	AccountIndex         uint32
 	OwnerAccountIndex    uint32
+	NftAssetId           uint32
 	NftIndex             uint32
+	NftContentHash       []byte
 	AssetId              uint32
 	AssetAmount          uint64
 	TreasuryFeeRate      uint32
@@ -113,7 +117,9 @@ func ComputeBuyNftMsgHash(txInfo *BuyNftTxInfo, hFunc hash.Hash) (msgHash []byte
 	var buf bytes.Buffer
 	writeUint64IntoBuf(&buf, uint64(txInfo.AccountIndex))
 	writeUint64IntoBuf(&buf, uint64(txInfo.OwnerAccountIndex))
+	writeUint64IntoBuf(&buf, uint64(txInfo.NftAssetId))
 	writeUint64IntoBuf(&buf, uint64(txInfo.NftIndex))
+	buf.Write(txInfo.NftContentHash)
 	writeUint64IntoBuf(&buf, uint64(txInfo.AssetId))
 	writeUint64IntoBuf(&buf, uint64(txInfo.AssetAmount))
 	writeUint64IntoBuf(&buf, uint64(txInfo.TreasuryAccountIndex))

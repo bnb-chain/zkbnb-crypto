@@ -21,13 +21,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 )
 
 type WithdrawNftSegmentFormat struct {
 	AccountIndex      int64  `json:"account_index"`
+	NftAssetId        int64  `json:"nft_asset_id"`
 	NftIndex          int64  `json:"nft_index"`
+	NftContentHash    string `json:"nft_content_hash"`
 	ToAddress         string `json:"to_address"`
 	ProxyAddress      string `json:"proxy_address"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
@@ -45,7 +48,9 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 	}
 	txInfo = &WithdrawNftTxInfo{
 		AccountIndex:      uint32(segmentFormat.AccountIndex),
-		NftIndex:          uint32(segmentFormat.NftIndex),
+		NftAssetId:        uint32(segmentFormat.NftAssetId),
+		NftIndex:          uint64(segmentFormat.NftIndex),
+		NftContentHash:    common.FromHex(segmentFormat.NftContentHash),
 		ToAddress:         segmentFormat.ToAddress,
 		ProxyAddress:      segmentFormat.ProxyAddress,
 		GasAccountIndex:   uint32(segmentFormat.GasAccountIndex),
@@ -71,7 +76,9 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 
 type WithdrawNftTxInfo struct {
 	AccountIndex      uint32
-	NftIndex          uint32
+	NftAssetId        uint32
+	NftIndex          uint64
+	NftContentHash    []byte
 	ToAddress         string
 	ProxyAddress      string
 	GasAccountIndex   uint32

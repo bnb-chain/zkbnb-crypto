@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 )
@@ -35,7 +36,9 @@ type GenericTransferSegmentFormat struct {
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
 	CallData          string `json:"call_data"`
-	NftIndex          int    `json:"nft_index"`
+	NftAssetId        int64  `json:"nft_asset_id"`
+	NftIndex          int64  `json:"nft_index"`
+	NftContentHash    string `json:"nft_content_hash"`
 	Nonce             int64  `json:"nonce"`
 }
 
@@ -60,7 +63,9 @@ func ConstructGenericTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 		GasFeeAssetAmount: uint64(segmentFormat.GasFeeAssetAmount),
 		CallData:          segmentFormat.CallData,
 		CallDataHash:      nil,
-		NftIndex:          segmentFormat.NftIndex,
+		NftAssetId:        uint32(segmentFormat.NftAssetId),
+		NftIndex:          uint64(segmentFormat.NftIndex),
+		NftContentHash:    common.FromHex(segmentFormat.NftContentHash),
 		Nonce:             uint64(segmentFormat.Nonce),
 		Sig:               nil,
 	}
@@ -94,7 +99,9 @@ type GenericTransferTxInfo struct {
 	GasFeeAssetAmount uint64
 	CallData          string
 	CallDataHash      []byte
-	NftIndex          int
+	NftAssetId        uint32
+	NftIndex          uint64
+	NftContentHash    []byte
 	Nonce             uint64
 	Sig               []byte
 }
@@ -112,7 +119,9 @@ func ComputeGenericTransferMsgHash(txInfo *GenericTransferTxInfo, hFunc hash.Has
 	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetId))
 	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetAmount))
 	buf.Write(txInfo.CallDataHash)
+	writeUint64IntoBuf(&buf, uint64(txInfo.NftAssetId))
 	writeUint64IntoBuf(&buf, uint64(txInfo.NftIndex))
+	buf.Write(txInfo.NftContentHash)
 	writeUint64IntoBuf(&buf, uint64(txInfo.Nonce))
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
