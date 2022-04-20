@@ -47,7 +47,7 @@ func TestBuyNftProofCircuit_Define(t *testing.T) {
 		pk,
 		b,
 		sk,
-		contentHash, assetId, assetAmount,
+		1, 1, contentHash, assetId, assetAmount,
 		bEnc, b, assetId, fee,
 		20,
 	)

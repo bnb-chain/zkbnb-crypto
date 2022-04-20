@@ -18,14 +18,14 @@ type BuyNftProofConstraints struct {
 	//BPrimeRangeProof      CtRangeProofConstraints
 	//GasFeePrimeRangeProof CtRangeProofConstraints
 	// common inputs
-	C               ElGamalEncConstraints
-	T, Pk           Point
-	NftAccountIndex Variable
-	NftIndex        Variable
-	NftContentHash  Variable
-	AssetId         Variable
-	AssetAmount     Variable
-	FeeRate         Variable
+	C              ElGamalEncConstraints
+	T, Pk          Point
+	NftAssetId     Variable
+	NftIndex       Variable
+	NftContentHash Variable
+	AssetId        Variable
+	AssetAmount    Variable
+	FeeRate        Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
@@ -108,7 +108,7 @@ func VerifyBuyNftProof(
 	WriteEncIntoBuf(&hFunc, proof.C_fee)
 	hFunc.Write(proof.GasFeeAssetId)
 	hFunc.Write(proof.GasFee)
-	hFunc.Write(proof.NftAccountIndex)
+	hFunc.Write(proof.NftAssetId)
 	hFunc.Write(proof.NftIndex)
 	hFunc.Write(proof.NftContentHash)
 	hFunc.Write(proof.AssetId)
@@ -169,7 +169,7 @@ func SetEmptyBuyNftProofWitness() (witness BuyNftProofConstraints) {
 	witness.C, _ = SetElGamalEncWitness(ZeroElgamalEnc)
 	witness.T, _ = SetPointWitness(BasePoint)
 	witness.Pk, _ = SetPointWitness(BasePoint)
-	witness.NftAccountIndex = ZeroInt
+	witness.NftAssetId = ZeroInt
 	witness.NftIndex = ZeroInt
 	witness.NftContentHash = ZeroInt
 	witness.AssetId = ZeroInt
@@ -232,7 +232,7 @@ func SetBuyNftProofWitness(proof *zecrey.BuyNftProof, isEnabled bool) (witness B
 	if err != nil {
 		return witness, err
 	}
-	witness.NftAccountIndex = proof.NftAccountIndex
+	witness.NftAssetId = proof.NftAssetId
 	witness.NftIndex = proof.NftIndex
 	witness.NftContentHash = proof.NftContentHash
 	witness.AssetId = uint64(proof.AssetId)

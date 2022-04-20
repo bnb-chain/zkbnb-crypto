@@ -34,13 +34,13 @@ type SetNftPriceProof struct {
 	// Commitment Range Proofs
 	GasFeePrimeRangeProof *RangeProof
 	// common inputs
-	Pk              *Point
-	TxType          uint32
-	NftAccountIndex uint32
-	NftIndex        uint64
-	NftContentHash  []byte
-	AssetId         uint32
-	AssetAmount     uint64
+	Pk             *Point
+	TxType         uint32
+	NftAssetId     uint32
+	NftIndex       uint64
+	NftContentHash []byte
+	AssetId        uint32
+	AssetAmount    uint64
 	// gas fee
 	A_T_feeC_feeRPrimeInv *Point
 	Z_bar_r_fee           *big.Int
@@ -59,7 +59,7 @@ func (proof *SetNftPriceProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, RangeProofSize, proof.GasFeePrimeRangeProof.Bytes())
 	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.TxType))
-	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftAccountIndex))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftAssetId))
 	offset = copyBuf(&buf, offset, EightBytes, uint64ToBytes(proof.NftIndex))
 	offset = copyBuf(&buf, offset, PointSize, proof.NftContentHash)
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.AssetId))
@@ -97,7 +97,7 @@ func ParseSetNftPriceProofBytes(proofBytes []byte) (proof *SetNftPriceProof, err
 		return nil, err
 	}
 	offset, proof.TxType = readUint32FromBuf(proofBytes, offset)
-	offset, proof.NftAccountIndex = readUint32FromBuf(proofBytes, offset)
+	offset, proof.NftAssetId = readUint32FromBuf(proofBytes, offset)
 	offset, proof.NftIndex = readUint64FromBuf(proofBytes, offset)
 	offset, proof.NftContentHash = readHashFromBuf(proofBytes, offset)
 	offset, proof.AssetId = readUint32FromBuf(proofBytes, offset)
@@ -136,13 +136,13 @@ type SetNftPriceRelation struct {
 	// ------------- public ---------------------
 	GasFeePrimeRangeProof *RangeProof
 	// public key
-	Pk              *Point
-	TxType          uint32
-	NftAccountIndex uint32
-	NftIndex        uint64
-	NftContentHash  []byte
-	AssetId         uint32
-	AssetAmount     uint64
+	Pk             *Point
+	TxType         uint32
+	NftAssetId     uint32
+	NftIndex       uint64
+	NftContentHash []byte
+	AssetId        uint32
+	AssetAmount    uint64
 	// ----------- private ---------------------
 	Sk *big.Int
 	// gas fee
@@ -201,7 +201,7 @@ func NewSetNftPriceRelation(
 		GasFeePrimeRangeProof: GasFeePrimeRangeProof,
 		Pk:                    pk,
 		TxType:                txType,
-		NftAccountIndex:       nftAccountIndex,
+		NftAssetId:            nftAccountIndex,
 		NftIndex:              nftIndex,
 		NftContentHash:        nftContentHash,
 		AssetId:               assetId,

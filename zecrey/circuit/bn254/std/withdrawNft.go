@@ -17,14 +17,14 @@ type WithdrawNftProofConstraints struct {
 	// Commitment Range Proofs
 	//GasFeePrimeRangeProof CtRangeProofConstraints
 	// common inputs
-	Pk              Point
-	TxType          Variable
-	NftAccountIndex Variable
-	NftIndex        Variable
-	NftContentHash  Variable
-	ReceiveAddr     Variable
-	ProxyAddr       Variable
-	ChainId         Variable
+	Pk             Point
+	TxType         Variable
+	NftAssetId     Variable
+	NftIndex       Variable
+	NftContentHash Variable
+	ReceiveAddr    Variable
+	ProxyAddr      Variable
+	ChainId        Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
@@ -91,7 +91,7 @@ func VerifyWithdrawNftProof(
 	WritePointIntoBuf(&hFunc, proof.T_fee)
 	WritePointIntoBuf(&hFunc, proof.Pk)
 	hFunc.Write(proof.TxType)
-	hFunc.Write(proof.NftAccountIndex)
+	hFunc.Write(proof.NftAssetId)
 	hFunc.Write(proof.NftIndex)
 	hFunc.Write(proof.NftContentHash)
 	hFunc.Write(proof.ReceiveAddr)
@@ -141,7 +141,7 @@ func SetEmptyWithdrawNftProofWitness() (witness WithdrawNftProofConstraints) {
 	// common inputs
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.TxType = ZeroInt
-	witness.NftAccountIndex = ZeroInt
+	witness.NftAssetId = ZeroInt
 	witness.NftIndex = ZeroInt
 	witness.NftContentHash = ZeroInt
 	witness.ReceiveAddr = ZeroInt
@@ -190,7 +190,7 @@ func SetWithdrawNftProofWitness(proof *zecrey.WithdrawNftProof, isEnabled bool) 
 		return witness, err
 	}
 	witness.TxType = uint64(proof.TxType)
-	witness.NftAccountIndex = proof.NftAccountIndex
+	witness.NftAssetId = proof.NftAssetId
 	witness.NftIndex = proof.NftIndex
 	witness.NftContentHash = proof.NftContentHash
 	witness.ReceiveAddr = proof.ReceiveAddr
@@ -240,7 +240,7 @@ func VerifyWithdrawNftTxParams(api API, flag Variable, nilHash Variable, tx With
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// should confirm if the user owns the nft
-	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
 	// after withdraw nft should be empty
 	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.NftIndex, DefaultInt)

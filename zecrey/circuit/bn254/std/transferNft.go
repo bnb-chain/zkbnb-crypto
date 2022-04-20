@@ -36,7 +36,7 @@ type TransferNftProofConstraints struct {
 	// common inputs
 	Pk                   Point
 	TxType               Variable
-	NftAccountIndex      Variable
+	NftAssetId           Variable
 	NftIndex             Variable
 	NftContentHash       Variable
 	ReceiverAccountIndex Variable
@@ -106,7 +106,7 @@ func VerifyTransferNftProof(
 	WritePointIntoBuf(&hFunc, proof.T_fee)
 	WritePointIntoBuf(&hFunc, proof.Pk)
 	hFunc.Write(proof.TxType)
-	hFunc.Write(proof.NftAccountIndex)
+	hFunc.Write(proof.NftAssetId)
 	hFunc.Write(proof.NftIndex)
 	hFunc.Write(proof.NftContentHash)
 	hFunc.Write(proof.ReceiverAccountIndex)
@@ -155,7 +155,7 @@ func SetEmptyTransferNftProofWitness() (witness TransferNftProofConstraints) {
 	// common inputs
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.TxType = ZeroInt
-	witness.NftAccountIndex = ZeroInt
+	witness.NftAssetId = ZeroInt
 	witness.NftIndex = ZeroInt
 	witness.NftContentHash = ZeroInt
 	witness.ReceiverAccountIndex = ZeroInt
@@ -202,7 +202,7 @@ func SetTransferNftProofWitness(proof *zecrey.TransferNftProof, isEnabled bool) 
 		return witness, err
 	}
 	witness.TxType = uint64(proof.TxType)
-	witness.NftAccountIndex = proof.NftAccountIndex
+	witness.NftAssetId = proof.NftAssetId
 	witness.NftIndex = proof.NftIndex
 	witness.NftContentHash = proof.NftContentHash
 	witness.ReceiverAccountIndex = proof.ReceiverAccountIndex
@@ -251,7 +251,7 @@ func SetTransferNftProofWitness(proof *zecrey.TransferNftProof, isEnabled bool) 
 func VerifyTransferNftTxParams(api API, flag Variable, nilHash Variable, tx TransferNftProofConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	// nft index
-	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[1].NftInfo.NftIndex)
 	// before account nft should be empty

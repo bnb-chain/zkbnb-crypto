@@ -58,7 +58,7 @@ func ProveTransferNft(relation *TransferNftRelation) (proof *TransferNftProof, e
 	writePointIntoBuf(&buf, relation.T_fee)
 	writePointIntoBuf(&buf, relation.Pk)
 	writeUint64IntoBuf(&buf, uint64(relation.TxType))
-	writeUint64IntoBuf(&buf, uint64(relation.NftAccountIndex))
+	writeUint64IntoBuf(&buf, uint64(relation.NftAssetId))
 	writeUint64IntoBuf(&buf, relation.NftIndex)
 	buf.Write(relation.NftContentHash)
 	writeUint64IntoBuf(&buf, uint64(relation.ReceiverAccountIndex))
@@ -79,7 +79,7 @@ func ProveTransferNft(relation *TransferNftRelation) (proof *TransferNftProof, e
 		GasFeePrimeRangeProof: relation.GasFeePrimeRangeProof,
 		Pk:                    relation.Pk,
 		TxType:                relation.TxType,
-		NftAccountIndex:       relation.NftAccountIndex,
+		NftAssetId:            relation.NftAssetId,
 		NftIndex:              relation.NftIndex,
 		NftContentHash:        relation.NftContentHash,
 		ReceiverAccountIndex:  relation.ReceiverAccountIndex,
@@ -130,7 +130,7 @@ func (proof *TransferNftProof) Verify() (bool, error) {
 	writePointIntoBuf(&buf, proof.T_fee)
 	writePointIntoBuf(&buf, proof.Pk)
 	writeUint64IntoBuf(&buf, uint64(proof.TxType))
-	writeUint64IntoBuf(&buf, uint64(proof.NftAccountIndex))
+	writeUint64IntoBuf(&buf, uint64(proof.NftAssetId))
 	writeUint64IntoBuf(&buf, proof.NftIndex)
 	buf.Write(proof.NftContentHash)
 	writeUint64IntoBuf(&buf, uint64(proof.ReceiverAccountIndex))

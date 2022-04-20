@@ -17,13 +17,13 @@ type SetNftPriceProofConstraints struct {
 	// Commitment Range Proofs
 	//GasFeePrimeRangeProof CtRangeProofConstraints
 	// common inputs
-	Pk              Point
-	TxType          Variable
-	NftAccountIndex Variable
-	NftIndex        Variable
-	NftContentHash  Variable
-	AssetId         Variable
-	AssetAmount     Variable
+	Pk             Point
+	TxType         Variable
+	NftAssetId     Variable
+	NftIndex       Variable
+	NftContentHash Variable
+	AssetId        Variable
+	AssetAmount    Variable
 	// gas fee
 	A_T_feeC_feeRPrimeInv Point
 	Z_bar_r_fee           Variable
@@ -90,7 +90,7 @@ func VerifySetNftPriceProof(
 	WritePointIntoBuf(&hFunc, proof.T_fee)
 	WritePointIntoBuf(&hFunc, proof.Pk)
 	hFunc.Write(proof.TxType)
-	hFunc.Write(proof.NftAccountIndex)
+	hFunc.Write(proof.NftAssetId)
 	hFunc.Write(proof.NftIndex)
 	hFunc.Write(proof.NftContentHash)
 	hFunc.Write(proof.AssetId)
@@ -140,7 +140,7 @@ func SetEmptySetNftProofWitness() (witness SetNftPriceProofConstraints) {
 	// common inputs
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.TxType = ZeroInt
-	witness.NftAccountIndex = ZeroInt
+	witness.NftAssetId = ZeroInt
 	witness.NftIndex = ZeroInt
 	witness.NftContentHash = ZeroInt
 	witness.AssetId = ZeroInt
@@ -188,7 +188,7 @@ func SetSetNftPriceProofWitness(proof *zecrey.SetNftPriceProof, isEnabled bool) 
 		return witness, err
 	}
 	witness.TxType = uint64(proof.TxType)
-	witness.NftAccountIndex = proof.NftAccountIndex
+	witness.NftAssetId = proof.NftAssetId
 	witness.NftIndex = proof.NftIndex
 	witness.NftContentHash = proof.NftContentHash
 	witness.AssetId = proof.AssetId
@@ -234,7 +234,7 @@ func SetSetNftPriceProofWitness(proof *zecrey.SetNftPriceProof, isEnabled bool) 
 */
 func VerifySetNftPriceTxParams(api API, flag Variable, tx SetNftPriceProofConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
 	// verify params
-	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
 	IsVariableEqual(api, flag, tx.AssetId, accountsAfter[0].NftInfo.AssetId)
 	IsVariableEqual(api, flag, tx.AssetAmount, accountsAfter[0].NftInfo.AssetAmount)

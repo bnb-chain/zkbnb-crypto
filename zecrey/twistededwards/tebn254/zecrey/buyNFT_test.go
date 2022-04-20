@@ -51,7 +51,7 @@ func TestBuyNftProof_Verify(t *testing.T) {
 		pk,
 		b,
 		sk,
-		nftIndex, assetId, assetAmount,
+		nftIndex, 1, make([]byte, 32), assetId, assetAmount,
 		bEnc, b, assetId, fee,
 		20,
 	)

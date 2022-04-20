@@ -19,7 +19,7 @@ type MintNftProofConstraints struct {
 	// common inputs
 	Pk                  Point
 	TxType              Variable
-	NftAccountIndex     Variable
+	NftAssetId          Variable
 	NftIndex            Variable
 	NftContentHash      Variable
 	CreatorAccountIndex Variable
@@ -138,7 +138,7 @@ func SetEmptyMintNftProofWitness() (witness MintNftProofConstraints) {
 	// common inputs
 	witness.Pk, _ = SetPointWitness(BasePoint)
 	witness.TxType = ZeroInt
-	witness.NftAccountIndex = ZeroInt
+	witness.NftAssetId = ZeroInt
 	witness.NftIndex = ZeroInt
 	witness.NftContentHash = ZeroInt
 	witness.CreatorAccountIndex = ZeroInt
@@ -186,7 +186,7 @@ func SetMintNftProofWitness(proof *zecrey.MintNftProof, isEnabled bool) (witness
 		return witness, err
 	}
 	witness.TxType = uint64(proof.TxType)
-	witness.NftAccountIndex = uint64(proof.NftAccountIndex)
+	witness.NftAssetId = uint64(proof.NftAssetId)
 	witness.NftIndex = proof.NftIndex
 	witness.NftContentHash = proof.NftContentHash
 	witness.CreatorAccountIndex = proof.CreatorAccountIndex
@@ -236,7 +236,7 @@ func SetMintNftProofWitness(proof *zecrey.MintNftProof, isEnabled bool) (witness
 func VerifyMintNftTxParams(api API, flag Variable, nilHash Variable, tx MintNftProofConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	// nft index
-	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[1].NftInfo.NftIndex)
 	// before account nft should be empty
 	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftIndex, DefaultInt)

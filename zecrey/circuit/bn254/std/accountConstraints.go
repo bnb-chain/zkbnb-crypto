@@ -109,19 +109,19 @@ func IsAccountLiquidityConstraintsEqual(api API, flag Variable, a, b AccountLiqu
 }
 
 type AccountNftConstraints struct {
-	NftAccountIndex Variable
-	NftIndex        Variable
-	CreatorIndex    Variable
-	NftContentHash  Variable
-	AssetId         Variable
-	AssetAmount     Variable
-	ChainId         Variable
-	L1Address       Variable
-	L1TokenId       Variable
+	NftAssetId     Variable
+	NftIndex       Variable
+	CreatorIndex   Variable
+	NftContentHash Variable
+	AssetId        Variable
+	AssetAmount    Variable
+	ChainId        Variable
+	L1Address      Variable
+	L1TokenId      Variable
 }
 
 func SetAccountNftWitness(nftInfo *AccountNft) (witness AccountNftConstraints) {
-	witness.NftAccountIndex = nftInfo.NftAccountIndex
+	witness.NftAssetId = nftInfo.NftAccountIndex
 	witness.NftIndex = nftInfo.NftIndex
 	witness.CreatorIndex = nftInfo.CreatorIndex
 	witness.NftContentHash = nftInfo.NftContentHash

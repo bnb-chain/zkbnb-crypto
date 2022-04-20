@@ -36,7 +36,7 @@ type TransferNftProof struct {
 	// common inputs
 	Pk                   *Point
 	TxType               uint32
-	NftAccountIndex      uint32
+	NftAssetId           uint32
 	NftIndex             uint64
 	NftContentHash       []byte
 	ReceiverAccountIndex uint32
@@ -58,7 +58,7 @@ func (proof *TransferNftProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, RangeProofSize, proof.GasFeePrimeRangeProof.Bytes())
 	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.TxType))
-	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftAccountIndex))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftAssetId))
 	offset = copyBuf(&buf, offset, EightBytes, uint64ToBytes(proof.NftIndex))
 	offset = copyBuf(&buf, offset, PointSize, proof.NftContentHash)
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ReceiverAccountIndex))
@@ -95,7 +95,7 @@ func ParseTransferNftProofBytes(proofBytes []byte) (proof *TransferNftProof, err
 		return nil, err
 	}
 	offset, proof.TxType = readUint32FromBuf(proofBytes, offset)
-	offset, proof.NftAccountIndex = readUint32FromBuf(proofBytes, offset)
+	offset, proof.NftAssetId = readUint32FromBuf(proofBytes, offset)
 	offset, proof.NftIndex = readUint64FromBuf(proofBytes, offset)
 	offset, proof.NftContentHash = readHashFromBuf(proofBytes, offset)
 	offset, proof.ReceiverAccountIndex = readUint32FromBuf(proofBytes, offset)
@@ -135,7 +135,7 @@ type TransferNftRelation struct {
 	// public key
 	Pk                   *Point
 	TxType               uint32
-	NftAccountIndex      uint32
+	NftAssetId           uint32
 	NftIndex             uint64
 	NftContentHash       []byte
 	ReceiverAccountIndex uint32
@@ -196,7 +196,7 @@ func NewTransferNftRelation(
 		GasFeePrimeRangeProof: GasFeePrimeRangeProof,
 		Pk:                    pk,
 		TxType:                txType,
-		NftAccountIndex:       nftAccountIndex,
+		NftAssetId:            nftAccountIndex,
 		NftIndex:              nftIndex,
 		NftContentHash:        nftContentHash,
 		ReceiverAccountIndex:  receiverAccountIndex,
