@@ -36,6 +36,8 @@ type MintNftProof struct {
 	// common inputs
 	Pk                   *Point
 	TxType               uint32
+	NftAccountIndex      uint32
+	NftIndex             uint64
 	NftContentHash       []byte
 	ReceiverAccountIndex uint32
 	// gas fee
@@ -56,6 +58,8 @@ func (proof *MintNftProof) Bytes() []byte {
 	offset = copyBuf(&buf, offset, RangeProofSize, proof.GasFeePrimeRangeProof.Bytes())
 	offset = copyBuf(&buf, offset, PointSize, proof.Pk.Marshal())
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.TxType))
+	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.NftAccountIndex))
+	offset = copyBuf(&buf, offset, FourBytes, uint64ToBytes(proof.NftIndex))
 	offset = copyBuf(&buf, offset, PointSize, proof.NftContentHash)
 	offset = copyBuf(&buf, offset, FourBytes, uint32ToBytes(proof.ReceiverAccountIndex))
 	offset = copyBuf(&buf, offset, PointSize, proof.A_T_feeC_feeRPrimeInv.Marshal())
@@ -91,6 +95,8 @@ func ParseMintNftProofBytes(proofBytes []byte) (proof *MintNftProof, err error) 
 		return nil, err
 	}
 	offset, proof.TxType = readUint32FromBuf(proofBytes, offset)
+	offset, proof.NftAccountIndex = readUint32FromBuf(proofBytes, offset)
+	offset, proof.NftIndex = readUint64FromBuf(proofBytes, offset)
 	offset, proof.NftContentHash = readHashFromBuf(proofBytes, offset)
 	offset, proof.ReceiverAccountIndex = readUint32FromBuf(proofBytes, offset)
 	offset, proof.A_T_feeC_feeRPrimeInv, err = readPointFromBuf(proofBytes, offset)
@@ -129,6 +135,8 @@ type MintNftRelation struct {
 	// public key
 	Pk                   *Point
 	TxType               uint32
+	NftAccountIndex      uint32
+	NftIndex             uint64
 	NftContentHash       []byte
 	ReceiverAccountIndex uint32
 	// ----------- private ---------------------
@@ -197,4 +205,9 @@ func NewMintNftRelation(
 		Bar_r_fee:             Bar_r_fee,
 	}
 	return relation, nil
+}
+
+func (proof *MintNftProof) FillNftInfo(nftAccountIndex uint32, nftIndex uint64) {
+	proof.NftAccountIndex = nftAccountIndex
+	proof.NftIndex = nftIndex
 }

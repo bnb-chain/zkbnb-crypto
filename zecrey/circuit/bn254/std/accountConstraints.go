@@ -110,12 +110,28 @@ func IsAccountLiquidityConstraintsEqual(api API, flag Variable, a, b AccountLiqu
 }
 
 type AccountNftConstraints struct {
-	NftIndex       Variable
-	CreatorIndex   Variable
-	NftContentHash Variable
-	AssetId        Variable
-	AssetAmount    Variable
-	ChainId        Variable
+	NftAccountIndex Variable
+	NftIndex        Variable
+	CreatorIndex    Variable
+	NftContentHash  Variable
+	AssetId         Variable
+	AssetAmount     Variable
+	ChainId         Variable
+	L1Address       Variable
+	L1TokenId       Variable
+}
+
+func SetAccountNftWitness(nftInfo *AccountNft) (witness AccountNftConstraints) {
+	witness.NftAccountIndex = nftInfo.NftAccountIndex
+	witness.NftIndex = nftInfo.NftIndex
+	witness.CreatorIndex = nftInfo.CreatorIndex
+	witness.NftContentHash = nftInfo.NftContentHash
+	witness.AssetId = nftInfo.AssetId
+	witness.AssetAmount = nftInfo.AssetAmount
+	witness.ChainId = nftInfo.ChainId
+	witness.L1Address = nftInfo.L1Address
+	witness.L1TokenId = nftInfo.L1TokenId
+	return witness
 }
 
 /*
@@ -148,13 +164,6 @@ type AccountLiquidityDeltaConstraints struct {
 	AssetARDelta Variable
 	AssetBRDelta Variable
 	LpEncDelta   ElGamalEncConstraints
-}
-
-type NftDeltaConstraints struct {
-	NftContentHash Variable
-	AssetId        Variable
-	AssetAmount    Variable
-	ChainId        Variable
 }
 
 /*
@@ -213,6 +222,7 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 		log.Println("[SetAccountWitness] err info:", err)
 		return witness, err
 	}
+	witness.NftInfo = SetAccountNftWitness(account.NftInfo)
 	return witness, nil
 }
 

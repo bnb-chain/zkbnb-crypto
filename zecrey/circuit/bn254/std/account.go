@@ -72,22 +72,28 @@ func EmptyAccountLiquidity() *AccountLiquidity {
 }
 
 type AccountNft struct {
-	NftIndex       uint64
-	CreatorIndex   uint64
-	NftContentHash []byte
-	AssetId        uint64
-	AssetAmount    uint64
-	ChainId        uint64
+	NftAccountIndex uint64
+	NftIndex        uint64
+	CreatorIndex    uint64
+	NftContentHash  []byte
+	AssetId         uint64
+	AssetAmount     uint64
+	ChainId         uint64
+	L1Address       string
+	L1TokenId       *big.Int
 }
 
 func EmptyAccountNft() *AccountNft {
 	return &AccountNft{
-		NftIndex:       std.ZeroInt,
-		CreatorIndex:   std.ZeroInt,
-		NftContentHash: []byte{},
-		AssetId:        std.ZeroInt,
-		AssetAmount:    std.ZeroInt,
-		ChainId:        std.ZeroInt,
+		NftAccountIndex: std.ZeroInt,
+		NftIndex:        std.ZeroInt,
+		CreatorIndex:    std.ZeroInt,
+		NftContentHash:  []byte{},
+		AssetId:         std.ZeroInt,
+		AssetAmount:     std.ZeroInt,
+		ChainId:         std.ZeroInt,
+		L1Address:       "",
+		L1TokenId:       std.ZeroBigInt,
 	}
 }
 
