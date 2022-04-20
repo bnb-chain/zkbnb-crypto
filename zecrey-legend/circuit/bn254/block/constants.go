@@ -75,6 +75,8 @@ const (
 	TxTypeSetNftPrice
 	TxTypeBuyNft
 	TxTypeWithdrawNft
+	// TODO
+	TxTypeChangePubKey
 )
 
 const (

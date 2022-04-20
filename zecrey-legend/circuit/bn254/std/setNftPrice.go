@@ -28,7 +28,7 @@ type SetNftPriceTx struct {
 		- gas fee asset amount
 	*/
 	AccountIndex      uint32
-	NftAccountIndex   uint32
+	NftAssetId        uint32
 	NftIndex          uint32
 	AssetId           uint32
 	AssetAmount       uint64
@@ -39,7 +39,7 @@ type SetNftPriceTx struct {
 
 type SetNftPriceTxConstraints struct {
 	AccountIndex      Variable
-	NftAccountIndex   Variable
+	NftAssetId        Variable
 	NftIndex          Variable
 	AssetId           Variable
 	AssetAmount       Variable
@@ -51,7 +51,7 @@ type SetNftPriceTxConstraints struct {
 func EmptySetNftPriceTxWitness() (witness SetNftPriceTxConstraints) {
 	return SetNftPriceTxConstraints{
 		AccountIndex:      ZeroInt,
-		NftAccountIndex:   ZeroInt,
+		NftAssetId:        ZeroInt,
 		NftIndex:          ZeroInt,
 		AssetId:           ZeroInt,
 		AssetAmount:       ZeroInt,
@@ -64,7 +64,7 @@ func EmptySetNftPriceTxWitness() (witness SetNftPriceTxConstraints) {
 func SetSetNftPriceTxWitness(tx *SetNftPriceTx) (witness SetNftPriceTxConstraints) {
 	witness = SetNftPriceTxConstraints{
 		AccountIndex:      tx.AccountIndex,
-		NftAccountIndex:   tx.NftAccountIndex,
+		NftAssetId:        tx.NftAssetId,
 		NftIndex:          tx.NftIndex,
 		AssetId:           tx.AssetId,
 		AssetAmount:       tx.AssetAmount,
@@ -79,7 +79,7 @@ func ComputeHashFromSetNftPriceTx(tx SetNftPriceTxConstraints, nonce Variable, h
 	hFunc.Reset()
 	hFunc.Write(
 		tx.AccountIndex,
-		tx.NftAccountIndex,
+		tx.NftAssetId,
 		tx.NftIndex,
 		tx.AssetId,
 		tx.AssetAmount,
@@ -107,7 +107,7 @@ func ComputeHashFromSetNftPriceTx(tx SetNftPriceTxConstraints, nonce Variable, h
 func VerifySetNftPriceTx(api API, flag Variable, tx SetNftPriceTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAccountIndex)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
 	IsVariableEqual(api, flag, tx.AssetId, accountsAfter[0].NftInfo.AssetId)
 	IsVariableEqual(api, flag, tx.AssetAmount, accountsAfter[0].NftInfo.AssetAmount)

@@ -18,42 +18,42 @@
 package std
 
 type DepositNftTx struct {
-	AccountName     string
-	NftIndex        uint64
-	NftAccountIndex uint64
-	NftTokenId      uint64
-	NftContentHash  string
-	NftL1Address    string
+	AccountName    string
+	NftIndex       uint64
+	NftAssetId     uint64
+	NftTokenId     uint64
+	NftContentHash string
+	NftL1Address   string
 }
 
 type DepositNftTxConstraints struct {
-	AccountName     Variable
-	NftIndex        Variable
-	NftAccountIndex Variable
-	NftTokenId      Variable
-	NftContentHash  Variable
-	NftL1Address    Variable
+	AccountName    Variable
+	NftIndex       Variable
+	NftAssetId     Variable
+	NftTokenId     Variable
+	NftContentHash Variable
+	NftL1Address   Variable
 }
 
 func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
 	return DepositNftTxConstraints{
-		AccountName:     ZeroInt,
-		NftIndex:        ZeroInt,
-		NftAccountIndex: ZeroInt,
-		NftTokenId:      ZeroInt,
-		NftContentHash:  ZeroInt,
-		NftL1Address:    ZeroInt,
+		AccountName:    ZeroInt,
+		NftIndex:       ZeroInt,
+		NftAssetId:     ZeroInt,
+		NftTokenId:     ZeroInt,
+		NftContentHash: ZeroInt,
+		NftL1Address:   ZeroInt,
 	}
 }
 
 func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) {
 	witness = DepositNftTxConstraints{
-		AccountName:     tx.AccountName,
-		NftIndex:        tx.NftIndex,
-		NftAccountIndex: tx.NftAccountIndex,
-		NftTokenId:      tx.NftTokenId,
-		NftContentHash:  tx.NftContentHash,
-		NftL1Address:    tx.NftL1Address,
+		AccountName:    tx.AccountName,
+		NftIndex:       tx.NftIndex,
+		NftAssetId:     tx.NftAssetId,
+		NftTokenId:     tx.NftTokenId,
+		NftContentHash: tx.NftContentHash,
+		NftL1Address:   tx.NftL1Address,
 	}
 	return witness
 }
@@ -68,7 +68,7 @@ func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) 
 func VerifyDepositNftTx(api API, flag Variable, nilHash Variable, tx DepositNftTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	// nft index
-	IsVariableEqual(api, flag, tx.NftAccountIndex, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAccountIndex)
 	// before account nft should be empty
 	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftIndex, DefaultInt)
 	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)

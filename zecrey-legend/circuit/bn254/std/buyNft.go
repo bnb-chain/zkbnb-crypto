@@ -31,7 +31,9 @@ type BuyNftTx struct {
 	*/
 	AccountIndex         uint32
 	OwnerAccountIndex    uint32
-	NftIndex             uint32
+	NftAssetId           uint32
+	NftIndex             uint64
+	NftContentHash       []byte
 	AssetId              uint32
 	AssetAmount          uint64
 	TreasuryFeeRate      uint32
@@ -55,7 +57,9 @@ type BuyNftTxConstraints struct {
 	*/
 	AccountIndex         Variable
 	OwnerAccountIndex    Variable
+	NftAssetId           Variable
 	NftIndex             Variable
+	NftContentHash       Variable
 	AssetId              Variable
 	AssetAmount          Variable
 	TreasuryAccountIndex Variable
@@ -69,7 +73,9 @@ func EmptyBuyNftTxWitness() (witness BuyNftTxConstraints) {
 	witness = BuyNftTxConstraints{
 		AccountIndex:         ZeroInt,
 		OwnerAccountIndex:    ZeroInt,
+		NftAssetId:           ZeroInt,
 		NftIndex:             ZeroInt,
+		NftContentHash:       ZeroInt,
 		AssetId:              ZeroInt,
 		AssetAmount:          ZeroInt,
 		TreasuryAccountIndex: ZeroInt,
@@ -85,7 +91,9 @@ func SetBuyNftTxWitness(tx *BuyNftTx) (witness BuyNftTxConstraints) {
 	witness = BuyNftTxConstraints{
 		AccountIndex:         tx.AccountIndex,
 		OwnerAccountIndex:    tx.OwnerAccountIndex,
+		NftAssetId:           tx.NftAssetId,
 		NftIndex:             tx.NftIndex,
+		NftContentHash:       tx.NftContentHash,
 		AssetId:              tx.AssetId,
 		AssetAmount:          tx.AssetAmount,
 		TreasuryAccountIndex: tx.TreasuryAccountIndex,
@@ -102,7 +110,9 @@ func ComputeHashFromBuyNftTx(tx BuyNftTxConstraints, nonce Variable, hFunc MiMC)
 	hFunc.Write(
 		tx.AccountIndex,
 		tx.OwnerAccountIndex,
+		tx.NftAssetId,
 		tx.NftIndex,
+		tx.NftContentHash,
 		tx.AssetId,
 		tx.AssetAmount,
 		tx.TreasuryAccountIndex,
