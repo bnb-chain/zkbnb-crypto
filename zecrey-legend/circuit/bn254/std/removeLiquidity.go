@@ -146,6 +146,8 @@ func VerifyRemoveLiquidityTx(api API, flag Variable, tx RemoveLiquidityTxConstra
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 	// should have enough lp
 	IsVariableLessOrEqual(api, flag, tx.LpAmount, accountsBefore[0].LiquidityInfo.LpAmount)
+	// enough balance
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	// verify LP
 	Delta_LPCheck := api.Mul(tx.AssetAAmountDelta, tx.AssetBAmountDelta)
 	LPCheck := api.Mul(tx.LpAmount, tx.LpAmount)

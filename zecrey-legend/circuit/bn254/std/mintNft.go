@@ -47,8 +47,6 @@ type MintNftTxConstraints struct {
 	NftAccountIndex     Variable
 	NftIndex            Variable
 	NftContentHash      Variable
-	AssetId             Variable
-	AssetAmount         Variable
 	GasAccountIndex     Variable
 	GasFeeAssetId       Variable
 	GasFeeAssetAmount   Variable
@@ -61,8 +59,6 @@ func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 		NftAccountIndex:     ZeroInt,
 		NftIndex:            ZeroInt,
 		NftContentHash:      ZeroInt,
-		AssetId:             ZeroInt,
-		AssetAmount:         ZeroInt,
 		GasAccountIndex:     ZeroInt,
 		GasFeeAssetId:       ZeroInt,
 		GasFeeAssetAmount:   ZeroInt,
@@ -76,8 +72,6 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 		NftAccountIndex:     tx.NftAccountIndex,
 		NftIndex:            tx.NftIndex,
 		NftContentHash:      tx.NftContentHash,
-		AssetId:             tx.AssetId,
-		AssetAmount:         tx.AssetAmount,
 		GasAccountIndex:     tx.GasAccountIndex,
 		GasFeeAssetId:       tx.GasFeeAssetId,
 		GasFeeAssetAmount:   tx.GasFeeAssetAmount,
@@ -93,8 +87,6 @@ func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, hFunc MiM
 		tx.NftAccountIndex,
 		tx.NftIndex,
 		tx.NftContentHash,
-		tx.AssetId,
-		tx.AssetAmount,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
@@ -131,8 +123,6 @@ func VerifyMintNftTx(api API, flag Variable, nilHash Variable, tx MintNftTxConst
 	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
 	// new nft info should be right
 	IsVariableEqual(api, flag, tx.NftContentHash, accountsAfter[1].NftInfo.NftContentHash)
-	IsVariableEqual(api, flag, tx.AssetId, accountsAfter[1].NftInfo.AssetId)
-	IsVariableEqual(api, flag, tx.AssetAmount, accountsAfter[1].NftInfo.AssetAmount)
 	// from account index
 	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
@@ -140,5 +130,5 @@ func VerifyMintNftTx(api API, flag Variable, nilHash Variable, tx MintNftTxConst
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 	// should have enough balance
-	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 }

@@ -219,8 +219,8 @@ func VerifyTransaction(
 			NftContentHash Variable
 			AssetId        Variable
 			AssetAmount    Variable
-			L1Address      Variable
-			L1TokenId      Variable
+			NftL1Address      Variable
+			NftTokenId      Variable
 		*/
 		hFunc.Reset()
 		hFunc.Write(

@@ -50,8 +50,8 @@ func CompareAccountBeforeAndAfterParams(api API, accountBefore, accountAfter std
 		NftContentHash Variable
 		AssetId        Variable
 		AssetAmount    Variable
-		L1Address      Variable
-		L1TokenId      Variable
+		NftL1Address      Variable
+		NftTokenId      Variable
 	*/
 	api.AssertIsEqual(accountBefore.NftInfo.NftAccountIndex, accountAfter.NftInfo.NftAccountIndex)
 	api.AssertIsEqual(accountBefore.NftInfo.L1Address, accountAfter.NftInfo.L1Address)

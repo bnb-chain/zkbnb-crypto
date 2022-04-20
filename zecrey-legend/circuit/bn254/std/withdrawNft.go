@@ -120,4 +120,6 @@ func VerifyWithdrawNftTx(api API, flag Variable, nilHash Variable, tx WithdrawNf
 	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.NftContentHash, nilHash)
 	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.AssetId, DefaultInt)
 	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.AssetAmount, DefaultInt)
+	// have enough assets
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 }
