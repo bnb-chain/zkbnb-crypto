@@ -23,27 +23,28 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"hash"
 	"log"
+	"math/big"
 )
 
 type SwapSegmentFormat struct {
-	FromAccountIndex       int64 `json:"from_account_index"`
-	ToAccountIndex         int64 `json:"to_account_index"`
-	PairIndex              int64 `json:"pair_index"`
-	AssetAId               int64 `json:"asset_a_id"`
-	AssetAAmount           int64 `json:"asset_a_amount"`
-	AssetBId               int64 `json:"asset_b_id"`
-	AssetBMinAmount        int64 `json:"asset_b_min_amount"`
-	AssetBAmountDelta      int64 `json:"asset_b_amount_delta"`
-	PoolAAmount            int64 `json:"pool_a_amount"`
-	PoolBAmount            int64 `json:"pool_b_amount"`
-	FeeRate                int64 `json:"fee_rate"`
-	TreasuryAccountIndex   int64 `json:"treasury_account_index"`
-	TreasuryRate           int64 `json:"treasury_rate"`
-	TreasuryFeeAmountDelta int64 `json:"treasury_fee_amount_delta"`
-	GasAccountIndex        int64 `json:"gas_account_index"`
-	GasFeeAssetId          int64 `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount      int64 `json:"gas_fee_asset_amount"`
-	Nonce                  int64 `json:"nonce"`
+	FromAccountIndex       int64  `json:"from_account_index"`
+	ToAccountIndex         int64  `json:"to_account_index"`
+	PairIndex              int64  `json:"pair_index"`
+	AssetAId               int64  `json:"asset_a_id"`
+	AssetAAmount           string `json:"asset_a_amount"`
+	AssetBId               int64  `json:"asset_b_id"`
+	AssetBMinAmount        string `json:"asset_b_min_amount"`
+	AssetBAmountDelta      string `json:"asset_b_amount_delta"`
+	PoolAAmount            string `json:"pool_a_amount"`
+	PoolBAmount            string `json:"pool_b_amount"`
+	FeeRate                int64  `json:"fee_rate"`
+	TreasuryAccountIndex   int64  `json:"treasury_account_index"`
+	TreasuryRate           int64  `json:"treasury_rate"`
+	TreasuryFeeAmountDelta int64  `json:"treasury_fee_amount_delta"`
+	GasAccountIndex        int64  `json:"gas_account_index"`
+	GasFeeAssetId          int64  `json:"gas_fee_asset_id"`
+	GasFeeAssetAmount      int64  `json:"gas_fee_asset_amount"`
+	Nonce                  int64  `json:"nonce"`
 }
 
 func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo, err error) {
@@ -53,25 +54,40 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 		log.Println("[ConstructSwapTxInfo] err info:", err)
 		return nil, err
 	}
+	assetAAmount, err := StringToBigInt(segmentFormat.AssetAAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
+	assetBMinAmount, err := StringToBigInt(segmentFormat.AssetBMinAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
+	assetBAmountDelta, err := StringToBigInt(segmentFormat.AssetBAmountDelta)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &SwapTxInfo{
-		FromAccountIndex:       uint32(segmentFormat.FromAccountIndex),
-		ToAccountIndex:         uint32(segmentFormat.ToAccountIndex),
-		PairIndex:              uint32(segmentFormat.PairIndex),
-		AssetAId:               uint32(segmentFormat.AssetAId),
-		AssetAAmount:           uint64(segmentFormat.AssetAAmount),
-		AssetBId:               uint32(segmentFormat.AssetBId),
-		AssetBMinAmount:        uint64(segmentFormat.AssetBMinAmount),
-		AssetBAmountDelta:      uint64(segmentFormat.AssetBAmountDelta),
-		PoolAAmount:            uint64(segmentFormat.PoolAAmount),
-		PoolBAmount:            uint64(segmentFormat.PoolBAmount),
-		FeeRate:                uint32(segmentFormat.FeeRate),
-		TreasuryAccountIndex:   uint32(segmentFormat.TreasuryAccountIndex),
-		TreasuryRate:           uint32(segmentFormat.TreasuryRate),
-		TreasuryFeeAmountDelta: uint64(segmentFormat.TreasuryFeeAmountDelta),
-		GasAccountIndex:        uint32(segmentFormat.GasAccountIndex),
-		GasFeeAssetId:          uint32(segmentFormat.GasFeeAssetId),
-		GasFeeAssetAmount:      uint64(segmentFormat.GasFeeAssetAmount),
-		Nonce:                  uint64(segmentFormat.Nonce),
+		FromAccountIndex:       segmentFormat.FromAccountIndex,
+		ToAccountIndex:         segmentFormat.ToAccountIndex,
+		PairIndex:              segmentFormat.PairIndex,
+		AssetAId:               segmentFormat.AssetAId,
+		AssetAAmount:           assetAAmount,
+		AssetBId:               segmentFormat.AssetBId,
+		AssetBMinAmount:        assetBMinAmount,
+		AssetBAmountDelta:      assetBAmountDelta,
+		PoolAAmount:            ZeroBigInt,
+		PoolBAmount:            ZeroBigInt,
+		FeeRate:                segmentFormat.FeeRate,
+		TreasuryAccountIndex:   segmentFormat.TreasuryAccountIndex,
+		TreasuryRate:           segmentFormat.TreasuryRate,
+		TreasuryFeeAmountDelta: segmentFormat.TreasuryFeeAmountDelta,
+		GasAccountIndex:        segmentFormat.GasAccountIndex,
+		GasFeeAssetId:          segmentFormat.GasFeeAssetId,
+		GasFeeAssetAmount:      segmentFormat.GasFeeAssetAmount,
+		Nonce:                  segmentFormat.Nonce,
 		Sig:                    nil,
 	}
 	hFunc := mimc.NewMiMC()
@@ -87,24 +103,24 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 }
 
 type SwapTxInfo struct {
-	FromAccountIndex       uint32
-	ToAccountIndex         uint32
-	PairIndex              uint32
-	AssetAId               uint32
-	AssetAAmount           uint64
-	AssetBId               uint32
-	AssetBMinAmount        uint64
-	AssetBAmountDelta      uint64
-	PoolAAmount            uint64
-	PoolBAmount            uint64
-	FeeRate                uint32
-	TreasuryAccountIndex   uint32
-	TreasuryRate           uint32
-	TreasuryFeeAmountDelta uint64
-	GasAccountIndex        uint32
-	GasFeeAssetId          uint32
-	GasFeeAssetAmount      uint64
-	Nonce                  uint64
+	FromAccountIndex       int64
+	ToAccountIndex         int64
+	PairIndex              int64
+	AssetAId               int64
+	AssetAAmount           *big.Int
+	AssetBId               int64
+	AssetBMinAmount        *big.Int
+	AssetBAmountDelta      *big.Int
+	PoolAAmount            *big.Int
+	PoolBAmount            *big.Int
+	FeeRate                int64
+	TreasuryAccountIndex   int64
+	TreasuryRate           int64
+	TreasuryFeeAmountDelta int64
+	GasAccountIndex        int64
+	GasFeeAssetId          int64
+	GasFeeAssetAmount      int64
+	Nonce                  int64
 	Sig                    []byte
 }
 
@@ -129,20 +145,20 @@ func ComputeSwapMsgHash(txInfo *SwapTxInfo, hFunc hash.Hash) (msgHash []byte) {
 	*/
 	hFunc.Reset()
 	var buf bytes.Buffer
-	writeUint64IntoBuf(&buf, uint64(txInfo.FromAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.ToAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.PairIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetAId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetAAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetBId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetBMinAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.FeeRate))
-	writeUint64IntoBuf(&buf, uint64(txInfo.TreasuryAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.TreasuryRate))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.Nonce))
+	writeInt64IntoBuf(&buf, txInfo.FromAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.ToAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.PairIndex)
+	writeInt64IntoBuf(&buf, txInfo.AssetAId)
+	writeBigIntIntoBuf(&buf, txInfo.AssetAAmount)
+	writeInt64IntoBuf(&buf, txInfo.AssetBId)
+	writeBigIntIntoBuf(&buf, txInfo.AssetBMinAmount)
+	writeInt64IntoBuf(&buf, txInfo.FeeRate)
+	writeInt64IntoBuf(&buf, txInfo.TreasuryAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.TreasuryRate)
+	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
+	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	writeInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash

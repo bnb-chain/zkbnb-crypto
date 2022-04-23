@@ -17,9 +17,16 @@
 
 package zecrey_legend
 
-import "github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+import (
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	"math/big"
+)
 
 type (
 	Signature  = eddsa.Signature
 	PrivateKey = eddsa.PrivateKey
+)
+
+var (
+	ZeroBigInt = big.NewInt(0)
 )

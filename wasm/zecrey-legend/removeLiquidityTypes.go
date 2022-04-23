@@ -23,23 +23,24 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"hash"
 	"log"
+	"math/big"
 )
 
 type RemoveLiquiditySegmentFormat struct {
-	FromAccountIndex  int64 `json:"from_account_index"`
-	ToAccountIndex    int64 `json:"to_account_index"`
-	PairIndex         int64 `json:"pair_index"`
-	AssetAId          int64 `json:"asset_a_id"`
-	AssetAMinAmount   int64 `json:"asset_a_min_amount"`
-	AssetBId          int64 `json:"asset_b_id"`
-	AssetBMinAmount   int64 `json:"asset_b_min_amount"`
-	LpAmount          int64 `json:"lp_amount"`
-	AssetAAmountDelta int64 `json:"asset_a_amount_delta"`
-	AssetBAmountDelta int64 `json:"asset_b_amount_delta"`
-	GasAccountIndex   int64 `json:"gas_account_index"`
-	GasFeeAssetId     int64 `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount int64 `json:"gas_fee_asset_amount"`
-	Nonce             int64 `json:"nonce"`
+	FromAccountIndex  int64  `json:"from_account_index"`
+	ToAccountIndex    int64  `json:"to_account_index"`
+	PairIndex         int64  `json:"pair_index"`
+	AssetAId          int64  `json:"asset_a_id"`
+	AssetAMinAmount   string `json:"asset_a_min_amount"`
+	AssetBId          int64  `json:"asset_b_id"`
+	AssetBMinAmount   string `json:"asset_b_min_amount"`
+	LpAmount          string `json:"lp_amount"`
+	AssetAAmountDelta string `json:"asset_a_amount_delta"`
+	AssetBAmountDelta string `json:"asset_b_amount_delta"`
+	GasAccountIndex   int64  `json:"gas_account_index"`
+	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
+	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	Nonce             int64  `json:"nonce"`
 }
 
 func ConstructRemoveLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *RemoveLiquidityTxInfo, err error) {
@@ -49,21 +50,46 @@ func ConstructRemoveLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 		log.Println("[ConstructRemoveLiquidityTxInfo] err info:", err)
 		return nil, err
 	}
+	assetAMinAmount, err := StringToBigInt(segmentFormat.AssetAMinAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
+	assetBMinAmount, err := StringToBigInt(segmentFormat.AssetBMinAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
+	lpAmount, err := StringToBigInt(segmentFormat.LpAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
+	assetAAmountDelta, err := StringToBigInt(segmentFormat.AssetAAmountDelta)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
+	assetBAmountDelta, err := StringToBigInt(segmentFormat.AssetBAmountDelta)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &RemoveLiquidityTxInfo{
-		FromAccountIndex:  uint32(segmentFormat.FromAccountIndex),
-		ToAccountIndex:    uint32(segmentFormat.ToAccountIndex),
-		PairIndex:         uint32(segmentFormat.PairIndex),
-		AssetAId:          uint32(segmentFormat.AssetAId),
-		AssetAMinAmount:   uint64(segmentFormat.AssetAMinAmount),
-		AssetBId:          uint32(segmentFormat.AssetBId),
-		AssetBMinAmount:   uint64(segmentFormat.AssetBMinAmount),
-		LpAmount:          uint64(segmentFormat.LpAmount),
-		AssetAAmountDelta: uint64(segmentFormat.AssetAAmountDelta),
-		AssetBAmountDelta: uint64(segmentFormat.AssetBAmountDelta),
-		GasAccountIndex:   uint32(segmentFormat.GasAccountIndex),
-		GasFeeAssetId:     uint32(segmentFormat.GasFeeAssetId),
-		GasFeeAssetAmount: uint64(segmentFormat.GasFeeAssetAmount),
-		Nonce:             uint64(segmentFormat.Nonce),
+		FromAccountIndex:  segmentFormat.FromAccountIndex,
+		ToAccountIndex:    segmentFormat.ToAccountIndex,
+		PairIndex:         segmentFormat.PairIndex,
+		AssetAId:          segmentFormat.AssetAId,
+		AssetAMinAmount:   assetAMinAmount,
+		AssetBId:          segmentFormat.AssetBId,
+		AssetBMinAmount:   assetBMinAmount,
+		LpAmount:          lpAmount,
+		AssetAAmountDelta: assetAAmountDelta,
+		AssetBAmountDelta: assetBAmountDelta,
+		GasAccountIndex:   segmentFormat.GasAccountIndex,
+		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
+		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
+		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
 	// compute call data hash
@@ -82,20 +108,20 @@ func ConstructRemoveLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 }
 
 type RemoveLiquidityTxInfo struct {
-	FromAccountIndex  uint32
-	ToAccountIndex    uint32
-	PairIndex         uint32
-	AssetAId          uint32
-	AssetAMinAmount   uint64
-	AssetBId          uint32
-	AssetBMinAmount   uint64
-	LpAmount          uint64
-	AssetAAmountDelta uint64
-	AssetBAmountDelta uint64
-	GasAccountIndex   uint32
-	GasFeeAssetId     uint32
-	GasFeeAssetAmount uint64
-	Nonce             uint64
+	FromAccountIndex  int64
+	ToAccountIndex    int64
+	PairIndex         int64
+	AssetAId          int64
+	AssetAMinAmount   *big.Int
+	AssetBId          int64
+	AssetBMinAmount   *big.Int
+	LpAmount          *big.Int
+	AssetAAmountDelta *big.Int
+	AssetBAmountDelta *big.Int
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount int64
+	Nonce             int64
 	Sig               []byte
 }
 
@@ -117,18 +143,18 @@ func ComputeRemoveLiquidityMsgHash(txInfo *RemoveLiquidityTxInfo, hFunc hash.Has
 	*/
 	hFunc.Reset()
 	var buf bytes.Buffer
-	writeUint64IntoBuf(&buf, uint64(txInfo.FromAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.ToAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.PairIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetAId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetAMinAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetBId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetBMinAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.LpAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.Nonce))
+	writeInt64IntoBuf(&buf, txInfo.FromAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.ToAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.PairIndex)
+	writeInt64IntoBuf(&buf, txInfo.AssetAId)
+	writeBigIntIntoBuf(&buf, txInfo.AssetAMinAmount)
+	writeInt64IntoBuf(&buf, txInfo.AssetBId)
+	writeBigIntIntoBuf(&buf, txInfo.AssetBMinAmount)
+	writeBigIntIntoBuf(&buf, txInfo.LpAmount)
+	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
+	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	writeInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash

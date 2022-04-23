@@ -47,16 +47,16 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 		return nil, err
 	}
 	txInfo = &WithdrawNftTxInfo{
-		AccountIndex:      uint32(segmentFormat.AccountIndex),
-		NftAssetId:        uint32(segmentFormat.NftAssetId),
-		NftIndex:          uint64(segmentFormat.NftIndex),
+		AccountIndex:      segmentFormat.AccountIndex,
+		NftAssetId:        segmentFormat.NftAssetId,
+		NftIndex:          segmentFormat.NftIndex,
 		NftContentHash:    common.FromHex(segmentFormat.NftContentHash),
 		ToAddress:         segmentFormat.ToAddress,
 		ProxyAddress:      segmentFormat.ProxyAddress,
-		GasAccountIndex:   uint32(segmentFormat.GasAccountIndex),
-		GasFeeAssetId:     uint32(segmentFormat.GasFeeAssetId),
-		GasFeeAssetAmount: uint64(segmentFormat.GasFeeAssetAmount),
-		Nonce:             uint64(segmentFormat.Nonce),
+		GasAccountIndex:   segmentFormat.GasAccountIndex,
+		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
+		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
+		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
 	// compute call data hash
@@ -75,16 +75,16 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 }
 
 type WithdrawNftTxInfo struct {
-	AccountIndex      uint32
-	NftAssetId        uint32
-	NftIndex          uint64
+	AccountIndex      int64
+	NftAssetId        int64
+	NftIndex          int64
 	NftContentHash    []byte
 	ToAddress         string
 	ProxyAddress      string
-	GasAccountIndex   uint32
-	GasFeeAssetId     uint32
-	GasFeeAssetAmount uint64
-	Nonce             uint64
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount int64
+	Nonce             int64
 	Sig               []byte
 }
 
@@ -103,14 +103,14 @@ func ComputeWithdrawNftMsgHash(txInfo *WithdrawNftTxInfo, hFunc hash.Hash) (msgH
 	*/
 	hFunc.Reset()
 	var buf bytes.Buffer
-	writeUint64IntoBuf(&buf, uint64(txInfo.AccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.NftIndex))
+	writeInt64IntoBuf(&buf, txInfo.AccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.NftIndex)
 	buf.Write(PaddingStringToBytes32(txInfo.ToAddress))
 	buf.Write(PaddingStringToBytes32(txInfo.ProxyAddress))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.Nonce))
+	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
+	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	writeInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash
