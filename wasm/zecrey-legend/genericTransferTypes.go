@@ -53,17 +53,11 @@ func ConstructGenericTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 		log.Println("[ConstructGenericTransferTxInfo] err info:", err)
 		return nil, err
 	}
-	assetAmount, err := StringToBigInt(segmentFormat.AssetAmount)
-	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
-		return nil, err
-	}
 	txInfo = &GenericTransferTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
 		ToAccountName:     segmentFormat.ToAccountName,
 		AssetId:           segmentFormat.AssetId,
-		AssetAmount:       assetAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
@@ -71,9 +65,17 @@ func ConstructGenericTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 		CallDataHash:      nil,
 		NftAssetId:        segmentFormat.NftAssetId,
 		NftIndex:          segmentFormat.NftIndex,
-		NftContentHash:    common.FromHex(segmentFormat.NftContentHash),
+		NftContentHash:    segmentFormat.NftContentHash,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
+	}
+	if txInfo.AssetId != -1 {
+		assetAmount, err := StringToBigInt(segmentFormat.AssetAmount)
+		if err != nil {
+			log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+			return nil, err
+		}
+		txInfo.AssetAmount = assetAmount
 	}
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
@@ -107,7 +109,7 @@ type GenericTransferTxInfo struct {
 	CallDataHash      []byte
 	NftAssetId        int64
 	NftIndex          int64
-	NftContentHash    []byte
+	NftContentHash    string
 	Nonce             int64
 	Sig               []byte
 }
@@ -127,7 +129,7 @@ func ComputeGenericTransferMsgHash(txInfo *GenericTransferTxInfo, hFunc hash.Has
 	buf.Write(txInfo.CallDataHash)
 	writeInt64IntoBuf(&buf, txInfo.NftAssetId)
 	writeInt64IntoBuf(&buf, txInfo.NftIndex)
-	buf.Write(txInfo.NftContentHash)
+	buf.Write(common.FromHex(txInfo.NftContentHash))
 	writeInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

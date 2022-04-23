@@ -50,7 +50,7 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 		AccountIndex:      segmentFormat.AccountIndex,
 		NftAssetId:        segmentFormat.NftAssetId,
 		NftIndex:          segmentFormat.NftIndex,
-		NftContentHash:    common.FromHex(segmentFormat.NftContentHash),
+		NftContentHash:    segmentFormat.NftContentHash,
 		ToAddress:         segmentFormat.ToAddress,
 		ProxyAddress:      segmentFormat.ProxyAddress,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
@@ -78,7 +78,7 @@ type WithdrawNftTxInfo struct {
 	AccountIndex      int64
 	NftAssetId        int64
 	NftIndex          int64
-	NftContentHash    []byte
+	NftContentHash    string
 	ToAddress         string
 	ProxyAddress      string
 	GasAccountIndex   int64
@@ -104,7 +104,9 @@ func ComputeWithdrawNftMsgHash(txInfo *WithdrawNftTxInfo, hFunc hash.Hash) (msgH
 	hFunc.Reset()
 	var buf bytes.Buffer
 	writeInt64IntoBuf(&buf, txInfo.AccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.NftAssetId)
 	writeInt64IntoBuf(&buf, txInfo.NftIndex)
+	buf.Write(common.FromHex(txInfo.NftContentHash))
 	buf.Write(PaddingStringToBytes32(txInfo.ToAddress))
 	buf.Write(PaddingStringToBytes32(txInfo.ProxyAddress))
 	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
