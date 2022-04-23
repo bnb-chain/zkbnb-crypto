@@ -35,6 +35,7 @@ type TransferNftSegmentFormat struct {
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	CallData          string `json:"call_data"`
 	Nonce             int64  `json:"nonce"`
 }
 
@@ -60,9 +61,12 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
-	// compute call data hash
-	hFunc := mimc.NewMiMC()
 	// compute msg hash
+	hFunc := mimc.NewMiMC()
+	hFunc.Write([]byte(txInfo.CallData))
+	callDataHash := hFunc.Sum(nil)
+	txInfo.CallDataHash = callDataHash
+	hFunc.Reset()
 	msgHash := ComputeTransferNftMsgHash(txInfo, hFunc)
 	// compute signature
 	hFunc.Reset()
@@ -84,6 +88,8 @@ type TransferNftTxInfo struct {
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
+	CallData          string
+	CallDataHash      []byte
 	Nonce             int64
 	Sig               []byte
 }
@@ -99,6 +105,7 @@ func ComputeTransferNftMsgHash(txInfo *TransferNftTxInfo, hFunc hash.Hash) (msgH
 	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	buf.Write(txInfo.CallDataHash)
 	writeInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
