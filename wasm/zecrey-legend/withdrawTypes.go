@@ -23,12 +23,13 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"hash"
 	"log"
+	"math/big"
 )
 
 type WithdrawSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
 	AssetId           int64  `json:"asset_id"`
-	AssetAmount       int64  `json:"asset_amount"`
+	AssetAmount       string `json:"asset_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
@@ -43,15 +44,20 @@ func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Withdra
 		log.Println("[ConstructRemoveLiquidityTxInfo] err info:", err)
 		return nil, err
 	}
+	assetAmount, err := StringToBigInt(segmentFormat.AssetAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &WithdrawTxInfo{
-		FromAccountIndex:  uint32(segmentFormat.FromAccountIndex),
-		AssetId:           uint32(segmentFormat.AssetId),
-		AssetAmount:       uint64(segmentFormat.AssetAmount),
-		GasAccountIndex:   uint32(segmentFormat.GasAccountIndex),
-		GasFeeAssetId:     uint32(segmentFormat.GasFeeAssetId),
-		GasFeeAssetAmount: uint64(segmentFormat.GasFeeAssetAmount),
+		FromAccountIndex:  segmentFormat.FromAccountIndex,
+		AssetId:           segmentFormat.AssetId,
+		AssetAmount:       assetAmount,
+		GasAccountIndex:   segmentFormat.GasAccountIndex,
+		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
+		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
 		ToAddress:         segmentFormat.ToAddress,
-		Nonce:             uint64(segmentFormat.Nonce),
+		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
 	// compute call data hash
@@ -70,14 +76,14 @@ func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Withdra
 }
 
 type WithdrawTxInfo struct {
-	FromAccountIndex  uint32
-	AssetId           uint32
-	AssetAmount       uint64
-	GasAccountIndex   uint32
-	GasFeeAssetId     uint32
-	GasFeeAssetAmount uint64
+	FromAccountIndex  int64
+	AssetId           int64
+	AssetAmount       *big.Int
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount int64
 	ToAddress         string
-	Nonce             uint64
+	Nonce             int64
 	Sig               []byte
 }
 
@@ -96,14 +102,14 @@ func ComputeWithdrawMsgHash(txInfo *WithdrawTxInfo, hFunc hash.Hash) (msgHash []
 	*/
 	hFunc.Reset()
 	var buf bytes.Buffer
-	writeUint64IntoBuf(&buf, uint64(txInfo.FromAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetAmount))
+	writeInt64IntoBuf(&buf, txInfo.FromAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.AssetId)
+	writeBigIntIntoBuf(&buf, txInfo.AssetAmount)
+	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
+	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	buf.Write(PaddingStringToBytes32(txInfo.ToAddress))
-	writeUint64IntoBuf(&buf, uint64(txInfo.Nonce))
+	writeInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash

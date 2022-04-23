@@ -28,20 +28,20 @@ import (
 )
 
 type AddLiquiditySegmentFormat struct {
-	FromAccountIndex  int64 `json:"from_account_index"`
-	ToAccountIndex    int64 `json:"to_account_index"`
-	PairIndex         int64 `json:"pair_index"`
-	AssetAId          int64 `json:"asset_a_id"`
-	AssetAAmount      int64 `json:"asset_a_amount"`
-	AssetBId          int64 `json:"asset_b_id"`
-	AssetBAmount      int64 `json:"asset_b_amount"`
-	LpAmount          int64 `json:"lp_amount"`
-	PoolAAmount       int64 `json:"pool_a_amount"`
-	PoolBAmount       int64 `json:"pool_b_amount"`
-	GasAccountIndex   int64 `json:"gas_account_index"`
-	GasFeeAssetId     int64 `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount int64 `json:"gas_fee_asset_amount"`
-	Nonce             int64 `json:"nonce"`
+	FromAccountIndex  int64  `json:"from_account_index"`
+	ToAccountIndex    int64  `json:"to_account_index"`
+	PairIndex         int64  `json:"pair_index"`
+	AssetAId          int64  `json:"asset_a_id"`
+	AssetAAmount      string `json:"asset_a_amount"`
+	AssetBId          int64  `json:"asset_b_id"`
+	AssetBAmount      string `json:"asset_b_amount"`
+	LpAmount          string `json:"lp_amount"`
+	PoolAAmount       string `json:"pool_a_amount"`
+	PoolBAmount       string `json:"pool_b_amount"`
+	GasAccountIndex   int64  `json:"gas_account_index"`
+	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
+	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	Nonce             int64  `json:"nonce"`
 }
 
 func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *AddLiquidityTxInfo, err error) {
@@ -52,23 +52,33 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 		return nil, err
 	}
 	// TODO lp amount
-	lpSquare := ffmath.Multiply(new(big.Int).SetInt64(segmentFormat.AssetAAmount), new(big.Int).SetInt64(segmentFormat.AssetBAmount))
-	lpAmount := new(big.Int).Sqrt(lpSquare).Uint64()
+	assetAAmount, err := StringToBigInt(segmentFormat.AssetAAmount)
+	if err != nil {
+		log.Println("[ConstructAddLiquidityTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
+	assetBAmount, err := StringToBigInt(segmentFormat.AssetBAmount)
+	if err != nil {
+		log.Println("[ConstructAddLiquidityTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
+	lpSquare := ffmath.Multiply(assetAAmount, assetBAmount)
+	lpAmount := new(big.Int).Sqrt(lpSquare)
 	txInfo = &AddLiquidityTxInfo{
-		FromAccountIndex:  uint32(segmentFormat.FromAccountIndex),
-		ToAccountIndex:    uint32(segmentFormat.ToAccountIndex),
-		PairIndex:         uint32(segmentFormat.PairIndex),
-		AssetAId:          uint32(segmentFormat.AssetAId),
-		AssetAAmount:      uint64(segmentFormat.AssetAAmount),
-		AssetBId:          uint32(segmentFormat.AssetBId),
-		AssetBAmount:      uint64(segmentFormat.AssetBAmount),
+		FromAccountIndex:  segmentFormat.FromAccountIndex,
+		ToAccountIndex:    segmentFormat.ToAccountIndex,
+		PairIndex:         segmentFormat.PairIndex,
+		AssetAId:          segmentFormat.AssetAId,
+		AssetAAmount:      assetAAmount,
+		AssetBId:          segmentFormat.AssetBId,
+		AssetBAmount:      assetBAmount,
 		LpAmount:          lpAmount,
-		PoolAAmount:       uint64(segmentFormat.PoolAAmount),
-		PoolBAmount:       uint64(segmentFormat.PoolBAmount),
-		GasAccountIndex:   uint32(segmentFormat.GasAccountIndex),
-		GasFeeAssetId:     uint32(segmentFormat.GasFeeAssetId),
-		GasFeeAssetAmount: uint64(segmentFormat.GasFeeAssetAmount),
-		Nonce:             uint64(segmentFormat.Nonce),
+		PoolAAmount:       ZeroBigInt,
+		PoolBAmount:       ZeroBigInt,
+		GasAccountIndex:   segmentFormat.GasAccountIndex,
+		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
+		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
+		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
 	// compute call data hash
@@ -87,20 +97,20 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 }
 
 type AddLiquidityTxInfo struct {
-	FromAccountIndex  uint32
-	ToAccountIndex    uint32
-	PairIndex         uint32
-	AssetAId          uint32
-	AssetAAmount      uint64
-	AssetBId          uint32
-	AssetBAmount      uint64
-	LpAmount          uint64
-	PoolAAmount       uint64
-	PoolBAmount       uint64
-	GasAccountIndex   uint32
-	GasFeeAssetId     uint32
-	GasFeeAssetAmount uint64
-	Nonce             uint64
+	FromAccountIndex  int64
+	ToAccountIndex    int64
+	PairIndex         int64
+	AssetAId          int64
+	AssetAAmount      *big.Int
+	AssetBId          int64
+	AssetBAmount      *big.Int
+	LpAmount          *big.Int
+	PoolAAmount       *big.Int
+	PoolBAmount       *big.Int
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount int64
+	Nonce             int64
 	Sig               []byte
 }
 
@@ -122,17 +132,17 @@ func ComputeAddLiquidityMsgHash(txInfo *AddLiquidityTxInfo, hFunc hash.Hash) (ms
 	*/
 	hFunc.Reset()
 	var buf bytes.Buffer
-	writeUint64IntoBuf(&buf, uint64(txInfo.FromAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.ToAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.PairIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetAId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetAAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetBId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.AssetBAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasAccountIndex))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetId))
-	writeUint64IntoBuf(&buf, uint64(txInfo.GasFeeAssetAmount))
-	writeUint64IntoBuf(&buf, uint64(txInfo.Nonce))
+	writeInt64IntoBuf(&buf, txInfo.FromAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.ToAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.PairIndex)
+	writeInt64IntoBuf(&buf, txInfo.AssetAId)
+	writeBigIntIntoBuf(&buf, txInfo.AssetAAmount)
+	writeInt64IntoBuf(&buf, txInfo.AssetBId)
+	writeBigIntIntoBuf(&buf, txInfo.AssetBAmount)
+	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
+	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	writeInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash

@@ -24,103 +24,88 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
-	"math/big"
 )
 
-type SetNftPriceSegmentFormat struct {
-	AccountIndex      int64  `json:"account_index"`
-	NftAssetId        int64  `json:"nft_asset_id"`
+type TransferNftSegmentFormat struct {
+	FromAccountIndex  int64  `json:"from_account_index"`
+	ToAccountIndex    int64  `json:"to_account_index"`
 	NftIndex          int64  `json:"nft_index"`
+	NftAssetId        int64  `json:"nft_asset_id"`
 	NftContentHash    string `json:"nft_content_hash"`
-	AssetId           int64  `json:"asset_id"`
-	AssetAmount       string `json:"asset_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	CallData          string `json:"call_data"`
 	Nonce             int64  `json:"nonce"`
 }
 
 /*
-	ConstructSetNftPriceTxInfo: construct set nft price tx, sign txInfo
+	ConstructTransferNftTxInfo: construct transfer nft tx, sign txInfo
 */
-func ConstructSetNftPriceTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SetNftPriceTxInfo, err error) {
-	var segmentFormat *SetNftPriceSegmentFormat
+func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *TransferNftTxInfo, err error) {
+	var segmentFormat *MintNftSegmentFormat
 	err = json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
-		log.Println("[ConstructSetNftPriceTxInfo] err info:", err)
+		log.Println("[ConstructTransferNftTxInfo] err info:", err)
 		return nil, err
 	}
-	assetAmount, err := StringToBigInt(segmentFormat.AssetAmount)
-	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
-		return nil, err
-	}
-	txInfo = &SetNftPriceTxInfo{
-		AccountIndex:      segmentFormat.AccountIndex,
-		NftAssetId:        segmentFormat.NftAssetId,
+	txInfo = &TransferNftTxInfo{
+		FromAccountIndex:  segmentFormat.CreatorAccountIndex,
+		ToAccountIndex:    segmentFormat.ToAccountIndex,
+		NftAssetId:        segmentFormat.AssetId,
 		NftIndex:          segmentFormat.NftIndex,
 		NftContentHash:    segmentFormat.NftContentHash,
-		AssetId:           segmentFormat.AssetId,
-		AssetAmount:       assetAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
-	// compute call data hash
-	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash := ComputeSetNftPriceMsgHash(txInfo, hFunc)
+	hFunc := mimc.NewMiMC()
+	hFunc.Write([]byte(txInfo.CallData))
+	callDataHash := hFunc.Sum(nil)
+	txInfo.CallDataHash = callDataHash
+	hFunc.Reset()
+	msgHash := ComputeTransferNftMsgHash(txInfo, hFunc)
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
 	if err != nil {
-		log.Println("[ConstructSetNftPriceTxInfo] unable to sign:", err)
+		log.Println("[ConstructTransferNftTxInfo] unable to sign:", err)
 		return nil, err
 	}
 	txInfo.Sig = sigBytes
 	return txInfo, nil
 }
 
-type SetNftPriceTxInfo struct {
-	AccountIndex      int64
+type TransferNftTxInfo struct {
+	FromAccountIndex  int64
+	ToAccountIndex    int64
 	NftAssetId        int64
 	NftIndex          int64
 	NftContentHash    string
-	AssetId           int64
-	AssetAmount       *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
+	CallData          string
+	CallDataHash      []byte
 	Nonce             int64
 	Sig               []byte
 }
 
-func ComputeSetNftPriceMsgHash(txInfo *SetNftPriceTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeTransferNftMsgHash(txInfo *TransferNftTxInfo, hFunc hash.Hash) (msgHash []byte) {
 	hFunc.Reset()
-	/*
-		hFunc.Write(
-			tx.AccountIndex,
-			tx.NftIndex,
-			tx.AssetId,
-			tx.AssetAmount,
-			tx.GasAccountIndex,
-			tx.GasFeeAssetId,
-			tx.GasFeeAssetAmount,
-		)
-		hFunc.Write(nonce)
-	*/
 	var buf bytes.Buffer
-	writeInt64IntoBuf(&buf, txInfo.AccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.FromAccountIndex)
+	writeInt64IntoBuf(&buf, txInfo.ToAccountIndex)
 	writeInt64IntoBuf(&buf, txInfo.NftAssetId)
 	writeInt64IntoBuf(&buf, txInfo.NftIndex)
 	buf.Write(common.FromHex(txInfo.NftContentHash))
-	writeInt64IntoBuf(&buf, txInfo.AssetId)
-	writeBigIntIntoBuf(&buf, txInfo.AssetAmount)
 	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	buf.Write(txInfo.CallDataHash)
 	writeInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

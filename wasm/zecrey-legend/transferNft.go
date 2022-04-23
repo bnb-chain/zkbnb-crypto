@@ -24,10 +24,10 @@ import (
 	"syscall/js"
 )
 
-func GenericTransferTx() js.Func {
+func TransferNftTx() js.Func {
 	helperFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if len(args) != 2 {
-			return "invalid generic transfer params"
+			return "invalid mint nft params"
 		}
 		seed := args[0].String()
 		segmentStr := args[1].String()
@@ -35,14 +35,14 @@ func GenericTransferTx() js.Func {
 		if err != nil {
 			return err.Error()
 		}
-		txInfo, err := ConstructGenericTransferTxInfo(sk, segmentStr)
+		txInfo, err := ConstructTransferNftTxInfo(sk, segmentStr)
 		if err != nil {
-			log.Println("[GenericTransfer] unable to construct generic transfer:", err)
+			log.Println("[MintNftTx] unable to construct generic transfer:", err)
 			return err.Error()
 		}
 		txInfoBytes, err := json.Marshal(txInfo)
 		if err != nil {
-			log.Println("[GenericTransfer] unable to marshal:", err)
+			log.Println("[MintNftTx] unable to marshal:", err)
 			return err.Error()
 		}
 		return string(txInfoBytes)

@@ -19,6 +19,8 @@ package zecrey_legend
 
 import (
 	"bytes"
+	"errors"
+	"log"
 	"math/big"
 )
 
@@ -26,9 +28,25 @@ func writeUint64IntoBuf(buf *bytes.Buffer, a uint64) {
 	buf.Write(new(big.Int).SetUint64(a).FillBytes(make([]byte, 32)))
 }
 
+func writeInt64IntoBuf(buf *bytes.Buffer, a int64) {
+	buf.Write(new(big.Int).SetInt64(a).FillBytes(make([]byte, 32)))
+}
+
+func writeBigIntIntoBuf(buf *bytes.Buffer, a *big.Int) {
+	buf.Write(a.FillBytes(make([]byte, 32)))
+}
+
+func StringToBigInt(a string) (res *big.Int, err error) {
+	res, isValid := new(big.Int).SetString(a, 10)
+	if !isValid {
+		log.Println("[StringToBigInt] invalid string to big int")
+		return nil, errors.New("[StringToBigInt] invalid string to big int")
+	}
+	return res, nil
+}
+
 func PaddingStringToBytes32(name string) []byte {
 	buf := make([]byte, 32)
 	copy(buf, name)
 	return buf
 }
-
