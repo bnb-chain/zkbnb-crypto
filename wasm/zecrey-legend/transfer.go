@@ -24,7 +24,7 @@ import (
 	"syscall/js"
 )
 
-func GenericTransferTx() js.Func {
+func TransferTx() js.Func {
 	helperFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if len(args) != 2 {
 			return "invalid generic transfer params"
