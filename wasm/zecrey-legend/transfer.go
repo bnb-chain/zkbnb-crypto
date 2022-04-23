@@ -35,7 +35,7 @@ func TransferTx() js.Func {
 		if err != nil {
 			return err.Error()
 		}
-		txInfo, err := ConstructGenericTransferTxInfo(sk, segmentStr)
+		txInfo, err := ConstructTransferTxInfo(sk, segmentStr)
 		if err != nil {
 			log.Println("[GenericTransfer] unable to construct generic transfer:", err)
 			return err.Error()
