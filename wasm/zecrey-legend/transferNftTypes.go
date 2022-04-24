@@ -43,16 +43,16 @@ type TransferNftSegmentFormat struct {
 	ConstructTransferNftTxInfo: construct transfer nft tx, sign txInfo
 */
 func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *TransferNftTxInfo, err error) {
-	var segmentFormat *MintNftSegmentFormat
+	var segmentFormat *TransferNftSegmentFormat
 	err = json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
 		log.Println("[ConstructTransferNftTxInfo] err info:", err)
 		return nil, err
 	}
 	txInfo = &TransferNftTxInfo{
-		FromAccountIndex:  segmentFormat.CreatorAccountIndex,
+		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
-		NftAssetId:        segmentFormat.AssetId,
+		NftAssetId:        segmentFormat.NftAssetId,
 		NftIndex:          segmentFormat.NftIndex,
 		NftContentHash:    segmentFormat.NftContentHash,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
