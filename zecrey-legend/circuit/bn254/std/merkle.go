@@ -35,6 +35,18 @@ func VerifyMerkleProof(api API, isEnabled Variable, h MiMC, merkleRoot Variable,
 	IsVariableEqual(api, isEnabled, node, merkleRoot)
 }
 
+func UpdateMerkleProof(api API, h MiMC, proofSet, helper []Variable) (root Variable) {
+	node := proofSet[0]
+	for i := 1; i < len(proofSet); i++ {
+		api.AssertIsBoolean(helper[i-1])
+		d1 := api.Select(helper[i-1], proofSet[i], node)
+		d2 := api.Select(helper[i-1], node, proofSet[i])
+		node = nodeSum(h, d1, d2)
+	}
+	root = node
+	return root
+}
+
 // nodeSum returns the hash created from data inserted to form a leaf.
 // Without domain separation.
 func nodeSum(h MiMC, a, b Variable) Variable {

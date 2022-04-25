@@ -17,6 +17,8 @@
 
 package std
 
+import "math/big"
+
 type TransferNftTx struct {
 	/*
 		- from account index
@@ -36,6 +38,9 @@ type TransferNftTx struct {
 	NftAssetId        int64
 	NftIndex          int64
 	NftContentHash    []byte
+	ToNftAssetId      int64
+	NftL1TokenId      *big.Int
+	NftL1Address      []byte
 	GasAccountIndex   uint32
 	GasFeeAssetId     uint32
 	GasFeeAssetAmount uint64
@@ -49,6 +54,9 @@ type TransferNftTxConstraints struct {
 	NftAssetId        Variable
 	NftIndex          Variable
 	NftContentHash    Variable
+	ToNftAssetId      Variable
+	NftL1TokenId      Variable
+	NftL1Address      Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
@@ -60,9 +68,12 @@ func EmptyTransferNftTxWitness() (witness TransferNftTxConstraints) {
 		FromAccountIndex:  ZeroInt,
 		ToAccountIndex:    ZeroInt,
 		ToAccountName:     ZeroInt,
-		NftIndex:          ZeroInt,
 		NftAssetId:        ZeroInt,
+		NftIndex:          ZeroInt,
 		NftContentHash:    ZeroInt,
+		ToNftAssetId:      ZeroInt,
+		NftL1TokenId:      ZeroInt,
+		NftL1Address:      ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
@@ -75,9 +86,12 @@ func SetTransferNftTxWitness(tx *TransferNftTx) (witness TransferNftTxConstraint
 		FromAccountIndex:  tx.FromAccountIndex,
 		ToAccountIndex:    tx.ToAccountIndex,
 		ToAccountName:     tx.ToAccountName,
-		NftIndex:          tx.NftIndex,
 		NftAssetId:        tx.NftAssetId,
+		NftIndex:          tx.NftIndex,
 		NftContentHash:    tx.NftContentHash,
+		ToNftAssetId:      tx.ToNftAssetId,
+		NftL1TokenId:      tx.NftL1TokenId,
+		NftL1Address:      tx.NftL1Address,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
@@ -92,13 +106,13 @@ func ComputeHashFromTransferNftTx(tx TransferNftTxConstraints, nonce Variable, h
 		tx.FromAccountIndex,
 		tx.ToAccountIndex,
 		tx.ToAccountName,
+		tx.NftAssetId,
+		tx.NftIndex,
+		tx.NftContentHash,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
 		tx.CallDataHash,
-		tx.NftAssetId,
-		tx.NftIndex,
-		tx.NftContentHash,
 	)
 	hFunc.Write(nonce)
 	hashVal = hFunc.Sum()
@@ -120,16 +134,13 @@ func ComputeHashFromTransferNftTx(tx TransferNftTxConstraints, nonce Variable, h
 		- Assets
 			- AssetGas
 */
-func VerifyTransferNftTx(api API, flag Variable, nilHash Variable, tx TransferNftTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+func VerifyTransferNftTx(api API, flag Variable, nilHash Variable, tx TransferNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	// nft index
 	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
-	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[1].NftInfo.NftIndex)
 	// before account nft should be empty
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
+	IsEmptyNftInfo(api, flag, nilHash, accountsBefore[1].NftInfo)
 	// from account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)

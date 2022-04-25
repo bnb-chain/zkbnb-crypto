@@ -19,23 +19,18 @@ package std
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	"math/big"
 )
 
 type RegisterZnsTx struct {
 	AccountName string
 	PubKey      *eddsa.PublicKey
 	L1Address   string
-	AssetId     uint32
-	AssetAmount *big.Int
 }
 
 type RegisterZnsTxConstraints struct {
 	AccountName Variable
 	PubKey      PublicKeyConstraints
 	L1Address   Variable
-	AssetId     Variable
-	AssetAmount Variable
 }
 
 func EmptyRegisterZnsTxWitness() (witness RegisterZnsTxConstraints) {
@@ -43,8 +38,6 @@ func EmptyRegisterZnsTxWitness() (witness RegisterZnsTxConstraints) {
 		AccountName: ZeroInt,
 		PubKey:      EmptyPublicKeyWitness(),
 		L1Address:   ZeroInt,
-		AssetId:     ZeroInt,
-		AssetAmount: ZeroInt,
 	}
 }
 
@@ -53,21 +46,6 @@ func SetRegisterZnsTxWitness(tx *RegisterZnsTx) (witness RegisterZnsTxConstraint
 		AccountName: tx.AccountName,
 		PubKey:      SetPubKeyWitness(tx.PubKey),
 		L1Address:   tx.L1Address,
-		AssetId:     tx.AssetId,
-		AssetAmount: tx.AssetAmount,
 	}
 	return witness
-}
-
-/*
-	VerifyRegisterZnsTx:
-	accounts order is:
-	- FromAccount
-		- Assets
-			- AssetA
-*/
-func VerifyRegisterZnsTx(api API, flag Variable, tx RegisterZnsTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
-	// verify params
-	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.AssetId, accountsAfter[0].AssetsInfo[0].AssetId)
 }

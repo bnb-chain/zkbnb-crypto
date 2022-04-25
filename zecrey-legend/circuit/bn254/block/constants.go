@@ -37,11 +37,12 @@ type (
 	RegisterZnsTx     = std.RegisterZnsTx
 	DepositTx         = std.DepositTx
 	DepositNftTx      = std.DepositNftTx
-	GenericTransferTx = std.GenericTransferTx
+	TransferTx        = std.TransferTx
 	SwapTx            = std.SwapTx
 	AddLiquidityTx    = std.AddLiquidityTx
 	RemoveLiquidityTx = std.RemoveLiquidityTx
 	MintNftTx         = std.MintNftTx
+	TransferNftTx     = std.TransferNftTx
 	SetNftPriceTx     = std.SetNftPriceTx
 	BuyNftTx          = std.BuyNftTx
 	WithdrawTx        = std.WithdrawTx
@@ -50,11 +51,12 @@ type (
 	RegisterZnsTxConstraints     = std.RegisterZnsTxConstraints
 	DepositTxConstraints         = std.DepositTxConstraints
 	DepositNftTxConstraints      = std.DepositNftTxConstraints
-	GenericTransferTxConstraints = std.GenericTransferTxConstraints
+	TransferTxConstraints        = std.TransferTxConstraints
 	SwapTxConstraints            = std.SwapTxConstraints
 	AddLiquidityTxConstraints    = std.AddLiquidityTxConstraints
 	RemoveLiquidityTxConstraints = std.RemoveLiquidityTxConstraints
 	MintNftTxConstraints         = std.MintNftTxConstraints
+	TransferNftTxConstraints     = std.TransferNftTxConstraints
 	SetNftPriceTxConstraints     = std.SetNftPriceTxConstraints
 	BuyNftTxConstraints          = std.BuyNftTxConstraints
 	WithdrawTxConstraints        = std.WithdrawTxConstraints
@@ -66,17 +68,16 @@ const (
 	TxTypeRegisterZns
 	TxTypeDeposit
 	TxTypeDepositNft
-	TxTypeGenericTransfer
+	TxTypeTransfer
 	TxTypeSwap
 	TxTypeAddLiquidity
 	TxTypeRemoveLiquidity
 	TxTypeWithdraw
 	TxTypeMintNft
+	TxTypeTransferNft
 	TxTypeSetNftPrice
 	TxTypeBuyNft
 	TxTypeWithdrawNft
-	// TODO
-	TxTypeChangePubKey
 )
 
 const (

@@ -17,6 +17,8 @@
 
 package std
 
+import "math/big"
+
 type BuyNftTx struct {
 	/*
 		- account index
@@ -34,6 +36,8 @@ type BuyNftTx struct {
 	NftAssetId           uint32
 	NftIndex             uint64
 	NftContentHash       []byte
+	NftL1TokenId         *big.Int
+	NftL1Address         []byte
 	AssetId              uint32
 	AssetAmount          uint64
 	TreasuryFeeRate      uint32
@@ -60,6 +64,8 @@ type BuyNftTxConstraints struct {
 	NftAssetId           Variable
 	NftIndex             Variable
 	NftContentHash       Variable
+	NftL1TokenId         Variable
+	NftL1Address         Variable
 	AssetId              Variable
 	AssetAmount          Variable
 	TreasuryAccountIndex Variable
@@ -76,6 +82,8 @@ func EmptyBuyNftTxWitness() (witness BuyNftTxConstraints) {
 		NftAssetId:           ZeroInt,
 		NftIndex:             ZeroInt,
 		NftContentHash:       ZeroInt,
+		NftL1TokenId:         ZeroInt,
+		NftL1Address:         ZeroInt,
 		AssetId:              ZeroInt,
 		AssetAmount:          ZeroInt,
 		TreasuryAccountIndex: ZeroInt,
@@ -94,6 +102,8 @@ func SetBuyNftTxWitness(tx *BuyNftTx) (witness BuyNftTxConstraints) {
 		NftAssetId:           tx.NftAssetId,
 		NftIndex:             tx.NftIndex,
 		NftContentHash:       tx.NftContentHash,
+		NftL1TokenId:         tx.NftL1TokenId,
+		NftL1Address:         tx.NftL1Address,
 		AssetId:              tx.AssetId,
 		AssetAmount:          tx.AssetAmount,
 		TreasuryAccountIndex: tx.TreasuryAccountIndex,
@@ -145,7 +155,7 @@ func ComputeHashFromBuyNftTx(tx BuyNftTxConstraints, nonce Variable, hFunc MiMC)
 		- Assets
 			- AssetGas
 */
-func VerifyBuyNftTx(api API, flag Variable, nilHash Variable, tx BuyNftTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+func VerifyBuyNftTx(api API, flag Variable, nilHash Variable, tx BuyNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	// from account index
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
@@ -153,14 +163,8 @@ func VerifyBuyNftTx(api API, flag Variable, nilHash Variable, tx BuyNftTxConstra
 	IsVariableEqual(api, flag, tx.OwnerAccountIndex, accountsBefore[1].AccountIndex)
 	// treasury account index
 	IsVariableEqual(api, flag, tx.TreasuryAccountIndex, accountsBefore[2].AccountIndex)
-	// nft index
-	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
-	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[1].NftInfo.NftIndex)
-	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[0].NftInfo.NftIndex)
 	// buyer nft should be empty
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
+	IsEmptyNftInfo(api, flag, nilHash, accountsBefore[0].NftInfo)
 	// owner nft asset id and amount
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[1].NftInfo.AssetId)
 	IsVariableEqual(api, flag, tx.AssetAmount, accountsBefore[1].NftInfo.AssetAmount)
@@ -170,5 +174,10 @@ func VerifyBuyNftTx(api API, flag Variable, nilHash Variable, tx BuyNftTxConstra
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[3].AccountIndex)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[3].AssetsInfo[0].AssetId)
 	// should have enough assets
-	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	isSameAsset := api.IsZero(api.Sub(tx.AssetId, tx.GasFeeAssetId))
+	totalDelta := api.Add(tx.AssetAmount, tx.GasFeeAssetAmount)
+	assetADelta := api.Select(isSameAsset, totalDelta, tx.AssetAmount)
+	assetFeeDelta := api.Select(isSameAsset, totalDelta, tx.GasFeeAssetAmount)
+	IsVariableLessOrEqual(api, flag, tx.AssetAmount, assetADelta)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, assetFeeDelta)
 }

@@ -60,13 +60,13 @@ type AccountLiquidity struct {
 	AccountNft: nft info
 */
 type AccountNft struct {
-	NftAccountIndex uint64
-	NftIndex        uint64
-	CreatorIndex    uint64
-	NftContentHash  []byte
-	AssetId         uint64
-	AssetAmount     uint64
-	ChainId         uint64
-	L1Address       string
-	L1TokenId       uint64
+	NftAssetId     uint64
+	NftIndex       uint64
+	CreatorIndex   uint64
+	NftContentHash []byte
+	AssetId        uint64
+	AssetAmount    uint64
+	ChainId        uint64
+	L1Address      string
+	L1TokenId      uint64
 }

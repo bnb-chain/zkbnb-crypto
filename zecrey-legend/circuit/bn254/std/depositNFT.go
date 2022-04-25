@@ -65,18 +65,10 @@ func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) 
 		- Nft
 			- nft index
 */
-func VerifyDepositNftTx(api API, flag Variable, nilHash Variable, tx DepositNftTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+func VerifyDepositNftTx(api API, flag Variable, nilHash Variable, tx DepositNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	// nft index
 	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
 	// before account nft should be empty
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftIndex, DefaultInt)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
-	// new nft should be right
-	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[0].NftInfo.NftIndex)
-	IsVariableEqual(api, flag, tx.NftContentHash, accountsAfter[0].NftInfo.NftContentHash)
-	IsVariableEqual(api, flag, tx.NftTokenId, accountsAfter[0].NftInfo.L1TokenId)
-	IsVariableEqual(api, flag, tx.NftL1Address, accountsAfter[0].NftInfo.L1Address)
+	IsEmptyNftInfo(api, flag, nilHash, accountsBefore[0].NftInfo)
 }

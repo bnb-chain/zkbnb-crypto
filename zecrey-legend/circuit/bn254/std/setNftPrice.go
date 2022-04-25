@@ -17,6 +17,8 @@
 
 package std
 
+import "math/big"
+
 type SetNftPriceTx struct {
 	/*
 		- account index
@@ -30,6 +32,9 @@ type SetNftPriceTx struct {
 	AccountIndex      uint32
 	NftAssetId        uint32
 	NftIndex          uint32
+	NftContentHash    []byte
+	NftL1TokenId      *big.Int
+	NftL1Address      []byte
 	AssetId           uint32
 	AssetAmount       uint64
 	GasAccountIndex   uint32
@@ -41,6 +46,9 @@ type SetNftPriceTxConstraints struct {
 	AccountIndex      Variable
 	NftAssetId        Variable
 	NftIndex          Variable
+	NftContentHash    Variable
+	NftL1TokenId      Variable
+	NftL1Address      Variable
 	AssetId           Variable
 	AssetAmount       Variable
 	GasAccountIndex   Variable
@@ -53,6 +61,9 @@ func EmptySetNftPriceTxWitness() (witness SetNftPriceTxConstraints) {
 		AccountIndex:      ZeroInt,
 		NftAssetId:        ZeroInt,
 		NftIndex:          ZeroInt,
+		NftContentHash:    ZeroInt,
+		NftL1TokenId:      ZeroInt,
+		NftL1Address:      ZeroInt,
 		AssetId:           ZeroInt,
 		AssetAmount:       ZeroInt,
 		GasAccountIndex:   ZeroInt,
@@ -66,6 +77,9 @@ func SetSetNftPriceTxWitness(tx *SetNftPriceTx) (witness SetNftPriceTxConstraint
 		AccountIndex:      tx.AccountIndex,
 		NftAssetId:        tx.NftAssetId,
 		NftIndex:          tx.NftIndex,
+		NftContentHash:    tx.NftContentHash,
+		NftL1TokenId:      tx.NftL1TokenId,
+		NftL1Address:      tx.NftL1Address,
 		AssetId:           tx.AssetId,
 		AssetAmount:       tx.AssetAmount,
 		GasAccountIndex:   tx.GasAccountIndex,
@@ -81,6 +95,7 @@ func ComputeHashFromSetNftPriceTx(tx SetNftPriceTxConstraints, nonce Variable, h
 		tx.AccountIndex,
 		tx.NftAssetId,
 		tx.NftIndex,
+		tx.NftContentHash,
 		tx.AssetId,
 		tx.AssetAmount,
 		tx.GasAccountIndex,
@@ -104,17 +119,16 @@ func ComputeHashFromSetNftPriceTx(tx SetNftPriceTxConstraints, nonce Variable, h
 		- Assets:
 			- AssetGas
 */
-func VerifySetNftPriceTx(api API, flag Variable, tx SetNftPriceTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+func VerifySetNftPriceTx(api API, flag Variable, tx SetNftPriceTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
-	IsVariableEqual(api, flag, tx.AssetId, accountsAfter[0].NftInfo.AssetId)
-	IsVariableEqual(api, flag, tx.AssetAmount, accountsAfter[0].NftInfo.AssetAmount)
+	// asset
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	// gas
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	// should have enough assets
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 }
