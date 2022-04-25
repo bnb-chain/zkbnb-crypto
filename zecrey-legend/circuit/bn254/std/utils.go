@@ -38,3 +38,13 @@ func EmptyPublicKeyWitness() (witness PublicKeyConstraints) {
 	}
 	return witness
 }
+
+func IsEmptyNftInfo(api API, flag Variable, zeroHash Variable, nftInfo AccountNftConstraints) {
+	IsVariableEqual(api, flag, nftInfo.NftAssetId, DefaultInt)
+	IsVariableEqual(api, flag, nftInfo.NftIndex, DefaultInt)
+	IsVariableEqual(api, flag, nftInfo.NftContentHash, zeroHash)
+	IsVariableEqual(api, flag, nftInfo.AssetId, DefaultInt)
+	IsVariableEqual(api, flag, nftInfo.AssetAmount, 0)
+	IsVariableEqual(api, flag, nftInfo.NftL1TokenId, DefaultInt)
+	IsVariableEqual(api, flag, nftInfo.NftL1Address, zeroHash)
+}

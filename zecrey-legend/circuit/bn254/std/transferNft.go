@@ -17,98 +17,102 @@
 
 package std
 
-type GenericTransferTx struct {
+import "math/big"
+
+type TransferNftTx struct {
 	/*
 		- from account index
 		- to account index
 		- to account name
-		- asset id
-		- asset amount
 		- gas account index
 		- gas fee asset id
 		- gas fee asset amount
 		- call data hash
 		- nft index
+		- nft asset Id
+		- nft content hash
 	*/
 	FromAccountIndex  uint32
 	ToAccountIndex    uint32
 	ToAccountName     string
-	AssetId           uint32
-	AssetAmount       uint64
+	NftAssetId        int64
+	NftIndex          int64
+	NftContentHash    []byte
+	ToNftAssetId      int64
+	NftL1TokenId      *big.Int
+	NftL1Address      []byte
 	GasAccountIndex   uint32
 	GasFeeAssetId     uint32
 	GasFeeAssetAmount uint64
 	CallDataHash      []byte
-	NftAssetId        int64
-	NftIndex          int64
-	NftContentHash    []byte
 }
 
-type GenericTransferTxConstraints struct {
+type TransferNftTxConstraints struct {
 	FromAccountIndex  Variable
 	ToAccountIndex    Variable
 	ToAccountName     Variable
-	AssetId           Variable
-	AssetAmount       Variable
+	NftAssetId        Variable
+	NftIndex          Variable
+	NftContentHash    Variable
+	ToNftAssetId      Variable
+	NftL1TokenId      Variable
+	NftL1Address      Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
 	CallDataHash      Variable
-	NftAccountId      Variable
-	NftIndex          Variable
-	NftContentHash    Variable
 }
 
-func EmptyGenericTransferTxWitness() (witness GenericTransferTxConstraints) {
-	return GenericTransferTxConstraints{
+func EmptyTransferNftTxWitness() (witness TransferNftTxConstraints) {
+	return TransferNftTxConstraints{
 		FromAccountIndex:  ZeroInt,
 		ToAccountIndex:    ZeroInt,
 		ToAccountName:     ZeroInt,
-		AssetId:           ZeroInt,
-		AssetAmount:       ZeroInt,
+		NftAssetId:        ZeroInt,
+		NftIndex:          ZeroInt,
+		NftContentHash:    ZeroInt,
+		ToNftAssetId:      ZeroInt,
+		NftL1TokenId:      ZeroInt,
+		NftL1Address:      ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
 		CallDataHash:      ZeroInt,
-		NftAccountId:      ZeroInt,
-		NftIndex:          ZeroInt,
-		NftContentHash:    ZeroInt,
 	}
 }
 
-func SetGenericTransferTxWitness(tx *GenericTransferTx) (witness GenericTransferTxConstraints) {
-	witness = GenericTransferTxConstraints{
+func SetTransferNftTxWitness(tx *TransferNftTx) (witness TransferNftTxConstraints) {
+	witness = TransferNftTxConstraints{
 		FromAccountIndex:  tx.FromAccountIndex,
 		ToAccountIndex:    tx.ToAccountIndex,
 		ToAccountName:     tx.ToAccountName,
-		AssetId:           tx.AssetId,
-		AssetAmount:       tx.AssetAmount,
+		NftAssetId:        tx.NftAssetId,
+		NftIndex:          tx.NftIndex,
+		NftContentHash:    tx.NftContentHash,
+		ToNftAssetId:      tx.ToNftAssetId,
+		NftL1TokenId:      tx.NftL1TokenId,
+		NftL1Address:      tx.NftL1Address,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
 		CallDataHash:      tx.CallDataHash,
-		NftAccountId:      tx.NftAssetId,
-		NftIndex:          tx.NftIndex,
-		NftContentHash:    tx.NftContentHash,
 	}
 	return witness
 }
 
-func ComputeHashFromGenericTransferTx(tx GenericTransferTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromTransferNftTx(tx TransferNftTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,
 		tx.ToAccountIndex,
 		tx.ToAccountName,
-		tx.AssetId,
-		tx.AssetAmount,
+		tx.NftAssetId,
+		tx.NftIndex,
+		tx.NftContentHash,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
 		tx.CallDataHash,
-		tx.NftAccountId,
-		tx.NftIndex,
-		tx.NftContentHash,
 	)
 	hFunc.Write(nonce)
 	hashVal = hFunc.Sum()
@@ -120,42 +124,28 @@ func ComputeHashFromGenericTransferTx(tx GenericTransferTxConstraints, nonce Var
 	accounts order is:
 	- FromAccount
 		- Assets
-			- AssetA
 			- AssetGas
 		- Nft
 			- nft index
 	- ToAccount
-		- Assets
-			- AssetA
 		- Nft
 			- nft index
 	- GasAccount
 		- Assets
 			- AssetGas
 */
-func VerifyGenericTransferTx(api API, flag Variable, nilHash Variable, tx GenericTransferTxConstraints, accountsBefore, accountsAfter [NbAccountsPerTx]AccountConstraints) {
+func VerifyTransferNftTx(api API, flag Variable, nilHash Variable, tx TransferNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
 	// verify params
 	// nft index
-	IsVariableEqual(api, flag, tx.NftAccountId, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
-	IsVariableEqual(api, flag, tx.NftIndex, accountsAfter[1].NftInfo.NftIndex)
 	// before account nft should be empty
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
+	IsEmptyNftInfo(api, flag, nilHash, accountsBefore[1].NftInfo)
 	// from account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
-	// asset id
-	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// gas asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	// should have enough balance
-	isSameAsset := api.IsZero(api.Sub(tx.AssetId, tx.GasFeeAssetId))
-	totalDelta := api.Add(tx.AssetAmount, tx.GasFeeAssetAmount)
-	assetADelta := api.Select(isSameAsset, totalDelta, tx.AssetAmount)
-	assetFeeDelta := api.Select(isSameAsset, totalDelta, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.AssetAmount, assetADelta)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, assetFeeDelta)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 }

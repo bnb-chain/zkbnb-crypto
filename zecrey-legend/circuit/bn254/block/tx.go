@@ -26,11 +26,12 @@ type Tx struct {
 	RegisterZnsTxInfo     *RegisterZnsTx
 	DepositTxInfo         *DepositTx
 	DepositNftTxInfo      *DepositNftTx
-	GenericTransferTxInfo *GenericTransferTx
+	TransferTxInfo        *TransferTx
 	SwapTxInfo            *SwapTx
 	AddLiquidityTxInfo    *AddLiquidityTx
 	RemoveLiquidityTxInfo *RemoveLiquidityTx
 	MintNftTxInfo         *MintNftTx
+	TransferNftTxInfo     *TransferNftTx
 	SetNftPriceTxInfo     *SetNftPriceTx
 	BuyNftTxInfo          *BuyNftTx
 	WithdrawTxInfo        *WithdrawTx
@@ -55,18 +56,4 @@ type Tx struct {
 	MerkleProofsHelperAccountBefore [NbAccountsPerTx][AccountMerkleHelperLevels]int
 	// account root after
 	AccountRootAfter []byte
-	// account after info, size is 4
-	AccountsInfoAfter [NbAccountsPerTx]*std.Account
-	// after account asset merkle proof
-	MerkleProofsAccountAssetsAfter       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
-	MerkleProofsHelperAccountAssetsAfter [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]int
-	// after account liquidity merkle proof
-	MerkleProofsAccountLiquidityAfter       [NbAccountsPerTx][LiquidityMerkleLevels][]byte
-	MerkleProofsHelperAccountLiquidityAfter [NbAccountsPerTx][LiquidityMerkleHelperLevels]int
-	// after account nft tree merkle proof
-	MerkleProofsAccountNftAfter       [NbAccountsPerTx][NftMerkleLevels][]byte
-	MerkleProofsHelperAccountNftAfter [NbAccountsPerTx][NftMerkleHelperLevels]int
-	// after account merkle proof
-	MerkleProofsAccountAfter       [NbAccountsPerTx][AccountMerkleLevels][]byte
-	MerkleProofsHelperAccountAfter [NbAccountsPerTx][AccountMerkleHelperLevels]int
 }

@@ -51,11 +51,11 @@ func CompareAccountBeforeAndAfterParams(api API, accountBefore, accountAfter std
 		AssetId        Variable
 		AssetAmount    Variable
 		NftL1Address      Variable
-		NftTokenId      Variable
+		NftL1TokenId      Variable
 	*/
-	api.AssertIsEqual(accountBefore.NftInfo.NftAccountIndex, accountAfter.NftInfo.NftAccountIndex)
-	api.AssertIsEqual(accountBefore.NftInfo.L1Address, accountAfter.NftInfo.L1Address)
-	api.AssertIsEqual(accountBefore.NftInfo.L1TokenId, accountAfter.NftInfo.L1TokenId)
+	api.AssertIsEqual(accountBefore.NftInfo.NftAssetId, accountAfter.NftInfo.NftAssetId)
+	api.AssertIsEqual(accountBefore.NftInfo.NftL1Address, accountAfter.NftInfo.NftL1Address)
+	api.AssertIsEqual(accountBefore.NftInfo.NftL1TokenId, accountAfter.NftInfo.NftL1TokenId)
 }
 
 func SelectDeltas(
@@ -74,6 +74,30 @@ func SelectDeltas(
 			api.Select(flag, deltas[i].LiquidityDelta.AssetBDelta, deltasCheck[i].LiquidityDelta.AssetBDelta)
 		deltasRes[i].LiquidityDelta.LpDelta =
 			api.Select(flag, deltas[i].LiquidityDelta.LpDelta, deltasCheck[i].LiquidityDelta.LpDelta)
+	}
+	return deltasRes
+}
+
+func SelectNftDeltas(
+	api API,
+	flag Variable,
+	deltas, deltasCheck [NbAccountsPerTx]AccountNftDeltaConstraints,
+) (deltasRes [NbAccountsPerTx]AccountNftDeltaConstraints) {
+	for i := 0; i < NbAccountsPerTx; i++ {
+		deltasRes[i].NftIndex =
+			api.Select(flag, deltas[i].NftIndex, deltasCheck[i].NftIndex)
+		deltasRes[i].NftAssetId =
+			api.Select(flag, deltas[i].NftAssetId, deltasCheck[i].NftAssetId)
+		deltasRes[i].NftContentHash =
+			api.Select(flag, deltas[i].NftContentHash, deltasCheck[i].NftContentHash)
+		deltasRes[i].AssetId =
+			api.Select(flag, deltas[i].AssetId, deltasCheck[i].AssetId)
+		deltasRes[i].AssetAmount =
+			api.Select(flag, deltas[i].AssetAmount, deltasCheck[i].AssetAmount)
+		deltasRes[i].NftL1TokenId =
+			api.Select(flag, deltas[i].NftL1TokenId, deltasCheck[i].NftL1TokenId)
+		deltasRes[i].NftL1Address =
+			api.Select(flag, deltas[i].NftL1Address, deltasCheck[i].NftL1Address)
 	}
 	return deltasRes
 }

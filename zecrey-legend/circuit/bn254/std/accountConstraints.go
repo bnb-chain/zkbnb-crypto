@@ -37,17 +37,6 @@ type AccountConstraints struct {
 	NftInfo       AccountNftConstraints
 }
 
-func CompareAccountsAfterUpdate(api API, oAccounts, nAccounts [NbAccountsPerTx]AccountConstraints) {
-	for i := 0; i < NbAccountsPerTx; i++ {
-		for j := 0; j < NbAccountAssetsPerAccount; j++ {
-			api.AssertIsEqual(oAccounts[i].AssetsInfo[j].Balance, nAccounts[i].AssetsInfo[j].Balance)
-		}
-		api.AssertIsEqual(oAccounts[i].LiquidityInfo.AssetAAmount, nAccounts[i].LiquidityInfo.AssetAAmount)
-		api.AssertIsEqual(oAccounts[i].LiquidityInfo.AssetBAmount, nAccounts[i].LiquidityInfo.AssetBAmount)
-		api.AssertIsEqual(oAccounts[i].LiquidityInfo.LpAmount, nAccounts[i].LiquidityInfo.LpAmount)
-	}
-}
-
 type AccountAssetConstraints struct {
 	AssetId Variable
 	Balance Variable
@@ -85,26 +74,26 @@ func SetAccountLiquidityWitness(info *AccountLiquidity) (witness AccountLiquidit
 }
 
 type AccountNftConstraints struct {
-	NftAccountIndex Variable
-	NftIndex        Variable
-	CreatorIndex    Variable
-	NftContentHash  Variable
-	AssetId         Variable
-	AssetAmount     Variable
-	L1Address       Variable
-	L1TokenId       Variable
+	NftAssetId     Variable
+	NftIndex       Variable
+	NftContentHash Variable
+	CreatorIndex   Variable
+	AssetId        Variable
+	AssetAmount    Variable
+	NftL1Address   Variable
+	NftL1TokenId   Variable
 }
 
 func SetAccountNftWitness(nft *AccountNft) (witness AccountNftConstraints) {
 	witness = AccountNftConstraints{
-		NftAccountIndex: nft.NftAccountIndex,
-		NftIndex:        nft.NftIndex,
-		CreatorIndex:    nft.CreatorIndex,
-		NftContentHash:  nft.NftContentHash,
-		AssetId:         nft.AssetId,
-		AssetAmount:     nft.AssetAmount,
-		L1Address:       nft.L1Address,
-		L1TokenId:       nft.L1TokenId,
+		NftAssetId:     nft.NftAssetId,
+		NftIndex:       nft.NftIndex,
+		CreatorIndex:   nft.CreatorIndex,
+		NftContentHash: nft.NftContentHash,
+		AssetId:        nft.AssetId,
+		AssetAmount:    nft.AssetAmount,
+		NftL1Address:   nft.L1Address,
+		NftL1TokenId:   nft.L1TokenId,
 	}
 	return witness
 }

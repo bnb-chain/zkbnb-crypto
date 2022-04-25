@@ -17,7 +17,9 @@
 
 package block
 
-import "github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
+import (
+	"github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
+)
 
 type AccountDeltaConstraints struct {
 	AssetDeltas    [NbAccountAssetsPerAccount]Variable
@@ -38,49 +40,62 @@ func EmptyAccountLiquidityDeltaConstraints() AccountLiquidityDeltaConstraints {
 	}
 }
 
+type AccountNftDeltaConstraints struct {
+	NftIndex       Variable
+	NftAssetId     Variable
+	NftContentHash Variable
+	AssetId        Variable
+	AssetAmount    Variable
+	NftL1TokenId   Variable
+	NftL1Address   Variable
+}
+
+func EmptyAccountNftDeltaConstraints() AccountNftDeltaConstraints {
+	return AccountNftDeltaConstraints{
+		NftIndex:       -1,
+		NftAssetId:     -1,
+		NftContentHash: 0,
+		AssetId:        -1,
+		AssetAmount:    0,
+		NftL1TokenId:   0,
+		NftL1Address:   0,
+	}
+}
+
 func UpdateAccounts(
 	api API,
 	accountInfos [NbAccountsPerTx]std.AccountConstraints,
 	accountDeltas [NbAccountsPerTx]AccountDeltaConstraints,
-) [NbAccountsPerTx]std.AccountConstraints {
+	accountNftDeltas [NbAccountsPerTx]AccountNftDeltaConstraints,
+) (AccountsInfoAfter [NbAccountsPerTx]std.AccountConstraints) {
+	AccountsInfoAfter = accountInfos
 	for i := 0; i < NbAccountsPerTx; i++ {
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
-			accountInfos[i].AssetsInfo[j].Balance = api.Add(
+			AccountsInfoAfter[i].AssetsInfo[j].Balance = api.Add(
 				accountInfos[i].AssetsInfo[j].Balance,
 				accountDeltas[i].AssetDeltas[j])
 		}
-		accountInfos[i].LiquidityInfo.AssetAAmount = api.Add(
+		AccountsInfoAfter[i].LiquidityInfo.AssetAAmount = api.Add(
 			accountInfos[i].LiquidityInfo.AssetAAmount,
 			accountDeltas[i].LiquidityDelta.AssetADelta,
 		)
-		accountInfos[i].LiquidityInfo.AssetBAmount = api.Add(
+		AccountsInfoAfter[i].LiquidityInfo.AssetBAmount = api.Add(
 			accountInfos[i].LiquidityInfo.AssetBAmount,
 			accountDeltas[i].LiquidityDelta.AssetBDelta,
 		)
-		accountInfos[i].LiquidityInfo.LpAmount = api.Add(
+		AccountsInfoAfter[i].LiquidityInfo.LpAmount = api.Add(
 			accountInfos[i].LiquidityInfo.LpAmount,
 			accountDeltas[i].LiquidityDelta.LpDelta,
 		)
+		AccountsInfoAfter[i].NftInfo.NftIndex = accountNftDeltas[i].NftIndex
+		AccountsInfoAfter[i].NftInfo.NftAssetId = accountNftDeltas[i].NftAssetId
+		AccountsInfoAfter[i].NftInfo.NftContentHash = accountNftDeltas[i].NftContentHash
+		AccountsInfoAfter[i].NftInfo.AssetId = accountNftDeltas[i].AssetId
+		AccountsInfoAfter[i].NftInfo.AssetAmount = accountNftDeltas[i].AssetAmount
+		AccountsInfoAfter[i].NftInfo.NftL1TokenId = accountNftDeltas[i].NftL1TokenId
+		AccountsInfoAfter[i].NftInfo.NftL1Address = accountNftDeltas[i].NftL1Address
 	}
-	return accountInfos
-}
-
-func GetAccountDeltasFromRegisterZns(
-	api API,
-	txInfo RegisterZnsTxConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
-	deltas[0] = AccountDeltaConstraints{
-		AssetDeltas: [3]Variable{
-			txInfo.AssetAmount,
-			txInfo.AssetAmount,
-			txInfo.AssetAmount,
-		},
-		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
-	}
-	for i := 1; i < NbAccountsPerTx; i++ {
-		deltas[i] = deltas[0]
-	}
-	return deltas
+	return AccountsInfoAfter
 }
 
 func GetAccountDeltasFromDeposit(
@@ -104,14 +119,15 @@ func GetAccountDeltasFromDeposit(
 func GetAccountDeltasFromDepositNft(
 	api API,
 	txInfo DepositNftTxConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
-	deltas[0] = AccountDeltaConstraints{
-		AssetDeltas: [3]Variable{
-			std.ZeroInt,
-			std.ZeroInt,
-			std.ZeroInt,
-		},
-		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
+) (deltas [NbAccountsPerTx]AccountNftDeltaConstraints) {
+	deltas[0] = AccountNftDeltaConstraints{
+		NftIndex:       txInfo.NftIndex,
+		NftAssetId:     txInfo.NftAssetId,
+		AssetId:        -1,
+		AssetAmount:    0,
+		NftContentHash: txInfo.NftContentHash,
+		NftL1TokenId:   txInfo.NftTokenId,
+		NftL1Address:   txInfo.NftL1Address,
 	}
 	for i := 1; i < NbAccountsPerTx; i++ {
 		deltas[i] = deltas[0]
@@ -119,9 +135,9 @@ func GetAccountDeltasFromDepositNft(
 	return deltas
 }
 
-func GetAccountDeltasFromGenericTransfer(
+func GetAccountDeltasFromTransfer(
 	api API,
-	txInfo GenericTransferTxConstraints,
+	txInfo TransferTxConstraints,
 ) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
 	// if assetId == gasFeeAssetId, compute delta for asset A
 	notSameAsset := api.Sub(txInfo.AssetId, txInfo.GasFeeAssetId)
@@ -136,8 +152,8 @@ func GetAccountDeltasFromGenericTransfer(
 			assetADelta,
 			// assetGas
 			assetGasDelta,
-			// assetA
-			assetADelta,
+			// assetGas
+			assetGasDelta,
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
@@ -157,7 +173,7 @@ func GetAccountDeltasFromGenericTransfer(
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
-	deltas[3] = deltas[0]
+	deltas[3] = deltas[2]
 	return deltas
 }
 
@@ -208,7 +224,7 @@ func GetAccountDeltasFromSwap(
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
-	deltas[3] = deltas[0]
+	deltas[3] = deltas[2]
 	return deltas
 }
 
@@ -265,7 +281,7 @@ func GetAccountDeltasFromAddLiquidity(
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
-	deltas[3] = deltas[0]
+	deltas[3] = deltas[2]
 	return deltas
 }
 
@@ -320,7 +336,7 @@ func GetAccountDeltasFromRemoveLiquidity(
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
-	deltas[3] = deltas[0]
+	deltas[3] = deltas[2]
 	return deltas
 }
 
@@ -341,8 +357,8 @@ func GetAccountDeltasFromWithdraw(
 			assetADelta,
 			// assetGas
 			assetGasDelta,
-			// assetA
-			assetADelta,
+			// assetGas
+			assetGasDelta,
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
@@ -354,15 +370,15 @@ func GetAccountDeltasFromWithdraw(
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
-	deltas[2] = deltas[0]
-	deltas[3] = deltas[0]
+	deltas[2] = deltas[1]
+	deltas[3] = deltas[2]
 	return deltas
 }
 
 func GetAccountDeltasFromMintNft(
 	api API,
 	txInfo MintNftTxConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]AccountNftDeltaConstraints) {
 	// if assetId == gasFeeAssetId, compute delta for asset A
 	assetGasDelta := api.Neg(txInfo.GasFeeAssetAmount)
 	deltas[0] = AccountDeltaConstraints{
@@ -384,15 +400,72 @@ func GetAccountDeltasFromMintNft(
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
-	deltas[2] = deltas[0]
-	deltas[3] = deltas[0]
-	return deltas
+	deltas[2] = deltas[1]
+	deltas[3] = deltas[2]
+	// nft deltas
+	nftDeltas[0] = AccountNftDeltaConstraints{
+		NftIndex:       txInfo.NftIndex,
+		NftAssetId:     txInfo.NftAssetId,
+		AssetId:        -1,
+		AssetAmount:    0,
+		NftContentHash: txInfo.NftContentHash,
+		NftL1TokenId:   -1,
+		NftL1Address:   0,
+	}
+	for i := 1; i < NbAccountsPerTx; i++ {
+		nftDeltas[i] = nftDeltas[i-1]
+	}
+	return deltas, nftDeltas
+}
+
+func GetAccountDeltasFromTransferNft(
+	api API,
+	txInfo TransferNftTxConstraints,
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]AccountNftDeltaConstraints) {
+	assetGasDelta := api.Neg(txInfo.GasFeeAssetAmount)
+	deltas[0] = AccountDeltaConstraints{
+		AssetDeltas: [3]Variable{
+			// assetGas
+			assetGasDelta,
+			// assetGas
+			assetGasDelta,
+			// assetGas
+			assetGasDelta,
+		},
+		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
+	}
+	deltas[1] = AccountDeltaConstraints{
+		AssetDeltas: [3]Variable{
+			txInfo.GasFeeAssetAmount,
+			txInfo.GasFeeAssetAmount,
+			txInfo.GasFeeAssetAmount,
+		},
+		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
+	}
+	deltas[2] = deltas[1]
+	deltas[3] = deltas[2]
+	// nft deltas
+	// from account
+	nftDeltas[0] = EmptyAccountNftDeltaConstraints()
+	// to account
+	nftDeltas[1] = AccountNftDeltaConstraints{
+		NftIndex:       txInfo.NftIndex,
+		NftAssetId:     txInfo.ToNftAssetId,
+		NftContentHash: txInfo.NftContentHash,
+		AssetId:        -1,
+		AssetAmount:    0,
+		NftL1TokenId:   txInfo.NftL1TokenId,
+		NftL1Address:   txInfo.NftL1Address,
+	}
+	nftDeltas[2] = nftDeltas[1]
+	nftDeltas[3] = nftDeltas[2]
+	return deltas, nftDeltas
 }
 
 func GetAccountDeltasFromSetNftPrice(
 	api API,
 	txInfo SetNftPriceTxConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]AccountNftDeltaConstraints) {
 	// if assetId == gasFeeAssetId, compute delta for asset A
 	assetGasDelta := api.Neg(txInfo.GasFeeAssetAmount)
 	deltas[0] = AccountDeltaConstraints{
@@ -416,13 +489,27 @@ func GetAccountDeltasFromSetNftPrice(
 	}
 	deltas[2] = deltas[0]
 	deltas[3] = deltas[0]
-	return deltas
+	// nft deltas
+	// from account
+	nftDeltas[0] = AccountNftDeltaConstraints{
+		NftIndex:       txInfo.NftIndex,
+		NftAssetId:     txInfo.NftAssetId,
+		NftContentHash: txInfo.NftContentHash,
+		AssetId:        txInfo.AssetId,
+		AssetAmount:    txInfo.AssetAmount,
+		NftL1TokenId:   txInfo.NftL1TokenId,
+		NftL1Address:   txInfo.NftL1Address,
+	}
+	for i := 1; i < NbAccountsPerTx; i++ {
+		nftDeltas[i] = nftDeltas[i-1]
+	}
+	return deltas, nftDeltas
 }
 
 func GetAccountDeltasFromBuyNft(
 	api API,
 	txInfo BuyNftTxConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]AccountNftDeltaConstraints) {
 	// if assetId == gasFeeAssetId, compute delta for asset A
 	notSameAsset := api.Sub(txInfo.AssetId, txInfo.GasFeeAssetId)
 	assetADelta := api.Add(txInfo.AssetAmount, txInfo.GasFeeAssetAmount)
@@ -442,7 +529,7 @@ func GetAccountDeltasFromBuyNft(
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
-	// TODO compute treasury fee
+	// compute treasury fee
 	treasuryFee := api.Div(api.Mul(txInfo.AssetAmount, txInfo.TreasuryFeeRate), 10000)
 	assetAForToDelta := api.Sub(txInfo.AssetAmount, treasuryFee)
 	// to account
@@ -472,13 +559,28 @@ func GetAccountDeltasFromBuyNft(
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
-	return deltas
+	// nft deltas
+	// buyer account
+	nftDeltas[0] = AccountNftDeltaConstraints{
+		NftIndex:       txInfo.NftIndex,
+		NftAssetId:     txInfo.NftAssetId,
+		NftContentHash: txInfo.NftContentHash,
+		AssetId:        -1,
+		AssetAmount:    0,
+		NftL1TokenId:   txInfo.NftL1TokenId,
+		NftL1Address:   txInfo.NftL1Address,
+	}
+	// owner account
+	nftDeltas[1] = EmptyAccountNftDeltaConstraints()
+	nftDeltas[2] = nftDeltas[1]
+	nftDeltas[3] = nftDeltas[2]
+	return deltas, nftDeltas
 }
 
 func GetAccountDeltasFromWithdrawNft(
 	api API,
 	txInfo WithdrawNftTxConstraints,
-) (deltas [NbAccountsPerTx]AccountDeltaConstraints) {
+) (deltas [NbAccountsPerTx]AccountDeltaConstraints, nftDeltas [NbAccountsPerTx]AccountNftDeltaConstraints) {
 	// if assetId == gasFeeAssetId, compute delta for asset A
 	assetGasDelta := api.Neg(txInfo.GasFeeAssetAmount)
 	deltas[0] = AccountDeltaConstraints{
@@ -500,7 +602,12 @@ func GetAccountDeltasFromWithdrawNft(
 		},
 		LiquidityDelta: EmptyAccountLiquidityDeltaConstraints(),
 	}
-	deltas[2] = deltas[0]
-	deltas[3] = deltas[0]
-	return deltas
+	deltas[2] = deltas[1]
+	deltas[3] = deltas[2]
+	// nft deltas
+	nftDeltas[0] = EmptyAccountNftDeltaConstraints()
+	for i := 1; i < NbAccountsPerTx; i++ {
+		nftDeltas[i] = nftDeltas[i-1]
+	}
+	return deltas, nftDeltas
 }
