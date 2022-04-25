@@ -224,7 +224,7 @@ func VerifyTransaction(
 		*/
 		hFunc.Reset()
 		hFunc.Write(
-			tx.AccountsInfoBefore[i].NftInfo.NftAccountIndex,
+			tx.AccountsInfoBefore[i].NftInfo.NftAssetId,
 			tx.AccountsInfoBefore[i].NftInfo.NftIndex,
 			tx.AccountsInfoBefore[i].NftInfo.CreatorIndex,
 			tx.AccountsInfoBefore[i].NftInfo.NftContentHash,
@@ -382,7 +382,7 @@ func VerifyTransaction(
 		// verify updated account nft node hash
 		hFunc.Reset()
 		hFunc.Write(
-			tx.AccountsInfoAfter[i].NftInfo.NftAccountIndex,
+			tx.AccountsInfoAfter[i].NftInfo.NftAssetId,
 			tx.AccountsInfoAfter[i].NftInfo.NftIndex,
 			tx.AccountsInfoAfter[i].NftInfo.CreatorIndex,
 			tx.AccountsInfoAfter[i].NftInfo.NftContentHash,

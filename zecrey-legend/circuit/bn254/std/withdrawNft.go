@@ -113,7 +113,7 @@ func VerifyWithdrawNftTx(api API, flag Variable, nilHash Variable, tx WithdrawNf
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// should confirm if the user owns the nft
-	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAccountIndex)
+	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
 	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
 	// after withdraw nft should be empty
 	IsVariableEqual(api, flag, accountsAfter[0].NftInfo.NftIndex, DefaultInt)
