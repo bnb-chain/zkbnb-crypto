@@ -30,7 +30,6 @@ type TransferNftSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
 	ToAccountIndex    int64  `json:"to_account_index"`
 	NftIndex          int64  `json:"nft_index"`
-	NftAssetId        int64  `json:"nft_asset_id"`
 	NftContentHash    string `json:"nft_content_hash"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
@@ -52,7 +51,6 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 	txInfo = &TransferNftTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
-		NftAssetId:        segmentFormat.NftAssetId,
 		NftIndex:          segmentFormat.NftIndex,
 		NftContentHash:    segmentFormat.NftContentHash,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
@@ -83,7 +81,6 @@ type TransferNftTxInfo struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
 	ToAccountName     string
-	NftAssetId        int64
 	NftIndex          int64
 	NftContentHash    string
 	GasAccountIndex   int64
@@ -100,7 +97,6 @@ func ComputeTransferNftMsgHash(txInfo *TransferNftTxInfo, hFunc hash.Hash) (msgH
 	var buf bytes.Buffer
 	writeInt64IntoBuf(&buf, txInfo.FromAccountIndex)
 	writeInt64IntoBuf(&buf, txInfo.ToAccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.NftAssetId)
 	writeInt64IntoBuf(&buf, txInfo.NftIndex)
 	buf.Write(common.FromHex(txInfo.NftContentHash))
 	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)

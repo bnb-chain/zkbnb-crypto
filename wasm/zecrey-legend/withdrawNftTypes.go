@@ -29,7 +29,6 @@ import (
 
 type WithdrawNftSegmentFormat struct {
 	AccountIndex      int64  `json:"account_index"`
-	NftAssetId        int64  `json:"nft_asset_id"`
 	NftIndex          int64  `json:"nft_index"`
 	NftContentHash    string `json:"nft_content_hash"`
 	ToAddress         string `json:"to_address"`
@@ -49,7 +48,6 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 	}
 	txInfo = &WithdrawNftTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
-		NftAssetId:        segmentFormat.NftAssetId,
 		NftIndex:          segmentFormat.NftIndex,
 		NftContentHash:    segmentFormat.NftContentHash,
 		ToAddress:         segmentFormat.ToAddress,
@@ -76,10 +74,9 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 }
 
 type WithdrawNftTxInfo struct {
-	AccountIndex      int64
+	AccountIndex int64
 	// TODO not sure if we need to add it here
 	AccountNameHash   string
-	NftAssetId        int64
 	NftIndex          int64
 	NftContentHash    string
 	NftL1Address      string
@@ -110,7 +107,6 @@ func ComputeWithdrawNftMsgHash(txInfo *WithdrawNftTxInfo, hFunc hash.Hash) (msgH
 	hFunc.Reset()
 	var buf bytes.Buffer
 	writeInt64IntoBuf(&buf, txInfo.AccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.NftAssetId)
 	writeInt64IntoBuf(&buf, txInfo.NftIndex)
 	buf.Write(common.FromHex(txInfo.NftContentHash))
 	buf.Write(PaddingStringToBytes32(txInfo.ToAddress))

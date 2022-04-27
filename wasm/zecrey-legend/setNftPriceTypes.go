@@ -29,7 +29,6 @@ import (
 
 type SetNftPriceSegmentFormat struct {
 	AccountIndex      int64  `json:"account_index"`
-	NftAssetId        int64  `json:"nft_asset_id"`
 	NftIndex          int64  `json:"nft_index"`
 	NftContentHash    string `json:"nft_content_hash"`
 	AssetId           int64  `json:"asset_id"`
@@ -57,7 +56,6 @@ func ConstructSetNftPriceTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SetN
 	}
 	txInfo = &SetNftPriceTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
-		NftAssetId:        segmentFormat.NftAssetId,
 		NftIndex:          segmentFormat.NftIndex,
 		NftContentHash:    segmentFormat.NftContentHash,
 		AssetId:           segmentFormat.AssetId,
@@ -85,7 +83,6 @@ func ConstructSetNftPriceTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SetN
 
 type SetNftPriceTxInfo struct {
 	AccountIndex      int64
-	NftAssetId        int64
 	NftIndex          int64
 	NftContentHash    string
 	AssetId           int64
@@ -113,7 +110,6 @@ func ComputeSetNftPriceMsgHash(txInfo *SetNftPriceTxInfo, hFunc hash.Hash) (msgH
 	*/
 	var buf bytes.Buffer
 	writeInt64IntoBuf(&buf, txInfo.AccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.NftAssetId)
 	writeInt64IntoBuf(&buf, txInfo.NftIndex)
 	buf.Write(common.FromHex(txInfo.NftContentHash))
 	writeInt64IntoBuf(&buf, txInfo.AssetId)
