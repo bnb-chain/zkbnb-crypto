@@ -24,6 +24,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
+	"math/big"
 )
 
 type WithdrawNftSegmentFormat struct {
@@ -76,9 +77,14 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 
 type WithdrawNftTxInfo struct {
 	AccountIndex      int64
+	// TODO not sure if we need to add it here
+	AccountNameHash   string
 	NftAssetId        int64
 	NftIndex          int64
 	NftContentHash    string
+	NftL1Address      string
+	NftL1TokenId      *big.Int
+	Amount            int64
 	ToAddress         string
 	ProxyAddress      string
 	GasAccountIndex   int64

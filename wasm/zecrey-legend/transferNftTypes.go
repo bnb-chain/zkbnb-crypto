@@ -82,6 +82,7 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 type TransferNftTxInfo struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
+	ToAccountName     string
 	NftAssetId        int64
 	NftIndex          int64
 	NftContentHash    string

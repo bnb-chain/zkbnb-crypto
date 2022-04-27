@@ -113,7 +113,7 @@ type SwapTxInfo struct {
 	AssetBAmountDelta      *big.Int
 	PoolAAmount            *big.Int
 	PoolBAmount            *big.Int
-	FeeRate                int64
+	FeeRate                int64 // 0.3 * 10000
 	TreasuryAccountIndex   int64
 	TreasuryRate           int64
 	TreasuryFeeAmountDelta int64

@@ -84,6 +84,7 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 type MintNftTxInfo struct {
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
+	ToAccountName       string
 	NftAssetId          int64
 	NftIndex            int64
 	NftContentHash      string
