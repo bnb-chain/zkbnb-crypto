@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey_legend
+package legendTxTypes
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"

@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey_legend
+package legendTxTypes
 
 import (
 	"bytes"
@@ -143,18 +143,18 @@ func ComputeRemoveLiquidityMsgHash(txInfo *RemoveLiquidityTxInfo, hFunc hash.Has
 	*/
 	hFunc.Reset()
 	var buf bytes.Buffer
-	writeInt64IntoBuf(&buf, txInfo.FromAccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.ToAccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.PairIndex)
-	writeInt64IntoBuf(&buf, txInfo.AssetAId)
-	writeBigIntIntoBuf(&buf, txInfo.AssetAMinAmount)
-	writeInt64IntoBuf(&buf, txInfo.AssetBId)
-	writeBigIntIntoBuf(&buf, txInfo.AssetBMinAmount)
-	writeBigIntIntoBuf(&buf, txInfo.LpAmount)
-	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
-	writeInt64IntoBuf(&buf, txInfo.Nonce)
+	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.PairIndex)
+	WriteInt64IntoBuf(&buf, txInfo.AssetAId)
+	WriteBigIntIntoBuf(&buf, txInfo.AssetAMinAmount)
+	WriteInt64IntoBuf(&buf, txInfo.AssetBId)
+	WriteBigIntIntoBuf(&buf, txInfo.AssetBMinAmount)
+	WriteBigIntIntoBuf(&buf, txInfo.LpAmount)
+	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
+	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash

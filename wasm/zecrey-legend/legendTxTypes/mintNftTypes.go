@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey_legend
+package legendTxTypes
 
 import (
 	"bytes"
@@ -113,14 +113,14 @@ func ComputeMintNftMsgHash(txInfo *MintNftTxInfo, hFunc hash.Hash) (msgHash []by
 		hFunc.Write(nonce)
 	*/
 	var buf bytes.Buffer
-	writeInt64IntoBuf(&buf, txInfo.CreatorAccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.ToAccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.NftIndex)
+	WriteInt64IntoBuf(&buf, txInfo.CreatorAccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
 	buf.Write(common.FromHex(txInfo.NftContentHash))
-	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
-	writeInt64IntoBuf(&buf, txInfo.Nonce)
+	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
+	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash

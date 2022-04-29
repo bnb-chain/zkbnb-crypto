@@ -81,24 +81,22 @@ func TestDecByStartRoutine(t *testing.T) {
 }
 
 func TestDec(t *testing.T) {
-	enc, err := FromString("vnD6I3qhOKPp2JpRNCShZnEmeCSC6DgXh8wr+GpKsh6mVVIxi2eRBYI4snGqXedK64+THIk5+/UfiH4IGJqEGg==")
+	enc, err := FromString("AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARrk4rOFZLJ7pFNNWl1VQiqRP5bttHIcAfrh36Xj5wHA==")
 	if err != nil {
 		t.Fatal(err)
 	}
-	delta, err := FromString("9pYkX+HnCWWFagTuizryd4tnB0I4cz9fPGMUPT2vM5dBYBngm2oFJuZQutj6S/8bZjNamJ5o9sKsEIjqd5uSoA==")
-	if err != nil {
-		t.Fatal(err)
+
+	point := curve.ScalarMul(H, big.NewInt(30010))
+	nEnc := &ElGamalEnc{
+		CL: curve.ZeroPoint(),
+		CR: point,
 	}
-	newEnc, err := EncAdd(enc, delta)
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println(newEnc.String())
-	sk, b := new(big.Int).SetString("58701357177140449605359986386991314012065100879587586149814219788744791162880", 10)
+	fmt.Println(nEnc.String())
+	sk, b := new(big.Int).SetString("1274920211692271005034136269791630795266250736102937985856472195493871858111", 10)
 	if !b {
 		t.Fatal("cannot parse sk")
 	}
-	res, err := Dec(newEnc, sk, 100000)
+	res, err := Dec(enc, sk, 10000000)
 	if err != nil {
 		t.Fatal(err)
 	}

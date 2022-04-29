@@ -20,6 +20,7 @@ package zecrey_legend
 import (
 	"encoding/json"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/wasm/zecrey-legend/legendTxTypes"
 	"log"
 	"syscall/js"
 )
@@ -35,7 +36,7 @@ func BuyNftTx() js.Func {
 		if err != nil {
 			return err.Error()
 		}
-		txInfo, err := ConstructBuyNftTxInfo(sk, segmentStr)
+		txInfo, err := legendTxTypes.ConstructBuyNftTxInfo(sk, segmentStr)
 		if err != nil {
 			log.Println("[BuyNftTx] unable to construct generic transfer:", err)
 			return err.Error()
