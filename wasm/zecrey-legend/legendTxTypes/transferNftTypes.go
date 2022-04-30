@@ -24,6 +24,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
+	"math/big"
 )
 
 type TransferNftSegmentFormat struct {
@@ -33,7 +34,7 @@ type TransferNftSegmentFormat struct {
 	NftContentHash    string `json:"nft_content_hash"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
 	CallData          string `json:"call_data"`
 	Nonce             int64  `json:"nonce"`
 }
@@ -48,6 +49,11 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 		log.Println("[ConstructTransferNftTxInfo] err info:", err)
 		return nil, err
 	}
+	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &TransferNftTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
@@ -55,7 +61,7 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 		NftContentHash:    segmentFormat.NftContentHash,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
-		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
+		GasFeeAssetAmount: gasFeeAmount,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
@@ -85,7 +91,7 @@ type TransferNftTxInfo struct {
 	NftContentHash    string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount int64
+	GasFeeAssetAmount *big.Int
 	CallData          string
 	CallDataHash      []byte
 	Nonce             int64
@@ -101,7 +107,7 @@ func ComputeTransferNftMsgHash(txInfo *TransferNftTxInfo, hFunc hash.Hash) (msgH
 	buf.Write(common.FromHex(txInfo.NftContentHash))
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	buf.Write(txInfo.CallDataHash)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())

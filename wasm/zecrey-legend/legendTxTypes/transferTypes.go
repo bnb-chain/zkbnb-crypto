@@ -34,7 +34,7 @@ type TransferSegmentFormat struct {
 	AssetAmount       string `json:"asset_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
 	CallData          string `json:"call_data"`
 	Nonce             int64  `json:"nonce"`
 }
@@ -54,6 +54,11 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &TransferTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
@@ -62,7 +67,7 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 		AssetAmount:       assetAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
-		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
+		GasFeeAssetAmount: gasFeeAmount,
 		CallData:          segmentFormat.CallData,
 		CallDataHash:      nil,
 		Nonce:             segmentFormat.Nonce,
@@ -95,7 +100,7 @@ type TransferTxInfo struct {
 	AssetAmount       *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount int64
+	GasFeeAssetAmount *big.Int
 	CallData          string
 	CallDataHash      []byte
 	Nonce             int64
@@ -113,7 +118,7 @@ func ComputeTransferMsgHash(txInfo *TransferTxInfo, hFunc hash.Hash) (msgHash []
 	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	buf.Write(txInfo.CallDataHash)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())

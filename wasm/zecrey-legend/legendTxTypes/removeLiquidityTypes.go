@@ -39,7 +39,7 @@ type RemoveLiquiditySegmentFormat struct {
 	AssetBAmountDelta string `json:"asset_b_amount_delta"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
 	Nonce             int64  `json:"nonce"`
 }
 
@@ -75,6 +75,11 @@ func ConstructRemoveLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &RemoveLiquidityTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
@@ -88,7 +93,7 @@ func ConstructRemoveLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 		AssetBAmountDelta: assetBAmountDelta,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
-		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
+		GasFeeAssetAmount: gasFeeAmount,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
@@ -120,7 +125,7 @@ type RemoveLiquidityTxInfo struct {
 	AssetBAmountDelta *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount int64
+	GasFeeAssetAmount *big.Int
 	Nonce             int64
 	Sig               []byte
 }
@@ -153,7 +158,7 @@ func ComputeRemoveLiquidityMsgHash(txInfo *RemoveLiquidityTxInfo, hFunc hash.Has
 	WriteBigIntIntoBuf(&buf, txInfo.LpAmount)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

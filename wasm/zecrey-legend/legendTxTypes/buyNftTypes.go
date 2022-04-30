@@ -36,9 +36,10 @@ type BuyNftSegmentFormat struct {
 	AssetAmount          string `json:"asset_amount"`
 	TreasuryFeeRate      int64  `json:"treasury_fee_rate"`
 	TreasuryAccountIndex int64  `json:"treasury_account_index"`
+	CreatorFeeRate       int64  `json:"creator_fee_rate"`
 	GasAccountIndex      int64  `json:"gas_account_index"`
 	GasFeeAssetId        int64  `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount    int64  `json:"gas_fee_asset_amount"`
+	GasFeeAssetAmount    string `json:"gas_fee_asset_amount"`
 	Nonce                int64  `json:"nonce"`
 }
 
@@ -57,6 +58,11 @@ func ConstructBuyNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *BuyNftTxI
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &BuyNftTxInfo{
 		AccountIndex:         segmentFormat.AccountIndex,
 		OwnerAccountIndex:    segmentFormat.OwnerAccountIndex,
@@ -66,9 +72,10 @@ func ConstructBuyNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *BuyNftTxI
 		AssetAmount:          assetAmount,
 		TreasuryFeeRate:      segmentFormat.TreasuryFeeRate,
 		TreasuryAccountIndex: segmentFormat.TreasuryAccountIndex,
+		CreatorFeeRate:       segmentFormat.CreatorFeeRate,
 		GasAccountIndex:      segmentFormat.GasAccountIndex,
 		GasFeeAssetId:        segmentFormat.GasFeeAssetId,
-		GasFeeAssetAmount:    segmentFormat.GasFeeAssetAmount,
+		GasFeeAssetAmount:    gasFeeAmount,
 		Nonce:                segmentFormat.Nonce,
 		Sig:                  nil,
 	}
@@ -96,9 +103,10 @@ type BuyNftTxInfo struct {
 	AssetAmount          *big.Int
 	TreasuryFeeRate      int64
 	TreasuryAccountIndex int64
+	CreatorFeeRate       int64
 	GasAccountIndex      int64
 	GasFeeAssetId        int64
-	GasFeeAssetAmount    int64
+	GasFeeAssetAmount    *big.Int
 	Nonce                int64
 	Sig                  []byte
 }
@@ -114,6 +122,7 @@ func ComputeBuyNftMsgHash(txInfo *BuyNftTxInfo, hFunc hash.Hash) (msgHash []byte
 			tx.AssetAmount,
 			tx.TreasuryAccountIndex,
 			tx.TreasuryFeeRate,
+			tx.CreatorFeeRate,
 			tx.GasAccountIndex,
 			tx.GasFeeAssetId,
 			tx.GasFeeAssetAmount,
@@ -129,9 +138,10 @@ func ComputeBuyNftMsgHash(txInfo *BuyNftTxInfo, hFunc hash.Hash) (msgHash []byte
 	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.TreasuryAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.TreasuryFeeRate)
+	WriteInt64IntoBuf(&buf, txInfo.CreatorFeeRate)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

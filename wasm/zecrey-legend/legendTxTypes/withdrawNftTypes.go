@@ -35,7 +35,7 @@ type WithdrawNftSegmentFormat struct {
 	ProxyAddress      string `json:"proxy_address"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
 	Nonce             int64  `json:"nonce"`
 }
 
@@ -46,6 +46,11 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 		log.Println("[ConstructWithdrawNftTxInfo] err info:", err)
 		return nil, err
 	}
+	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &WithdrawNftTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
 		NftIndex:          segmentFormat.NftIndex,
@@ -54,7 +59,7 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 		ProxyAddress:      segmentFormat.ProxyAddress,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
-		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
+		GasFeeAssetAmount: gasFeeAmount,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
@@ -77,6 +82,7 @@ type WithdrawNftTxInfo struct {
 	AccountIndex int64
 	// TODO not sure if we need to add it here
 	AccountNameHash   string
+	NftType           uint8
 	NftIndex          int64
 	NftContentHash    string
 	NftL1Address      string
@@ -86,7 +92,7 @@ type WithdrawNftTxInfo struct {
 	ProxyAddress      string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount int64
+	GasFeeAssetAmount *big.Int
 	Nonce             int64
 	Sig               []byte
 }
@@ -113,7 +119,7 @@ func ComputeWithdrawNftMsgHash(txInfo *WithdrawNftTxInfo, hFunc hash.Hash) (msgH
 	buf.Write(PaddingStringToBytes32(txInfo.ProxyAddress))
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

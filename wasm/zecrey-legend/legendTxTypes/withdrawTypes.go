@@ -32,7 +32,7 @@ type WithdrawSegmentFormat struct {
 	AssetAmount       string `json:"asset_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
 	ToAddress         string `json:"to_address"`
 	Nonce             int64  `json:"nonce"`
 }
@@ -49,13 +49,18 @@ func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Withdra
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &WithdrawTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		AssetId:           segmentFormat.AssetId,
 		AssetAmount:       assetAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
-		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
+		GasFeeAssetAmount: gasFeeAmount,
 		ToAddress:         segmentFormat.ToAddress,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
@@ -81,7 +86,7 @@ type WithdrawTxInfo struct {
 	AssetAmount       *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount int64
+	GasFeeAssetAmount *big.Int
 	ToAddress         string
 	Nonce             int64
 	Sig               []byte
@@ -107,7 +112,7 @@ func ComputeWithdrawMsgHash(txInfo *WithdrawTxInfo, hFunc hash.Hash) (msgHash []
 	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	buf.Write(PaddingStringToBytes32(txInfo.ToAddress))
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())

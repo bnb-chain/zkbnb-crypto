@@ -35,7 +35,7 @@ type SetNftPriceSegmentFormat struct {
 	AssetAmount       string `json:"asset_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount int64  `json:"gas_fee_asset_amount"`
+	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
 	Nonce             int64  `json:"nonce"`
 }
 
@@ -54,6 +54,11 @@ func ConstructSetNftPriceTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SetN
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &SetNftPriceTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
 		NftIndex:          segmentFormat.NftIndex,
@@ -62,7 +67,7 @@ func ConstructSetNftPriceTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SetN
 		AssetAmount:       assetAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
-		GasFeeAssetAmount: segmentFormat.GasFeeAssetAmount,
+		GasFeeAssetAmount: gasFeeAmount,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
@@ -89,7 +94,7 @@ type SetNftPriceTxInfo struct {
 	AssetAmount       *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount int64
+	GasFeeAssetAmount *big.Int
 	Nonce             int64
 	Sig               []byte
 }
@@ -116,7 +121,7 @@ func ComputeSetNftPriceMsgHash(txInfo *SetNftPriceTxInfo, hFunc hash.Hash) (msgH
 	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

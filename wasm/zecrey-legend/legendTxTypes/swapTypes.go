@@ -40,10 +40,10 @@ type SwapSegmentFormat struct {
 	FeeRate                int64  `json:"fee_rate"`
 	TreasuryAccountIndex   int64  `json:"treasury_account_index"`
 	TreasuryRate           int64  `json:"treasury_rate"`
-	TreasuryFeeAmountDelta int64  `json:"treasury_fee_amount_delta"`
+	TreasuryFeeAmountDelta string `json:"treasury_fee_amount_delta"`
 	GasAccountIndex        int64  `json:"gas_account_index"`
 	GasFeeAssetId          int64  `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount      int64  `json:"gas_fee_asset_amount"`
+	GasFeeAssetAmount      string `json:"gas_fee_asset_amount"`
 	Nonce                  int64  `json:"nonce"`
 }
 
@@ -69,6 +69,16 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
+	treasuryAmount, err := StringToBigInt(segmentFormat.TreasuryFeeAmountDelta)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &SwapTxInfo{
 		FromAccountIndex:       segmentFormat.FromAccountIndex,
 		ToAccountIndex:         segmentFormat.ToAccountIndex,
@@ -83,10 +93,10 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 		FeeRate:                segmentFormat.FeeRate,
 		TreasuryAccountIndex:   segmentFormat.TreasuryAccountIndex,
 		TreasuryRate:           segmentFormat.TreasuryRate,
-		TreasuryFeeAmountDelta: segmentFormat.TreasuryFeeAmountDelta,
+		TreasuryFeeAmountDelta: treasuryAmount,
 		GasAccountIndex:        segmentFormat.GasAccountIndex,
 		GasFeeAssetId:          segmentFormat.GasFeeAssetId,
-		GasFeeAssetAmount:      segmentFormat.GasFeeAssetAmount,
+		GasFeeAssetAmount:      gasFeeAmount,
 		Nonce:                  segmentFormat.Nonce,
 		Sig:                    nil,
 	}
@@ -116,10 +126,10 @@ type SwapTxInfo struct {
 	FeeRate                int64 // 0.3 * 10000
 	TreasuryAccountIndex   int64
 	TreasuryRate           int64
-	TreasuryFeeAmountDelta int64
+	TreasuryFeeAmountDelta *big.Int
 	GasAccountIndex        int64
 	GasFeeAssetId          int64
-	GasFeeAssetAmount      int64
+	GasFeeAssetAmount      *big.Int
 	Nonce                  int64
 	Sig                    []byte
 }
@@ -157,7 +167,7 @@ func ComputeSwapMsgHash(txInfo *SwapTxInfo, hFunc hash.Hash) (msgHash []byte) {
 	WriteInt64IntoBuf(&buf, txInfo.TreasuryRate)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
