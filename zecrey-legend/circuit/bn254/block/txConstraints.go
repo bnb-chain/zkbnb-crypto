@@ -354,7 +354,7 @@ func VerifyTransaction(
 		NewAccountNftRoot = std.UpdateMerkleProof(api, hFunc, tx.MerkleProofsAccountNftBefore[i][:], tx.MerkleProofsHelperAccountNftBefore[i][:])
 		// verify account node hash
 		/*
-			AccountIndex      Variable
+			BuyerAccountIndex      Variable
 			AccountName       Variable
 			AccountPk         eddsa.PublicKey
 			Nonce             Variable

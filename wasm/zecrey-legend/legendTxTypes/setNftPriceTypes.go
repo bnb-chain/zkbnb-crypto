@@ -103,7 +103,7 @@ func ComputeSetNftPriceMsgHash(txInfo *SetNftPriceTxInfo, hFunc hash.Hash) (msgH
 	hFunc.Reset()
 	/*
 		hFunc.Write(
-			tx.AccountIndex,
+			tx.BuyerAccountIndex,
 			tx.NftIndex,
 			tx.AssetId,
 			tx.AssetAmount,

@@ -35,6 +35,7 @@ type TransferSegmentFormat struct {
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
+	Memo              string `json:"memo"`
 	CallData          string `json:"call_data"`
 	Nonce             int64  `json:"nonce"`
 }
@@ -67,6 +68,7 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 		AssetAmount:       assetAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
+		Memo:              segmentFormat.Memo,
 		GasFeeAssetAmount: gasFeeAmount,
 		CallData:          segmentFormat.CallData,
 		CallDataHash:      nil,
@@ -101,6 +103,7 @@ type TransferTxInfo struct {
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
+	Memo              string
 	CallData          string
 	CallDataHash      []byte
 	Nonce             int64

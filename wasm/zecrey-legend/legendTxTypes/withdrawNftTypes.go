@@ -100,7 +100,7 @@ type WithdrawNftTxInfo struct {
 func ComputeWithdrawNftMsgHash(txInfo *WithdrawNftTxInfo, hFunc hash.Hash) (msgHash []byte) {
 	/*
 		hFunc.Write(
-			tx.AccountIndex,
+			tx.BuyerAccountIndex,
 			tx.NftIndex,
 			tx.ToAddress,
 			tx.ProxyAddress,
