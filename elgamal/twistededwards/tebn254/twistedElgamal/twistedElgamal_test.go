@@ -19,6 +19,8 @@ package twistedElgamal
 
 import (
 	"fmt"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/magiconair/properties/assert"
 	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/zecrey-labs/zecrey-crypto/ffmath"
@@ -125,4 +127,62 @@ func TestFakeElGamalEnc(t *testing.T) {
 	CR := curve.ScalarMul(curve.H, big.NewInt(100))
 	enc := &ElGamalEnc{CL: CL, CR: CR}
 	fmt.Println(enc.String())
+}
+
+func TestEddsa(t *testing.T) {
+	hFunc := mimc.NewMiMC()
+	hFunc.Write([]byte("sher"))
+	seedBytes := hFunc.Sum(nil)
+	seed := common.Bytes2Hex(seedBytes)
+	fmt.Println(seed)
+	key, err := curve.GenerateEddsaPrivateKey(seed)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("sher:", common.Bytes2Hex(key.PublicKey.Bytes()))
+	fmt.Println(key.Bytes())
+
+	hFunc.Reset()
+	hFunc.Write([]byte("gavin"))
+	seedBytes = hFunc.Sum(nil)
+	seed = common.Bytes2Hex(seedBytes)
+	key, err = curve.GenerateEddsaPrivateKey(seed)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("gavin:", common.Bytes2Hex(key.PublicKey.Bytes()))
+	fmt.Println(key.Bytes())
+
+	hFunc.Reset()
+	hFunc.Write([]byte("pool"))
+	seedBytes = hFunc.Sum(nil)
+	seed = common.Bytes2Hex(seedBytes)
+	key, err = curve.GenerateEddsaPrivateKey(seed)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("pool:", common.Bytes2Hex(key.PublicKey.Bytes()))
+	fmt.Println(key.Bytes())
+
+	hFunc.Reset()
+	hFunc.Write([]byte("treasury"))
+	seedBytes = hFunc.Sum(nil)
+	seed = common.Bytes2Hex(seedBytes)
+	key, err = curve.GenerateEddsaPrivateKey(seed)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("treasury:", common.Bytes2Hex(key.PublicKey.Bytes()))
+	fmt.Println(key.Bytes())
+
+	hFunc.Reset()
+	hFunc.Write([]byte("gas"))
+	seedBytes = hFunc.Sum(nil)
+	seed = common.Bytes2Hex(seedBytes)
+	key, err = curve.GenerateEddsaPrivateKey(seed)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("gas:", common.Bytes2Hex(key.PublicKey.Bytes()))
+	fmt.Println(key.Bytes())
 }

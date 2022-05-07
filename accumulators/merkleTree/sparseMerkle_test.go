@@ -48,6 +48,23 @@ func ToString(buf []byte) string {
 	return hex.EncodeToString(buf)
 }
 
+func TestCreateLeafNode(t *testing.T) {
+	tree, err := NewEmptyTree(32, NilHash, mimc.NewMiMC())
+	if err != nil {
+		panic(err)
+	}
+	log.Println(common.Bytes2Hex(tree.RootNode.Value))
+	hFunc := mimc.NewMiMC()
+	hFunc.Write([]byte("1"))
+	first := hFunc.Sum(nil)
+	tree.Update(0, first)
+	log.Println(common.Bytes2Hex(tree.RootNode.Value))
+	hFunc.Write([]byte("2"))
+	second := hFunc.Sum(nil)
+	tree.Update(1, second)
+	log.Println(common.Bytes2Hex(tree.RootNode.Value))
+}
+
 func TestNewTree(t *testing.T) {
 	elapse := time.Now()
 	hashState := MockState(6)
