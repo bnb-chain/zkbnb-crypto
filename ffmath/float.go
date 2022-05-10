@@ -41,6 +41,10 @@ func FloatMul(a, b *big.Float) *big.Float {
 	return new(big.Float).Mul(a, b)
 }
 
+func FloatSqrt(a *big.Float) *big.Float {
+	return new(big.Float).Sqrt(a)
+}
+
 func IntToFloat(a *big.Int) *big.Float {
 	return new(big.Float).SetInt(a)
 }

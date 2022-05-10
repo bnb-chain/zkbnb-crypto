@@ -123,6 +123,8 @@ type RemoveLiquidityTxInfo struct {
 	LpAmount          *big.Int
 	AssetAAmountDelta *big.Int
 	AssetBAmountDelta *big.Int
+	PoolAAmount       *big.Int
+	PoolBAmount       *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
