@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey_legend
+package legendTxTypes
 
 import (
 	"bytes"
@@ -24,15 +24,15 @@ import (
 	"math/big"
 )
 
-func writeUint64IntoBuf(buf *bytes.Buffer, a uint64) {
+func WriteUint64IntoBuf(buf *bytes.Buffer, a uint64) {
 	buf.Write(new(big.Int).SetUint64(a).FillBytes(make([]byte, 32)))
 }
 
-func writeInt64IntoBuf(buf *bytes.Buffer, a int64) {
+func WriteInt64IntoBuf(buf *bytes.Buffer, a int64) {
 	buf.Write(new(big.Int).SetInt64(a).FillBytes(make([]byte, 32)))
 }
 
-func writeBigIntIntoBuf(buf *bytes.Buffer, a *big.Int) {
+func WriteBigIntIntoBuf(buf *bytes.Buffer, a *big.Int) {
 	buf.Write(a.FillBytes(make([]byte, 32)))
 }
 

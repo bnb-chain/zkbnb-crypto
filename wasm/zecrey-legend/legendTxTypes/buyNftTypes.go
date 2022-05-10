@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey_legend
+package legendTxTypes
 
 import (
 	"bytes"
@@ -28,18 +28,19 @@ import (
 )
 
 type BuyNftSegmentFormat struct {
-	AccountIndex         int64  `json:"account_index"`
+	BuyerAccountIndex    int64  `json:"buyer_account_index"`
 	OwnerAccountIndex    int64  `json:"owner_account_index"`
-	NftAssetId           int64  `json:"nft_asset_id"`
 	NftIndex             int64  `json:"nft_index"`
 	NftContentHash       string `json:"nft_content_hash"`
 	AssetId              int64  `json:"asset_id"`
 	AssetAmount          string `json:"asset_amount"`
 	TreasuryFeeRate      int64  `json:"treasury_fee_rate"`
 	TreasuryAccountIndex int64  `json:"treasury_account_index"`
+	CreatorAccountIndex  int64  `json:"creator_account_index"`
+	CreatorFeeRate       int64  `json:"creator_fee_rate"`
 	GasAccountIndex      int64  `json:"gas_account_index"`
 	GasFeeAssetId        int64  `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount    int64  `json:"gas_fee_asset_amount"`
+	GasFeeAssetAmount    string `json:"gas_fee_asset_amount"`
 	Nonce                int64  `json:"nonce"`
 }
 
@@ -58,19 +59,25 @@ func ConstructBuyNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *BuyNftTxI
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		return nil, err
+	}
 	txInfo = &BuyNftTxInfo{
-		AccountIndex:         segmentFormat.AccountIndex,
+		BuyerAccountIndex:    segmentFormat.BuyerAccountIndex,
 		OwnerAccountIndex:    segmentFormat.OwnerAccountIndex,
-		NftAssetId:           segmentFormat.NftAssetId,
 		NftIndex:             segmentFormat.NftIndex,
 		NftContentHash:       segmentFormat.NftContentHash,
 		AssetId:              segmentFormat.AssetId,
 		AssetAmount:          assetAmount,
 		TreasuryFeeRate:      segmentFormat.TreasuryFeeRate,
 		TreasuryAccountIndex: segmentFormat.TreasuryAccountIndex,
+		CreatorAccountIndex:  segmentFormat.CreatorAccountIndex,
+		CreatorFeeRate:       segmentFormat.CreatorFeeRate,
 		GasAccountIndex:      segmentFormat.GasAccountIndex,
 		GasFeeAssetId:        segmentFormat.GasFeeAssetId,
-		GasFeeAssetAmount:    segmentFormat.GasFeeAssetAmount,
+		GasFeeAssetAmount:    gasFeeAmount,
 		Nonce:                segmentFormat.Nonce,
 		Sig:                  nil,
 	}
@@ -90,18 +97,19 @@ func ConstructBuyNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *BuyNftTxI
 }
 
 type BuyNftTxInfo struct {
-	AccountIndex         int64
+	BuyerAccountIndex    int64
 	OwnerAccountIndex    int64
-	NftAssetId           int64
 	NftIndex             int64
 	NftContentHash       string
 	AssetId              int64
 	AssetAmount          *big.Int
 	TreasuryFeeRate      int64
 	TreasuryAccountIndex int64
+	CreatorAccountIndex  int64
+	CreatorFeeRate       int64
 	GasAccountIndex      int64
 	GasFeeAssetId        int64
-	GasFeeAssetAmount    int64
+	GasFeeAssetAmount    *big.Int
 	Nonce                int64
 	Sig                  []byte
 }
@@ -110,13 +118,14 @@ func ComputeBuyNftMsgHash(txInfo *BuyNftTxInfo, hFunc hash.Hash) (msgHash []byte
 	hFunc.Reset()
 	/*
 		hFunc.Write(
-			tx.AccountIndex,
+			tx.BuyerAccountIndex,
 			tx.OwnerAccountIndex,
 			tx.NftIndex,
 			tx.AssetId,
 			tx.AssetAmount,
 			tx.TreasuryAccountIndex,
 			tx.TreasuryFeeRate,
+			tx.CreatorFeeRate,
 			tx.GasAccountIndex,
 			tx.GasFeeAssetId,
 			tx.GasFeeAssetAmount,
@@ -124,19 +133,19 @@ func ComputeBuyNftMsgHash(txInfo *BuyNftTxInfo, hFunc hash.Hash) (msgHash []byte
 		hFunc.Write(nonce)
 	*/
 	var buf bytes.Buffer
-	writeInt64IntoBuf(&buf, txInfo.AccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.OwnerAccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.NftAssetId)
-	writeInt64IntoBuf(&buf, txInfo.NftIndex)
+	WriteInt64IntoBuf(&buf, txInfo.BuyerAccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.OwnerAccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
 	buf.Write(common.FromHex(txInfo.NftContentHash))
-	writeInt64IntoBuf(&buf, txInfo.AssetId)
-	writeBigIntIntoBuf(&buf, txInfo.AssetAmount)
-	writeInt64IntoBuf(&buf, txInfo.TreasuryAccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.TreasuryFeeRate)
-	writeInt64IntoBuf(&buf, txInfo.GasAccountIndex)
-	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	writeInt64IntoBuf(&buf, txInfo.GasFeeAssetAmount)
-	writeInt64IntoBuf(&buf, txInfo.Nonce)
+	WriteInt64IntoBuf(&buf, txInfo.AssetId)
+	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)
+	WriteInt64IntoBuf(&buf, txInfo.TreasuryAccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.TreasuryFeeRate)
+	WriteInt64IntoBuf(&buf, txInfo.CreatorFeeRate)
+	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
+	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash

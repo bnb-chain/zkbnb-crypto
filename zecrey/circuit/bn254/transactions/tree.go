@@ -26,7 +26,7 @@ import (
 type MixedArray struct {
 	/*
 		hFunc.Write(
-					tx.AccountsInfoAfter[i].AccountIndex,
+					tx.AccountsInfoAfter[i].BuyerAccountIndex,
 					tx.AccountsInfoAfter[i].AccountName,
 				)
 				std.WritePointIntoBuf(&hFunc, tx.AccountsInfoAfter[i].AccountPk)

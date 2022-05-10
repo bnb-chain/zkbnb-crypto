@@ -160,11 +160,14 @@ func NewTreeByMap(leaves map[int64]*Node, maxHeight int, nilHash []byte, hFunc h
 	nilHashValueConst := make([][]byte, maxHeight+1)
 	nilHashValueConst[0] = nilHash
 	// scan map
-	maxIndex := int64(0)
+	maxIndex := int64(-1)
 	for index, _ := range leaves {
 		if index > maxIndex {
 			maxIndex = index
 		}
+	}
+	if maxIndex == -1 {
+		return NewEmptyTree(maxHeight, nilHash, hFunc)
 	}
 	var nodes []*Node
 	for i := int64(0); i <= maxIndex; i++ {
