@@ -29,7 +29,6 @@ import (
 
 type AddLiquiditySegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
-	ToAccountIndex    int64  `json:"to_account_index"`
 	PairIndex         int64  `json:"pair_index"`
 	AssetAId          int64  `json:"asset_a_id"`
 	AssetAAmount      string `json:"asset_a_amount"`
@@ -71,7 +70,6 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 	lpAmount := new(big.Int).Sqrt(lpSquare)
 	txInfo = &AddLiquidityTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
-		ToAccountIndex:    segmentFormat.ToAccountIndex,
 		PairIndex:         segmentFormat.PairIndex,
 		AssetAId:          segmentFormat.AssetAId,
 		AssetAAmount:      assetAAmount,
@@ -103,7 +101,6 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 
 type AddLiquidityTxInfo struct {
 	FromAccountIndex  int64
-	ToAccountIndex    int64
 	PairIndex         int64
 	AssetAId          int64
 	AssetAAmount      *big.Int
@@ -138,7 +135,6 @@ func ComputeAddLiquidityMsgHash(txInfo *AddLiquidityTxInfo, hFunc hash.Hash) (ms
 	hFunc.Reset()
 	var buf bytes.Buffer
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.PairIndex)
 	WriteInt64IntoBuf(&buf, txInfo.AssetAId)
 	WriteBigIntIntoBuf(&buf, txInfo.AssetAAmount)

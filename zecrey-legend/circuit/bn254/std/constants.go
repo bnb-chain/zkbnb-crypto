@@ -33,9 +33,12 @@ type (
 )
 
 const (
-	ZeroInt    = uint64(0)
-	DefaultInt = int64(-1)
+	ZeroInt = uint64(0)
+	// TODO
+	EmptyAssetRoot = 0
+	DefaultInt     = int64(-1)
 
-	NbAccountAssetsPerAccount = 3
+	NbAccountAssetsPerAccount = 4
 	NbAccountsPerTx           = 4
+	NbNftsPerTx               = 2
 )

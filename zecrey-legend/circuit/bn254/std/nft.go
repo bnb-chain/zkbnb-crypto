@@ -17,28 +17,16 @@
 
 package std
 
-import (
-	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	"math/big"
-)
+import "math/big"
 
-/*
-	Account: account info
-*/
-type Account struct {
-	AccountIndex    int64
-	AccountNameHash []byte
-	AccountPk       *eddsa.PublicKey
-	Nonce           int64
-	AssetRoot       []byte
-	AssetsInfo      [NbAccountAssetsPerAccount]*AccountAsset
-}
-
-/*
-	AccountAsset: asset info
-*/
-type AccountAsset struct {
-	AssetId  int64
-	Balance  *big.Int
-	LpAmount *big.Int
+type Nft struct {
+	NftIndex            int64
+	NftContentHash      []byte
+	CreatorAccountIndex int64
+	OwnerAccountIndex   int64
+	AssetId             int64
+	AssetAmount         *big.Int
+	NftL1Address        *big.Int
+	NftL1TokenId        *big.Int
+	CreatorTreasuryRate int64
 }

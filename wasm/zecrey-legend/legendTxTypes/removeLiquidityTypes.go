@@ -28,7 +28,6 @@ import (
 
 type RemoveLiquiditySegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
-	ToAccountIndex    int64  `json:"to_account_index"`
 	PairIndex         int64  `json:"pair_index"`
 	AssetAId          int64  `json:"asset_a_id"`
 	AssetAMinAmount   string `json:"asset_a_min_amount"`
@@ -82,7 +81,6 @@ func ConstructRemoveLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 	}
 	txInfo = &RemoveLiquidityTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
-		ToAccountIndex:    segmentFormat.ToAccountIndex,
 		PairIndex:         segmentFormat.PairIndex,
 		AssetAId:          segmentFormat.AssetAId,
 		AssetAMinAmount:   assetAMinAmount,
@@ -114,7 +112,6 @@ func ConstructRemoveLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 
 type RemoveLiquidityTxInfo struct {
 	FromAccountIndex  int64
-	ToAccountIndex    int64
 	PairIndex         int64
 	AssetAId          int64
 	AssetAMinAmount   *big.Int
@@ -151,7 +148,6 @@ func ComputeRemoveLiquidityMsgHash(txInfo *RemoveLiquidityTxInfo, hFunc hash.Has
 	hFunc.Reset()
 	var buf bytes.Buffer
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.PairIndex)
 	WriteInt64IntoBuf(&buf, txInfo.AssetAId)
 	WriteBigIntIntoBuf(&buf, txInfo.AssetAMinAmount)

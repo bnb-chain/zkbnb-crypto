@@ -20,56 +20,28 @@ package std
 import "math/big"
 
 type BuyNftTx struct {
-	/*
-		- account index
-		- owner account index
-		- nft token id
-		- asset id
-		- asset amount
-		- gas account index
-		- gas fee asset id
-		- gas fee asset amount
-		- nonce
-	*/
-	AccountIndex         uint32
-	OwnerAccountIndex    uint32
-	NftAssetId           uint32
-	NftIndex             uint64
-	NftContentHash       []byte
-	NftL1TokenId         *big.Int
-	NftL1Address         []byte
-	AssetId              uint32
-	AssetAmount          uint64
-	TreasuryFeeRate      uint32
-	TreasuryAccountIndex uint32
-	GasAccountIndex      uint32
-	GasFeeAssetId        uint32
-	GasFeeAssetAmount    uint64
+	BuyerAccountIndex    int64
+	OwnerAccountIndex    int64
+	NftIndex             int64
+	AssetId              int64
+	AssetAmount          *big.Int
+	TreasuryFeeRate      int64
+	TreasuryAccountIndex int64
+	CreatorTreasuryRate  int64
+	GasAccountIndex      int64
+	GasFeeAssetId        int64
+	GasFeeAssetAmount    *big.Int
 }
 
 type BuyNftTxConstraints struct {
-	/*
-		- account index
-		- owner account index
-		- nft token id
-		- asset id
-		- asset amount
-		- gas account index
-		- gas fee asset id
-		- gas fee asset amount
-		- nonce
-	*/
-	AccountIndex         Variable
+	BuyerAccountIndex    Variable
 	OwnerAccountIndex    Variable
-	NftAssetId           Variable
 	NftIndex             Variable
-	NftContentHash       Variable
-	NftL1TokenId         Variable
-	NftL1Address         Variable
 	AssetId              Variable
 	AssetAmount          Variable
-	TreasuryAccountIndex Variable
 	TreasuryFeeRate      Variable
+	TreasuryAccountIndex Variable
+	CreatorTreasuryRate  Variable
 	GasAccountIndex      Variable
 	GasFeeAssetId        Variable
 	GasFeeAssetAmount    Variable
@@ -77,17 +49,14 @@ type BuyNftTxConstraints struct {
 
 func EmptyBuyNftTxWitness() (witness BuyNftTxConstraints) {
 	witness = BuyNftTxConstraints{
-		AccountIndex:         ZeroInt,
+		BuyerAccountIndex:    ZeroInt,
 		OwnerAccountIndex:    ZeroInt,
-		NftAssetId:           ZeroInt,
 		NftIndex:             ZeroInt,
-		NftContentHash:       ZeroInt,
-		NftL1TokenId:         ZeroInt,
-		NftL1Address:         ZeroInt,
 		AssetId:              ZeroInt,
 		AssetAmount:          ZeroInt,
-		TreasuryAccountIndex: ZeroInt,
 		TreasuryFeeRate:      ZeroInt,
+		TreasuryAccountIndex: ZeroInt,
+		CreatorTreasuryRate:  ZeroInt,
 		GasAccountIndex:      ZeroInt,
 		GasFeeAssetId:        ZeroInt,
 		GasFeeAssetAmount:    ZeroInt,
@@ -97,17 +66,14 @@ func EmptyBuyNftTxWitness() (witness BuyNftTxConstraints) {
 
 func SetBuyNftTxWitness(tx *BuyNftTx) (witness BuyNftTxConstraints) {
 	witness = BuyNftTxConstraints{
-		AccountIndex:         tx.AccountIndex,
+		BuyerAccountIndex:    tx.BuyerAccountIndex,
 		OwnerAccountIndex:    tx.OwnerAccountIndex,
-		NftAssetId:           tx.NftAssetId,
 		NftIndex:             tx.NftIndex,
-		NftContentHash:       tx.NftContentHash,
-		NftL1TokenId:         tx.NftL1TokenId,
-		NftL1Address:         tx.NftL1Address,
 		AssetId:              tx.AssetId,
 		AssetAmount:          tx.AssetAmount,
-		TreasuryAccountIndex: tx.TreasuryAccountIndex,
 		TreasuryFeeRate:      tx.TreasuryFeeRate,
+		TreasuryAccountIndex: tx.TreasuryAccountIndex,
+		CreatorTreasuryRate:  tx.CreatorTreasuryRate,
 		GasAccountIndex:      tx.GasAccountIndex,
 		GasFeeAssetId:        tx.GasFeeAssetId,
 		GasFeeAssetAmount:    tx.GasFeeAssetAmount,
@@ -118,15 +84,13 @@ func SetBuyNftTxWitness(tx *BuyNftTx) (witness BuyNftTxConstraints) {
 func ComputeHashFromBuyNftTx(tx BuyNftTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		tx.AccountIndex,
 		tx.OwnerAccountIndex,
-		tx.NftAssetId,
 		tx.NftIndex,
-		tx.NftContentHash,
 		tx.AssetId,
 		tx.AssetAmount,
 		tx.TreasuryAccountIndex,
 		tx.TreasuryFeeRate,
+		tx.CreatorTreasuryRate,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
@@ -155,29 +119,24 @@ func ComputeHashFromBuyNftTx(tx BuyNftTxConstraints, nonce Variable, hFunc MiMC)
 		- Assets
 			- AssetGas
 */
-func VerifyBuyNftTx(api API, flag Variable, nilHash Variable, tx BuyNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifyBuyNftTx(api API, flag Variable, nilHash Variable, tx BuyNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints) {
 	// verify params
-	// from account index
-	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
-	// owner account index
+	// account index
+	IsVariableEqual(api, flag, tx.BuyerAccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.OwnerAccountIndex, accountsBefore[1].AccountIndex)
-	// treasury account index
 	IsVariableEqual(api, flag, tx.TreasuryAccountIndex, accountsBefore[2].AccountIndex)
-	// buyer nft should be empty
-	IsEmptyNftInfo(api, flag, nilHash, accountsBefore[0].NftInfo)
-	// owner nft asset id and amount
-	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[1].NftInfo.AssetId)
-	IsVariableEqual(api, flag, tx.AssetAmount, accountsBefore[1].NftInfo.AssetAmount)
-	// treasury asset id
-	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[2].AssetsInfo[0].AssetId)
-	// gas
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[3].AccountIndex)
+	// asset id
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[3].AssetsInfo[0].AssetId)
+	// nft info
+	IsVariableEqual(api, flag, tx.OwnerAccountIndex, nftBefore.OwnerAccountIndex)
+	IsVariableEqual(api, flag, tx.AssetId, nftBefore.AssetId)
+	IsVariableEqual(api, flag, tx.AssetAmount, nftBefore.AssetAmount)
+	IsVariableEqual(api, flag, tx.CreatorTreasuryRate, nftBefore.CreatorTreasuryRate)
 	// should have enough assets
-	isSameAsset := api.IsZero(api.Sub(tx.AssetId, tx.GasFeeAssetId))
-	totalDelta := api.Add(tx.AssetAmount, tx.GasFeeAssetAmount)
-	assetADelta := api.Select(isSameAsset, totalDelta, tx.AssetAmount)
-	assetFeeDelta := api.Select(isSameAsset, totalDelta, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.AssetAmount, assetADelta)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, assetFeeDelta)
+	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
 }

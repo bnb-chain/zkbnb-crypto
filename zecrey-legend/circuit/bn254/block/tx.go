@@ -42,15 +42,23 @@ type Tx struct {
 	AccountRootBefore []byte
 	// account before info, size is 4
 	AccountsInfoBefore [NbAccountsPerTx]*std.Account
+	// liquidity root before
+	LiquidityRootBefore []byte
+	// liquidity before
+	LiquidityBefore *std.Liquidity
+	// nft root before
+	NftRootBefore []byte
+	// nft before
+	NftBefore *std.Nft
 	// before account asset merkle proof
 	MerkleProofsAccountAssetsBefore       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
 	MerkleProofsHelperAccountAssetsBefore [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]int
 	// before account liquidity merkle proof
-	MerkleProofsAccountLiquidityBefore       [NbAccountsPerTx][LiquidityMerkleLevels][]byte
-	MerkleProofsHelperAccountLiquidityBefore [NbAccountsPerTx][LiquidityMerkleHelperLevels]int
+	MerkleProofsLiquidityBefore       [NbAccountsPerTx][LiquidityMerkleLevels][]byte
+	MerkleProofsHelperLiquidityBefore [NbAccountsPerTx][LiquidityMerkleHelperLevels]int
 	// before account nft tree merkle proof
-	MerkleProofsAccountNftBefore       [NbAccountsPerTx][NftMerkleLevels][]byte
-	MerkleProofsHelperAccountNftBefore [NbAccountsPerTx][NftMerkleHelperLevels]int
+	MerkleProofsNftBefore       [NbAccountsPerTx][NftMerkleLevels][]byte
+	MerkleProofsHelperNftBefore [NbAccountsPerTx][NftMerkleHelperLevels]int
 	// before account merkle proof
 	MerkleProofsAccountBefore       [NbAccountsPerTx][AccountMerkleLevels][]byte
 	MerkleProofsHelperAccountBefore [NbAccountsPerTx][AccountMerkleHelperLevels]int

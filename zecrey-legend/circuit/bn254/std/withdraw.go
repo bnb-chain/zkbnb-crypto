@@ -101,17 +101,14 @@ func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, hFunc M
 */
 func VerifyWithdrawTx(api API, flag Variable, tx WithdrawTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
 	// verify params
+	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
+	// asset id
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	// gas
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// should have enough assets
-	isSameAsset := api.IsZero(api.Sub(tx.AssetId, tx.GasFeeAssetId))
-	totalDelta := api.Add(tx.AssetAmount, tx.GasFeeAssetAmount)
-	assetADelta := api.Select(isSameAsset, totalDelta, tx.AssetAmount)
-	assetFeeDelta := api.Select(isSameAsset, totalDelta, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.AssetAmount, assetADelta)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, assetFeeDelta)
+	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
 }

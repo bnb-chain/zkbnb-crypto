@@ -17,6 +17,8 @@
 
 package std
 
+import "math/big"
+
 type WithdrawNftTx struct {
 	/*
 		- account index
@@ -28,22 +30,18 @@ type WithdrawNftTx struct {
 		- gas fee asset amount
 		- nonce
 	*/
-	AccountIndex      uint32
-	NftAssetId        uint32
-	NftIndex          uint32
-	NftContentHash    []byte
+	AccountIndex      int64
+	NftIndex          int64
 	ToAddress         string
 	ProxyAddress      string
-	GasAccountIndex   uint32
-	GasFeeAssetId     uint32
-	GasFeeAssetAmount uint64
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount *big.Int
 }
 
 type WithdrawNftTxConstraints struct {
 	AccountIndex      Variable
-	NftAssetId        Variable
 	NftIndex          Variable
-	NftContentHash    Variable
 	ToAddress         Variable
 	ProxyAddress      Variable
 	GasAccountIndex   Variable
@@ -54,9 +52,7 @@ type WithdrawNftTxConstraints struct {
 func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
 	return WithdrawNftTxConstraints{
 		AccountIndex:      ZeroInt,
-		NftAssetId:        ZeroInt,
 		NftIndex:          ZeroInt,
-		NftContentHash:    ZeroInt,
 		ToAddress:         ZeroInt,
 		ProxyAddress:      ZeroInt,
 		GasAccountIndex:   ZeroInt,
@@ -68,9 +64,7 @@ func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
 func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraints) {
 	witness = WithdrawNftTxConstraints{
 		AccountIndex:      tx.AccountIndex,
-		NftAssetId:        tx.NftAssetId,
 		NftIndex:          tx.NftIndex,
-		NftContentHash:    tx.NftContentHash,
 		ToAddress:         tx.ToAddress,
 		ProxyAddress:      tx.ProxyAddress,
 		GasAccountIndex:   tx.GasAccountIndex,
@@ -84,9 +78,7 @@ func ComputeHashFromWithdrawNftTx(tx WithdrawNftTxConstraints, nonce Variable, h
 	hFunc.Reset()
 	hFunc.Write(
 		tx.AccountIndex,
-		tx.NftAssetId,
 		tx.NftIndex,
-		tx.NftContentHash,
 		tx.ToAddress,
 		tx.ProxyAddress,
 		tx.GasAccountIndex,
@@ -110,17 +102,23 @@ func ComputeHashFromWithdrawNftTx(tx WithdrawNftTxConstraints, nonce Variable, h
 		- Assets:
 			- AssetGas
 */
-func VerifyWithdrawNftTx(api API, flag Variable, nilHash Variable, tx WithdrawNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifyWithdrawNftTx(
+	api API,
+	flag Variable,
+	tx WithdrawNftTxConstraints,
+	accountsBefore [NbAccountsPerTx]AccountConstraints,
+	nftBefore NftConstraints,
+) {
 	// verify params
+	// account index
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
-	// gas
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
+	// asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
-	// should confirm if the user owns the nft
-	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
-	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftIndex)
-	IsVariableEqual(api, flag, tx.NftIndex, accountsBefore[0].NftInfo.NftContentHash)
+	// nft info
+	IsVariableEqual(api, flag, tx.NftIndex, nftBefore.NftIndex)
+	IsVariableEqual(api, flag, tx.AccountIndex, nftBefore.OwnerAccountIndex)
 	// have enough assets
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 }

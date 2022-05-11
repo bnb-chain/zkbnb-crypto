@@ -126,7 +126,7 @@ func GetAccountDeltasFromDepositNft(
 		AssetId:        -1,
 		AssetAmount:    0,
 		NftContentHash: txInfo.NftContentHash,
-		NftL1TokenId:   txInfo.NftTokenId,
+		NftL1TokenId:   txInfo.NftL1TokenId,
 		NftL1Address:   txInfo.NftL1Address,
 	}
 	for i := 1; i < NbAccountsPerTx; i++ {

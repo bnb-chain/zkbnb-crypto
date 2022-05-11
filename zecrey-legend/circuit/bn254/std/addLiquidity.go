@@ -32,7 +32,6 @@ type AddLiquidityTx struct {
 		- nonce
 	*/
 	FromAccountIndex  uint32
-	ToAccountIndex    uint32
 	PairIndex         uint32
 	AssetAId          uint32
 	AssetAAmount      uint64
@@ -49,7 +48,6 @@ type AddLiquidityTx struct {
 type AddLiquidityTxConstraints struct {
 	/*
 		- from account index
-		- to account index
 		- pair index
 		- asset a id
 		- asset a amount
@@ -60,7 +58,6 @@ type AddLiquidityTxConstraints struct {
 		- gas fee amount
 	*/
 	FromAccountIndex  Variable
-	ToAccountIndex    Variable
 	PairIndex         Variable
 	AssetAId          Variable
 	AssetAAmount      Variable
@@ -77,7 +74,6 @@ type AddLiquidityTxConstraints struct {
 func EmptyAddLiquidityTxWitness() (witness AddLiquidityTxConstraints) {
 	witness = AddLiquidityTxConstraints{
 		FromAccountIndex:  ZeroInt,
-		ToAccountIndex:    ZeroInt,
 		PairIndex:         ZeroInt,
 		AssetAId:          ZeroInt,
 		AssetAAmount:      ZeroInt,
@@ -96,7 +92,6 @@ func EmptyAddLiquidityTxWitness() (witness AddLiquidityTxConstraints) {
 func SetAddLiquidityTxWitness(tx *AddLiquidityTx) (witness AddLiquidityTxConstraints) {
 	witness = AddLiquidityTxConstraints{
 		FromAccountIndex:  tx.FromAccountIndex,
-		ToAccountIndex:    tx.ToAccountIndex,
 		PairIndex:         tx.PairIndex,
 		AssetAId:          tx.AssetAId,
 		AssetAAmount:      tx.AssetAAmount,
@@ -116,7 +111,6 @@ func ComputeHashFromAddLiquidityTx(tx AddLiquidityTxConstraints, nonce Variable,
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,
-		tx.ToAccountIndex,
 		tx.PairIndex,
 		tx.AssetAId,
 		tx.AssetAAmount,
@@ -154,34 +148,29 @@ func ComputeHashFromAddLiquidityTx(tx AddLiquidityTxConstraints, nonce Variable,
 			- AssetB
 			- AssetGas
 */
-func VerifyAddLiquidityTx(api API, flag Variable, tx AddLiquidityTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifyAddLiquidityTx(api API, flag Variable, tx AddLiquidityTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints) {
 	// check params
+	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
+	// asset id
 	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[0].AssetsInfo[1].AssetId)
+	IsVariableEqual(api, flag, tx.AssetAId, liquidityBefore.AssetAId)
+	IsVariableEqual(api, flag, tx.AssetBId, liquidityBefore.AssetBId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[1].LiquidityInfo.AssetAId)
-	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[1].LiquidityInfo.AssetBId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// check if the user has enough balance
-	isSameAssetA := api.IsZero(api.Sub(tx.AssetAId, tx.GasFeeAssetId))
-	isSameAssetB := api.IsZero(api.Sub(tx.AssetBId, tx.GasFeeAssetId))
-	aDelta := api.Add(tx.AssetAAmount, tx.GasFeeAssetAmount)
-	bDelta := api.Add(tx.AssetBAmount, tx.GasFeeAssetAmount)
-	assetADelta := api.Select(isSameAssetA, aDelta, tx.AssetAAmount)
-	assetBDelta := api.Select(isSameAssetB, bDelta, tx.AssetBAmount)
-	assetFeeDelta := api.Select(isSameAssetA, aDelta, tx.GasFeeAssetAmount)
-	assetFeeDelta = api.Select(isSameAssetB, bDelta, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, assetADelta)
-	IsVariableLessOrEqual(api, flag, tx.AssetBAmount, assetBDelta)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, assetFeeDelta)
+	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.AssetBAmount, accountsBefore[0].AssetsInfo[1].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[2].Balance)
+	IsVariableEqual(api, flag, tx.PoolAAmount, liquidityBefore.AssetA)
+	IsVariableEqual(api, flag, tx.PoolBAmount, liquidityBefore.AssetB)
 	// verify LP
 	Delta_LPCheck := api.Mul(tx.AssetAAmount, tx.AssetBAmount)
 	LPCheck := api.Mul(tx.LpAmount, tx.LpAmount)
 	api.AssertIsLessOrEqual(LPCheck, Delta_LPCheck)
-	// verify AMM info
+	// TODO verify AMM info
 	l := api.Mul(tx.PoolBAmount, tx.AssetAAmount)
 	r := api.Mul(tx.PoolAAmount, tx.AssetBAmount)
 	api.AssertIsEqual(l, r)

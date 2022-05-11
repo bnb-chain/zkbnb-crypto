@@ -83,11 +83,12 @@ const (
 const (
 	NbAccountAssetsPerAccount   = std.NbAccountAssetsPerAccount
 	NbAccountsPerTx             = std.NbAccountsPerTx
+	NbNftsPerTx                 = std.NbNftsPerTx
 	AssetMerkleLevels           = 17
 	AssetMerkleHelperLevels     = AssetMerkleLevels - 1
 	LiquidityMerkleLevels       = 17
 	LiquidityMerkleHelperLevels = LiquidityMerkleLevels - 1
-	NftMerkleLevels             = 33
+	NftMerkleLevels             = 41
 	NftMerkleHelperLevels       = NftMerkleLevels - 1
 	AccountMerkleLevels         = 33
 	AccountMerkleHelperLevels   = AccountMerkleLevels - 1

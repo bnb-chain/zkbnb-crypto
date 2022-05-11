@@ -28,7 +28,6 @@ import (
 
 type SwapSegmentFormat struct {
 	FromAccountIndex       int64  `json:"from_account_index"`
-	ToAccountIndex         int64  `json:"to_account_index"`
 	PairIndex              int64  `json:"pair_index"`
 	AssetAId               int64  `json:"asset_a_id"`
 	AssetAAmount           string `json:"asset_a_amount"`
@@ -81,7 +80,6 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 	}
 	txInfo = &SwapTxInfo{
 		FromAccountIndex:       segmentFormat.FromAccountIndex,
-		ToAccountIndex:         segmentFormat.ToAccountIndex,
 		PairIndex:              segmentFormat.PairIndex,
 		AssetAId:               segmentFormat.AssetAId,
 		AssetAAmount:           assetAAmount,
@@ -114,7 +112,6 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 
 type SwapTxInfo struct {
 	FromAccountIndex       int64
-	ToAccountIndex         int64
 	PairIndex              int64
 	AssetAId               int64
 	AssetAAmount           *big.Int
@@ -156,7 +153,6 @@ func ComputeSwapMsgHash(txInfo *SwapTxInfo, hFunc hash.Hash) (msgHash []byte) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.PairIndex)
 	WriteInt64IntoBuf(&buf, txInfo.AssetAId)
 	WriteBigIntIntoBuf(&buf, txInfo.AssetAAmount)
