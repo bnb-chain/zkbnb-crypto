@@ -31,7 +31,6 @@ type RemoveLiquidityTx struct {
 		- gas fee asset amount
 	*/
 	FromAccountIndex  uint32
-	ToAccountIndex    uint32
 	PairIndex         uint32
 	AssetAId          uint32
 	AssetAMinAmount   uint64
@@ -47,7 +46,6 @@ type RemoveLiquidityTx struct {
 
 type RemoveLiquidityTxConstraints struct {
 	FromAccountIndex  Variable
-	ToAccountIndex    Variable
 	PairIndex         Variable
 	AssetAId          Variable
 	AssetAMinAmount   Variable
@@ -64,7 +62,6 @@ type RemoveLiquidityTxConstraints struct {
 func EmptyRemoveLiquidityTxWitness() (witness RemoveLiquidityTxConstraints) {
 	return RemoveLiquidityTxConstraints{
 		FromAccountIndex:  ZeroInt,
-		ToAccountIndex:    ZeroInt,
 		PairIndex:         ZeroInt,
 		AssetAId:          ZeroInt,
 		AssetAMinAmount:   ZeroInt,
@@ -82,7 +79,6 @@ func EmptyRemoveLiquidityTxWitness() (witness RemoveLiquidityTxConstraints) {
 func SetRemoveLiquidityTxWitness(tx *RemoveLiquidityTx) (witness RemoveLiquidityTxConstraints) {
 	witness = RemoveLiquidityTxConstraints{
 		FromAccountIndex:  tx.FromAccountIndex,
-		ToAccountIndex:    tx.ToAccountIndex,
 		PairIndex:         tx.PairIndex,
 		AssetAId:          tx.AssetAId,
 		AssetAMinAmount:   tx.AssetAMinAmount,
@@ -102,7 +98,6 @@ func ComputeHashFromRemoveLiquidityTx(tx RemoveLiquidityTxConstraints, nonce Var
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,
-		tx.ToAccountIndex,
 		tx.PairIndex,
 		tx.AssetAId,
 		tx.AssetAMinAmount,
@@ -136,19 +131,23 @@ func ComputeHashFromRemoveLiquidityTx(tx RemoveLiquidityTxConstraints, nonce Var
 		- Assets:
 			- AssetGas
 */
-func VerifyRemoveLiquidityTx(api API, flag Variable, tx RemoveLiquidityTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifyRemoveLiquidityTx(api API, flag Variable, tx RemoveLiquidityTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints) {
 	// verify params
+	// account index
+	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
+	// asset id
 	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[0].AssetsInfo[1].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
-	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[1].LiquidityInfo.AssetAId)
-	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[1].LiquidityInfo.AssetBId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[3].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.AssetAId, liquidityBefore.AssetAId)
+	IsVariableEqual(api, flag, tx.AssetBId, liquidityBefore.AssetBId)
 	// should have enough lp
-	IsVariableLessOrEqual(api, flag, tx.LpAmount, accountsBefore[0].LiquidityInfo.LpAmount)
+	IsVariableLessOrEqual(api, flag, tx.LpAmount, accountsBefore[0].AssetsInfo[2].LpAmount)
 	// enough balance
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
-	// verify LP
+	// TODO verify LP
 	Delta_LPCheck := api.Mul(tx.AssetAAmountDelta, tx.AssetBAmountDelta)
 	LPCheck := api.Mul(tx.LpAmount, tx.LpAmount)
 	IsVariableLessOrEqual(api, flag, Delta_LPCheck, LPCheck)

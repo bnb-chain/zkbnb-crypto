@@ -17,43 +17,45 @@
 
 package std
 
+import "math/big"
+
 type DepositNftTx struct {
-	AccountName    string
-	NftIndex       uint64
-	NftAssetId     uint64
-	NftTokenId     uint64
-	NftContentHash string
-	NftL1Address   string
+	AccountIndex    int64
+	AccountNameHash []byte
+	NftIndex        int64
+	NftContentHash  []byte
+	NftL1Address    *big.Int
+	NftL1TokenId    *big.Int
 }
 
 type DepositNftTxConstraints struct {
-	AccountName    Variable
-	NftIndex       Variable
-	NftAssetId     Variable
-	NftTokenId     Variable
-	NftContentHash Variable
-	NftL1Address   Variable
+	AccountIndex    Variable
+	AccountNameHash Variable
+	NftIndex        Variable
+	NftContentHash  Variable
+	NftL1Address    Variable
+	NftL1TokenId    Variable
 }
 
 func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
 	return DepositNftTxConstraints{
-		AccountName:    ZeroInt,
-		NftIndex:       ZeroInt,
-		NftAssetId:     ZeroInt,
-		NftTokenId:     ZeroInt,
-		NftContentHash: ZeroInt,
-		NftL1Address:   ZeroInt,
+		AccountIndex:    ZeroInt,
+		AccountNameHash: ZeroInt,
+		NftIndex:        ZeroInt,
+		NftContentHash:  ZeroInt,
+		NftL1Address:    ZeroInt,
+		NftL1TokenId:    ZeroInt,
 	}
 }
 
 func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) {
 	witness = DepositNftTxConstraints{
-		AccountName:    tx.AccountName,
-		NftIndex:       tx.NftIndex,
-		NftAssetId:     tx.NftAssetId,
-		NftTokenId:     tx.NftTokenId,
-		NftContentHash: tx.NftContentHash,
-		NftL1Address:   tx.NftL1Address,
+		AccountIndex:    tx.AccountIndex,
+		AccountNameHash: tx.AccountNameHash,
+		NftIndex:        tx.NftIndex,
+		NftContentHash:  tx.NftContentHash,
+		NftL1Address:    tx.NftL1Address,
+		NftL1TokenId:    tx.NftL1TokenId,
 	}
 	return witness
 }
@@ -65,10 +67,18 @@ func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) 
 		- Nft
 			- nft index
 */
-func VerifyDepositNftTx(api API, flag Variable, nilHash Variable, tx DepositNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifyDepositNftTx(
+	api API,
+	flag Variable,
+	tx DepositNftTxConstraints,
+	accountsBefore [NbAccountsPerTx]AccountConstraints,
+	nftBefore NftConstraints,
+) {
 	// verify params
-	// nft index
-	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
-	// before account nft should be empty
-	IsEmptyNftInfo(api, flag, nilHash, accountsBefore[0].NftInfo)
+	// check empty nft
+	CheckEmptyNftNode(api, flag, nftBefore)
+	// account index
+	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
+	// account name hash
+	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)
 }

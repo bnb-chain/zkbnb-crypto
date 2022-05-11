@@ -22,7 +22,7 @@ import "github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
 func CompareAccountBeforeAndAfterParams(api API, accountBefore, accountAfter std.AccountConstraints) {
 	/*
 		BuyerAccountIndex      Variable
-		AccountName       Variable
+		AccountNameHash       Variable
 		AccountPk         eddsa.PublicKey
 		Nonce             Variable
 	*/

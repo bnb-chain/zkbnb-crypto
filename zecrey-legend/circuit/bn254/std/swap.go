@@ -17,6 +17,8 @@
 
 package std
 
+import "math/big"
+
 type SwapTx struct {
 	/*
 		- from account index
@@ -32,28 +34,26 @@ type SwapTx struct {
 		- gas fee asset id
 		- gas fee asset amount
 	*/
-	FromAccountIndex       uint32
-	ToAccountIndex         uint32
-	PairIndex              uint32
-	AssetAId               uint32
-	AssetAAmount           uint64
-	AssetBId               uint32
-	AssetBMinAmount        uint64
-	AssetBAmountDelta      uint64
-	PoolAAmount            uint64
-	PoolBAmount            uint64
-	FeeRate                uint32
-	TreasuryAccountIndex   uint32
-	TreasuryRate           uint32
-	TreasuryFeeAmountDelta uint64
-	GasAccountIndex        uint32
-	GasFeeAssetId          uint32
-	GasFeeAssetAmount      uint64
+	FromAccountIndex       int64
+	PairIndex              int64
+	AssetAId               int64
+	AssetAAmount           *big.Int
+	AssetBId               int64
+	AssetBMinAmount        *big.Int
+	AssetBAmountDelta      *big.Int
+	PoolAAmount            *big.Int
+	PoolBAmount            *big.Int
+	FeeRate                int64
+	TreasuryAccountIndex   int64
+	TreasuryRate           int64
+	TreasuryFeeAmountDelta *big.Int
+	GasAccountIndex        int64
+	GasFeeAssetId          int64
+	GasFeeAssetAmount      *big.Int
 }
 
 type SwapTxConstraints struct {
 	FromAccountIndex       Variable
-	ToAccountIndex         Variable
 	PairIndex              Variable
 	AssetAId               Variable
 	AssetAAmount           Variable
@@ -74,7 +74,6 @@ type SwapTxConstraints struct {
 func EmptySwapTxWitness() (witness SwapTxConstraints) {
 	return SwapTxConstraints{
 		FromAccountIndex:       ZeroInt,
-		ToAccountIndex:         ZeroInt,
 		PairIndex:              ZeroInt,
 		AssetAId:               ZeroInt,
 		AssetAAmount:           ZeroInt,
@@ -96,7 +95,6 @@ func EmptySwapTxWitness() (witness SwapTxConstraints) {
 func SetSwapTxWitness(tx *SwapTx) (witness SwapTxConstraints) {
 	witness = SwapTxConstraints{
 		FromAccountIndex:       tx.FromAccountIndex,
-		ToAccountIndex:         tx.ToAccountIndex,
 		PairIndex:              tx.PairIndex,
 		AssetAId:               tx.AssetAId,
 		AssetAAmount:           tx.AssetAAmount,
@@ -120,7 +118,6 @@ func ComputeHashFromSwapTx(tx SwapTxConstraints, nonce Variable, hFunc MiMC) (ha
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,
-		tx.ToAccountIndex,
 		tx.PairIndex,
 		tx.AssetAId,
 		tx.AssetAAmount,
@@ -157,29 +154,56 @@ func ComputeHashFromSwapTx(tx SwapTxConstraints, nonce Variable, hFunc MiMC) (ha
 		- Assets:
 			- AssetGas
 */
-func VerifySwapTx(api API, flag Variable, tx SwapTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifySwapTx(api API, flag Variable, tx SwapTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints) {
 	// verify params
+	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
-	IsVariableEqual(api, flag, tx.TreasuryAccountIndex, accountsBefore[2].AccountIndex)
+	IsVariableEqual(api, flag, tx.TreasuryAccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
+	// pair index
+	IsVariableEqual(api, flag, tx.PairIndex, liquidityBefore.PairIndex)
+	// asset id
 	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[0].AssetsInfo[1].AssetId)
-	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[1].LiquidityInfo.AssetAId)
-	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[1].LiquidityInfo.AssetBId)
-	// gas
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[3].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[3].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[1].AssetsInfo[0].AssetId)
+	isSameAsset := api.IsZero(
+		api.And(
+			api.IsZero(api.Sub(tx.AssetAId, liquidityBefore.AssetAId)),
+			api.IsZero(api.Sub(tx.AssetBId, liquidityBefore.AssetBId)),
+		),
+	)
+	isDifferentAsset := api.IsZero(
+		api.And(
+			api.IsZero(api.Sub(tx.AssetAId, liquidityBefore.AssetBId)),
+			api.IsZero(api.Sub(tx.AssetBId, liquidityBefore.AssetAId)),
+		),
+	)
+	IsVariableEqual(
+		api, flag,
+		api.Or(
+			isSameAsset,
+			isDifferentAsset,
+		),
+		1,
+	)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 	// should have enough assets
-	isSameAsset := api.IsZero(api.Sub(tx.AssetAId, tx.GasFeeAssetId))
-	totalDelta := api.Add(tx.AssetAAmount, tx.GasFeeAssetAmount)
-	assetADelta := api.Select(isSameAsset, totalDelta, tx.AssetAAmount)
-	assetFeeDelta := api.Select(isSameAsset, totalDelta, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, assetADelta)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, assetFeeDelta)
 	IsVariableLessOrEqual(api, flag, tx.AssetBMinAmount, tx.AssetBAmountDelta)
+	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[2].Balance)
+	// pool info
+	isSameAsset = api.And(flag, isSameAsset)
+	isDifferentAsset = api.And(flag, isSameAsset)
+	IsVariableLessOrEqual(api, isSameAsset, tx.PoolAAmount, liquidityBefore.AssetA)
+	IsVariableLessOrEqual(api, isSameAsset, tx.PoolBAmount, liquidityBefore.AssetB)
+	IsVariableLessOrEqual(api, isDifferentAsset, tx.PoolAAmount, liquidityBefore.AssetB)
+	IsVariableLessOrEqual(api, isDifferentAsset, tx.PoolBAmount, liquidityBefore.AssetA)
 	// verify AMM
 	k := api.Mul(tx.PoolAAmount, tx.PoolBAmount)
 	// TODO check treasury fee amount
+	treasuryAmount := api.Div(api.Mul(tx.AssetAAmount, tx.TreasuryRate), 10000)
+	IsVariableEqual(api, flag, tx.TreasuryFeeAmountDelta, treasuryAmount)
 	poolADelta := api.Sub(tx.AssetAAmount, tx.TreasuryFeeAmountDelta)
 	kPrime := api.Mul(api.Add(tx.PoolAAmount, poolADelta), api.Sub(tx.PoolBAmount, tx.AssetBAmountDelta))
 	api.AssertIsLessOrEqual(k, kPrime)

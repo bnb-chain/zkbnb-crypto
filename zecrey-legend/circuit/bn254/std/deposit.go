@@ -20,30 +20,34 @@ package std
 import "math/big"
 
 type DepositTx struct {
-	AccountName string
-	AssetId     uint32
-	AssetAmount *big.Int
+	AccountIndex    int64
+	AccountNameHash []byte
+	AssetId         uint32
+	AssetAmount     *big.Int
 }
 
 type DepositTxConstraints struct {
-	AccountName Variable
-	AssetId     Variable
-	AssetAmount Variable
+	AccountIndex    Variable
+	AccountNameHash Variable
+	AssetId         Variable
+	AssetAmount     Variable
 }
 
 func EmptyDepositTxWitness() (witness DepositTxConstraints) {
 	return DepositTxConstraints{
-		AccountName: ZeroInt,
-		AssetId:     ZeroInt,
-		AssetAmount: ZeroInt,
+		AccountIndex:    ZeroInt,
+		AccountNameHash: ZeroInt,
+		AssetId:         ZeroInt,
+		AssetAmount:     ZeroInt,
 	}
 }
 
 func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints) {
 	witness = DepositTxConstraints{
-		AccountName: tx.AccountName,
-		AssetId:     tx.AssetId,
-		AssetAmount: tx.AssetAmount,
+		AccountIndex:    tx.AccountIndex,
+		AccountNameHash: tx.AccountNameHash,
+		AssetId:         tx.AssetId,
+		AssetAmount:     tx.AssetAmount,
 	}
 	return witness
 }
@@ -54,8 +58,10 @@ func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints) {
 	- FromAccount
 		- Assets
 			- AssetA
- */
+*/
 func VerifyDepositTx(api API, flag Variable, tx DepositTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
 	// verify params
+	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)
+	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 }

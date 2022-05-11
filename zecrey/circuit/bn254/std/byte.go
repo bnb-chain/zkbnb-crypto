@@ -18,27 +18,30 @@
 package std
 
 import (
-	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	"math/big"
+	"github.com/consensys/gnark/std/hash/mimc"
 )
 
-/*
-	Account: account info
-*/
-type Account struct {
-	AccountIndex    int64
-	AccountNameHash []byte
-	AccountPk       *eddsa.PublicKey
-	Nonce           int64
-	AssetRoot       []byte
-	AssetsInfo      [NbAccountAssetsPerAccount]*AccountAsset
+type ByteConstraints struct {
+	A, B, C Variable
 }
 
-/*
-	AccountAsset: asset info
-*/
-type AccountAsset struct {
-	AssetId  int64
-	Balance  *big.Int
-	LpAmount *big.Int
+// define for range proof test
+func (circuit ByteConstraints) Define(api API) error {
+	// mimc
+	hFunc, err := mimc.NewMiMC(api)
+	if err != nil {
+		return err
+	}
+	api.Println(circuit.A)
+	ABits := api.ToBinary(circuit.A, 256)
+	BBits := api.ToBinary(circuit.B, 128)
+	ABBits := append(ABits, BBits[:90]...)
+	api.Println(ABits...)
+	AB1 := api.FromBinary(ABBits...)
+	AB2 := api.FromBinary(BBits[90:]...)
+	hFunc.Write(AB1)
+	hFunc.Write(AB2)
+	ABHash := hFunc.Sum()
+	api.AssertIsEqual(ABHash, circuit.C)
+	return nil
 }

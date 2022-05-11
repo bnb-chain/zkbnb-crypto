@@ -24,22 +24,27 @@ import (
 )
 
 type AccountConstraints struct {
-	AccountIndex         Variable
-	AccountName          Variable
-	AccountPk            eddsa.PublicKey
-	Nonce                Variable
-	AccountAssetsRoot    Variable
-	AccountLiquidityRoot Variable
-	AccountNftRoot       Variable
+	AccountIndex    Variable
+	AccountNameHash Variable
+	AccountPk       eddsa.PublicKey
+	Nonce           Variable
+	AssetRoot       Variable
 	// at most 4 assets changed in one transaction
-	AssetsInfo    [NbAccountAssetsPerAccount]AccountAssetConstraints
-	LiquidityInfo AccountLiquidityConstraints
-	NftInfo       AccountNftConstraints
+	AssetsInfo [NbAccountAssetsPerAccount]AccountAssetConstraints
+}
+
+func CheckEmptyAccountNode(api API, flag Variable, account AccountConstraints) {
+	IsVariableEqual(api, flag, account.AccountNameHash, ZeroInt)
+	IsVariableEqual(api, flag, account.AccountPk, ZeroInt)
+	IsVariableEqual(api, flag, account.Nonce, ZeroInt)
+	// empty asset
+	IsVariableEqual(api, flag, account.AssetRoot, EmptyAssetRoot)
 }
 
 type AccountAssetConstraints struct {
-	AssetId Variable
-	Balance Variable
+	AssetId  Variable
+	Balance  Variable
+	LpAmount Variable
 }
 
 func SetAccountAssetWitness(asset *AccountAsset) (witness AccountAssetConstraints, err error) {
@@ -47,55 +52,12 @@ func SetAccountAssetWitness(asset *AccountAsset) (witness AccountAssetConstraint
 		log.Println("[SetAccountAssetWitness] invalid params")
 		return witness, errors.New("[SetAccountAssetWitness] invalid params")
 	}
-	witness.AssetId = asset.AssetId
-	witness.Balance = asset.Balance
+	witness = AccountAssetConstraints{
+		AssetId:  asset.AssetId,
+		Balance:  asset.Balance,
+		LpAmount: asset.LpAmount,
+	}
 	return witness, nil
-}
-
-type AccountLiquidityConstraints struct {
-	PairIndex    Variable
-	AssetAId     Variable
-	AssetAAmount Variable
-	AssetBId     Variable
-	AssetBAmount Variable
-	LpAmount     Variable
-}
-
-func SetAccountLiquidityWitness(info *AccountLiquidity) (witness AccountLiquidityConstraints) {
-	witness = AccountLiquidityConstraints{
-		PairIndex:    info.PairIndex,
-		AssetAId:     info.AssetAId,
-		AssetAAmount: info.AssetAAmount,
-		AssetBId:     info.AssetBId,
-		AssetBAmount: info.AssetBAmount,
-		LpAmount:     info.LpAmount,
-	}
-	return witness
-}
-
-type AccountNftConstraints struct {
-	NftAssetId     Variable
-	NftIndex       Variable
-	NftContentHash Variable
-	CreatorIndex   Variable
-	AssetId        Variable
-	AssetAmount    Variable
-	NftL1Address   Variable
-	NftL1TokenId   Variable
-}
-
-func SetAccountNftWitness(nft *AccountNft) (witness AccountNftConstraints) {
-	witness = AccountNftConstraints{
-		NftAssetId:     nft.NftAssetId,
-		NftIndex:       nft.NftIndex,
-		CreatorIndex:   nft.CreatorIndex,
-		NftContentHash: nft.NftContentHash,
-		AssetId:        nft.AssetId,
-		AssetAmount:    nft.AssetAmount,
-		NftL1Address:   nft.L1Address,
-		NftL1TokenId:   nft.L1TokenId,
-	}
-	return witness
 }
 
 /*
@@ -113,19 +75,13 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 			return witness, err
 		}
 	}
-	// set liquidity witness
-	witness.LiquidityInfo = SetAccountLiquidityWitness(account.LiquidityInfo)
-	// set nft witness
-	witness.NftInfo = SetAccountNftWitness(account.NftInfo)
 	// set witness
 	witness = AccountConstraints{
-		AccountIndex:         account.AccountIndex,
-		AccountName:          account.AccountName,
-		AccountPk:            SetPubKeyWitness(account.AccountPk),
-		Nonce:                account.Nonce,
-		AccountAssetsRoot:    account.AccountAssetsRoot,
-		AccountLiquidityRoot: account.AccountLiquidityRoot,
-		AccountNftRoot:       account.AccountNftRoot,
+		AccountIndex:    account.AccountIndex,
+		AccountNameHash: account.AccountNameHash,
+		AccountPk:       SetPubKeyWitness(account.AccountPk),
+		Nonce:           account.Nonce,
+		AssetRoot:       account.AssetRoot,
 	}
 	return witness, nil
 }

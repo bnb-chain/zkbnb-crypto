@@ -17,6 +17,8 @@
 
 package std
 
+import "math/big"
+
 type MintNftTx struct {
 	/*
 		- creator account index
@@ -29,22 +31,18 @@ type MintNftTx struct {
 		- gas fee asset id
 		- gas fee asset amount
 	*/
-	CreatorAccountIndex uint32
-	ToAccountIndex      uint32
-	NftAssetId          uint32
+	CreatorAccountIndex int64
+	ToAccountIndex      int64
 	NftIndex            int64
 	NftContentHash      string
-	AssetId             uint32
-	AssetAmount         uint64
-	GasAccountIndex     uint32
-	GasFeeAssetId       uint32
-	GasFeeAssetAmount   uint64
+	GasAccountIndex     int64
+	GasFeeAssetId       int64
+	GasFeeAssetAmount   *big.Int
 }
 
 type MintNftTxConstraints struct {
 	CreatorAccountIndex Variable
 	ToAccountIndex      Variable
-	NftAssetId          Variable
 	NftIndex            Variable
 	NftContentHash      Variable
 	GasAccountIndex     Variable
@@ -56,7 +54,6 @@ func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 	return MintNftTxConstraints{
 		CreatorAccountIndex: ZeroInt,
 		ToAccountIndex:      ZeroInt,
-		NftAssetId:          ZeroInt,
 		NftIndex:            ZeroInt,
 		NftContentHash:      ZeroInt,
 		GasAccountIndex:     ZeroInt,
@@ -69,7 +66,6 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 	witness = MintNftTxConstraints{
 		CreatorAccountIndex: tx.CreatorAccountIndex,
 		ToAccountIndex:      tx.ToAccountIndex,
-		NftAssetId:          tx.NftAssetId,
 		NftIndex:            tx.NftIndex,
 		NftContentHash:      tx.NftContentHash,
 		GasAccountIndex:     tx.GasAccountIndex,
@@ -84,7 +80,6 @@ func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, hFunc MiM
 	hFunc.Write(
 		tx.CreatorAccountIndex,
 		tx.ToAccountIndex,
-		tx.NftAssetId,
 		tx.NftIndex,
 		tx.NftContentHash,
 		tx.GasAccountIndex,
@@ -109,15 +104,14 @@ func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, hFunc MiM
 		- Assets
 			- AssetGas
 */
-func VerifyMintNftTx(api API, flag Variable, nilHash Variable, tx MintNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifyMintNftTx(api API, flag Variable, tx MintNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints) {
 	// verify params
-	// nft index
-	IsVariableEqual(api, flag, tx.NftAssetId, accountsBefore[0].NftInfo.NftAssetId)
-	// before account nft should be empty
-	IsEmptyNftInfo(api, flag, nilHash, accountsBefore[1].NftInfo)
-	// from account index
+	// check empty nft
+	CheckEmptyNftNode(api, flag, nftBefore)
+	// account index
 	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
 	// gas asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)

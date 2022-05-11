@@ -19,33 +19,42 @@ package std
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	"math/big"
 )
 
 type RegisterZnsTx struct {
-	AccountName string
-	PubKey      *eddsa.PublicKey
-	L1Address   string
+	AccountName     *big.Int
+	AccountNameHash []byte
+	PubKey          *eddsa.PublicKey
+	L1Address       string
 }
 
 type RegisterZnsTxConstraints struct {
-	AccountName Variable
-	PubKey      PublicKeyConstraints
-	L1Address   Variable
+	AccountName     Variable
+	AccountNameHash Variable
+	PubKey          PublicKeyConstraints
+	L1Address       Variable
 }
 
 func EmptyRegisterZnsTxWitness() (witness RegisterZnsTxConstraints) {
 	return RegisterZnsTxConstraints{
-		AccountName: ZeroInt,
-		PubKey:      EmptyPublicKeyWitness(),
-		L1Address:   ZeroInt,
+		AccountName:     ZeroInt,
+		AccountNameHash: ZeroInt,
+		PubKey:          EmptyPublicKeyWitness(),
+		L1Address:       ZeroInt,
 	}
 }
 
 func SetRegisterZnsTxWitness(tx *RegisterZnsTx) (witness RegisterZnsTxConstraints) {
 	witness = RegisterZnsTxConstraints{
-		AccountName: tx.AccountName,
-		PubKey:      SetPubKeyWitness(tx.PubKey),
-		L1Address:   tx.L1Address,
+		AccountName:     tx.AccountName,
+		AccountNameHash: tx.AccountNameHash,
+		PubKey:          SetPubKeyWitness(tx.PubKey),
+		L1Address:       tx.L1Address,
 	}
 	return witness
+}
+
+func VerifyRegisterZNSTx(api API, flag Variable, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+	CheckEmptyAccountNode(api, flag, accountsBefore[0])
 }

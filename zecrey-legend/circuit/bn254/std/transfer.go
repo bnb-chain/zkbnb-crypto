@@ -31,7 +31,6 @@ type TransferTx struct {
 	*/
 	FromAccountIndex  uint32
 	ToAccountIndex    uint32
-	ToAccountName     string
 	AssetId           uint32
 	AssetAmount       uint64
 	GasAccountIndex   uint32
@@ -43,7 +42,6 @@ type TransferTx struct {
 type TransferTxConstraints struct {
 	FromAccountIndex  Variable
 	ToAccountIndex    Variable
-	ToAccountName     Variable
 	AssetId           Variable
 	AssetAmount       Variable
 	GasAccountIndex   Variable
@@ -56,7 +54,6 @@ func EmptyTransferTxWitness() (witness TransferTxConstraints) {
 	return TransferTxConstraints{
 		FromAccountIndex:  ZeroInt,
 		ToAccountIndex:    ZeroInt,
-		ToAccountName:     ZeroInt,
 		AssetId:           ZeroInt,
 		AssetAmount:       ZeroInt,
 		GasAccountIndex:   ZeroInt,
@@ -70,7 +67,6 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints) {
 	witness = TransferTxConstraints{
 		FromAccountIndex:  tx.FromAccountIndex,
 		ToAccountIndex:    tx.ToAccountIndex,
-		ToAccountName:     tx.ToAccountName,
 		AssetId:           tx.AssetId,
 		AssetAmount:       tx.AssetAmount,
 		GasAccountIndex:   tx.GasAccountIndex,
@@ -86,7 +82,6 @@ func ComputeHashFromTransferTx(tx TransferTxConstraints, nonce Variable, hFunc M
 	hFunc.Write(
 		tx.FromAccountIndex,
 		tx.ToAccountIndex,
-		tx.ToAccountName,
 		tx.AssetId,
 		tx.AssetAmount,
 		tx.GasAccountIndex,
@@ -113,13 +108,9 @@ func ComputeHashFromTransferTx(tx TransferTxConstraints, nonce Variable, hFunc M
 		- Assets
 			- AssetGas
 */
-func VerifyTransferTx(api API, flag Variable, nilHash Variable, tx TransferTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifyTransferTx(api API, flag Variable, tx TransferTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
 	// verify params
-	// before account nft should be empty
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.NftContentHash, nilHash)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetId, DefaultInt)
-	IsVariableEqual(api, flag, accountsBefore[0].NftInfo.AssetAmount, DefaultInt)
-	// from account index
+	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
 	// asset id
@@ -128,10 +119,6 @@ func VerifyTransferTx(api API, flag Variable, nilHash Variable, tx TransferTxCon
 	// gas asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	// should have enough balance
-	isSameAsset := api.IsZero(api.Sub(tx.AssetId, tx.GasFeeAssetId))
-	totalDelta := api.Add(tx.AssetAmount, tx.GasFeeAssetAmount)
-	assetADelta := api.Select(isSameAsset, totalDelta, tx.AssetAmount)
-	assetFeeDelta := api.Select(isSameAsset, totalDelta, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.AssetAmount, assetADelta)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, assetFeeDelta)
+	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
 }
