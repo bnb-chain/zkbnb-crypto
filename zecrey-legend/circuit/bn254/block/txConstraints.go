@@ -166,7 +166,7 @@ func VerifyTransaction(
 	std.VerifyMintNftTx(api, isMintNftTx, tx.MintNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	std.VerifyTransferNftTx(api, isTransferNftTx, tx.TransferNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	std.VerifySetNftPriceTx(api, isSetNftPriceTx, tx.SetNftPriceTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
-	std.VerifyBuyNftTx(api, isBuyNftTx, nilHash, tx.BuyNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
+	std.VerifyBuyNftTx(api, isBuyNftTx, tx.BuyNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	std.VerifyWithdrawNftTx(api, isWithdrawNftTx, tx.WithdrawNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	// deposit
 	deltas := GetAccountDeltasFromDeposit(api, tx.DepositTxInfo)

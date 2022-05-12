@@ -39,6 +39,6 @@ const (
 	DefaultInt     = int64(-1)
 
 	NbAccountAssetsPerAccount = 4
-	NbAccountsPerTx           = 4
+	NbAccountsPerTx           = 5
 	NbNftsPerTx               = 2
 )

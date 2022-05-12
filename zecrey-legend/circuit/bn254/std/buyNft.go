@@ -36,6 +36,7 @@ type BuyNftTx struct {
 type BuyNftTxConstraints struct {
 	BuyerAccountIndex    Variable
 	OwnerAccountIndex    Variable
+	CreatorAccountIndex  Variable
 	NftIndex             Variable
 	AssetId              Variable
 	AssetAmount          Variable
@@ -119,23 +120,28 @@ func ComputeHashFromBuyNftTx(tx BuyNftTxConstraints, nonce Variable, hFunc MiMC)
 		- Assets
 			- AssetGas
 */
-func VerifyBuyNftTx(api API, flag Variable, nilHash Variable, tx BuyNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints) {
+func VerifyBuyNftTx(api API, flag Variable, tx BuyNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints) {
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.BuyerAccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.OwnerAccountIndex, accountsBefore[1].AccountIndex)
-	IsVariableEqual(api, flag, tx.TreasuryAccountIndex, accountsBefore[2].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[3].AccountIndex)
+	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[2].AccountIndex)
+	IsVariableEqual(api, flag, tx.TreasuryAccountIndex, accountsBefore[3].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[4].AccountIndex)
 	// asset id
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[3].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[3].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[4].AssetsInfo[0].AssetId)
 	// nft info
+	IsVariableEqual(api, flag, tx.CreatorAccountIndex, nftBefore.CreatorAccountIndex)
 	IsVariableEqual(api, flag, tx.OwnerAccountIndex, nftBefore.OwnerAccountIndex)
 	IsVariableEqual(api, flag, tx.AssetId, nftBefore.AssetId)
 	IsVariableEqual(api, flag, tx.AssetAmount, nftBefore.AssetAmount)
 	IsVariableEqual(api, flag, tx.CreatorTreasuryRate, nftBefore.CreatorTreasuryRate)
+	// TODO treasury amount check
 	// should have enough assets
 	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
