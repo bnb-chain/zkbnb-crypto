@@ -207,5 +207,4 @@ func VerifySwapTx(api API, flag Variable, tx SwapTxConstraints, accountsBefore [
 	poolADelta := api.Sub(tx.AssetAAmount, tx.TreasuryFeeAmountDelta)
 	kPrime := api.Mul(api.Add(tx.PoolAAmount, poolADelta), api.Sub(tx.PoolBAmount, tx.AssetBAmountDelta))
 	api.AssertIsLessOrEqual(k, kPrime)
-
 }
