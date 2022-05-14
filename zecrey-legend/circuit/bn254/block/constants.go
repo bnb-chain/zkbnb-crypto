@@ -22,7 +22,6 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/hash/mimc"
 	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
-	"github.com/zecrey-labs/zecrey-crypto/accumulators/merkleTree"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
 )
 
@@ -35,6 +34,7 @@ type (
 	MiMC                 = mimc.MiMC
 
 	RegisterZnsTx     = std.RegisterZnsTx
+	CreatePairTx      = std.CreatePairTx
 	DepositTx         = std.DepositTx
 	DepositNftTx      = std.DepositNftTx
 	TransferTx        = std.TransferTx
@@ -47,8 +47,11 @@ type (
 	BuyNftTx          = std.BuyNftTx
 	WithdrawTx        = std.WithdrawTx
 	WithdrawNftTx     = std.WithdrawNftTx
+	FullExitTx        = std.FullExitTx
+	FullExitNftTx     = std.FullExitNftTx
 
 	RegisterZnsTxConstraints     = std.RegisterZnsTxConstraints
+	CreatePairTxConstraints      = std.CreatePairTxConstraints
 	DepositTxConstraints         = std.DepositTxConstraints
 	DepositNftTxConstraints      = std.DepositNftTxConstraints
 	TransferTxConstraints        = std.TransferTxConstraints
@@ -61,39 +64,18 @@ type (
 	BuyNftTxConstraints          = std.BuyNftTxConstraints
 	WithdrawTxConstraints        = std.WithdrawTxConstraints
 	WithdrawNftTxConstraints     = std.WithdrawNftTxConstraints
+	FullExitTxConstraints        = std.FullExitTxConstraints
+	FullExitNftTxConstraints     = std.FullExitNftTxConstraints
+
+	LiquidityConstraints = std.LiquidityConstraints
+	NftConstraints       = std.NftConstraints
 )
 
 const (
-	TxTypeEmptyTx = iota
-	TxTypeRegisterZns
-	TxTypeDeposit
-	TxTypeDepositNft
-	TxTypeTransfer
-	TxTypeSwap
-	TxTypeAddLiquidity
-	TxTypeRemoveLiquidity
-	TxTypeWithdraw
-	TxTypeMintNft
-	TxTypeTransferNft
-	TxTypeSetNftPrice
-	TxTypeBuyNft
-	TxTypeWithdrawNft
-)
-
-const (
-	NbAccountAssetsPerAccount   = std.NbAccountAssetsPerAccount
-	NbAccountsPerTx             = std.NbAccountsPerTx
-	NbNftsPerTx                 = std.NbNftsPerTx
-	AssetMerkleLevels           = 17
-	AssetMerkleHelperLevels     = AssetMerkleLevels - 1
-	LiquidityMerkleLevels       = 17
-	LiquidityMerkleHelperLevels = LiquidityMerkleLevels - 1
-	NftMerkleLevels             = 41
-	NftMerkleHelperLevels       = NftMerkleLevels - 1
-	AccountMerkleLevels         = 33
-	AccountMerkleHelperLevels   = AccountMerkleLevels - 1
-)
-
-var (
-	NilHash = merkleTree.NilHash
+	NbAccountAssetsPerAccount = std.NbAccountAssetsPerAccount
+	NbAccountsPerTx           = std.NbAccountsPerTx
+	AssetMerkleLevels         = 16
+	LiquidityMerkleLevels     = 16
+	NftMerkleLevels           = 40
+	AccountMerkleLevels       = 32
 )

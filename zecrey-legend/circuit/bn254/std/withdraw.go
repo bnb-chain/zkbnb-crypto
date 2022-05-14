@@ -99,7 +99,13 @@ func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, hFunc M
 		- Assets:
 			- AssetGas
 */
-func VerifyWithdrawTx(api API, flag Variable, tx WithdrawTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifyWithdrawTx(
+	api API, flag Variable,
+	tx *WithdrawTxConstraints,
+	accountsBefore [NbAccountsPerTx]AccountConstraints,
+	hFunc *MiMC,
+) {
+	CollectPubDataFromWithdraw(api, flag, *tx, hFunc)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
@@ -109,6 +115,8 @@ func VerifyWithdrawTx(api API, flag Variable, tx WithdrawTxConstraints, accounts
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// should have enough assets
+	tx.AssetAmount = UnpackAmount(api, tx.AssetAmount)
+	tx.GasFeeAssetAmount = UnpackAmount(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
 }

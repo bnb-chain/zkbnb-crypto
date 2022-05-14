@@ -108,7 +108,14 @@ func ComputeHashFromTransferTx(tx TransferTxConstraints, nonce Variable, hFunc M
 		- Assets
 			- AssetGas
 */
-func VerifyTransferTx(api API, flag Variable, tx TransferTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifyTransferTx(
+	api API, flag Variable,
+	tx *TransferTxConstraints,
+	accountsBefore [NbAccountsPerTx]AccountConstraints,
+	hFunc *MiMC,
+) {
+	// collect pubdata
+	CollectPubDataFromTransfer(api, flag, *tx, hFunc)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
@@ -119,6 +126,8 @@ func VerifyTransferTx(api API, flag Variable, tx TransferTxConstraints, accounts
 	// gas asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	// should have enough balance
+	tx.AssetAmount = UnpackAmount(api, tx.AssetAmount)
+	//tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
 }

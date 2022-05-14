@@ -17,87 +17,47 @@
 
 package block
 
-import "github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
-
-func CompareAccountBeforeAndAfterParams(api API, accountBefore, accountAfter std.AccountConstraints) {
-	/*
-		BuyerAccountIndex      Variable
-		AccountNameHash       Variable
-		AccountPk         eddsa.PublicKey
-		Nonce             Variable
-	*/
-	// basic info
-	api.AssertIsEqual(accountBefore.AccountIndex, accountAfter.AccountIndex)
-	api.AssertIsEqual(accountBefore.AccountName, accountAfter.AccountName)
-	std.IsEqualPubKey(api, accountBefore.AccountPk, accountAfter.AccountPk)
-	updatedNonce := api.Add(accountBefore.Nonce, 1)
-	api.AssertIsEqual(updatedNonce, accountAfter.Nonce)
-	// account assets basic info
-	/*
-		AssetId    Variable
-		Balance  Variable
-	*/
-	for i := 0; i < NbAccountAssetsPerAccount; i++ {
-		api.AssertIsEqual(accountBefore.AssetsInfo[i].AssetId, accountAfter.AssetsInfo[i].AssetId)
-	}
-	// account liquidity basic info
-	api.AssertIsEqual(accountBefore.LiquidityInfo.AssetAId, accountAfter.LiquidityInfo.AssetAId)
-	api.AssertIsEqual(accountBefore.LiquidityInfo.AssetBId, accountAfter.LiquidityInfo.AssetBId)
-	// account nft basic info
-	/*
-		NftIndex       Variable
-		CreatorIndex   Variable
-		NftContentHash Variable
-		AssetId        Variable
-		AssetAmount    Variable
-		NftL1Address      Variable
-		NftL1TokenId      Variable
-	*/
-	api.AssertIsEqual(accountBefore.NftInfo.NftAssetId, accountAfter.NftInfo.NftAssetId)
-	api.AssertIsEqual(accountBefore.NftInfo.NftL1Address, accountAfter.NftInfo.NftL1Address)
-	api.AssertIsEqual(accountBefore.NftInfo.NftL1TokenId, accountAfter.NftInfo.NftL1TokenId)
-}
-
-func SelectDeltas(
+func SelectAssetDeltas(
 	api API,
 	flag Variable,
-	deltas, deltasCheck [NbAccountsPerTx]AccountDeltaConstraints,
-) (deltasRes [NbAccountsPerTx]AccountDeltaConstraints) {
+	deltas, deltasCheck [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+) (deltasRes [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
 	for i := 0; i < NbAccountsPerTx; i++ {
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
-			deltasRes[i].AssetDeltas[j] =
-				api.Select(flag, deltas[i].AssetDeltas[j], deltasCheck[i].AssetDeltas[j])
+			deltasRes[i][j].BalanceDelta =
+				api.Select(flag, deltas[i][j].BalanceDelta, deltasCheck[i][j].BalanceDelta)
+			deltasRes[i][j].LpDelta =
+				api.Select(flag, deltas[i][j].LpDelta, deltasCheck[i][j].LpDelta)
 		}
-		deltasRes[i].LiquidityDelta.AssetADelta =
-			api.Select(flag, deltas[i].LiquidityDelta.AssetADelta, deltasCheck[i].LiquidityDelta.AssetADelta)
-		deltasRes[i].LiquidityDelta.AssetBDelta =
-			api.Select(flag, deltas[i].LiquidityDelta.AssetBDelta, deltasCheck[i].LiquidityDelta.AssetBDelta)
-		deltasRes[i].LiquidityDelta.LpDelta =
-			api.Select(flag, deltas[i].LiquidityDelta.LpDelta, deltasCheck[i].LiquidityDelta.LpDelta)
 	}
 	return deltasRes
+}
+
+func SelectLiquidityDelta(
+	api API,
+	flag Variable,
+	delta, deltaCheck LiquidityDeltaConstraints,
+) (deltaRes LiquidityDeltaConstraints) {
+	deltaRes.AssetAId = api.Select(flag, delta.AssetAId, deltaCheck.AssetAId)
+	deltaRes.AssetADelta = api.Select(flag, delta.AssetADelta, deltaCheck.AssetADelta)
+	deltaRes.AssetBId = api.Select(flag, delta.AssetBId, deltaCheck.AssetBId)
+	deltaRes.AssetBDelta = api.Select(flag, delta.AssetBDelta, deltaCheck.AssetBDelta)
+	deltaRes.LpDelta = api.Select(flag, delta.LpDelta, deltaCheck.LpDelta)
+	return deltaRes
 }
 
 func SelectNftDeltas(
 	api API,
 	flag Variable,
-	deltas, deltasCheck [NbAccountsPerTx]AccountNftDeltaConstraints,
-) (deltasRes [NbAccountsPerTx]AccountNftDeltaConstraints) {
-	for i := 0; i < NbAccountsPerTx; i++ {
-		deltasRes[i].NftIndex =
-			api.Select(flag, deltas[i].NftIndex, deltasCheck[i].NftIndex)
-		deltasRes[i].NftAssetId =
-			api.Select(flag, deltas[i].NftAssetId, deltasCheck[i].NftAssetId)
-		deltasRes[i].NftContentHash =
-			api.Select(flag, deltas[i].NftContentHash, deltasCheck[i].NftContentHash)
-		deltasRes[i].AssetId =
-			api.Select(flag, deltas[i].AssetId, deltasCheck[i].AssetId)
-		deltasRes[i].AssetAmount =
-			api.Select(flag, deltas[i].AssetAmount, deltasCheck[i].AssetAmount)
-		deltasRes[i].NftL1TokenId =
-			api.Select(flag, deltas[i].NftL1TokenId, deltasCheck[i].NftL1TokenId)
-		deltasRes[i].NftL1Address =
-			api.Select(flag, deltas[i].NftL1Address, deltasCheck[i].NftL1Address)
-	}
-	return deltasRes
+	delta, deltaCheck NftDeltaConstraints,
+) (deltaRes NftDeltaConstraints) {
+	deltaRes.CreatorAccountIndex = api.Select(flag, delta.CreatorAccountIndex, deltaCheck.CreatorAccountIndex)
+	deltaRes.OwnerAccountIndex = api.Select(flag, delta.OwnerAccountIndex, deltaCheck.OwnerAccountIndex)
+	deltaRes.NftContentHash = api.Select(flag, delta.NftContentHash, deltaCheck.NftContentHash)
+	deltaRes.NftL1Address = api.Select(flag, delta.NftL1Address, deltaCheck.NftL1Address)
+	deltaRes.NftL1TokenId = api.Select(flag, delta.NftL1TokenId, deltaCheck.NftL1TokenId)
+	deltaRes.AssetId = api.Select(flag, delta.AssetId, deltaCheck.AssetId)
+	deltaRes.AssetAmount = api.Select(flag, delta.AssetAmount, deltaCheck.AssetAmount)
+	deltaRes.CreatorTreasuryRate = api.Select(flag, delta.CreatorTreasuryRate, deltaCheck.CreatorTreasuryRate)
+	return deltaRes
 }

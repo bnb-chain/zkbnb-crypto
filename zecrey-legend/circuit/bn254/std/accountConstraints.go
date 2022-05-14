@@ -35,7 +35,8 @@ type AccountConstraints struct {
 
 func CheckEmptyAccountNode(api API, flag Variable, account AccountConstraints) {
 	IsVariableEqual(api, flag, account.AccountNameHash, ZeroInt)
-	IsVariableEqual(api, flag, account.AccountPk, ZeroInt)
+	IsVariableEqual(api, flag, account.AccountPk.A.X, ZeroInt)
+	IsVariableEqual(api, flag, account.AccountPk.A.Y, ZeroInt)
 	IsVariableEqual(api, flag, account.Nonce, ZeroInt)
 	// empty asset
 	IsVariableEqual(api, flag, account.AssetRoot, EmptyAssetRoot)

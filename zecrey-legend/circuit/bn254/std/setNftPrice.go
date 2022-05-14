@@ -99,7 +99,13 @@ func ComputeHashFromSetNftPriceTx(tx SetNftPriceTxConstraints, nonce Variable, h
 		- Assets:
 			- AssetGas
 */
-func VerifySetNftPriceTx(api API, flag Variable, tx SetNftPriceTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints) {
+func VerifySetNftPriceTx(
+	api API, flag Variable,
+	tx *SetNftPriceTxConstraints,
+	accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints,
+	hFunc *MiMC,
+) {
+	CollectPubDataFromSetNftPrice(api, flag, *tx, hFunc)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
@@ -111,5 +117,6 @@ func VerifySetNftPriceTx(api API, flag Variable, tx SetNftPriceTxConstraints, ac
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 	// should have enough assets
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 }

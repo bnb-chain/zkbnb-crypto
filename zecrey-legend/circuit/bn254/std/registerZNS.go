@@ -23,6 +23,7 @@ import (
 )
 
 type RegisterZnsTx struct {
+	AccountIndex    int64
 	AccountName     *big.Int
 	AccountNameHash []byte
 	PubKey          *eddsa.PublicKey
@@ -30,6 +31,7 @@ type RegisterZnsTx struct {
 }
 
 type RegisterZnsTxConstraints struct {
+	AccountIndex    Variable
 	AccountName     Variable
 	AccountNameHash Variable
 	PubKey          PublicKeyConstraints
@@ -38,6 +40,7 @@ type RegisterZnsTxConstraints struct {
 
 func EmptyRegisterZnsTxWitness() (witness RegisterZnsTxConstraints) {
 	return RegisterZnsTxConstraints{
+		AccountIndex:    ZeroInt,
 		AccountName:     ZeroInt,
 		AccountNameHash: ZeroInt,
 		PubKey:          EmptyPublicKeyWitness(),
@@ -47,6 +50,7 @@ func EmptyRegisterZnsTxWitness() (witness RegisterZnsTxConstraints) {
 
 func SetRegisterZnsTxWitness(tx *RegisterZnsTx) (witness RegisterZnsTxConstraints) {
 	witness = RegisterZnsTxConstraints{
+		AccountIndex:    tx.AccountIndex,
 		AccountName:     tx.AccountName,
 		AccountNameHash: tx.AccountNameHash,
 		PubKey:          SetPubKeyWitness(tx.PubKey),
@@ -55,6 +59,12 @@ func SetRegisterZnsTxWitness(tx *RegisterZnsTx) (witness RegisterZnsTxConstraint
 	return witness
 }
 
-func VerifyRegisterZNSTx(api API, flag Variable, accountsBefore [NbAccountsPerTx]AccountConstraints) {
+func VerifyRegisterZNSTx(
+	api API, flag Variable,
+	tx RegisterZnsTxConstraints,
+	accountsBefore [NbAccountsPerTx]AccountConstraints,
+	hFunc *MiMC,
+) {
+	CollectPubDataFromRegisterZNS(api, flag, tx, hFunc)
 	CheckEmptyAccountNode(api, flag, accountsBefore[0])
 }

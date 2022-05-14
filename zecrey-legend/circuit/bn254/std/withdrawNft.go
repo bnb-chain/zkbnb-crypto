@@ -32,6 +32,9 @@ type WithdrawNftTx struct {
 	*/
 	AccountIndex      int64
 	NftIndex          int64
+	NftContentHash    []byte
+	NftL1Address      string
+	NftL1TokenId      *big.Int
 	ToAddress         string
 	ProxyAddress      string
 	GasAccountIndex   int64
@@ -42,6 +45,9 @@ type WithdrawNftTx struct {
 type WithdrawNftTxConstraints struct {
 	AccountIndex      Variable
 	NftIndex          Variable
+	NftContentHash    Variable
+	NftL1Address      Variable
+	NftL1TokenId      Variable
 	ToAddress         Variable
 	ProxyAddress      Variable
 	GasAccountIndex   Variable
@@ -53,6 +59,9 @@ func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
 	return WithdrawNftTxConstraints{
 		AccountIndex:      ZeroInt,
 		NftIndex:          ZeroInt,
+		NftContentHash:    ZeroInt,
+		NftL1Address:      ZeroInt,
+		NftL1TokenId:      ZeroInt,
 		ToAddress:         ZeroInt,
 		ProxyAddress:      ZeroInt,
 		GasAccountIndex:   ZeroInt,
@@ -65,6 +74,9 @@ func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraint
 	witness = WithdrawNftTxConstraints{
 		AccountIndex:      tx.AccountIndex,
 		NftIndex:          tx.NftIndex,
+		NftContentHash:    tx.NftContentHash,
+		NftL1Address:      tx.NftL1Address,
+		NftL1TokenId:      tx.NftL1TokenId,
 		ToAddress:         tx.ToAddress,
 		ProxyAddress:      tx.ProxyAddress,
 		GasAccountIndex:   tx.GasAccountIndex,
@@ -105,10 +117,12 @@ func ComputeHashFromWithdrawNftTx(tx WithdrawNftTxConstraints, nonce Variable, h
 func VerifyWithdrawNftTx(
 	api API,
 	flag Variable,
-	tx WithdrawNftTxConstraints,
+	tx *WithdrawNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
+	hFunc *MiMC,
 ) {
+	CollectPubDataFromWithdrawNft(api, flag, *tx, hFunc)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
@@ -120,5 +134,6 @@ func VerifyWithdrawNftTx(
 	IsVariableEqual(api, flag, tx.NftIndex, nftBefore.NftIndex)
 	IsVariableEqual(api, flag, tx.AccountIndex, nftBefore.OwnerAccountIndex)
 	// have enough assets
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 }
