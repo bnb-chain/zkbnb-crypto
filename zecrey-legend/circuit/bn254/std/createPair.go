@@ -46,7 +46,13 @@ func SetCreatePairTxWitness(tx *CreatePairTx) (witness CreatePairTxConstraints) 
 	return witness
 }
 
-func VerifyCreatePairTx(api API, flag Variable, tx CreatePairTxConstraints, liquidityBefore LiquidityConstraints) {
+func VerifyCreatePairTx(
+	api API, flag Variable,
+	tx CreatePairTxConstraints,
+	liquidityBefore LiquidityConstraints,
+	hFunc *MiMC,
+) {
+	CollectPubDataFromCreatePair(api, flag, tx, hFunc)
 	// verify params
 	IsVariableEqual(api, flag, tx.PairIndex, liquidityBefore.PairIndex)
 	CheckEmptyLiquidityNode(api, flag, liquidityBefore)

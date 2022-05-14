@@ -20,42 +20,46 @@ package std
 import "math/big"
 
 type DepositNftTx struct {
-	AccountIndex    int64
-	AccountNameHash []byte
-	NftIndex        int64
-	NftContentHash  []byte
-	NftL1Address    *big.Int
-	NftL1TokenId    *big.Int
+	AccountIndex        int64
+	AccountNameHash     []byte
+	NftIndex            int64
+	NftContentHash      []byte
+	NftL1Address        *big.Int
+	NftL1TokenId        *big.Int
+	CreatorTreasuryRate int64
 }
 
 type DepositNftTxConstraints struct {
-	AccountIndex    Variable
-	AccountNameHash Variable
-	NftIndex        Variable
-	NftContentHash  Variable
-	NftL1Address    Variable
-	NftL1TokenId    Variable
+	AccountIndex        Variable
+	AccountNameHash     Variable
+	NftIndex            Variable
+	NftContentHash      Variable
+	NftL1Address        Variable
+	NftL1TokenId        Variable
+	CreatorTreasuryRate Variable
 }
 
 func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
 	return DepositNftTxConstraints{
-		AccountIndex:    ZeroInt,
-		AccountNameHash: ZeroInt,
-		NftIndex:        ZeroInt,
-		NftContentHash:  ZeroInt,
-		NftL1Address:    ZeroInt,
-		NftL1TokenId:    ZeroInt,
+		AccountIndex:        ZeroInt,
+		AccountNameHash:     ZeroInt,
+		NftIndex:            ZeroInt,
+		NftContentHash:      ZeroInt,
+		NftL1Address:        ZeroInt,
+		NftL1TokenId:        ZeroInt,
+		CreatorTreasuryRate: ZeroInt,
 	}
 }
 
 func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) {
 	witness = DepositNftTxConstraints{
-		AccountIndex:    tx.AccountIndex,
-		AccountNameHash: tx.AccountNameHash,
-		NftIndex:        tx.NftIndex,
-		NftContentHash:  tx.NftContentHash,
-		NftL1Address:    tx.NftL1Address,
-		NftL1TokenId:    tx.NftL1TokenId,
+		AccountIndex:        tx.AccountIndex,
+		AccountNameHash:     tx.AccountNameHash,
+		NftIndex:            tx.NftIndex,
+		NftContentHash:      tx.NftContentHash,
+		NftL1Address:        tx.NftL1Address,
+		NftL1TokenId:        tx.NftL1TokenId,
+		CreatorTreasuryRate: tx.CreatorTreasuryRate,
 	}
 	return witness
 }
@@ -73,7 +77,9 @@ func VerifyDepositNftTx(
 	tx DepositNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
+	hFunc *MiMC,
 ) {
+	CollectPubDataFromDepositNft(api, flag, tx, hFunc)
 	// verify params
 	// check empty nft
 	CheckEmptyNftNode(api, flag, nftBefore)

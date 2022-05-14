@@ -28,6 +28,7 @@ type LiquidityConstraints struct {
 	AssetA    Variable
 	AssetBId  Variable
 	AssetB    Variable
+	LpAmount  Variable
 }
 
 func CheckEmptyLiquidityNode(api API, flag Variable, liquidity LiquidityConstraints) {
@@ -35,6 +36,7 @@ func CheckEmptyLiquidityNode(api API, flag Variable, liquidity LiquidityConstrai
 	IsVariableEqual(api, flag, liquidity.AssetA, ZeroInt)
 	IsVariableEqual(api, flag, liquidity.AssetBId, ZeroInt)
 	IsVariableEqual(api, flag, liquidity.AssetB, ZeroInt)
+	IsVariableEqual(api, flag, liquidity.LpAmount, ZeroInt)
 }
 
 /*
@@ -52,6 +54,7 @@ func SetLiquidityWitness(liquidity *Liquidity) (witness LiquidityConstraints, er
 		AssetA:    liquidity.AssetA,
 		AssetBId:  liquidity.AssetBId,
 		AssetB:    liquidity.AssetB,
+		LpAmount:  liquidity.LpAmount,
 	}
 	return witness, nil
 }

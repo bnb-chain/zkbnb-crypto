@@ -35,6 +35,7 @@ type MintNftTx struct {
 	ToAccountIndex      int64
 	NftIndex            int64
 	NftContentHash      string
+	CreatorTreasuryRate int64
 	GasAccountIndex     int64
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   *big.Int
@@ -45,6 +46,7 @@ type MintNftTxConstraints struct {
 	ToAccountIndex      Variable
 	NftIndex            Variable
 	NftContentHash      Variable
+	CreatorTreasuryRate Variable
 	GasAccountIndex     Variable
 	GasFeeAssetId       Variable
 	GasFeeAssetAmount   Variable
@@ -56,6 +58,7 @@ func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 		ToAccountIndex:      ZeroInt,
 		NftIndex:            ZeroInt,
 		NftContentHash:      ZeroInt,
+		CreatorTreasuryRate: ZeroInt,
 		GasAccountIndex:     ZeroInt,
 		GasFeeAssetId:       ZeroInt,
 		GasFeeAssetAmount:   ZeroInt,
@@ -68,6 +71,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 		ToAccountIndex:      tx.ToAccountIndex,
 		NftIndex:            tx.NftIndex,
 		NftContentHash:      tx.NftContentHash,
+		CreatorTreasuryRate: tx.CreatorTreasuryRate,
 		GasAccountIndex:     tx.GasAccountIndex,
 		GasFeeAssetId:       tx.GasFeeAssetId,
 		GasFeeAssetAmount:   tx.GasFeeAssetAmount,
@@ -104,7 +108,13 @@ func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, hFunc MiM
 		- Assets
 			- AssetGas
 */
-func VerifyMintNftTx(api API, flag Variable, tx MintNftTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints) {
+func VerifyMintNftTx(
+	api API, flag Variable,
+	tx *MintNftTxConstraints,
+	accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints,
+	hFunc *MiMC,
+) {
+	CollectPubDataFromMintNft(api, flag, *tx, hFunc)
 	// verify params
 	// check empty nft
 	CheckEmptyNftNode(api, flag, nftBefore)
@@ -116,5 +126,6 @@ func VerifyMintNftTx(api API, flag Variable, tx MintNftTxConstraints, accountsBe
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 	// should have enough balance
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 }

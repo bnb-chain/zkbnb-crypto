@@ -154,7 +154,13 @@ func ComputeHashFromSwapTx(tx SwapTxConstraints, nonce Variable, hFunc MiMC) (ha
 		- Assets:
 			- AssetGas
 */
-func VerifySwapTx(api API, flag Variable, tx SwapTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints) {
+func VerifySwapTx(
+	api API, flag Variable,
+	tx *SwapTxConstraints,
+	accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints,
+	hFunc *MiMC,
+) {
+	CollectPubDataFromSwap(api, flag, *tx, hFunc)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
@@ -189,6 +195,11 @@ func VerifySwapTx(api API, flag Variable, tx SwapTxConstraints, accountsBefore [
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 	// should have enough assets
+	tx.AssetAAmount = UnpackAmount(api, tx.AssetAAmount)
+	tx.AssetBMinAmount = UnpackAmount(api, tx.AssetBMinAmount)
+	tx.AssetBAmountDelta = UnpackAmount(api, tx.AssetBAmountDelta)
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
+	tx.TreasuryFeeAmountDelta = UnpackFee(api, tx.TreasuryFeeAmountDelta)
 	IsVariableLessOrEqual(api, flag, tx.AssetBMinAmount, tx.AssetBAmountDelta)
 	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[2].Balance)

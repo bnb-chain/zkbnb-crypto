@@ -17,13 +17,21 @@
 
 package std
 
-import "math/big"
-
-type Liquidity struct {
-	PairIndex int64
-	AssetAId  int64
-	AssetA    *big.Int
-	AssetBId  int64
-	AssetB    *big.Int
-	LpAmount  *big.Int
-}
+const (
+	TxTypeBitsSize              = 8
+	AccountIndexBitsSize        = 32
+	PairIndexBitsSize           = 16
+	AssetIdBitsSize             = 16
+	AccountNameBitsSize         = 256
+	AccountNameHashBitsSize     = 256
+	PubKeyBitsSize              = 256
+	NftIndexBitsSize            = 40
+	NftContentHashBitsSize      = 256
+	NftL1TokenIdBitsSize        = 256
+	CreatorTreasuryRateBitsSize = 16
+	StateAmountBitsSize         = 128
+	PackedAmountBitsSize        = 40
+	PackedFeeBitsSize           = 16
+	CallDataHashBitsSize        = 256
+	AddressBitsSize             = 160
+)

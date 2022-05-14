@@ -98,10 +98,12 @@ func ComputeHashFromTransferNftTx(tx TransferNftTxConstraints, nonce Variable, h
 func VerifyTransferNftTx(
 	api API,
 	flag Variable,
-	tx TransferNftTxConstraints,
+	tx *TransferNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
+	hFunc *MiMC,
 ) {
+	CollectPubDataFromTransferNft(api, flag, *tx, hFunc)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
@@ -113,5 +115,6 @@ func VerifyTransferNftTx(
 	IsVariableEqual(api, flag, tx.NftIndex, nftBefore.NftIndex)
 	IsVariableEqual(api, flag, tx.FromAccountIndex, nftBefore.OwnerAccountIndex)
 	// should have enough balance
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 }

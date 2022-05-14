@@ -131,7 +131,13 @@ func ComputeHashFromRemoveLiquidityTx(tx RemoveLiquidityTxConstraints, nonce Var
 		- Assets:
 			- AssetGas
 */
-func VerifyRemoveLiquidityTx(api API, flag Variable, tx RemoveLiquidityTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints) {
+func VerifyRemoveLiquidityTx(
+	api API, flag Variable,
+	tx *RemoveLiquidityTxConstraints,
+	accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints,
+	hFunc *MiMC,
+) {
+	CollectPubDataFromRemoveLiquidity(api, flag, *tx, hFunc)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
@@ -146,6 +152,12 @@ func VerifyRemoveLiquidityTx(api API, flag Variable, tx RemoveLiquidityTxConstra
 	// should have enough lp
 	IsVariableLessOrEqual(api, flag, tx.LpAmount, accountsBefore[0].AssetsInfo[2].LpAmount)
 	// enough balance
+	tx.AssetAMinAmount = UnpackAmount(api, tx.AssetAMinAmount)
+	tx.AssetAAmountDelta = UnpackAmount(api, tx.AssetAAmountDelta)
+	tx.AssetBMinAmount = UnpackAmount(api, tx.AssetBMinAmount)
+	tx.AssetBAmountDelta = UnpackAmount(api, tx.AssetBAmountDelta)
+	tx.LpAmount = UnpackAmount(api, tx.LpAmount)
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	// TODO verify LP
 	Delta_LPCheck := api.Mul(tx.AssetAAmountDelta, tx.AssetBAmountDelta)

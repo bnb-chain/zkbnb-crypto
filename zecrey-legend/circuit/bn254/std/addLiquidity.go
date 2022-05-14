@@ -148,7 +148,13 @@ func ComputeHashFromAddLiquidityTx(tx AddLiquidityTxConstraints, nonce Variable,
 			- AssetB
 			- AssetGas
 */
-func VerifyAddLiquidityTx(api API, flag Variable, tx AddLiquidityTxConstraints, accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints) {
+func VerifyAddLiquidityTx(
+	api API, flag Variable,
+	tx *AddLiquidityTxConstraints,
+	accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints,
+	hFunc *MiMC,
+) {
+	CollectPubDataFromAddLiquidity(api, flag, *tx, hFunc)
 	// check params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
@@ -161,6 +167,10 @@ func VerifyAddLiquidityTx(api API, flag Variable, tx AddLiquidityTxConstraints, 
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// check if the user has enough balance
+	tx.AssetAAmount = UnpackAmount(api, tx.AssetAAmount)
+	tx.AssetBAmount = UnpackAmount(api, tx.AssetBAmount)
+	tx.LpAmount = UnpackAmount(api, tx.LpAmount)
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.AssetBAmount, accountsBefore[0].AssetsInfo[1].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[2].Balance)

@@ -40,5 +40,24 @@ const (
 
 	NbAccountAssetsPerAccount = 4
 	NbAccountsPerTx           = 5
-	NbNftsPerTx               = 2
+)
+
+const (
+	TxTypeEmptyTx = iota
+	TxTypeRegisterZns
+	TxTypeCreatePair
+	TxTypeDeposit
+	TxTypeDepositNft
+	TxTypeTransfer
+	TxTypeSwap
+	TxTypeAddLiquidity
+	TxTypeRemoveLiquidity
+	TxTypeWithdraw
+	TxTypeMintNft
+	TxTypeTransferNft
+	TxTypeSetNftPrice
+	TxTypeBuyNft
+	TxTypeWithdrawNft
+	TxTypeFullExit
+	TxTypeFullExitNft
 )

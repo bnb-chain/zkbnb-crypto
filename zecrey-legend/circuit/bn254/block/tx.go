@@ -24,6 +24,7 @@ type Tx struct {
 	TxType uint8
 	// different transactions
 	RegisterZnsTxInfo     *RegisterZnsTx
+	CreatePairTxInfo      *CreatePairTx
 	DepositTxInfo         *DepositTx
 	DepositNftTxInfo      *DepositNftTx
 	TransferTxInfo        *TransferTx
@@ -36,11 +37,13 @@ type Tx struct {
 	BuyNftTxInfo          *BuyNftTx
 	WithdrawTxInfo        *WithdrawTx
 	WithdrawNftTxInfo     *WithdrawNftTx
+	FullExitTxInfo        *FullExitTx
+	FullExitNftTxInfo     *FullExitNftTx
 	// signature
 	Signature *Signature
 	// account root before
 	AccountRootBefore []byte
-	// account before info, size is 4
+	// account before info, size is 5
 	AccountsInfoBefore [NbAccountsPerTx]*std.Account
 	// liquidity root before
 	LiquidityRootBefore []byte
@@ -50,18 +53,16 @@ type Tx struct {
 	NftRootBefore []byte
 	// nft before
 	NftBefore *std.Nft
+	// state root before
+	StateRootBefore []byte
 	// before account asset merkle proof
-	MerkleProofsAccountAssetsBefore       [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
-	MerkleProofsHelperAccountAssetsBefore [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleHelperLevels]int
-	// before account liquidity merkle proof
-	MerkleProofsLiquidityBefore       [NbAccountsPerTx][LiquidityMerkleLevels][]byte
-	MerkleProofsHelperLiquidityBefore [NbAccountsPerTx][LiquidityMerkleHelperLevels]int
-	// before account nft tree merkle proof
-	MerkleProofsNftBefore       [NbAccountsPerTx][NftMerkleLevels][]byte
-	MerkleProofsHelperNftBefore [NbAccountsPerTx][NftMerkleHelperLevels]int
+	MerkleProofsAccountAssetsBefore [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
+	// before liquidity merkle proof
+	MerkleProofsLiquidityBefore [LiquidityMerkleLevels][]byte
+	// before nft tree merkle proof
+	MerkleProofsNftBefore [NftMerkleLevels][]byte
 	// before account merkle proof
-	MerkleProofsAccountBefore       [NbAccountsPerTx][AccountMerkleLevels][]byte
-	MerkleProofsHelperAccountBefore [NbAccountsPerTx][AccountMerkleHelperLevels]int
-	// account root after
-	AccountRootAfter []byte
+	MerkleProofsAccountBefore [NbAccountsPerTx][AccountMerkleLevels][]byte
+	// state root after
+	StateRootAfter []byte
 }

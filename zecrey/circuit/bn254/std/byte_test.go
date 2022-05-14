@@ -18,13 +18,17 @@
 package std
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/consensys/gnark/test"
 	"math/big"
+	"math/rand"
 	"testing"
 )
 
@@ -42,24 +46,52 @@ func bitStringToBytes(s string) ([]byte, error) {
 
 func TestByteCircuit_Define(t *testing.T) {
 	assert := test.NewAssert(t)
-	bitStr := "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000110000100100001010000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
-	buf, _ := bitStringToBytes(bitStr)
-	fmt.Println(buf)
+	var buf bytes.Buffer
 	// 20byte
-	ABytes := make([]byte, 20)
-	copy(ABytes[:], "ABC")
+	ABytes := make([]byte, 16)
+	if _, err := rand.Read(ABytes); err != nil {
+		return
+	}
 	fmt.Println(ABytes)
-	fmt.Println(new(big.Int).SetBytes(ABytes).Bytes())
-	BBytes := make([]byte, 16)
-	copy(BBytes[:], "DEF")
-
-	CBytes := append(ABytes, BBytes...)
+	fmt.Println(new(big.Int).SetBytes(ABytes).String())
+	BBytes := make([]byte, 20)
+	if _, err := rand.Read(BBytes); err != nil {
+		return
+	}
+	CBytes := make([]byte, 30)
+	if _, err := rand.Read(CBytes); err != nil {
+		return
+	}
+	buf.Write(ABytes)
+	buf.Write(BBytes)
+	buf.Write(CBytes)
 	hFunc := mimc.NewMiMC()
-	hFunc.Write(CBytes)
-	CHash := hFunc.Sum(nil)
+	hFunc.Write(buf.Bytes())
+	DHash := hFunc.Sum(nil)
+	hFunc.Reset()
+	EBytes := []byte{1}
+	FBytes := []byte{2}
+	GBytes := []byte{3}
+	buf.Reset()
+	buf.Write(EBytes)
+	buf.Write(FBytes)
+	buf.Write(GBytes)
+	hFunc.Write(buf.Bytes())
+	HHash := hFunc.Sum(nil)
 	var circuit, witness ByteConstraints
 	witness.A = ABytes
 	witness.B = BBytes
-	witness.C = CHash
-	assert.SolvingSucceeded(&circuit, &witness, test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
+	witness.C = CBytes
+	witness.D = DHash
+	witness.E = EBytes
+	witness.F = FBytes
+	witness.G = GBytes
+	witness.H = HHash
+	//witness.D = DHash
+	r1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(r1cs.GetNbConstraints())
+	assert.SolvingSucceeded(&circuit, &witness, test.WithBackends(backend.GROTH16), test.WithCurves(ecc.BN254), test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
 }

@@ -19,22 +19,22 @@ package std
 
 import "math/big"
 
-type DepositTx struct {
+type FullExitTx struct {
 	AccountIndex    int64
 	AccountNameHash []byte
-	AssetId         uint32
+	AssetId         int64
 	AssetAmount     *big.Int
 }
 
-type DepositTxConstraints struct {
+type FullExitTxConstraints struct {
 	AccountIndex    Variable
 	AccountNameHash Variable
 	AssetId         Variable
 	AssetAmount     Variable
 }
 
-func EmptyDepositTxWitness() (witness DepositTxConstraints) {
-	return DepositTxConstraints{
+func EmptyFullExitTxWitness() (witness FullExitTxConstraints) {
+	return FullExitTxConstraints{
 		AccountIndex:    ZeroInt,
 		AccountNameHash: ZeroInt,
 		AssetId:         ZeroInt,
@@ -42,8 +42,8 @@ func EmptyDepositTxWitness() (witness DepositTxConstraints) {
 	}
 }
 
-func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints) {
-	witness = DepositTxConstraints{
+func SetFullExitTxWitness(tx *FullExitTx) (witness FullExitTxConstraints) {
+	witness = FullExitTxConstraints{
 		AccountIndex:    tx.AccountIndex,
 		AccountNameHash: tx.AccountNameHash,
 		AssetId:         tx.AssetId,
@@ -53,21 +53,22 @@ func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints) {
 }
 
 /*
-	VerifyDepositTx:
+	VerifyFullExitTx:
 	accounts order is:
 	- FromAccount
 		- Assets
 			- AssetA
 */
-func VerifyDepositTx(
+func VerifyFullExitTx(
 	api API, flag Variable,
-	tx DepositTxConstraints,
+	tx FullExitTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	hFunc *MiMC,
 ) {
-	CollectPubDataFromDeposit(api, flag, tx, hFunc)
+	CollectPubDataFromFullExit(api, flag, tx, hFunc)
 	// verify params
 	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 }
