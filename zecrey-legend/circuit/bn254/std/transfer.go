@@ -29,13 +29,13 @@ type TransferTx struct {
 		- gas fee asset amount
 		- call data hash
 	*/
-	FromAccountIndex  uint32
-	ToAccountIndex    uint32
-	AssetId           uint32
-	AssetAmount       uint64
-	GasAccountIndex   uint32
-	GasFeeAssetId     uint32
-	GasFeeAssetAmount uint64
+	FromAccountIndex  int64
+	ToAccountIndex    int64
+	AssetId           int64
+	AssetAmount       int64
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount int64
 	CallDataHash      []byte
 }
 

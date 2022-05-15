@@ -24,7 +24,7 @@ type DepositNftTx struct {
 	AccountNameHash     []byte
 	NftIndex            int64
 	NftContentHash      []byte
-	NftL1Address        *big.Int
+	NftL1Address        string
 	NftL1TokenId        *big.Int
 	CreatorTreasuryRate int64
 }

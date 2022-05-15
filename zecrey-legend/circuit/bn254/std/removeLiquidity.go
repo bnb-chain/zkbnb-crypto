@@ -18,30 +18,18 @@
 package std
 
 type RemoveLiquidityTx struct {
-	/*
-		- from account index
-		- to account index
-		- asset a id
-		- asset a min amount
-		- asset b id
-		- asset b min amount
-		- lp amount
-		- gas account index
-		- gas fee asset id
-		- gas fee asset amount
-	*/
-	FromAccountIndex  uint32
-	PairIndex         uint32
-	AssetAId          uint32
-	AssetAMinAmount   uint64
-	AssetBId          uint32
-	AssetBMinAmount   uint64
-	LpAmount          uint64
-	AssetAAmountDelta uint64
-	AssetBAmountDelta uint64
-	GasAccountIndex   uint32
-	GasFeeAssetId     uint32
-	GasFeeAssetAmount uint64
+	FromAccountIndex  int64
+	PairIndex         int64
+	AssetAId          int64
+	AssetAMinAmount   int64
+	AssetBId          int64
+	AssetBMinAmount   int64
+	LpAmount          int64
+	AssetAAmountDelta int64
+	AssetBAmountDelta int64
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount int64
 }
 
 type RemoveLiquidityTxConstraints struct {

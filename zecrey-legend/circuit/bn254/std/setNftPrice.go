@@ -27,13 +27,13 @@ type SetNftPriceTx struct {
 		- gas fee asset id
 		- gas fee asset amount
 	*/
-	AccountIndex      uint32
-	NftIndex          uint32
-	AssetId           uint32
-	AssetAmount       uint64
-	GasAccountIndex   uint32
-	GasFeeAssetId     uint32
-	GasFeeAssetAmount uint64
+	AccountIndex      int64
+	NftIndex          int64
+	AssetId           int64
+	AssetAmount       int64
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount int64
 }
 
 type SetNftPriceTxConstraints struct {

@@ -22,7 +22,7 @@ import "math/big"
 type DepositTx struct {
 	AccountIndex    int64
 	AccountNameHash []byte
-	AssetId         uint32
+	AssetId         int64
 	AssetAmount     *big.Int
 }
 

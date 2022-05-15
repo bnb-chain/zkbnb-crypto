@@ -17,22 +17,20 @@
 
 package std
 
-import "math/big"
-
 type BuyNftTx struct {
 	BuyerAccountIndex     int64
 	OwnerAccountIndex     int64
 	NftIndex              int64
 	AssetId               int64
-	AssetAmount           *big.Int
+	AssetAmount           int64
 	TreasuryFeeRate       int64
-	TreasuryFeeAmount     *big.Int
+	TreasuryFeeAmount     int64
 	TreasuryAccountIndex  int64
 	CreatorTreasuryRate   int64
-	CreatorTreasuryAmount *big.Int
+	CreatorTreasuryAmount int64
 	GasAccountIndex       int64
 	GasFeeAssetId         int64
-	GasFeeAssetAmount     *big.Int
+	GasFeeAssetAmount     int64
 }
 
 type BuyNftTxConstraints struct {

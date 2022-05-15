@@ -17,15 +17,13 @@
 
 package std
 
-import "math/big"
-
 type TransferNftTx struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
 	NftIndex          int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount *big.Int
+	GasFeeAssetAmount int64
 	CallDataHash      []byte
 }
 

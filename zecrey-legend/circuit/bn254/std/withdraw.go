@@ -17,23 +17,15 @@
 
 package std
 
+import "math/big"
+
 type WithdrawTx struct {
-	/*
-		- account index
-		- owner account index
-		- nft token id
-		- asset id
-		- asset amount
-		- gas account index
-		- gas fee asset id
-		- gas fee asset amount
-	*/
-	FromAccountIndex  uint32
-	AssetId           uint32
-	AssetAmount       uint64
-	GasAccountIndex   uint32
-	GasFeeAssetId     uint32
-	GasFeeAssetAmount uint64
+	FromAccountIndex  int64
+	AssetId           int64
+	AssetAmount       *big.Int
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount int64
 	ToAddress         string
 }
 
