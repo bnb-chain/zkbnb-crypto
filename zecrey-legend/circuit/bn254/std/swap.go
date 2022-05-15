@@ -37,19 +37,19 @@ type SwapTx struct {
 	FromAccountIndex       int64
 	PairIndex              int64
 	AssetAId               int64
-	AssetAAmount           *big.Int
+	AssetAAmount           int64
 	AssetBId               int64
-	AssetBMinAmount        *big.Int
-	AssetBAmountDelta      *big.Int
+	AssetBMinAmount        int64
+	AssetBAmountDelta      int64
 	PoolAAmount            *big.Int
 	PoolBAmount            *big.Int
 	FeeRate                int64
 	TreasuryAccountIndex   int64
 	TreasuryRate           int64
-	TreasuryFeeAmountDelta *big.Int
+	TreasuryFeeAmountDelta int64
 	GasAccountIndex        int64
 	GasFeeAssetId          int64
-	GasFeeAssetAmount      *big.Int
+	GasFeeAssetAmount      int64
 }
 
 type SwapTxConstraints struct {

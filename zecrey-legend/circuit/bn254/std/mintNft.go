@@ -17,8 +17,6 @@
 
 package std
 
-import "math/big"
-
 type MintNftTx struct {
 	/*
 		- creator account index
@@ -34,11 +32,11 @@ type MintNftTx struct {
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
 	NftIndex            int64
-	NftContentHash      string
+	NftContentHash      []byte
 	CreatorTreasuryRate int64
 	GasAccountIndex     int64
 	GasFeeAssetId       int64
-	GasFeeAssetAmount   *big.Int
+	GasFeeAssetAmount   int64
 }
 
 type MintNftTxConstraints struct {

@@ -19,12 +19,11 @@ package std
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	"math/big"
 )
 
 type RegisterZnsTx struct {
 	AccountIndex    int64
-	AccountName     *big.Int
+	AccountName     []byte
 	AccountNameHash []byte
 	PubKey          *eddsa.PublicKey
 	L1Address       string

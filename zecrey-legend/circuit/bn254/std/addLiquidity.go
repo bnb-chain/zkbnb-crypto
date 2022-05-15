@@ -17,6 +17,8 @@
 
 package std
 
+import "math/big"
+
 type AddLiquidityTx struct {
 	/*
 		- from account index
@@ -31,18 +33,18 @@ type AddLiquidityTx struct {
 		- gas fee amount
 		- nonce
 	*/
-	FromAccountIndex  uint32
-	PairIndex         uint32
-	AssetAId          uint32
-	AssetAAmount      uint64
-	AssetBId          uint32
-	AssetBAmount      uint64
-	LpAmount          uint64
-	PoolAAmount       uint64
-	PoolBAmount       uint64
-	GasAccountIndex   uint32
-	GasFeeAssetId     uint32
-	GasFeeAssetAmount uint64
+	FromAccountIndex  int64
+	PairIndex         int64
+	AssetAId          int64
+	AssetAAmount      int64
+	AssetBId          int64
+	AssetBAmount      int64
+	LpAmount          int64
+	PoolAAmount       *big.Int
+	PoolBAmount       *big.Int
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount int64
 }
 
 type AddLiquidityTxConstraints struct {

@@ -39,7 +39,7 @@ type WithdrawNftTx struct {
 	ProxyAddress      string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount *big.Int
+	GasFeeAssetAmount int64
 }
 
 type WithdrawNftTxConstraints struct {
