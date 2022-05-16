@@ -26,7 +26,6 @@ type RegisterZnsTx struct {
 	AccountName     []byte
 	AccountNameHash []byte
 	PubKey          *eddsa.PublicKey
-	L1Address       string
 }
 
 type RegisterZnsTxConstraints struct {
@@ -34,7 +33,6 @@ type RegisterZnsTxConstraints struct {
 	AccountName     Variable
 	AccountNameHash Variable
 	PubKey          PublicKeyConstraints
-	L1Address       Variable
 }
 
 func EmptyRegisterZnsTxWitness() (witness RegisterZnsTxConstraints) {
@@ -43,7 +41,6 @@ func EmptyRegisterZnsTxWitness() (witness RegisterZnsTxConstraints) {
 		AccountName:     ZeroInt,
 		AccountNameHash: ZeroInt,
 		PubKey:          EmptyPublicKeyWitness(),
-		L1Address:       ZeroInt,
 	}
 }
 
@@ -53,7 +50,6 @@ func SetRegisterZnsTxWitness(tx *RegisterZnsTx) (witness RegisterZnsTxConstraint
 		AccountName:     tx.AccountName,
 		AccountNameHash: tx.AccountNameHash,
 		PubKey:          SetPubKeyWitness(tx.PubKey),
-		L1Address:       tx.L1Address,
 	}
 	return witness
 }

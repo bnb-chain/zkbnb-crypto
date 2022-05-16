@@ -67,7 +67,7 @@ func SelectNftDeltas(
 	return deltaRes
 }
 
-func EmptySignature() (sig eddsa.Signature) {
+func EmptySignatureWitness() (sig eddsa.Signature) {
 	sig.R.X = std.ZeroInt
 	sig.R.Y = std.ZeroInt
 	sig.S = std.ZeroInt

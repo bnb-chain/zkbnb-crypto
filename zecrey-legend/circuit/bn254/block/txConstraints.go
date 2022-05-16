@@ -44,6 +44,8 @@ type TxConstraints struct {
 	WithdrawNftTxInfo     WithdrawNftTxConstraints
 	FullExitTxInfo        FullExitTxConstraints
 	FullExitNftTxInfo     FullExitNftTxConstraints
+	// nonce
+	Nonce Variable
 	// signature
 	Signature SignatureConstraints
 	// account root before
@@ -167,6 +169,21 @@ func VerifyTransaction(
 	hashValCheck = std.ComputeHashFromWithdrawNftTx(tx.WithdrawNftTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
 	hashVal = api.Select(isWithdrawNftTx, hashValCheck, hashVal)
 	hFunc.Reset()
+
+	// verify nonce
+	isLayer2Tx := api.Add(
+		isTransferTx,
+		isSwapTx,
+		isAddLiquidityTx,
+		isRemoveLiquidityTx,
+		isWithdrawTx,
+		isMintNftTx,
+		isTransferNftTx,
+		isSetNftPriceTx,
+		isBuyNftTx,
+		isWithdrawNftTx,
+	)
+	std.IsVariableEqual(api, isLayer2Tx, api.Add(tx.AccountsInfoBefore[0].Nonce, 1), tx.Nonce)
 	// verify signature
 	err := std.VerifyEddsaSig(
 		notNoSignatureTx,
@@ -291,6 +308,8 @@ func VerifyTransaction(
 	AccountsInfoAfter[0].AccountNameHash = api.Select(isRegisterZnsTx, accountDelta.AccountNameHash, AccountsInfoAfter[0].AccountNameHash)
 	AccountsInfoAfter[0].AccountPk.A.X = api.Select(isRegisterZnsTx, accountDelta.PubKey.A.X, AccountsInfoAfter[0].AccountPk.A.X)
 	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isRegisterZnsTx, accountDelta.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
+	// update nonce
+	AccountsInfoAfter[0].Nonce = api.Add(AccountsInfoAfter[0].Nonce, isLayer2Tx)
 	// update liquidity
 	LiquidityAfter := UpdateLiquidity(api, tx.LiquidityBefore, liquidityDelta)
 	// update nft
@@ -486,6 +505,8 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	witness.WithdrawNftTxInfo = std.EmptyWithdrawNftTxWitness()
 	witness.FullExitTxInfo = std.EmptyFullExitTxWitness()
 	witness.FullExitNftTxInfo = std.EmptyFullExitNftTxWitness()
+	witness.Signature = EmptySignatureWitness()
+	witness.Nonce = oTx.Nonce
 	switch oTx.TxType {
 	case std.TxTypeEmptyTx:
 		break
@@ -503,33 +524,63 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		break
 	case std.TxTypeTransfer:
 		witness.TransferTxInfo = std.SetTransferTxWitness(oTx.TransferTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeSwap:
 		witness.SwapTxInfo = std.SetSwapTxWitness(oTx.SwapTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeAddLiquidity:
 		witness.AddLiquidityTxInfo = std.SetAddLiquidityTxWitness(oTx.AddLiquidityTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeRemoveLiquidity:
 		witness.RemoveLiquidityTxInfo = std.SetRemoveLiquidityTxWitness(oTx.RemoveLiquidityTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeWithdraw:
 		witness.WithdrawTxInfo = std.SetWithdrawTxWitness(oTx.WithdrawTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeMintNft:
 		witness.MintNftTxInfo = std.SetMintNftTxWitness(oTx.MintNftTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeTransferNft:
 		witness.TransferNftTxInfo = std.SetTransferNftTxWitness(oTx.TransferNftTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeSetNftPrice:
 		witness.SetNftPriceTxInfo = std.SetSetNftPriceTxWitness(oTx.SetNftPriceTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeBuyNft:
 		witness.BuyNftTxInfo = std.SetBuyNftTxWitness(oTx.BuyNftTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeWithdrawNft:
 		witness.WithdrawNftTxInfo = std.SetWithdrawNftTxWitness(oTx.WithdrawNftTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeFullExit:
 		witness.FullExitTxInfo = std.SetFullExitTxWitness(oTx.FullExitTxInfo)
@@ -548,10 +599,6 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	witness.NftRootBefore = oTx.NftRootBefore
 	witness.StateRootAfter = oTx.StateRootAfter
 
-	// sig
-	witness.Signature.R.X = oTx.Signature.R.X
-	witness.Signature.R.Y = oTx.Signature.R.Y
-	witness.Signature.S = oTx.Signature.S[:]
 	// account before info, size is 4
 	for i := 0; i < NbAccountsPerTx; i++ {
 		// accounts info before

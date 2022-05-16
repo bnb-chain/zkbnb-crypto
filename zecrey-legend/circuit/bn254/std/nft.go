@@ -26,7 +26,7 @@ type Nft struct {
 	OwnerAccountIndex   int64
 	AssetId             int64
 	AssetAmount         *big.Int
-	NftL1Address        *big.Int
+	NftL1Address        string
 	NftL1TokenId        *big.Int
 	CreatorTreasuryRate int64
 }

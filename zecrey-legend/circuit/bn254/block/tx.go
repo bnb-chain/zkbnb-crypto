@@ -39,6 +39,8 @@ type Tx struct {
 	WithdrawNftTxInfo     *WithdrawNftTx
 	FullExitTxInfo        *FullExitTx
 	FullExitNftTxInfo     *FullExitNftTx
+	// nonce
+	Nonce int64
 	// signature
 	Signature *Signature
 	// account root before
