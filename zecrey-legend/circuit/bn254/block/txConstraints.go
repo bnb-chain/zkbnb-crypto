@@ -547,6 +547,11 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	witness.LiquidityRootBefore = oTx.LiquidityBefore
 	witness.NftRootBefore = oTx.NftRootBefore
 	witness.StateRootAfter = oTx.StateRootAfter
+
+	// sig
+	witness.Signature.R.X = oTx.Signature.R.X
+	witness.Signature.R.Y = oTx.Signature.R.Y
+	witness.Signature.S = oTx.Signature.S[:]
 	// account before info, size is 4
 	for i := 0; i < NbAccountsPerTx; i++ {
 		// accounts info before
