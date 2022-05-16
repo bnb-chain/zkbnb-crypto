@@ -17,6 +17,11 @@
 
 package block
 
+import (
+	"github.com/consensys/gnark/std/signature/eddsa"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
+)
+
 func SelectAssetDeltas(
 	api API,
 	flag Variable,
@@ -60,4 +65,11 @@ func SelectNftDeltas(
 	deltaRes.AssetAmount = api.Select(flag, delta.AssetAmount, deltaCheck.AssetAmount)
 	deltaRes.CreatorTreasuryRate = api.Select(flag, delta.CreatorTreasuryRate, deltaCheck.CreatorTreasuryRate)
 	return deltaRes
+}
+
+func EmptySignature() (sig eddsa.Signature) {
+	sig.R.X = std.ZeroInt
+	sig.R.Y = std.ZeroInt
+	sig.S = std.ZeroInt
+	return sig
 }
