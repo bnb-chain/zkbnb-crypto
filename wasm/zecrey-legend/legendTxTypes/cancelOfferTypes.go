@@ -21,18 +21,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
 )
 
-type SetNftPriceSegmentFormat struct {
+type CancelOfferSegmentFormat struct {
 	AccountIndex      int64  `json:"account_index"`
-	NftIndex          int64  `json:"nft_index"`
-	NftContentHash    string `json:"nft_content_hash"`
-	AssetId           int64  `json:"asset_id"`
-	AssetAmount       string `json:"asset_amount"`
+	OfferId           int64  `json:"offer_id"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -40,18 +36,13 @@ type SetNftPriceSegmentFormat struct {
 }
 
 /*
-	ConstructSetNftPriceTxInfo: construct set nft price tx, sign txInfo
+	ConstructCancelOfferTxInfo: construct cancel offer tx, sign txInfo
 */
-func ConstructSetNftPriceTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SetNftPriceTxInfo, err error) {
-	var segmentFormat *SetNftPriceSegmentFormat
+func ConstructCancelOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *CancelOfferTxInfo, err error) {
+	var segmentFormat *CancelOfferSegmentFormat
 	err = json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
-		log.Println("[ConstructSetNftPriceTxInfo] err info:", err)
-		return nil, err
-	}
-	assetAmount, err := StringToBigInt(segmentFormat.AssetAmount)
-	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructMintNftTxInfo] err info:", err)
 		return nil, err
 	}
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
@@ -59,12 +50,9 @@ func ConstructSetNftPriceTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SetN
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
-	txInfo = &SetNftPriceTxInfo{
+	txInfo = &CancelOfferTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
-		NftIndex:          segmentFormat.NftIndex,
-		NftContentHash:    segmentFormat.NftContentHash,
-		AssetId:           segmentFormat.AssetId,
-		AssetAmount:       assetAmount,
+		OfferId:           segmentFormat.OfferId,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -74,24 +62,21 @@ func ConstructSetNftPriceTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SetN
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash := ComputeSetNftPriceMsgHash(txInfo, hFunc)
+	msgHash := ComputeCancelOfferMsgHash(txInfo, hFunc)
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
 	if err != nil {
-		log.Println("[ConstructSetNftPriceTxInfo] unable to sign:", err)
+		log.Println("[ConstructMintNftTxInfo] unable to sign:", err)
 		return nil, err
 	}
 	txInfo.Sig = sigBytes
 	return txInfo, nil
 }
 
-type SetNftPriceTxInfo struct {
+type CancelOfferTxInfo struct {
 	AccountIndex      int64
-	NftIndex          int64
-	NftContentHash    string
-	AssetId           int64
-	AssetAmount       *big.Int
+	OfferId           int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
@@ -99,26 +84,11 @@ type SetNftPriceTxInfo struct {
 	Sig               []byte
 }
 
-func ComputeSetNftPriceMsgHash(txInfo *SetNftPriceTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeCancelOfferMsgHash(txInfo *CancelOfferTxInfo, hFunc hash.Hash) (msgHash []byte) {
 	hFunc.Reset()
-	/*
-		hFunc.Write(
-			tx.BuyerAccountIndex,
-			tx.NftIndex,
-			tx.AssetId,
-			tx.AssetAmount,
-			tx.GasAccountIndex,
-			tx.GasFeeAssetId,
-			tx.GasFeeAssetAmount,
-		)
-		hFunc.Write(nonce)
-	*/
 	var buf bytes.Buffer
 	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
-	buf.Write(common.FromHex(txInfo.NftContentHash))
-	WriteInt64IntoBuf(&buf, txInfo.AssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)
+	WriteInt64IntoBuf(&buf, txInfo.OfferId)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)

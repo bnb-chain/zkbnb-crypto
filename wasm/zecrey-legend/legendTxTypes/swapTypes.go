@@ -27,23 +27,21 @@ import (
 )
 
 type SwapSegmentFormat struct {
-	FromAccountIndex       int64  `json:"from_account_index"`
-	PairIndex              int64  `json:"pair_index"`
-	AssetAId               int64  `json:"asset_a_id"`
-	AssetAAmount           string `json:"asset_a_amount"`
-	AssetBId               int64  `json:"asset_b_id"`
-	AssetBMinAmount        string `json:"asset_b_min_amount"`
-	AssetBAmountDelta      string `json:"asset_b_amount_delta"`
-	PoolAAmount            string `json:"pool_a_amount"`
-	PoolBAmount            string `json:"pool_b_amount"`
-	FeeRate                int64  `json:"fee_rate"`
-	TreasuryAccountIndex   int64  `json:"treasury_account_index"`
-	TreasuryRate           int64  `json:"treasury_rate"`
-	TreasuryFeeAmountDelta string `json:"treasury_fee_amount_delta"`
-	GasAccountIndex        int64  `json:"gas_account_index"`
-	GasFeeAssetId          int64  `json:"gas_fee_asset_id"`
-	GasFeeAssetAmount      string `json:"gas_fee_asset_amount"`
-	Nonce                  int64  `json:"nonce"`
+	FromAccountIndex  int64  `json:"from_account_index"`
+	PairIndex         int64  `json:"pair_index"`
+	AssetAId          int64  `json:"asset_a_id"`
+	AssetAAmount      string `json:"asset_a_amount"`
+	AssetBId          int64  `json:"asset_b_id"`
+	AssetBMinAmount   string `json:"asset_b_min_amount"`
+	AssetBAmountDelta string `json:"asset_b_amount_delta"`
+	PoolAAmount       string `json:"pool_a_amount"`
+	PoolBAmount       string `json:"pool_b_amount"`
+	FeeRate           int64  `json:"fee_rate"`
+	GasAccountIndex   int64  `json:"gas_account_index"`
+	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
+	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
+	ExpiredAt         int64  `json:"expired_at"`
+	Nonce             int64  `json:"nonce"`
 }
 
 func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo, err error) {
@@ -73,30 +71,23 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
-	treasuryAmount, err := StringToBigInt(segmentFormat.TreasuryFeeAmountDelta)
-	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
-		return nil, err
-	}
 	txInfo = &SwapTxInfo{
-		FromAccountIndex:       segmentFormat.FromAccountIndex,
-		PairIndex:              segmentFormat.PairIndex,
-		AssetAId:               segmentFormat.AssetAId,
-		AssetAAmount:           assetAAmount,
-		AssetBId:               segmentFormat.AssetBId,
-		AssetBMinAmount:        assetBMinAmount,
-		AssetBAmountDelta:      assetBAmountDelta,
-		PoolAAmount:            ZeroBigInt,
-		PoolBAmount:            ZeroBigInt,
-		FeeRate:                segmentFormat.FeeRate,
-		TreasuryAccountIndex:   segmentFormat.TreasuryAccountIndex,
-		TreasuryRate:           segmentFormat.TreasuryRate,
-		TreasuryFeeAmountDelta: treasuryAmount,
-		GasAccountIndex:        segmentFormat.GasAccountIndex,
-		GasFeeAssetId:          segmentFormat.GasFeeAssetId,
-		GasFeeAssetAmount:      gasFeeAmount,
-		Nonce:                  segmentFormat.Nonce,
-		Sig:                    nil,
+		FromAccountIndex:  segmentFormat.FromAccountIndex,
+		PairIndex:         segmentFormat.PairIndex,
+		AssetAId:          segmentFormat.AssetAId,
+		AssetAAmount:      assetAAmount,
+		AssetBId:          segmentFormat.AssetBId,
+		AssetBMinAmount:   assetBMinAmount,
+		AssetBAmountDelta: assetBAmountDelta,
+		PoolAAmount:       ZeroBigInt,
+		PoolBAmount:       ZeroBigInt,
+		FeeRate:           segmentFormat.FeeRate,
+		GasAccountIndex:   segmentFormat.GasAccountIndex,
+		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
+		GasFeeAssetAmount: gasFeeAmount,
+		Nonce:             segmentFormat.Nonce,
+		ExpiredAt:         segmentFormat.ExpiredAt,
+		Sig:               nil,
 	}
 	hFunc := mimc.NewMiMC()
 	msgHash := ComputeSwapMsgHash(txInfo, hFunc)
@@ -111,24 +102,22 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 }
 
 type SwapTxInfo struct {
-	FromAccountIndex       int64
-	PairIndex              int64
-	AssetAId               int64
-	AssetAAmount           *big.Int
-	AssetBId               int64
-	AssetBMinAmount        *big.Int
-	AssetBAmountDelta      *big.Int
-	PoolAAmount            *big.Int
-	PoolBAmount            *big.Int
-	FeeRate                int64 // 0.3 * 10000
-	TreasuryAccountIndex   int64
-	TreasuryRate           int64
-	TreasuryFeeAmountDelta *big.Int
-	GasAccountIndex        int64
-	GasFeeAssetId          int64
-	GasFeeAssetAmount      *big.Int
-	Nonce                  int64
-	Sig                    []byte
+	FromAccountIndex  int64
+	PairIndex         int64
+	AssetAId          int64
+	AssetAAmount      *big.Int
+	AssetBId          int64
+	AssetBMinAmount   *big.Int
+	AssetBAmountDelta *big.Int
+	PoolAAmount       *big.Int
+	PoolBAmount       *big.Int
+	FeeRate           int64 // 0.3 * 10000
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount *big.Int
+	ExpiredAt         int64
+	Nonce             int64
+	Sig               []byte
 }
 
 func ComputeSwapMsgHash(txInfo *SwapTxInfo, hFunc hash.Hash) (msgHash []byte) {
@@ -159,11 +148,10 @@ func ComputeSwapMsgHash(txInfo *SwapTxInfo, hFunc hash.Hash) (msgHash []byte) {
 	WriteInt64IntoBuf(&buf, txInfo.AssetBId)
 	WriteBigIntIntoBuf(&buf, txInfo.AssetBMinAmount)
 	WriteInt64IntoBuf(&buf, txInfo.FeeRate)
-	WriteInt64IntoBuf(&buf, txInfo.TreasuryAccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.TreasuryRate)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
