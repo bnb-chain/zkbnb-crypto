@@ -333,7 +333,7 @@ func (t *Tree) BuildMerkleProofs(index int64) (
 	// if index belongs to leaves
 	if index < int64(len(t.Leaves)) {
 		node := t.Leaves[index]
-		proofs = append(proofs, node.Value)
+		//proofs = append(proofs, node.Value)
 		for node.Parent != nil {
 			if node.Parent.Left == node {
 				if node.Parent.Right == nil {
@@ -354,7 +354,7 @@ func (t *Tree) BuildMerkleProofs(index int64) (
 		}
 	} else {
 		// add itself
-		proofs = append(proofs, t.NilHashValueConst[0])
+		//proofs = append(proofs, t.NilHashValueConst[0])
 		// get last index
 		lastIndex := int64(len(t.Leaves) - 1)
 		// get last leave node

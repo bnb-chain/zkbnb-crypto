@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"hash"
 	"log"
 	"math/big"
@@ -77,7 +78,11 @@ func ConstructAtomicMatchTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Atom
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash := ComputeAtomicMatchMsgHash(txInfo, hFunc)
+	msgHash, err := ComputeAtomicMatchMsgHash(txInfo, hFunc)
+	if err != nil {
+		log.Println("[ConstructMintNftTxInfo] unable to compute hash: ", err.Error())
+		return nil, err
+	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
@@ -100,7 +105,7 @@ type AtomicMatchTxInfo struct {
 	Sig               []byte
 }
 
-func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
@@ -113,7 +118,17 @@ func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgH
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.ListedAt)
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.ExpiredAt)
 	// TODO write sig into buf
-	buf.Write(txInfo.BuyOffer.Sig)
+	var (
+		buyerSig, sellerSig = new(eddsa.Signature), new(eddsa.Signature)
+	)
+	_, err = buyerSig.SetBytes(txInfo.BuyOffer.Sig)
+	if err != nil {
+		log.Println("[ComputeAtomicMatchMsgHash] unable to convert to sig: ", err.Error())
+		return nil, err
+	}
+	buf.Write(buyerSig.R.X.Marshal())
+	buf.Write(buyerSig.R.Y.Marshal())
+	buf.Write(buyerSig.S[:])
 	WriteInt64IntoBuf(&buf, txInfo.SellOffer.Type)
 	WriteInt64IntoBuf(&buf, txInfo.SellOffer.OfferId)
 	WriteInt64IntoBuf(&buf, txInfo.SellOffer.AccountIndex)
@@ -122,13 +137,19 @@ func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgH
 	WriteBigIntIntoBuf(&buf, txInfo.SellOffer.AssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.SellOffer.ListedAt)
 	WriteInt64IntoBuf(&buf, txInfo.SellOffer.ExpiredAt)
-	// TODO write sig into buf
-	buf.Write(txInfo.SellOffer.Sig)
+	_, err = sellerSig.SetBytes(txInfo.SellOffer.Sig)
+	if err != nil {
+		log.Println("[ComputeAtomicMatchMsgHash] unable to convert to sig: ", err.Error())
+		return nil, err
+	}
+	buf.Write(sellerSig.R.X.Marshal())
+	buf.Write(sellerSig.R.Y.Marshal())
+	buf.Write(sellerSig.S[:])
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
-	return msgHash
+	return msgHash, nil
 }
