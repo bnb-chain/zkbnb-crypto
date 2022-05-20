@@ -43,9 +43,10 @@ func CheckEmptyAccountNode(api API, flag Variable, account AccountConstraints) {
 }
 
 type AccountAssetConstraints struct {
-	AssetId  Variable
-	Balance  Variable
-	LpAmount Variable
+	AssetId                  Variable
+	Balance                  Variable
+	LpAmount                 Variable
+	OfferCanceledOrFinalized Variable
 }
 
 func SetAccountAssetWitness(asset *AccountAsset) (witness AccountAssetConstraints, err error) {

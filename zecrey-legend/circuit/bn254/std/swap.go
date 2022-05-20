@@ -34,82 +34,70 @@ type SwapTx struct {
 		- gas fee asset id
 		- gas fee asset amount
 	*/
-	FromAccountIndex       int64
-	PairIndex              int64
-	AssetAId               int64
-	AssetAAmount           int64
-	AssetBId               int64
-	AssetBMinAmount        int64
-	AssetBAmountDelta      int64
-	PoolAAmount            *big.Int
-	PoolBAmount            *big.Int
-	FeeRate                int64
-	TreasuryAccountIndex   int64
-	TreasuryRate           int64
-	TreasuryFeeAmountDelta int64
-	GasAccountIndex        int64
-	GasFeeAssetId          int64
-	GasFeeAssetAmount      int64
+	FromAccountIndex  int64
+	PairIndex         int64
+	AssetAId          int64
+	AssetAAmount      int64
+	AssetBId          int64
+	AssetBMinAmount   int64
+	AssetBAmountDelta int64
+	PoolAAmount       *big.Int
+	PoolBAmount       *big.Int
+	FeeRate           int64
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount int64
 }
 
 type SwapTxConstraints struct {
-	FromAccountIndex       Variable
-	PairIndex              Variable
-	AssetAId               Variable
-	AssetAAmount           Variable
-	AssetBId               Variable
-	AssetBMinAmount        Variable
-	AssetBAmountDelta      Variable
-	PoolAAmount            Variable
-	PoolBAmount            Variable
-	TreasuryFeeAmountDelta Variable
-	FeeRate                Variable
-	TreasuryAccountIndex   Variable
-	TreasuryRate           Variable
-	GasAccountIndex        Variable
-	GasFeeAssetId          Variable
-	GasFeeAssetAmount      Variable
+	FromAccountIndex  Variable
+	PairIndex         Variable
+	AssetAId          Variable
+	AssetAAmount      Variable
+	AssetBId          Variable
+	AssetBMinAmount   Variable
+	AssetBAmountDelta Variable
+	PoolAAmount       Variable
+	PoolBAmount       Variable
+	FeeRate           Variable
+	GasAccountIndex   Variable
+	GasFeeAssetId     Variable
+	GasFeeAssetAmount Variable
 }
 
 func EmptySwapTxWitness() (witness SwapTxConstraints) {
 	return SwapTxConstraints{
-		FromAccountIndex:       ZeroInt,
-		PairIndex:              ZeroInt,
-		AssetAId:               ZeroInt,
-		AssetAAmount:           ZeroInt,
-		AssetBId:               ZeroInt,
-		AssetBMinAmount:        ZeroInt,
-		AssetBAmountDelta:      ZeroInt,
-		PoolAAmount:            ZeroInt,
-		PoolBAmount:            ZeroInt,
-		TreasuryFeeAmountDelta: ZeroInt,
-		FeeRate:                ZeroInt,
-		TreasuryAccountIndex:   ZeroInt,
-		TreasuryRate:           ZeroInt,
-		GasAccountIndex:        ZeroInt,
-		GasFeeAssetId:          ZeroInt,
-		GasFeeAssetAmount:      ZeroInt,
+		FromAccountIndex:  ZeroInt,
+		PairIndex:         ZeroInt,
+		AssetAId:          ZeroInt,
+		AssetAAmount:      ZeroInt,
+		AssetBId:          ZeroInt,
+		AssetBMinAmount:   ZeroInt,
+		AssetBAmountDelta: ZeroInt,
+		PoolAAmount:       ZeroInt,
+		PoolBAmount:       ZeroInt,
+		FeeRate:           ZeroInt,
+		GasAccountIndex:   ZeroInt,
+		GasFeeAssetId:     ZeroInt,
+		GasFeeAssetAmount: ZeroInt,
 	}
 }
 
 func SetSwapTxWitness(tx *SwapTx) (witness SwapTxConstraints) {
 	witness = SwapTxConstraints{
-		FromAccountIndex:       tx.FromAccountIndex,
-		PairIndex:              tx.PairIndex,
-		AssetAId:               tx.AssetAId,
-		AssetAAmount:           tx.AssetAAmount,
-		AssetBId:               tx.AssetBId,
-		AssetBMinAmount:        tx.AssetBMinAmount,
-		AssetBAmountDelta:      tx.AssetBAmountDelta,
-		PoolAAmount:            tx.PoolAAmount,
-		PoolBAmount:            tx.PoolBAmount,
-		TreasuryFeeAmountDelta: tx.TreasuryFeeAmountDelta,
-		FeeRate:                tx.FeeRate,
-		TreasuryAccountIndex:   tx.TreasuryAccountIndex,
-		TreasuryRate:           tx.TreasuryRate,
-		GasAccountIndex:        tx.GasAccountIndex,
-		GasFeeAssetId:          tx.GasFeeAssetId,
-		GasFeeAssetAmount:      tx.GasFeeAssetAmount,
+		FromAccountIndex:  tx.FromAccountIndex,
+		PairIndex:         tx.PairIndex,
+		AssetAId:          tx.AssetAId,
+		AssetAAmount:      tx.AssetAAmount,
+		AssetBId:          tx.AssetBId,
+		AssetBMinAmount:   tx.AssetBMinAmount,
+		AssetBAmountDelta: tx.AssetBAmountDelta,
+		PoolAAmount:       tx.PoolAAmount,
+		PoolBAmount:       tx.PoolBAmount,
+		FeeRate:           tx.FeeRate,
+		GasAccountIndex:   tx.GasAccountIndex,
+		GasFeeAssetId:     tx.GasFeeAssetId,
+		GasFeeAssetAmount: tx.GasFeeAssetAmount,
 	}
 	return witness
 }
@@ -124,8 +112,6 @@ func ComputeHashFromSwapTx(tx SwapTxConstraints, nonce Variable, hFunc MiMC) (ha
 		tx.AssetBId,
 		tx.AssetBMinAmount,
 		tx.FeeRate,
-		tx.TreasuryAccountIndex,
-		tx.TreasuryRate,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
@@ -164,7 +150,6 @@ func VerifySwapTx(
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.TreasuryAccountIndex, accountsBefore[1].AccountIndex)
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
 	// pair index
 	IsVariableEqual(api, flag, tx.PairIndex, liquidityBefore.PairIndex)
@@ -199,7 +184,6 @@ func VerifySwapTx(
 	tx.AssetBMinAmount = UnpackAmount(api, tx.AssetBMinAmount)
 	tx.AssetBAmountDelta = UnpackAmount(api, tx.AssetBAmountDelta)
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
-	tx.TreasuryFeeAmountDelta = UnpackFee(api, tx.TreasuryFeeAmountDelta)
 	IsVariableLessOrEqual(api, flag, tx.AssetBMinAmount, tx.AssetBAmountDelta)
 	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[2].Balance)
@@ -210,12 +194,18 @@ func VerifySwapTx(
 	IsVariableLessOrEqual(api, isSameAsset, tx.PoolBAmount, liquidityBefore.AssetB)
 	IsVariableLessOrEqual(api, isDifferentAsset, tx.PoolAAmount, liquidityBefore.AssetB)
 	IsVariableLessOrEqual(api, isDifferentAsset, tx.PoolBAmount, liquidityBefore.AssetA)
+	IsVariableEqual(api, flag, tx.FeeRate, liquidityBefore.FeeRate)
+	IsVariableLessOrEqual(api, flag, tx.FeeRate, RateBase)
+	assetAAmount := api.Select(isSameAsset, tx.AssetAAmount, tx.AssetBAmountDelta)
+	assetBAmount := api.Select(isSameAsset, tx.AssetBAmountDelta, tx.AssetAAmount)
 	// verify AMM
-	k := api.Mul(tx.PoolAAmount, tx.PoolBAmount)
-	// TODO check treasury fee amount
-	treasuryAmount := api.Div(api.Mul(tx.AssetAAmount, tx.TreasuryRate), 10000)
-	IsVariableEqual(api, flag, tx.TreasuryFeeAmountDelta, treasuryAmount)
-	poolADelta := api.Sub(tx.AssetAAmount, tx.TreasuryFeeAmountDelta)
-	kPrime := api.Mul(api.Add(tx.PoolAAmount, poolADelta), api.Sub(tx.PoolBAmount, tx.AssetBAmountDelta))
-	api.AssertIsLessOrEqual(k, kPrime)
+	r := api.Mul(api.Mul(tx.PoolAAmount, tx.PoolBAmount), RateBase)
+	l := api.Mul(
+		api.Sub(
+			api.Mul(RateBase, api.Add(assetAAmount, tx.PoolAAmount)),
+			api.Mul(liquidityBefore.FeeRate, assetAAmount),
+		),
+		assetBAmount,
+	)
+	IsVariableLessOrEqual(api, flag, r, l)
 }

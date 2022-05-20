@@ -40,10 +40,16 @@ func CollectPubDataFromCreatePair(api API, flag Variable, txInfo CreatePairTxCon
 		pairIndexBits := api.ToBinary(txInfo.PairIndex, PairIndexBitsSize)
 		assetAIdBits := api.ToBinary(txInfo.AssetAId, AssetIdBitsSize)
 		assetBIdBits := api.ToBinary(txInfo.AssetBId, AssetIdBitsSize)
+		FeeRateBits := api.ToBinary(txInfo.FeeRate, PackedFeeBitsSize)
+		TreasuryAccountIndexBits := api.ToBinary(txInfo.TreasuryAccountIndex, AccountIndexBitsSize)
+		TreasuryRateBits := api.ToBinary(txInfo.TreasuryRate, PackedFeeBitsSize)
 		ABits := append(pairIndexBits, txTypeBits...)
 		ABits = append(assetAIdBits, ABits...)
 		ABits = append(assetBIdBits, ABits...)
-		A := api.FromBinary(ABits)
+		ABits = append(FeeRateBits, ABits...)
+		ABits = append(TreasuryAccountIndexBits, ABits...)
+		ABits = append(TreasuryRateBits, ABits...)
+		A := api.FromBinary(ABits...)
 		hFunc.Write(A)
 	}
 }
@@ -57,9 +63,6 @@ func CollectPubDataFromDeposit(api API, flag Variable, txInfo DepositTxConstrain
 		assetIdBits := api.ToBinary(txInfo.AssetId, AssetIdBitsSize)
 		assetAmountBits := api.ToBinary(txInfo.AssetAmount, StateAmountBitsSize)
 		ABits := append(accountIndexBits, txTypeBits...)
-		//ABits = append(accountNameHashBits[40:], ABits...)
-		//BBits := append(assetIdBits, accountNameHashBits[:40]...)
-		//BBits = append(assetAmountBits, BBits...)
 		ABits = append(assetIdBits, ABits...)
 		ABits = append(assetAmountBits, ABits...)
 		A := api.FromBinary(ABits...)
@@ -123,8 +126,6 @@ func CollectPubDataFromSwap(api API, flag Variable, txInfo SwapTxConstraints, hF
 		pairIndexBits := api.ToBinary(txInfo.PairIndex, PairIndexBitsSize)
 		assetAAmountBits := api.ToBinary(txInfo.AssetAAmount, PackedAmountBitsSize)
 		assetBAmountBits := api.ToBinary(txInfo.AssetBAmountDelta, PackedAmountBitsSize)
-		treasuryAccountIndexBits := api.ToBinary(txInfo.TreasuryAccountIndex, AccountIndexBitsSize)
-		treasuryFeeAmountBits := api.ToBinary(txInfo.TreasuryFeeAmountDelta, PackedFeeBitsSize)
 		gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
 		gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
 		gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
@@ -132,8 +133,6 @@ func CollectPubDataFromSwap(api API, flag Variable, txInfo SwapTxConstraints, hF
 		ABits = append(pairIndexBits, ABits...)
 		ABits = append(assetAAmountBits, ABits...)
 		ABits = append(assetBAmountBits, ABits...)
-		ABits = append(treasuryAccountIndexBits, ABits...)
-		ABits = append(treasuryFeeAmountBits, ABits...)
 		ABits = append(gasAccountIndexBits, ABits...)
 		ABits = append(gasFeeAssetIdBits, ABits...)
 		ABits = append(gasFeeAssetAmountBits, ABits...)
@@ -267,63 +266,6 @@ func CollectPubDataFromTransferNft(api API, flag Variable, txInfo TransferNftTxC
 	}
 }
 
-func CollectPubDataFromSetNftPrice(api API, flag Variable, txInfo SetNftPriceTxConstraints, hFunc *MiMC) {
-	isTxVar := api.Sub(flag, 1)
-	isTx := api.Compiler().IsBoolean(isTxVar)
-	if isTx {
-		txTypeBits := api.ToBinary(TxTypeSetNftPrice, TxTypeBitsSize)
-		fromAccountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
-		nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
-		assetIdBits := api.ToBinary(txInfo.AssetId, AssetIdBitsSize)
-		assetAmountBits := api.ToBinary(txInfo.AssetAmount, PackedAmountBitsSize)
-		gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
-		gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
-		gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
-		ABits := append(fromAccountIndexBits, txTypeBits...)
-		ABits = append(nftIndexBits, ABits...)
-		ABits = append(assetIdBits, ABits...)
-		ABits = append(assetAmountBits, ABits...)
-		ABits = append(gasAccountIndexBits, ABits...)
-		ABits = append(gasFeeAssetIdBits, ABits...)
-		ABits = append(gasFeeAssetAmountBits, ABits...)
-		A := api.FromBinary(ABits...)
-		hFunc.Write(A)
-	}
-}
-
-func CollectPubDataFromBuyNft(api API, flag Variable, txInfo BuyNftTxConstraints, hFunc *MiMC) {
-	isTxVar := api.Sub(flag, 1)
-	isTx := api.Compiler().IsBoolean(isTxVar)
-	if isTx {
-		txTypeBits := api.ToBinary(TxTypeBuyNft, TxTypeBitsSize)
-		buyerAccountIndexBits := api.ToBinary(txInfo.BuyerAccountIndex, AccountIndexBitsSize)
-		ownerAccountIndexBits := api.ToBinary(txInfo.OwnerAccountIndex, AccountIndexBitsSize)
-		nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
-		assetIdBits := api.ToBinary(txInfo.AssetId, AssetIdBitsSize)
-		assetAmountBits := api.ToBinary(txInfo.AssetAmount, PackedAmountBitsSize)
-		gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
-		gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
-		gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
-		treasuryFeeAccountIndexBits := api.ToBinary(txInfo.TreasuryAccountIndex, AccountIndexBitsSize)
-		treasuryFeeAmountBits := api.ToBinary(txInfo.TreasuryFeeAmount, PackedFeeBitsSize)
-		creatorTreasuryAmountBits := api.ToBinary(txInfo.CreatorTreasuryAmount, PackedFeeBitsSize)
-		ABits := append(buyerAccountIndexBits, txTypeBits...)
-		ABits = append(ownerAccountIndexBits, ABits...)
-		ABits = append(nftIndexBits, ABits...)
-		ABits = append(assetIdBits, ABits...)
-		ABits = append(assetAmountBits, ABits...)
-		ABits = append(gasAccountIndexBits, ABits...)
-		ABits = append(gasFeeAssetIdBits, ABits...)
-		ABits = append(gasFeeAssetAmountBits, ABits...)
-		ABits = append(treasuryFeeAccountIndexBits[8:], ABits...)
-		BBits := append(treasuryFeeAmountBits, treasuryFeeAccountIndexBits[:8]...)
-		BBits = append(creatorTreasuryAmountBits, BBits...)
-		A := api.FromBinary(ABits...)
-		B := api.FromBinary(BBits...)
-		hFunc.Write(A, B)
-	}
-}
-
 func CollectPubDataFromWithdrawNft(api API, flag Variable, txInfo WithdrawNftTxConstraints, hFunc *MiMC) {
 	isTxVar := api.Sub(flag, 1)
 	isTx := api.Compiler().IsBoolean(isTxVar)
@@ -387,4 +329,14 @@ func CollectPubDataFromFullExitNft(api API, flag Variable, txInfo FullExitNftTxC
 		C := txInfo.NftL1TokenId
 		hFunc.Write(A, B, C)
 	}
+}
+
+// TODO
+func CollectPubDataFromCancelOffer(api API, flag Variable, txInfo CancelOfferTxConstraints, hFunc *MiMC) {
+
+}
+
+// TODO
+func CollectPubDataFromAtomicMatch(api API, flag Variable, txInfo AtomicMatchTxConstraints, hFunc *MiMC) {
+
 }

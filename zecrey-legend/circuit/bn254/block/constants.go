@@ -43,8 +43,8 @@ type (
 	RemoveLiquidityTx = std.RemoveLiquidityTx
 	MintNftTx         = std.MintNftTx
 	TransferNftTx     = std.TransferNftTx
-	SetNftPriceTx     = std.SetNftPriceTx
-	BuyNftTx          = std.BuyNftTx
+	AtomicMatchTx     = std.AtomicMatchTx
+	CancelOfferTx     = std.CancelOfferTx
 	WithdrawTx        = std.WithdrawTx
 	WithdrawNftTx     = std.WithdrawNftTx
 	FullExitTx        = std.FullExitTx
@@ -60,8 +60,8 @@ type (
 	RemoveLiquidityTxConstraints = std.RemoveLiquidityTxConstraints
 	MintNftTxConstraints         = std.MintNftTxConstraints
 	TransferNftTxConstraints     = std.TransferNftTxConstraints
-	SetNftPriceTxConstraints     = std.SetNftPriceTxConstraints
-	BuyNftTxConstraints          = std.BuyNftTxConstraints
+	AtomicMatchTxConstraints     = std.AtomicMatchTxConstraints
+	CancelOfferTxConstraints     = std.CancelOfferTxConstraints
 	WithdrawTxConstraints        = std.WithdrawTxConstraints
 	WithdrawNftTxConstraints     = std.WithdrawNftTxConstraints
 	FullExitTxConstraints        = std.FullExitTxConstraints
@@ -78,4 +78,6 @@ const (
 	LiquidityMerkleLevels     = 16
 	NftMerkleLevels           = 40
 	AccountMerkleLevels       = 32
+	RateBase                  = std.RateBase
+	OfferSizePerAsset         = 128
 )

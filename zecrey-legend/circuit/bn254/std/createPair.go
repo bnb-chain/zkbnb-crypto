@@ -18,30 +18,42 @@
 package std
 
 type CreatePairTx struct {
-	PairIndex int64
-	AssetAId  int64
-	AssetBId  int64
+	PairIndex            int64
+	AssetAId             int64
+	AssetBId             int64
+	FeeRate              int64
+	TreasuryAccountIndex int64
+	TreasuryRate         int64
 }
 
 type CreatePairTxConstraints struct {
-	PairIndex Variable
-	AssetAId  Variable
-	AssetBId  Variable
+	PairIndex            Variable
+	AssetAId             Variable
+	AssetBId             Variable
+	FeeRate              Variable
+	TreasuryAccountIndex Variable
+	TreasuryRate         Variable
 }
 
 func EmptyCreatePairTxWitness() (witness CreatePairTxConstraints) {
 	return CreatePairTxConstraints{
-		PairIndex: ZeroInt,
-		AssetAId:  ZeroInt,
-		AssetBId:  ZeroInt,
+		PairIndex:            ZeroInt,
+		AssetAId:             ZeroInt,
+		AssetBId:             ZeroInt,
+		FeeRate:              ZeroInt,
+		TreasuryAccountIndex: ZeroInt,
+		TreasuryRate:         ZeroInt,
 	}
 }
 
 func SetCreatePairTxWitness(tx *CreatePairTx) (witness CreatePairTxConstraints) {
 	witness = CreatePairTxConstraints{
-		PairIndex: tx.PairIndex,
-		AssetAId:  tx.AssetAId,
-		AssetBId:  tx.AssetBId,
+		PairIndex:            tx.PairIndex,
+		AssetAId:             tx.AssetAId,
+		AssetBId:             tx.AssetBId,
+		FeeRate:              tx.FeeRate,
+		TreasuryAccountIndex: tx.TreasuryAccountIndex,
+		TreasuryRate:         tx.TreasuryRate,
 	}
 	return witness
 }

@@ -38,14 +38,16 @@ type TxConstraints struct {
 	RemoveLiquidityTxInfo RemoveLiquidityTxConstraints
 	MintNftTxInfo         MintNftTxConstraints
 	TransferNftTxInfo     TransferNftTxConstraints
-	SetNftPriceTxInfo     SetNftPriceTxConstraints
-	BuyNftTxInfo          BuyNftTxConstraints
+	AtomicMatchTxInfo     AtomicMatchTxConstraints
+	CancelOfferTxInfo     CancelOfferTxConstraints
 	WithdrawTxInfo        WithdrawTxConstraints
 	WithdrawNftTxInfo     WithdrawNftTxConstraints
 	FullExitTxInfo        FullExitTxConstraints
 	FullExitNftTxInfo     FullExitNftTxConstraints
 	// nonce
 	Nonce Variable
+	// expired at
+	ExpiredAt Variable
 	// signature
 	Signature SignatureConstraints
 	// account root before
@@ -86,7 +88,7 @@ func (circuit TxConstraints) Define(api API) error {
 		return err
 	}
 
-	err = VerifyTransaction(api, circuit, hFunc, pubdataHashFunc)
+	err = VerifyTransaction(api, circuit, hFunc, pubdataHashFunc, 0)
 	if err != nil {
 		return err
 	}
@@ -98,6 +100,7 @@ func VerifyTransaction(
 	tx TxConstraints,
 	hFunc MiMC,
 	pubdataHashFunc MiMC,
+	blockCreatedAt Variable,
 ) error {
 	// compute tx type
 	isEmptyTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeEmptyTx))
@@ -112,8 +115,8 @@ func VerifyTransaction(
 	isWithdrawTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeWithdraw))
 	isMintNftTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeMintNft))
 	isTransferNftTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeTransferNft))
-	isSetNftPriceTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeSetNftPrice))
-	isBuyNftTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeBuyNft))
+	isAtomicMatchTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeAtomicMatch))
+	isCancelOfferTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeCancelOffer))
 	isWithdrawNftTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeWithdrawNft))
 	isFullExitTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeFullExit))
 	isFullExitNftTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeFullExitNft))
@@ -160,11 +163,11 @@ func VerifyTransaction(
 	hashValCheck = std.ComputeHashFromTransferNftTx(tx.TransferNftTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
 	hashVal = api.Select(isTransferNftTx, hashValCheck, hashVal)
 	// set nft price tx
-	hashValCheck = std.ComputeHashFromSetNftPriceTx(tx.SetNftPriceTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isSetNftPriceTx, hashValCheck, hashVal)
+	hashValCheck = std.ComputeHashFromAtomicMatchTx(tx.AtomicMatchTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
+	hashVal = api.Select(isAtomicMatchTx, hashValCheck, hashVal)
 	// buy nft tx
-	hashValCheck = std.ComputeHashFromBuyNftTx(tx.BuyNftTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isBuyNftTx, hashValCheck, hashVal)
+	hashValCheck = std.ComputeHashFromCancelOfferTx(tx.CancelOfferTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
+	hashVal = api.Select(isCancelOfferTx, hashValCheck, hashVal)
 	// withdraw nft tx
 	hashValCheck = std.ComputeHashFromWithdrawNftTx(tx.WithdrawNftTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
 	hashVal = api.Select(isWithdrawNftTx, hashValCheck, hashVal)
@@ -179,8 +182,8 @@ func VerifyTransaction(
 		isWithdrawTx,
 		isMintNftTx,
 		isTransferNftTx,
-		isSetNftPriceTx,
-		isBuyNftTx,
+		isAtomicMatchTx,
+		isCancelOfferTx,
 		isWithdrawNftTx,
 	)
 	std.IsVariableEqual(api, isLayer2Tx, api.Add(tx.AccountsInfoBefore[0].Nonce, 1), tx.Nonce)
@@ -210,11 +213,17 @@ func VerifyTransaction(
 	std.VerifyWithdrawTx(api, isWithdrawTx, &tx.WithdrawTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
 	std.VerifyMintNftTx(api, isMintNftTx, &tx.MintNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
 	std.VerifyTransferNftTx(api, isTransferNftTx, &tx.TransferNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
-	std.VerifySetNftPriceTx(api, isSetNftPriceTx, &tx.SetNftPriceTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
-	std.VerifyBuyNftTx(api, isBuyNftTx, &tx.BuyNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
+	err = std.VerifyAtomicMatchTx(api, isAtomicMatchTx, &tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore, blockCreatedAt, &pubdataHashFunc)
+	if err != nil {
+		return err
+	}
+	std.VerifyCancelOfferTx(api, isCancelOfferTx, &tx.CancelOfferTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
 	std.VerifyWithdrawNftTx(api, isWithdrawNftTx, &tx.WithdrawNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
 	std.VerifyFullExitTx(api, isFullExitTx, tx.FullExitTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
 	std.VerifyFullExitNftTx(api, isFullExitNftTx, tx.FullExitNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
+
+	// verify timestamp
+	std.IsVariableLessOrEqual(api, isLayer2Tx, blockCreatedAt, tx.ExpiredAt)
 
 	// empty delta
 	var (
@@ -243,8 +252,6 @@ func VerifyTransaction(
 		NftContentHash:      tx.NftBefore.NftContentHash,
 		NftL1Address:        tx.NftBefore.NftL1Address,
 		NftL1TokenId:        tx.NftBefore.NftL1TokenId,
-		AssetId:             tx.NftBefore.AssetId,
-		AssetAmount:         tx.NftBefore.AssetAmount,
 		CreatorTreasuryRate: tx.NftBefore.CreatorTreasuryRate,
 	}
 
@@ -286,13 +293,12 @@ func VerifyTransaction(
 	assetDeltas = SelectAssetDeltas(api, isTransferNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isTransferNftTx, nftDeltaCheck, nftDelta)
 	// set nft price
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromSetNftPrice(api, tx.SetNftPriceTxInfo, tx.NftBefore)
-	assetDeltas = SelectAssetDeltas(api, isSetNftPriceTx, assetDeltasCheck, assetDeltas)
-	nftDelta = SelectNftDeltas(api, isSetNftPriceTx, nftDeltaCheck, nftDelta)
+	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromAtomicMatch(api, tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
+	assetDeltas = SelectAssetDeltas(api, isAtomicMatchTx, assetDeltasCheck, assetDeltas)
+	nftDelta = SelectNftDeltas(api, isAtomicMatchTx, nftDeltaCheck, nftDelta)
 	// buy nft
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromBuyNft(api, tx.BuyNftTxInfo, tx.NftBefore)
-	assetDeltas = SelectAssetDeltas(api, isBuyNftTx, assetDeltasCheck, assetDeltas)
-	nftDelta = SelectNftDeltas(api, isBuyNftTx, nftDeltaCheck, nftDelta)
+	assetDeltasCheck = GetAssetDeltasFromCancelOffer(api, tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
+	assetDeltas = SelectAssetDeltas(api, isCancelOfferTx, assetDeltasCheck, assetDeltas)
 	// withdraw nft
 	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromWithdrawNft(api, tx.WithdrawNftTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isWithdrawNftTx, assetDeltasCheck, assetDeltas)
@@ -499,14 +505,15 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	witness.RemoveLiquidityTxInfo = std.EmptyRemoveLiquidityTxWitness()
 	witness.MintNftTxInfo = std.EmptyMintNftTxWitness()
 	witness.TransferNftTxInfo = std.EmptyTransferNftTxWitness()
-	witness.SetNftPriceTxInfo = std.EmptySetNftPriceTxWitness()
-	witness.BuyNftTxInfo = std.EmptyBuyNftTxWitness()
+	witness.AtomicMatchTxInfo = std.EmptyAtomicMatchTxWitness()
+	witness.CancelOfferTxInfo = std.EmptyCancelOfferTxWitness()
 	witness.WithdrawTxInfo = std.EmptyWithdrawTxWitness()
 	witness.WithdrawNftTxInfo = std.EmptyWithdrawNftTxWitness()
 	witness.FullExitTxInfo = std.EmptyFullExitTxWitness()
 	witness.FullExitNftTxInfo = std.EmptyFullExitNftTxWitness()
 	witness.Signature = EmptySignatureWitness()
 	witness.Nonce = oTx.Nonce
+	witness.ExpiredAt = oTx.ExpiredAt
 	switch oTx.TxType {
 	case std.TxTypeEmptyTx:
 		break
@@ -564,14 +571,14 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.Signature.R.Y = oTx.Signature.R.Y
 		witness.Signature.S = oTx.Signature.S[:]
 		break
-	case std.TxTypeSetNftPrice:
-		witness.SetNftPriceTxInfo = std.SetSetNftPriceTxWitness(oTx.SetNftPriceTxInfo)
+	case std.TxTypeAtomicMatch:
+		witness.AtomicMatchTxInfo = std.SetAtomicMatchTxWitness(oTx.AtomicMatchTxInfo)
 		witness.Signature.R.X = oTx.Signature.R.X
 		witness.Signature.R.Y = oTx.Signature.R.Y
 		witness.Signature.S = oTx.Signature.S[:]
 		break
-	case std.TxTypeBuyNft:
-		witness.BuyNftTxInfo = std.SetBuyNftTxWitness(oTx.BuyNftTxInfo)
+	case std.TxTypeCancelOffer:
+		witness.CancelOfferTxInfo = std.SetCancelOfferTxWitness(oTx.CancelTxInfo)
 		witness.Signature.R.X = oTx.Signature.R.X
 		witness.Signature.R.Y = oTx.Signature.R.Y
 		witness.Signature.S = oTx.Signature.S[:]

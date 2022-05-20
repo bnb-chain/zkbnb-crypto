@@ -55,9 +55,13 @@ const (
 	TxTypeWithdraw
 	TxTypeMintNft
 	TxTypeTransferNft
-	TxTypeSetNftPrice
-	TxTypeBuyNft
+	TxTypeAtomicMatch
+	TxTypeCancelOffer
 	TxTypeWithdrawNft
 	TxTypeFullExit
 	TxTypeFullExitNft
+)
+
+const (
+	RateBase = 10000
 )

@@ -20,10 +20,14 @@ package std
 import "math/big"
 
 type Liquidity struct {
-	PairIndex int64
-	AssetAId  int64
-	AssetA    *big.Int
-	AssetBId  int64
-	AssetB    *big.Int
-	LpAmount  *big.Int
+	PairIndex            int64
+	AssetAId             int64
+	AssetA               *big.Int
+	AssetBId             int64
+	AssetB               *big.Int
+	LpAmount             *big.Int
+	KLast                *big.Int
+	FeeRate              int64
+	TreasuryAccountIndex int64
+	TreasuryRate         int64
 }

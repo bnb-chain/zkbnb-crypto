@@ -33,6 +33,8 @@ func SelectAssetDeltas(
 				api.Select(flag, deltas[i][j].BalanceDelta, deltasCheck[i][j].BalanceDelta)
 			deltasRes[i][j].LpDelta =
 				api.Select(flag, deltas[i][j].LpDelta, deltasCheck[i][j].LpDelta)
+			deltasRes[i][j].OfferCanceledOrFinalized =
+				api.Select(flag, deltas[i][j].OfferCanceledOrFinalized, deltasCheck[i][j].OfferCanceledOrFinalized)
 		}
 	}
 	return deltasRes
@@ -61,8 +63,6 @@ func SelectNftDeltas(
 	deltaRes.NftContentHash = api.Select(flag, delta.NftContentHash, deltaCheck.NftContentHash)
 	deltaRes.NftL1Address = api.Select(flag, delta.NftL1Address, deltaCheck.NftL1Address)
 	deltaRes.NftL1TokenId = api.Select(flag, delta.NftL1TokenId, deltaCheck.NftL1TokenId)
-	deltaRes.AssetId = api.Select(flag, delta.AssetId, deltaCheck.AssetId)
-	deltaRes.AssetAmount = api.Select(flag, delta.AssetAmount, deltaCheck.AssetAmount)
 	deltaRes.CreatorTreasuryRate = api.Select(flag, delta.CreatorTreasuryRate, deltaCheck.CreatorTreasuryRate)
 	return deltaRes
 }

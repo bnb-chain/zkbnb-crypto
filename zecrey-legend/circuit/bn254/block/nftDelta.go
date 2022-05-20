@@ -25,8 +25,6 @@ type NftDeltaConstraints struct {
 	NftContentHash      Variable
 	NftL1Address        Variable
 	NftL1TokenId        Variable
-	AssetId             Variable
-	AssetAmount         Variable
 	CreatorTreasuryRate Variable
 }
 
@@ -37,8 +35,6 @@ func EmptyNftDeltaConstraints() NftDeltaConstraints {
 		NftContentHash:      std.ZeroInt,
 		NftL1Address:        std.ZeroInt,
 		NftL1TokenId:        std.ZeroInt,
-		AssetId:             std.ZeroInt,
-		AssetAmount:         std.ZeroInt,
 		CreatorTreasuryRate: std.ZeroInt,
 	}
 }
@@ -53,8 +49,6 @@ func UpdateNft(
 	nftAfter.NftContentHash = nftDelta.NftContentHash
 	nftAfter.NftL1Address = nftDelta.NftL1Address
 	nftAfter.NftL1TokenId = nftDelta.NftL1TokenId
-	nftAfter.AssetId = nftDelta.AssetId
-	nftAfter.AssetAmount = nftDelta.AssetAmount
 	nftAfter.CreatorTreasuryRate = nftDelta.CreatorTreasuryRate
 	return nftAfter
 }
