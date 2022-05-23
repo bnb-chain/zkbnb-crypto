@@ -82,11 +82,33 @@ func GetLiquidityDeltaFromCreatePair(
 	txInfo CreatePairTxConstraints,
 ) (liquidityDelta LiquidityDeltaConstraints) {
 	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:    txInfo.AssetAId,
-		AssetBId:    txInfo.AssetBId,
-		AssetADelta: std.ZeroInt,
-		AssetBDelta: std.ZeroInt,
-		LpDelta:     std.ZeroInt,
+		AssetAId:             txInfo.AssetAId,
+		AssetBId:             txInfo.AssetBId,
+		AssetADelta:          std.ZeroInt,
+		AssetBDelta:          std.ZeroInt,
+		LpDelta:              std.ZeroInt,
+		KLast:                std.ZeroInt,
+		FeeRate:              txInfo.FeeRate,
+		TreasuryAccountIndex: txInfo.TreasuryAccountIndex,
+		TreasuryRate:         txInfo.TreasuryRate,
+	}
+	return liquidityDelta
+}
+
+func GetLiquidityDeltaFromUpdatePairRate(
+	txInfo UpdatePairRateTxConstraints,
+	liquidityBefore LiquidityConstraints,
+) (liquidityDelta LiquidityDeltaConstraints) {
+	liquidityDelta = LiquidityDeltaConstraints{
+		AssetAId:             liquidityBefore.AssetAId,
+		AssetBId:             liquidityBefore.AssetBId,
+		AssetADelta:          std.ZeroInt,
+		AssetBDelta:          std.ZeroInt,
+		LpDelta:              std.ZeroInt,
+		KLast:                liquidityBefore.KLast,
+		FeeRate:              txInfo.FeeRate,
+		TreasuryAccountIndex: txInfo.TreasuryAccountIndex,
+		TreasuryRate:         txInfo.TreasuryRate,
 	}
 	return liquidityDelta
 }
@@ -236,11 +258,15 @@ func GetAssetDeltasAndLiquidityDeltaFromSwap(
 	assetADelta := api.Select(isSameAssetA, txInfo.AssetAAmount, negAssetBAmount)
 	assetBDelta := api.Select(isSameAssetA, negAssetBAmount, txInfo.AssetAAmount)
 	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:    liquidityBefore.AssetAId,
-		AssetBId:    liquidityBefore.AssetBId,
-		AssetADelta: assetADelta,
-		AssetBDelta: assetBDelta,
-		LpDelta:     std.ZeroInt,
+		AssetAId:             liquidityBefore.AssetAId,
+		AssetBId:             liquidityBefore.AssetBId,
+		AssetADelta:          assetADelta,
+		AssetBDelta:          assetBDelta,
+		LpDelta:              std.ZeroInt,
+		KLast:                liquidityBefore.KLast,
+		FeeRate:              liquidityBefore.FeeRate,
+		TreasuryAccountIndex: liquidityBefore.TreasuryAccountIndex,
+		TreasuryRate:         liquidityBefore.TreasuryRate,
 	}
 	return deltas, liquidityDelta
 }
@@ -278,8 +304,20 @@ func GetAssetDeltasAndLiquidityDeltaFromAddLiquidity(
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
 	}
-	// gas account
+	// treasury account
+	sLp := std.ComputeSLp(api, 1, liquidityBefore.AssetA, liquidityBefore.AssetB, liquidityBefore.KLast, liquidityBefore.FeeRate, liquidityBefore.TreasuryRate)
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+		{
+			BalanceDelta:             std.ZeroInt,
+			LpDelta:                  sLp,
+			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+	}
+	// gas account
+	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             txInfo.GasFeeAssetAmount,
 			LpDelta:                  std.ZeroInt,
@@ -289,7 +327,7 @@ func GetAssetDeltasAndLiquidityDeltaFromAddLiquidity(
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
-	for i := 2; i < NbAccountsPerTx; i++ {
+	for i := 3; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
@@ -297,12 +335,18 @@ func GetAssetDeltasAndLiquidityDeltaFromAddLiquidity(
 			EmptyAccountAssetDeltaConstraints(),
 		}
 	}
+	poolA := api.Add(liquidityBefore.AssetA, txInfo.AssetAAmount)
+	poolB := api.Add(liquidityBefore.AssetB, txInfo.AssetBAmount)
 	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:    liquidityBefore.AssetAId,
-		AssetBId:    liquidityBefore.AssetBId,
-		AssetADelta: txInfo.AssetAAmount,
-		AssetBDelta: txInfo.AssetBAmount,
-		LpDelta:     txInfo.LpAmount,
+		AssetAId:             liquidityBefore.AssetAId,
+		AssetBId:             liquidityBefore.AssetBId,
+		AssetADelta:          txInfo.AssetAAmount,
+		AssetBDelta:          txInfo.AssetBAmount,
+		LpDelta:              txInfo.LpAmount,
+		KLast:                api.Mul(poolA, poolB),
+		FeeRate:              liquidityBefore.FeeRate,
+		TreasuryAccountIndex: liquidityBefore.TreasuryAccountIndex,
+		TreasuryRate:         liquidityBefore.TreasuryRate,
 	}
 	return deltas, liquidityDelta
 }
@@ -340,8 +384,20 @@ func GetAssetDeltasAndLiquidityDeltaFromRemoveLiquidity(
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
 	}
-	// gas account
+	// treasury account
+	sLp := std.ComputeSLp(api, 1, liquidityBefore.AssetA, liquidityBefore.AssetB, liquidityBefore.KLast, liquidityBefore.FeeRate, liquidityBefore.TreasuryRate)
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+		{
+			BalanceDelta:             std.ZeroInt,
+			LpDelta:                  sLp,
+			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+	}
+	// gas account
+	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             txInfo.GasFeeAssetAmount,
 			LpDelta:                  std.ZeroInt,
@@ -351,7 +407,7 @@ func GetAssetDeltasAndLiquidityDeltaFromRemoveLiquidity(
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
-	for i := 2; i < NbAccountsPerTx; i++ {
+	for i := 3; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
@@ -359,12 +415,18 @@ func GetAssetDeltasAndLiquidityDeltaFromRemoveLiquidity(
 			EmptyAccountAssetDeltaConstraints(),
 		}
 	}
+	poolA := api.Sub(liquidityBefore.AssetA, txInfo.AssetAAmountDelta)
+	poolB := api.Sub(liquidityBefore.AssetB, txInfo.AssetBAmountDelta)
 	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:    liquidityBefore.AssetAId,
-		AssetBId:    liquidityBefore.AssetBId,
-		AssetADelta: api.Neg(txInfo.AssetAAmountDelta),
-		AssetBDelta: api.Neg(txInfo.AssetBAmountDelta),
-		LpDelta:     api.Neg(txInfo.LpAmount),
+		AssetAId:             liquidityBefore.AssetAId,
+		AssetBId:             liquidityBefore.AssetBId,
+		AssetADelta:          api.Neg(txInfo.AssetAAmountDelta),
+		AssetBDelta:          api.Neg(txInfo.AssetBAmountDelta),
+		LpDelta:              api.Neg(txInfo.LpAmount),
+		KLast:                api.Mul(poolA, poolB),
+		FeeRate:              liquidityBefore.FeeRate,
+		TreasuryAccountIndex: liquidityBefore.TreasuryAccountIndex,
+		TreasuryRate:         liquidityBefore.TreasuryRate,
 	}
 	return deltas, liquidityDelta
 }
@@ -533,9 +595,8 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	creatorAmount = new(big.Int).Div(creatorAmount, big.NewInt(RateBase))
 	treasuryAmount = new(big.Int).Div(treasuryAmount, big.NewInt(RateBase))
 	sellerAmount := api.Sub(api.Sub(txInfo.BuyOffer.AssetAmount, creatorAmount), treasuryAmount)
-	isOwner := api.IsZero(api.Sub(txInfo.BuyOffer.NftIndex, nftBefore.OwnerAccountIndex))
-	buyDelta := api.Select(isOwner, sellerAmount, std.ZeroInt)
-	sellDelta := api.Select(isOwner, std.ZeroInt, sellerAmount)
+	buyerDelta := api.Neg(txInfo.BuyOffer.AssetAmount)
+	sellerDelta := sellerAmount
 	// buyer
 	buyOfferId, _ := api.Compiler().ConstantValue(txInfo.BuyOffer.OfferId)
 	if buyOfferId == nil {
@@ -547,7 +608,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	buyOfferCanceledOrFinalized := api.FromBinary(buyOfferBits...)
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
-			BalanceDelta:             buyDelta,
+			BalanceDelta:             buyerDelta,
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: buyOfferCanceledOrFinalized,
 		},
@@ -566,7 +627,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	sellOfferCanceledOrFinalized := api.FromBinary(sellOfferBits...)
 	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
-			BalanceDelta:             sellDelta,
+			BalanceDelta:             sellerDelta,
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: sellOfferCanceledOrFinalized,
 		},

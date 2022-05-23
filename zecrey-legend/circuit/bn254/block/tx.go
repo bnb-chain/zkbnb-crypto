@@ -25,6 +25,7 @@ type Tx struct {
 	// different transactions
 	RegisterZnsTxInfo     *RegisterZnsTx
 	CreatePairTxInfo      *CreatePairTx
+	UpdatePairRateTxInfo  *UpdatePairRateTx
 	DepositTxInfo         *DepositTx
 	DepositNftTxInfo      *DepositNftTx
 	TransferTxInfo        *TransferTx

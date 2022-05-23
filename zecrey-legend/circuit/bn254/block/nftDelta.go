@@ -50,5 +50,6 @@ func UpdateNft(
 	nftAfter.NftL1Address = nftDelta.NftL1Address
 	nftAfter.NftL1TokenId = nftDelta.NftL1TokenId
 	nftAfter.CreatorTreasuryRate = nftDelta.CreatorTreasuryRate
+	nftAfter.CollectionId = nft.CollectionId
 	return nftAfter
 }

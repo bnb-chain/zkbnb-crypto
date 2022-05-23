@@ -35,6 +35,7 @@ type (
 
 	RegisterZnsTx     = std.RegisterZnsTx
 	CreatePairTx      = std.CreatePairTx
+	UpdatePairRateTx  = std.UpdatePairRateTx
 	DepositTx         = std.DepositTx
 	DepositNftTx      = std.DepositNftTx
 	TransferTx        = std.TransferTx
@@ -52,6 +53,7 @@ type (
 
 	RegisterZnsTxConstraints     = std.RegisterZnsTxConstraints
 	CreatePairTxConstraints      = std.CreatePairTxConstraints
+	UpdatePairRateTxConstraints  = std.UpdatePairRateTxConstraints
 	DepositTxConstraints         = std.DepositTxConstraints
 	DepositNftTxConstraints      = std.DepositNftTxConstraints
 	TransferTxConstraints        = std.TransferTxConstraints
@@ -80,4 +82,7 @@ const (
 	AccountMerkleLevels       = 32
 	RateBase                  = std.RateBase
 	OfferSizePerAsset         = 128
+
+	LastAccountIndex   = 4294967295
+	LastAccountAssetId = 65535
 )

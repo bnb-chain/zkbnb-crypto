@@ -94,7 +94,7 @@ func CreateLeafNode(hashVal []byte) *Node {
 
 func (t *Tree) InitNilHashValueConst() (err error) {
 	nilHash := t.NilHashValueConst[0]
-	for i := 1; i <= t.MaxHeight; i++ {
+	for i := 1; i < t.MaxHeight; i++ {
 		var (
 			nHash []byte
 		)
@@ -114,7 +114,7 @@ func NewEmptyTree(maxHeight int, nilHash []byte, hFunc hash.Hash) (*Tree, error)
 		Height: maxHeight,
 	}
 	// init nil hash values for different heights
-	nilHashValueConst := make([][]byte, maxHeight+1)
+	nilHashValueConst := make([][]byte, maxHeight)
 	nilHashValueConst[0] = nilHash
 	// init tree
 	tree := &Tree{
@@ -130,6 +130,11 @@ func NewEmptyTree(maxHeight int, nilHash []byte, hFunc hash.Hash) (*Tree, error)
 		log.Println(errInfo)
 		return nil, errors.New(errInfo)
 	}
+	hFunc.Reset()
+	hFunc.Write(nilHashValueConst[maxHeight-1])
+	hFunc.Write(nilHashValueConst[maxHeight-1])
+	tree.RootNode.Value = hFunc.Sum(nil)
+	hFunc.Reset()
 	return tree, nil
 }
 

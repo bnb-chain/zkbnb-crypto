@@ -32,11 +32,12 @@ type Account struct {
 	AccountNameHash []byte
 	AccountPk       *eddsa.PublicKey
 	Nonce           int64
+	CollectionNonce int64
 	AssetRoot       []byte
 	AssetsInfo      [NbAccountAssetsPerAccount]*AccountAsset
 }
 
-func EmptyAccount(accountIndex int64) *Account {
+func EmptyAccount(accountIndex int64, assetRoot []byte) *Account {
 	return &Account{
 		AccountIndex:    accountIndex,
 		AccountNameHash: []byte{},
@@ -46,8 +47,9 @@ func EmptyAccount(accountIndex int64) *Account {
 				Y: fr.NewElement(0),
 			},
 		},
-		Nonce:     0,
-		AssetRoot: []byte{},
+		Nonce:           0,
+		CollectionNonce: 0,
+		AssetRoot:       assetRoot,
 		AssetsInfo: [NbAccountAssetsPerAccount]*AccountAsset{
 			EmptyAccountAsset(0),
 			EmptyAccountAsset(0),
@@ -61,16 +63,18 @@ func EmptyAccount(accountIndex int64) *Account {
 	AccountAsset: asset info
 */
 type AccountAsset struct {
-	AssetId  int64
-	Balance  *big.Int
-	LpAmount *big.Int
+	AssetId                  int64
+	Balance                  *big.Int
+	LpAmount                 *big.Int
+	OfferCanceledOrFinalized *big.Int
 }
 
 func EmptyAccountAsset(assetId int64) *AccountAsset {
 	return &AccountAsset{
-		AssetId:  assetId,
-		Balance:  big.NewInt(0),
-		LpAmount: big.NewInt(0),
+		AssetId:                  assetId,
+		Balance:                  big.NewInt(0),
+		LpAmount:                 big.NewInt(0),
+		OfferCanceledOrFinalized: big.NewInt(0),
 	}
 }
 

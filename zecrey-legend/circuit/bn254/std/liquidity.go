@@ -31,3 +31,19 @@ type Liquidity struct {
 	TreasuryAccountIndex int64
 	TreasuryRate         int64
 }
+
+func EmptyLiquidity(pairIndex int64) *Liquidity {
+	zero := big.NewInt(0)
+	return &Liquidity{
+		PairIndex:            pairIndex,
+		AssetAId:             0,
+		AssetA:               zero,
+		AssetBId:             0,
+		AssetB:               zero,
+		LpAmount:             zero,
+		KLast:                zero,
+		FeeRate:              0,
+		TreasuryAccountIndex: 0,
+		TreasuryRate:         0,
+	}
+}

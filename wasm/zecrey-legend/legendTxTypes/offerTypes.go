@@ -35,6 +35,7 @@ type OfferSegmentFormat struct {
 	AssetAmount  string `json:"asset_amount"`
 	ListedAt     int64  `json:"listed_at"`
 	ExpiredAt    int64  `json:"expired_at"`
+	TreasuryRate int64  `json:"treasury_rate"`
 }
 
 /*
@@ -61,6 +62,7 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 		AssetAmount:  assetAmount,
 		ListedAt:     segmentFormat.ListedAt,
 		ExpiredAt:    segmentFormat.ExpiredAt,
+		TreasuryRate: segmentFormat.TreasuryRate,
 		Sig:          nil,
 	}
 	// compute call data hash
@@ -87,6 +89,7 @@ type OfferTxInfo struct {
 	AssetAmount  *big.Int
 	ListedAt     int64
 	ExpiredAt    int64
+	TreasuryRate int64
 	Sig          []byte
 }
 
@@ -101,6 +104,7 @@ func ComputeOfferMsgHash(txInfo *OfferTxInfo, hFunc hash.Hash) (msgHash []byte) 
 	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.ListedAt)
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
+	WriteInt64IntoBuf(&buf, txInfo.TreasuryRate)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash

@@ -36,7 +36,6 @@ type SwapSegmentFormat struct {
 	AssetBAmountDelta string `json:"asset_b_amount_delta"`
 	PoolAAmount       string `json:"pool_a_amount"`
 	PoolBAmount       string `json:"pool_b_amount"`
-	FeeRate           int64  `json:"fee_rate"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -81,7 +80,6 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 		AssetBAmountDelta: assetBAmountDelta,
 		PoolAAmount:       ZeroBigInt,
 		PoolBAmount:       ZeroBigInt,
-		FeeRate:           segmentFormat.FeeRate,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -111,7 +109,6 @@ type SwapTxInfo struct {
 	AssetBAmountDelta *big.Int
 	PoolAAmount       *big.Int
 	PoolBAmount       *big.Int
-	FeeRate           int64 // 0.3 * 10000
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
@@ -147,7 +144,6 @@ func ComputeSwapMsgHash(txInfo *SwapTxInfo, hFunc hash.Hash) (msgHash []byte) {
 	WriteBigIntIntoBuf(&buf, txInfo.AssetAAmount)
 	WriteInt64IntoBuf(&buf, txInfo.AssetBId)
 	WriteBigIntIntoBuf(&buf, txInfo.AssetBMinAmount)
-	WriteInt64IntoBuf(&buf, txInfo.FeeRate)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)

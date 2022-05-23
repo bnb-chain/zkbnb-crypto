@@ -54,6 +54,24 @@ func CollectPubDataFromCreatePair(api API, flag Variable, txInfo CreatePairTxCon
 	}
 }
 
+func CollectPubDataFromUpdatePairRate(api API, flag Variable, txInfo UpdatePairRateTxConstraints, hFunc *MiMC) {
+	isTxVar := api.Sub(flag, 1)
+	isTx := api.Compiler().IsBoolean(isTxVar)
+	if isTx {
+		txTypeBits := api.ToBinary(TxTypeCreatePair, TxTypeBitsSize)
+		pairIndexBits := api.ToBinary(txInfo.PairIndex, PairIndexBitsSize)
+		FeeRateBits := api.ToBinary(txInfo.FeeRate, PackedFeeBitsSize)
+		TreasuryAccountIndexBits := api.ToBinary(txInfo.TreasuryAccountIndex, AccountIndexBitsSize)
+		TreasuryRateBits := api.ToBinary(txInfo.TreasuryRate, PackedFeeBitsSize)
+		ABits := append(pairIndexBits, txTypeBits...)
+		ABits = append(FeeRateBits, ABits...)
+		ABits = append(TreasuryAccountIndexBits, ABits...)
+		ABits = append(TreasuryRateBits, ABits...)
+		A := api.FromBinary(ABits...)
+		hFunc.Write(A)
+	}
+}
+
 func CollectPubDataFromDeposit(api API, flag Variable, txInfo DepositTxConstraints, hFunc *MiMC) {
 	isTxVar := api.Sub(flag, 1)
 	isTx := api.Compiler().IsBoolean(isTxVar)

@@ -72,19 +72,20 @@ type AddLiquidityTxConstraints struct {
 
 func EmptyAddLiquidityTxWitness() (witness AddLiquidityTxConstraints) {
 	witness = AddLiquidityTxConstraints{
-		FromAccountIndex:  ZeroInt,
-		PairIndex:         ZeroInt,
-		AssetAId:          ZeroInt,
-		AssetAAmount:      ZeroInt,
-		AssetBId:          ZeroInt,
-		AssetBAmount:      ZeroInt,
-		LpAmount:          ZeroInt,
-		PoolAAmount:       ZeroInt,
-		PoolBAmount:       ZeroInt,
-		TreasuryRate:      ZeroInt,
-		GasAccountIndex:   ZeroInt,
-		GasFeeAssetId:     ZeroInt,
-		GasFeeAssetAmount: ZeroInt,
+		FromAccountIndex:     ZeroInt,
+		PairIndex:            ZeroInt,
+		AssetAId:             ZeroInt,
+		AssetAAmount:         ZeroInt,
+		AssetBId:             ZeroInt,
+		AssetBAmount:         ZeroInt,
+		LpAmount:             ZeroInt,
+		PoolAAmount:          ZeroInt,
+		PoolBAmount:          ZeroInt,
+		TreasuryAccountIndex: ZeroInt,
+		TreasuryRate:         ZeroInt,
+		GasAccountIndex:      ZeroInt,
+		GasFeeAssetId:        ZeroInt,
+		GasFeeAssetAmount:    ZeroInt,
 	}
 	return witness
 }
@@ -155,14 +156,16 @@ func VerifyAddLiquidityTx(
 	// check params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, tx.TreasuryAccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
 	// asset id
 	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[0].AssetsInfo[1].AssetId)
 	IsVariableEqual(api, flag, tx.AssetAId, liquidityBefore.AssetAId)
 	IsVariableEqual(api, flag, tx.AssetBId, liquidityBefore.AssetBId)
+	IsVariableEqual(api, flag, tx.PairIndex, accountsBefore[1].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 	IsVariableLessOrEqual(api, flag, 0, tx.AssetAAmount)
 	IsVariableLessOrEqual(api, flag, 0, tx.AssetBAmount)
 	// check if the user has enough balance

@@ -102,21 +102,21 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 }
 
 type AddLiquidityTxInfo struct {
-	FromAccountIndex  int64
-	PairIndex         int64
-	AssetAId          int64
-	AssetAAmount      *big.Int
-	AssetBId          int64
-	AssetBAmount      *big.Int
-	LpAmount          *big.Int
-	PoolAAmount       *big.Int
-	PoolBAmount       *big.Int
-	GasAccountIndex   int64
-	GasFeeAssetId     int64
-	GasFeeAssetAmount *big.Int
-	ExpiredAt         int64
-	Nonce             int64
-	Sig               []byte
+	FromAccountIndex     int64
+	PairIndex            int64
+	AssetAId             int64
+	AssetAAmount         *big.Int
+	AssetBId             int64
+	AssetBAmount         *big.Int
+	LpAmount             *big.Int
+	PoolAAmount          *big.Int
+	PoolBAmount          *big.Int
+	GasAccountIndex      int64
+	GasFeeAssetId        int64
+	GasFeeAssetAmount    *big.Int
+	ExpiredAt            int64
+	Nonce                int64
+	Sig                  []byte
 }
 
 func ComputeAddLiquidityMsgHash(txInfo *AddLiquidityTxInfo, hFunc hash.Hash) (msgHash []byte) {

@@ -22,6 +22,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/hash/mimc"
 	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
+	"math/big"
 )
 
 type (
@@ -33,10 +34,8 @@ type (
 )
 
 const (
-	ZeroInt = uint64(0)
-	// TODO
-	EmptyAssetRoot = 0
-	DefaultInt     = int64(-1)
+	ZeroInt    = uint64(0)
+	DefaultInt = int64(-1)
 
 	NbAccountAssetsPerAccount = 4
 	NbAccountsPerTx           = 5
@@ -46,6 +45,7 @@ const (
 	TxTypeEmptyTx = iota
 	TxTypeRegisterZns
 	TxTypeCreatePair
+	TxTypeUpdatePairRate
 	TxTypeDeposit
 	TxTypeDepositNft
 	TxTypeTransfer
@@ -53,6 +53,7 @@ const (
 	TxTypeAddLiquidity
 	TxTypeRemoveLiquidity
 	TxTypeWithdraw
+	TxTypeCreateCollection
 	TxTypeMintNft
 	TxTypeTransferNft
 	TxTypeAtomicMatch
@@ -64,4 +65,8 @@ const (
 
 const (
 	RateBase = 10000
+)
+
+var (
+	EmptyAssetRoot, _ = new(big.Int).SetString("20078765925047610631302921414746503738259000135611824775363050619361913896775", 10)
 )

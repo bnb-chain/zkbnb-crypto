@@ -117,7 +117,6 @@ func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgH
 	WriteBigIntIntoBuf(&buf, txInfo.BuyOffer.AssetAmount)
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.ListedAt)
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.ExpiredAt)
-	// TODO write sig into buf
 	var (
 		buyerSig, sellerSig = new(eddsa.Signature), new(eddsa.Signature)
 	)
