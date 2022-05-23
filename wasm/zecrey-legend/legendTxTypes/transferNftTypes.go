@@ -30,12 +30,14 @@ import (
 type TransferNftSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
 	ToAccountIndex    int64  `json:"to_account_index"`
+	ToAccountName     string `json:"to_account_name"`
 	NftIndex          int64  `json:"nft_index"`
 	NftContentHash    string `json:"nft_content_hash"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
 	CallData          string `json:"call_data"`
+	ExpiredAt         int64  `json:"expired_at"`
 	Nonce             int64  `json:"nonce"`
 }
 
@@ -57,11 +59,13 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 	txInfo = &TransferNftTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
+		ToAccountName:     segmentFormat.ToAccountName,
 		NftIndex:          segmentFormat.NftIndex,
 		NftContentHash:    segmentFormat.NftContentHash,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
+		ExpiredAt:         segmentFormat.ExpiredAt,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
@@ -94,6 +98,7 @@ type TransferNftTxInfo struct {
 	GasFeeAssetAmount *big.Int
 	CallData          string
 	CallDataHash      []byte
+	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
 }
@@ -109,6 +114,7 @@ func ComputeTransferNftMsgHash(txInfo *TransferNftTxInfo, hFunc hash.Hash) (msgH
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	buf.Write(txInfo.CallDataHash)
+	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

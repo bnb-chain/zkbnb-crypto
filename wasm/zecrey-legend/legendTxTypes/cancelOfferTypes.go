@@ -26,28 +26,23 @@ import (
 	"math/big"
 )
 
-type WithdrawSegmentFormat struct {
-	FromAccountIndex  int64  `json:"from_account_index"`
-	AssetId           int64  `json:"asset_id"`
-	AssetAmount       string `json:"asset_amount"`
+type CancelOfferSegmentFormat struct {
+	AccountIndex      int64  `json:"account_index"`
+	OfferId           int64  `json:"offer_id"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
-	ToAddress         string `json:"to_address"`
-	ExpiredAt         int64  `json:"expired_at"`
 	Nonce             int64  `json:"nonce"`
 }
 
-func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *WithdrawTxInfo, err error) {
-	var segmentFormat *WithdrawSegmentFormat
+/*
+	ConstructCancelOfferTxInfo: construct cancel offer tx, sign txInfo
+*/
+func ConstructCancelOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *CancelOfferTxInfo, err error) {
+	var segmentFormat *CancelOfferSegmentFormat
 	err = json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
-		log.Println("[ConstructRemoveLiquidityTxInfo] err info:", err)
-		return nil, err
-	}
-	assetAmount, err := StringToBigInt(segmentFormat.AssetAmount)
-	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructMintNftTxInfo] err info:", err)
 		return nil, err
 	}
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
@@ -55,69 +50,48 @@ func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Withdra
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
-	txInfo = &WithdrawTxInfo{
-		FromAccountIndex:  segmentFormat.FromAccountIndex,
-		AssetId:           segmentFormat.AssetId,
-		AssetAmount:       assetAmount,
+	txInfo = &CancelOfferTxInfo{
+		AccountIndex:      segmentFormat.AccountIndex,
+		OfferId:           segmentFormat.OfferId,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
-		ToAddress:         segmentFormat.ToAddress,
-		ExpiredAt:         segmentFormat.ExpiredAt,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash := ComputeWithdrawMsgHash(txInfo, hFunc)
+	msgHash := ComputeCancelOfferMsgHash(txInfo, hFunc)
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
 	if err != nil {
-		log.Println("[ConstructRemoveLiquidityTxInfo] unable to sign:", err)
+		log.Println("[ConstructMintNftTxInfo] unable to sign:", err)
 		return nil, err
 	}
 	txInfo.Sig = sigBytes
 	return txInfo, nil
 }
 
-type WithdrawTxInfo struct {
-	FromAccountIndex  int64
-	AssetId           int64
-	AssetAmount       *big.Int
+type CancelOfferTxInfo struct {
+	AccountIndex      int64
+	OfferId           int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
-	ToAddress         string
-	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
 }
 
-func ComputeWithdrawMsgHash(txInfo *WithdrawTxInfo, hFunc hash.Hash) (msgHash []byte) {
-	/*
-		hFunc.Write(
-			tx.FromAccountIndex,
-			tx.AssetId,
-			tx.AssetAmount,
-			tx.GasAccountIndex,
-			tx.GasFeeAssetId,
-			tx.GasFeeAssetAmount,
-			tx.ToAddress,
-		)
-		hFunc.Write(nonce)
-	*/
+func ComputeCancelOfferMsgHash(txInfo *CancelOfferTxInfo, hFunc hash.Hash) (msgHash []byte) {
 	hFunc.Reset()
 	var buf bytes.Buffer
-	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.AssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)
+	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
+	WriteInt64IntoBuf(&buf, txInfo.OfferId)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
-	buf.Write(PaddingStringToBytes32(txInfo.ToAddress))
-	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

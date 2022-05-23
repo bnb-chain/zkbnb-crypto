@@ -23,12 +23,16 @@ import (
 )
 
 type LiquidityConstraints struct {
-	PairIndex Variable
-	AssetAId  Variable
-	AssetA    Variable
-	AssetBId  Variable
-	AssetB    Variable
-	LpAmount  Variable
+	PairIndex            Variable
+	AssetAId             Variable
+	AssetA               Variable
+	AssetBId             Variable
+	AssetB               Variable
+	LpAmount             Variable
+	KLast                Variable
+	FeeRate              Variable
+	TreasuryAccountIndex Variable
+	TreasuryRate         Variable
 }
 
 func CheckEmptyLiquidityNode(api API, flag Variable, liquidity LiquidityConstraints) {
@@ -37,6 +41,10 @@ func CheckEmptyLiquidityNode(api API, flag Variable, liquidity LiquidityConstrai
 	IsVariableEqual(api, flag, liquidity.AssetBId, ZeroInt)
 	IsVariableEqual(api, flag, liquidity.AssetB, ZeroInt)
 	IsVariableEqual(api, flag, liquidity.LpAmount, ZeroInt)
+	IsVariableEqual(api, flag, liquidity.KLast, ZeroInt)
+	IsVariableEqual(api, flag, liquidity.FeeRate, ZeroInt)
+	IsVariableEqual(api, flag, liquidity.TreasuryAccountIndex, ZeroInt)
+	IsVariableEqual(api, flag, liquidity.TreasuryRate, ZeroInt)
 }
 
 /*
@@ -49,12 +57,16 @@ func SetLiquidityWitness(liquidity *Liquidity) (witness LiquidityConstraints, er
 	}
 	// set witness
 	witness = LiquidityConstraints{
-		PairIndex: liquidity.PairIndex,
-		AssetAId:  liquidity.AssetAId,
-		AssetA:    liquidity.AssetA,
-		AssetBId:  liquidity.AssetBId,
-		AssetB:    liquidity.AssetB,
-		LpAmount:  liquidity.LpAmount,
+		PairIndex:            liquidity.PairIndex,
+		AssetAId:             liquidity.AssetAId,
+		AssetA:               liquidity.AssetA,
+		AssetBId:             liquidity.AssetBId,
+		AssetB:               liquidity.AssetB,
+		LpAmount:             liquidity.LpAmount,
+		KLast:                liquidity.KLast,
+		FeeRate:              liquidity.FeeRate,
+		TreasuryAccountIndex: liquidity.TreasuryAccountIndex,
+		TreasuryRate:         liquidity.TreasuryRate,
 	}
 	return witness, nil
 }

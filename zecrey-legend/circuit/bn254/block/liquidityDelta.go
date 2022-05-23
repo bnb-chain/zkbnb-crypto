@@ -20,20 +20,28 @@ package block
 import "github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
 
 type LiquidityDeltaConstraints struct {
-	AssetAId    Variable
-	AssetBId    Variable
-	AssetADelta Variable
-	AssetBDelta Variable
-	LpDelta     Variable
+	AssetAId             Variable
+	AssetBId             Variable
+	AssetADelta          Variable
+	AssetBDelta          Variable
+	LpDelta              Variable
+	KLast                Variable
+	FeeRate              Variable
+	TreasuryAccountIndex Variable
+	TreasuryRate         Variable
 }
 
 func EmptyLiquidityDeltaConstraints() LiquidityDeltaConstraints {
 	return LiquidityDeltaConstraints{
-		AssetAId:    std.ZeroInt,
-		AssetBId:    std.ZeroInt,
-		AssetADelta: std.ZeroInt,
-		AssetBDelta: std.ZeroInt,
-		LpDelta:     std.ZeroInt,
+		AssetAId:             std.ZeroInt,
+		AssetBId:             std.ZeroInt,
+		AssetADelta:          std.ZeroInt,
+		AssetBDelta:          std.ZeroInt,
+		LpDelta:              std.ZeroInt,
+		KLast:                std.ZeroInt,
+		FeeRate:              std.ZeroInt,
+		TreasuryAccountIndex: std.ZeroInt,
+		TreasuryRate:         std.ZeroInt,
 	}
 }
 
@@ -48,5 +56,9 @@ func UpdateLiquidity(
 	liquidityAfter.AssetA = api.Add(liquidity.AssetA, liquidityDelta.AssetADelta)
 	liquidityAfter.AssetB = api.Add(liquidity.AssetB, liquidityDelta.AssetBDelta)
 	liquidityAfter.LpAmount = api.Add(liquidity.LpAmount, liquidityDelta.LpDelta)
+	liquidityAfter.KLast = liquidity.KLast
+	liquidityAfter.FeeRate = liquidity.FeeRate
+	liquidityAfter.TreasuryAccountIndex = liquidity.TreasuryAccountIndex
+	liquidityAfter.TreasuryRate = liquidity.TreasuryRate
 	return liquidityAfter
 }

@@ -24,9 +24,22 @@ type Nft struct {
 	NftContentHash      []byte
 	CreatorAccountIndex int64
 	OwnerAccountIndex   int64
-	AssetId             int64
-	AssetAmount         *big.Int
-	NftL1Address        string
+	NftL1Address        *big.Int
 	NftL1TokenId        *big.Int
 	CreatorTreasuryRate int64
+	CollectionId        int64
+}
+
+func EmptyNft(nftIndex int64) *Nft {
+	zero := big.NewInt(0)
+	return &Nft{
+		NftIndex:            nftIndex,
+		NftContentHash:      []byte{0},
+		CreatorAccountIndex: 0,
+		OwnerAccountIndex:   0,
+		NftL1Address:        zero,
+		NftL1TokenId:        zero,
+		CreatorTreasuryRate: 0,
+		CollectionId:        0,
+	}
 }

@@ -28,6 +28,7 @@ type AccountConstraints struct {
 	AccountNameHash Variable
 	AccountPk       eddsa.PublicKey
 	Nonce           Variable
+	CollectionNonce Variable
 	AssetRoot       Variable
 	// at most 4 assets changed in one transaction
 	AssetsInfo [NbAccountAssetsPerAccount]AccountAssetConstraints
@@ -38,14 +39,16 @@ func CheckEmptyAccountNode(api API, flag Variable, account AccountConstraints) {
 	IsVariableEqual(api, flag, account.AccountPk.A.X, ZeroInt)
 	IsVariableEqual(api, flag, account.AccountPk.A.Y, ZeroInt)
 	IsVariableEqual(api, flag, account.Nonce, ZeroInt)
+	IsVariableEqual(api, flag, account.CollectionNonce, ZeroInt)
 	// empty asset
 	IsVariableEqual(api, flag, account.AssetRoot, EmptyAssetRoot)
 }
 
 type AccountAssetConstraints struct {
-	AssetId  Variable
-	Balance  Variable
-	LpAmount Variable
+	AssetId                  Variable
+	Balance                  Variable
+	LpAmount                 Variable
+	OfferCanceledOrFinalized Variable
 }
 
 func SetAccountAssetWitness(asset *AccountAsset) (witness AccountAssetConstraints, err error) {
@@ -54,9 +57,10 @@ func SetAccountAssetWitness(asset *AccountAsset) (witness AccountAssetConstraint
 		return witness, errors.New("[SetAccountAssetWitness] invalid params")
 	}
 	witness = AccountAssetConstraints{
-		AssetId:  asset.AssetId,
-		Balance:  asset.Balance,
-		LpAmount: asset.LpAmount,
+		AssetId:                  asset.AssetId,
+		Balance:                  asset.Balance,
+		LpAmount:                 asset.LpAmount,
+		OfferCanceledOrFinalized: asset.OfferCanceledOrFinalized,
 	}
 	return witness, nil
 }
@@ -69,20 +73,21 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 		log.Println("[SetAccountConstraints] invalid params")
 		return witness, errors.New("[SetAccountConstraints] invalid params")
 	}
-	// set assets witness
-	for i := 0; i < NbAccountAssetsPerAccount; i++ {
-		witness.AssetsInfo[i], err = SetAccountAssetWitness(account.AssetsInfo[i])
-		if err != nil {
-			return witness, err
-		}
-	}
 	// set witness
 	witness = AccountConstraints{
 		AccountIndex:    account.AccountIndex,
 		AccountNameHash: account.AccountNameHash,
 		AccountPk:       SetPubKeyWitness(account.AccountPk),
 		Nonce:           account.Nonce,
+		CollectionNonce: account.CollectionNonce,
 		AssetRoot:       account.AssetRoot,
+	}
+	// set assets witness
+	for i := 0; i < NbAccountAssetsPerAccount; i++ {
+		witness.AssetsInfo[i], err = SetAccountAssetWitness(account.AssetsInfo[i])
+		if err != nil {
+			return witness, err
+		}
 	}
 	return witness, nil
 }

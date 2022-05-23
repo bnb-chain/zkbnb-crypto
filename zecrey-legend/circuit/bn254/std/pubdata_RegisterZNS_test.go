@@ -62,7 +62,6 @@ func TestCollectPubDataFromRegisterZNS(t *testing.T) {
 		AccountName:     accountName,
 		AccountNameHash: accountNameHash[:],
 		PubKey:          &sk.PublicKey,
-		L1Address:       "0xd5Aa3B56a2E2139DB315CdFE3b34149c8ed09171",
 	}
 	var buf bytes.Buffer
 	buf.Write([]byte{TxTypeRegisterZns})

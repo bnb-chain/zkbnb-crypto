@@ -18,7 +18,9 @@
 package std
 
 import (
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
 	"math/big"
 )
 
@@ -30,15 +32,59 @@ type Account struct {
 	AccountNameHash []byte
 	AccountPk       *eddsa.PublicKey
 	Nonce           int64
+	CollectionNonce int64
 	AssetRoot       []byte
 	AssetsInfo      [NbAccountAssetsPerAccount]*AccountAsset
+}
+
+func EmptyAccount(accountIndex int64, assetRoot []byte) *Account {
+	return &Account{
+		AccountIndex:    accountIndex,
+		AccountNameHash: []byte{},
+		AccountPk: &eddsa.PublicKey{
+			A: curve.Point{
+				X: fr.NewElement(0),
+				Y: fr.NewElement(0),
+			},
+		},
+		Nonce:           0,
+		CollectionNonce: 0,
+		AssetRoot:       assetRoot,
+		AssetsInfo: [NbAccountAssetsPerAccount]*AccountAsset{
+			EmptyAccountAsset(0),
+			EmptyAccountAsset(0),
+			EmptyAccountAsset(0),
+			EmptyAccountAsset(0),
+		},
+	}
 }
 
 /*
 	AccountAsset: asset info
 */
 type AccountAsset struct {
-	AssetId  int64
-	Balance  *big.Int
-	LpAmount *big.Int
+	AssetId                  int64
+	Balance                  *big.Int
+	LpAmount                 *big.Int
+	OfferCanceledOrFinalized *big.Int
+}
+
+func EmptyAccountAsset(assetId int64) *AccountAsset {
+	return &AccountAsset{
+		AssetId:                  assetId,
+		Balance:                  big.NewInt(0),
+		LpAmount:                 big.NewInt(0),
+		OfferCanceledOrFinalized: big.NewInt(0),
+	}
+}
+
+func EmptySignature() (sig *eddsa.Signature) {
+	sig = &eddsa.Signature{
+		R: curve.Point{
+			X: fr.NewElement(0),
+			Y: fr.NewElement(0),
+		},
+		S: [32]byte{},
+	}
+	return sig
 }

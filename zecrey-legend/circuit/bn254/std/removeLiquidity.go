@@ -17,6 +17,11 @@
 
 package std
 
+import (
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"math/big"
+)
+
 type RemoveLiquidityTx struct {
 	FromAccountIndex  int64
 	PairIndex         int64
@@ -146,11 +151,38 @@ func VerifyRemoveLiquidityTx(
 	tx.AssetBAmountDelta = UnpackAmount(api, tx.AssetBAmountDelta)
 	tx.LpAmount = UnpackAmount(api, tx.LpAmount)
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[3].Balance)
 	// TODO verify LP
-	Delta_LPCheck := api.Mul(tx.AssetAAmountDelta, tx.AssetBAmountDelta)
-	LPCheck := api.Mul(tx.LpAmount, tx.LpAmount)
-	IsVariableLessOrEqual(api, flag, Delta_LPCheck, LPCheck)
+	sLp := ComputeSLp(api, flag, liquidityBefore.AssetA, liquidityBefore.AssetB, liquidityBefore.KLast, liquidityBefore.FeeRate, liquidityBefore.TreasuryRate)
+	poolLpVar := api.Sub(liquidityBefore.LpAmount, sLp)
+	assetA, _ := api.Compiler().ConstantValue(liquidityBefore.AssetA)
+	if assetA == nil {
+		assetA = big.NewInt(0)
+	}
+	assetB, _ := api.Compiler().ConstantValue(liquidityBefore.AssetB)
+	if assetB == nil {
+		assetB = big.NewInt(0)
+	}
+	lpAmount, _ := api.Compiler().ConstantValue(tx.LpAmount)
+	if lpAmount == nil {
+		lpAmount = big.NewInt(0)
+	}
+	poolLp, _ := api.Compiler().ConstantValue(poolLpVar)
+	if poolLp == nil {
+		poolLp = big.NewInt(0)
+	}
+	var (
+		assetADelta, assetBDelta *big.Int
+	)
+	if poolLp.Cmp(big.NewInt(0)) == 0 {
+		assetADelta = big.NewInt(0)
+		assetBDelta = big.NewInt(0)
+	} else {
+		assetADelta = ffmath.Div(ffmath.Multiply(lpAmount, assetA), poolLp)
+		assetBDelta = ffmath.Div(ffmath.Multiply(lpAmount, assetB), poolLp)
+	}
+	IsVariableEqual(api, flag, tx.AssetAAmountDelta, assetADelta)
+	IsVariableEqual(api, flag, tx.AssetBAmountDelta, assetBDelta)
 	IsVariableLessOrEqual(api, flag, tx.AssetAMinAmount, tx.AssetAAmountDelta)
 	IsVariableLessOrEqual(api, flag, tx.AssetBMinAmount, tx.AssetBAmountDelta)
 }

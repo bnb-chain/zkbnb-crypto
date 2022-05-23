@@ -41,6 +41,7 @@ type MintNftSegmentFormat struct {
 	GasAccountIndex     int64  `json:"gas_account_index"`
 	GasFeeAssetId       int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount   string `json:"gas_fee_asset_amount"`
+	ExpiredAt           int64  `json:"expired_at"`
 	Nonce               int64  `json:"nonce"`
 }
 
@@ -74,6 +75,7 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 		GasFeeAssetId:       segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount:   gasFeeAmount,
 		Nonce:               segmentFormat.Nonce,
+		ExpiredAt:           segmentFormat.ExpiredAt,
 		Sig:                 nil,
 	}
 	// compute call data hash
@@ -95,6 +97,7 @@ type MintNftTxInfo struct {
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
 	ToAccountName       string
+	CollectionId        int64
 	NftIndex            int64
 	NftContentHash      string
 	NftName             string
@@ -105,25 +108,13 @@ type MintNftTxInfo struct {
 	GasAccountIndex     int64
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   *big.Int
+	ExpiredAt           int64
 	Nonce               int64
 	Sig                 []byte
 }
 
 func ComputeMintNftMsgHash(txInfo *MintNftTxInfo, hFunc hash.Hash) (msgHash []byte) {
 	hFunc.Reset()
-	/*
-		hFunc.Write(
-			tx.CreatorAccountIndex,
-			tx.ToAccountIndex,
-			tx.NftIndex,
-			tx.NftContentHash,
-			tx.CreatorFeeRate,
-			tx.GasAccountIndex,
-			tx.GasFeeAssetId,
-			tx.GasFeeAssetAmount,
-		)
-		hFunc.Write(nonce)
-	*/
 	var buf bytes.Buffer
 	WriteInt64IntoBuf(&buf, txInfo.CreatorAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
@@ -133,6 +124,7 @@ func ComputeMintNftMsgHash(txInfo *MintNftTxInfo, hFunc hash.Hash) (msgHash []by
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

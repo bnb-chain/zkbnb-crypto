@@ -39,6 +39,7 @@ type RemoveLiquiditySegmentFormat struct {
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
+	ExpiredAt         int64  `json:"expired_at"`
 	Nonce             int64  `json:"nonce"`
 }
 
@@ -93,6 +94,7 @@ func ConstructRemoveLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
 		Nonce:             segmentFormat.Nonce,
+		ExpiredAt:         segmentFormat.ExpiredAt,
 		Sig:               nil,
 	}
 	// compute call data hash
@@ -125,6 +127,7 @@ type RemoveLiquidityTxInfo struct {
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
+	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
 }
@@ -157,6 +160,7 @@ func ComputeRemoveLiquidityMsgHash(txInfo *RemoveLiquidityTxInfo, hFunc hash.Has
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

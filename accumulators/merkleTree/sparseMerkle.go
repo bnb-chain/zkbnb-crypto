@@ -94,7 +94,7 @@ func CreateLeafNode(hashVal []byte) *Node {
 
 func (t *Tree) InitNilHashValueConst() (err error) {
 	nilHash := t.NilHashValueConst[0]
-	for i := 1; i <= t.MaxHeight; i++ {
+	for i := 1; i < t.MaxHeight; i++ {
 		var (
 			nHash []byte
 		)
@@ -114,7 +114,7 @@ func NewEmptyTree(maxHeight int, nilHash []byte, hFunc hash.Hash) (*Tree, error)
 		Height: maxHeight,
 	}
 	// init nil hash values for different heights
-	nilHashValueConst := make([][]byte, maxHeight+1)
+	nilHashValueConst := make([][]byte, maxHeight)
 	nilHashValueConst[0] = nilHash
 	// init tree
 	tree := &Tree{
@@ -130,6 +130,11 @@ func NewEmptyTree(maxHeight int, nilHash []byte, hFunc hash.Hash) (*Tree, error)
 		log.Println(errInfo)
 		return nil, errors.New(errInfo)
 	}
+	hFunc.Reset()
+	hFunc.Write(nilHashValueConst[maxHeight-1])
+	hFunc.Write(nilHashValueConst[maxHeight-1])
+	tree.RootNode.Value = hFunc.Sum(nil)
+	hFunc.Reset()
 	return tree, nil
 }
 
@@ -333,7 +338,7 @@ func (t *Tree) BuildMerkleProofs(index int64) (
 	// if index belongs to leaves
 	if index < int64(len(t.Leaves)) {
 		node := t.Leaves[index]
-		proofs = append(proofs, node.Value)
+		//proofs = append(proofs, node.Value)
 		for node.Parent != nil {
 			if node.Parent.Left == node {
 				if node.Parent.Right == nil {
@@ -354,7 +359,7 @@ func (t *Tree) BuildMerkleProofs(index int64) (
 		}
 	} else {
 		// add itself
-		proofs = append(proofs, t.NilHashValueConst[0])
+		//proofs = append(proofs, t.NilHashValueConst[0])
 		// get last index
 		lastIndex := int64(len(t.Leaves) - 1)
 		// get last leave node

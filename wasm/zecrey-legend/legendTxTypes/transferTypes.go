@@ -37,6 +37,7 @@ type TransferSegmentFormat struct {
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
 	Memo              string `json:"memo"`
 	CallData          string `json:"call_data"`
+	ExpiredAt         int64  `json:"expired_at"`
 	Nonce             int64  `json:"nonce"`
 }
 
@@ -68,10 +69,10 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 		AssetAmount:       assetAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
-		Memo:              segmentFormat.Memo,
 		GasFeeAssetAmount: gasFeeAmount,
+		Memo:              segmentFormat.Memo,
 		CallData:          segmentFormat.CallData,
-		CallDataHash:      nil,
+		ExpiredAt:         segmentFormat.ExpiredAt,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
@@ -106,6 +107,7 @@ type TransferTxInfo struct {
 	Memo              string
 	CallData          string
 	CallDataHash      []byte
+	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
 }
@@ -123,6 +125,7 @@ func ComputeTransferMsgHash(txInfo *TransferTxInfo, hFunc hash.Hash) (msgHash []
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
 	buf.Write(txInfo.CallDataHash)
+	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

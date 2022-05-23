@@ -58,9 +58,6 @@ func TestCollectPubDataFromSwap(t *testing.T) {
 		PoolAAmount:            big.NewInt(10000),
 		PoolBAmount:            big.NewInt(10000),
 		FeeRate:                20,
-		TreasuryAccountIndex:   2,
-		TreasuryRate:           100,
-		TreasuryFeeAmountDelta: 10,
 		GasAccountIndex:        3,
 		GasFeeAssetId:          1,
 		GasFeeAssetAmount:      50,
@@ -71,8 +68,6 @@ func TestCollectPubDataFromSwap(t *testing.T) {
 	buf.Write(new(big.Int).SetInt64(txInfo.PairIndex).FillBytes(make([]byte, 2)))
 	buf.Write(new(big.Int).SetInt64(txInfo.AssetAAmount).FillBytes(make([]byte, 5)))
 	buf.Write(new(big.Int).SetInt64(txInfo.AssetBAmountDelta).FillBytes(make([]byte, 5)))
-	buf.Write(new(big.Int).SetInt64(txInfo.TreasuryAccountIndex).FillBytes(make([]byte, 4)))
-	buf.Write(new(big.Int).SetInt64(txInfo.TreasuryFeeAmountDelta).FillBytes(make([]byte, 2)))
 	buf.Write(new(big.Int).SetInt64(txInfo.GasAccountIndex).FillBytes(make([]byte, 4)))
 	buf.Write(new(big.Int).SetInt64(txInfo.GasFeeAssetId).FillBytes(make([]byte, 2)))
 	buf.Write(new(big.Int).SetInt64(txInfo.GasFeeAssetAmount).FillBytes(make([]byte, 2)))

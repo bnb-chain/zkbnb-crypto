@@ -17,40 +17,32 @@
 
 package std
 
-type CreatePairTx struct {
+type UpdatePairRateTx struct {
 	PairIndex            int64
-	AssetAId             int64
-	AssetBId             int64
 	FeeRate              int64
 	TreasuryAccountIndex int64
 	TreasuryRate         int64
 }
 
-type CreatePairTxConstraints struct {
+type UpdatePairRateTxConstraints struct {
 	PairIndex            Variable
-	AssetAId             Variable
-	AssetBId             Variable
 	FeeRate              Variable
 	TreasuryAccountIndex Variable
 	TreasuryRate         Variable
 }
 
-func EmptyCreatePairTxWitness() (witness CreatePairTxConstraints) {
-	return CreatePairTxConstraints{
+func EmptyUpdatePairRateTxWitness() (witness UpdatePairRateTxConstraints) {
+	return UpdatePairRateTxConstraints{
 		PairIndex:            ZeroInt,
-		AssetAId:             ZeroInt,
-		AssetBId:             ZeroInt,
 		FeeRate:              ZeroInt,
 		TreasuryAccountIndex: ZeroInt,
 		TreasuryRate:         ZeroInt,
 	}
 }
 
-func SetCreatePairTxWitness(tx *CreatePairTx) (witness CreatePairTxConstraints) {
-	witness = CreatePairTxConstraints{
+func SetUpdatePairRateTxWitness(tx *UpdatePairRateTx) (witness UpdatePairRateTxConstraints) {
+	witness = UpdatePairRateTxConstraints{
 		PairIndex:            tx.PairIndex,
-		AssetAId:             tx.AssetAId,
-		AssetBId:             tx.AssetBId,
 		FeeRate:              tx.FeeRate,
 		TreasuryAccountIndex: tx.TreasuryAccountIndex,
 		TreasuryRate:         tx.TreasuryRate,
@@ -58,14 +50,14 @@ func SetCreatePairTxWitness(tx *CreatePairTx) (witness CreatePairTxConstraints) 
 	return witness
 }
 
-func VerifyCreatePairTx(
+func VerifyUpdatePairRateTx(
 	api API, flag Variable,
-	tx CreatePairTxConstraints,
+	tx UpdatePairRateTxConstraints,
 	liquidityBefore LiquidityConstraints,
 	hFunc *MiMC,
 ) {
-	CollectPubDataFromCreatePair(api, flag, tx, hFunc)
+	CollectPubDataFromUpdatePairRate(api, flag, tx, hFunc)
 	// verify params
 	IsVariableEqual(api, flag, tx.PairIndex, liquidityBefore.PairIndex)
-	CheckEmptyLiquidityNode(api, flag, liquidityBefore)
+	IsVariableLessOrEqual(api, flag, tx.TreasuryRate, tx.FeeRate)
 }

@@ -40,6 +40,7 @@ type AddLiquiditySegmentFormat struct {
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
+	ExpiredAt         int64  `json:"expired_at"`
 	Nonce             int64  `json:"nonce"`
 }
 
@@ -81,6 +82,7 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
+		ExpiredAt:         segmentFormat.ExpiredAt,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
@@ -100,38 +102,24 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 }
 
 type AddLiquidityTxInfo struct {
-	FromAccountIndex  int64
-	PairIndex         int64
-	AssetAId          int64
-	AssetAAmount      *big.Int
-	AssetBId          int64
-	AssetBAmount      *big.Int
-	LpAmount          *big.Int
-	PoolAAmount       *big.Int
-	PoolBAmount       *big.Int
-	GasAccountIndex   int64
-	GasFeeAssetId     int64
-	GasFeeAssetAmount *big.Int
-	Nonce             int64
-	Sig               []byte
+	FromAccountIndex     int64
+	PairIndex            int64
+	AssetAId             int64
+	AssetAAmount         *big.Int
+	AssetBId             int64
+	AssetBAmount         *big.Int
+	LpAmount             *big.Int
+	PoolAAmount          *big.Int
+	PoolBAmount          *big.Int
+	GasAccountIndex      int64
+	GasFeeAssetId        int64
+	GasFeeAssetAmount    *big.Int
+	ExpiredAt            int64
+	Nonce                int64
+	Sig                  []byte
 }
 
 func ComputeAddLiquidityMsgHash(txInfo *AddLiquidityTxInfo, hFunc hash.Hash) (msgHash []byte) {
-	/*
-		hFunc.Write(
-			tx.FromAccountIndex,
-			tx.ToAccountIndex,
-			tx.PairIndex,
-			tx.AssetAId,
-			tx.AssetAAmount,
-			tx.AssetBId,
-			tx.AssetBAmount,
-			tx.GasAccountIndex,
-			tx.GasFeeAssetId,
-			tx.GasFeeAssetAmount,
-		)
-		hFunc.Write(nonce)
-	*/
 	hFunc.Reset()
 	var buf bytes.Buffer
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
@@ -143,6 +131,7 @@ func ComputeAddLiquidityMsgHash(txInfo *AddLiquidityTxInfo, hFunc hash.Hash) (ms
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

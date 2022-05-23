@@ -25,6 +25,7 @@ type Tx struct {
 	// different transactions
 	RegisterZnsTxInfo     *RegisterZnsTx
 	CreatePairTxInfo      *CreatePairTx
+	UpdatePairRateTxInfo  *UpdatePairRateTx
 	DepositTxInfo         *DepositTx
 	DepositNftTxInfo      *DepositNftTx
 	TransferTxInfo        *TransferTx
@@ -33,14 +34,16 @@ type Tx struct {
 	RemoveLiquidityTxInfo *RemoveLiquidityTx
 	MintNftTxInfo         *MintNftTx
 	TransferNftTxInfo     *TransferNftTx
-	SetNftPriceTxInfo     *SetNftPriceTx
-	BuyNftTxInfo          *BuyNftTx
+	AtomicMatchTxInfo     *AtomicMatchTx
+	CancelTxInfo          *CancelOfferTx
 	WithdrawTxInfo        *WithdrawTx
 	WithdrawNftTxInfo     *WithdrawNftTx
 	FullExitTxInfo        *FullExitTx
 	FullExitNftTxInfo     *FullExitNftTx
 	// nonce
 	Nonce int64
+	// expired at
+	ExpiredAt int64
 	// signature
 	Signature *Signature
 	// account root before
@@ -59,12 +62,12 @@ type Tx struct {
 	StateRootBefore []byte
 	// before account asset merkle proof
 	MerkleProofsAccountAssetsBefore [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
+	// before account merkle proof
+	MerkleProofsAccountBefore [NbAccountsPerTx][AccountMerkleLevels][]byte
 	// before liquidity merkle proof
 	MerkleProofsLiquidityBefore [LiquidityMerkleLevels][]byte
 	// before nft tree merkle proof
 	MerkleProofsNftBefore [NftMerkleLevels][]byte
-	// before account merkle proof
-	MerkleProofsAccountBefore [NbAccountsPerTx][AccountMerkleLevels][]byte
 	// state root after
 	StateRootAfter []byte
 }
