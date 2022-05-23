@@ -56,9 +56,9 @@ func UpdateLiquidity(
 	liquidityAfter.AssetA = api.Add(liquidity.AssetA, liquidityDelta.AssetADelta)
 	liquidityAfter.AssetB = api.Add(liquidity.AssetB, liquidityDelta.AssetBDelta)
 	liquidityAfter.LpAmount = api.Add(liquidity.LpAmount, liquidityDelta.LpDelta)
-	liquidityAfter.KLast = liquidity.KLast
-	liquidityAfter.FeeRate = liquidity.FeeRate
-	liquidityAfter.TreasuryAccountIndex = liquidity.TreasuryAccountIndex
-	liquidityAfter.TreasuryRate = liquidity.TreasuryRate
+	liquidityAfter.KLast = liquidityDelta.KLast
+	liquidityAfter.FeeRate = liquidityDelta.FeeRate
+	liquidityAfter.TreasuryAccountIndex = liquidityDelta.TreasuryAccountIndex
+	liquidityAfter.TreasuryRate = liquidityDelta.TreasuryRate
 	return liquidityAfter
 }

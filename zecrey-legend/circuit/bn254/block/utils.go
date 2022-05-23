@@ -50,6 +50,10 @@ func SelectLiquidityDelta(
 	deltaRes.AssetBId = api.Select(flag, delta.AssetBId, deltaCheck.AssetBId)
 	deltaRes.AssetBDelta = api.Select(flag, delta.AssetBDelta, deltaCheck.AssetBDelta)
 	deltaRes.LpDelta = api.Select(flag, delta.LpDelta, deltaCheck.LpDelta)
+	deltaRes.KLast = api.Select(flag, delta.KLast, deltaCheck.KLast)
+	deltaRes.FeeRate = api.Select(flag, delta.FeeRate, deltaCheck.FeeRate)
+	deltaRes.TreasuryAccountIndex = api.Select(flag, delta.TreasuryAccountIndex, deltaCheck.TreasuryAccountIndex)
+	deltaRes.TreasuryRate = api.Select(flag, delta.TreasuryRate, deltaCheck.TreasuryRate)
 	return deltaRes
 }
 
