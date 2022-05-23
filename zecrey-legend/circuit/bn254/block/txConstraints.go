@@ -124,26 +124,6 @@ func VerifyTransaction(
 	isFullExitTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeFullExit))
 	isFullExitNftTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeFullExitNft))
 
-	// no need to verify signature transaction
-	notNoSignatureTx := api.IsZero(
-		api.Or(
-			isEmptyTx,
-			api.Or(
-				api.Or(
-					isRegisterZnsTx,
-					isDepositTx,
-				),
-				api.Or(
-					isDepositNftTx,
-					api.Or(
-						isCreatePairTx,
-						api.Or(
-							isFullExitTx,
-							isFullExitNftTx,
-						),
-					),
-				))))
-
 	// get hash value from tx based on tx type
 	// transfer tx
 	hashVal := std.ComputeHashFromTransferTx(tx.TransferTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
@@ -193,7 +173,7 @@ func VerifyTransaction(
 	std.IsVariableEqual(api, isLayer2Tx, api.Add(tx.AccountsInfoBefore[0].Nonce, 1), tx.Nonce)
 	// verify signature
 	err := std.VerifyEddsaSig(
-		notNoSignatureTx,
+		isLayer2Tx,
 		api,
 		hFunc,
 		hashVal,
@@ -245,11 +225,15 @@ func VerifyTransaction(
 		}
 	}
 	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:    tx.LiquidityBefore.AssetAId,
-		AssetBId:    tx.LiquidityBefore.AssetBId,
-		AssetADelta: std.ZeroInt,
-		AssetBDelta: std.ZeroInt,
-		LpDelta:     std.ZeroInt,
+		AssetAId:             tx.LiquidityBefore.AssetAId,
+		AssetBId:             tx.LiquidityBefore.AssetBId,
+		AssetADelta:          std.ZeroInt,
+		AssetBDelta:          std.ZeroInt,
+		LpDelta:              std.ZeroInt,
+		KLast:                tx.LiquidityBefore.KLast,
+		FeeRate:              tx.LiquidityBefore.FeeRate,
+		TreasuryAccountIndex: tx.LiquidityBefore.TreasuryAccountIndex,
+		TreasuryRate:         tx.LiquidityBefore.TreasuryRate,
 	}
 	nftDelta = NftDeltaConstraints{
 		CreatorAccountIndex: tx.NftBefore.CreatorAccountIndex,
@@ -362,7 +346,7 @@ func VerifyTransaction(
 				api,
 				notEmptyTx,
 				hFunc,
-				tx.AccountsInfoBefore[i].AssetRoot,
+				NewAccountAssetsRoot,
 				assetNodeHash,
 				tx.MerkleProofsAccountAssetsBefore[i][j][:],
 				assetMerkleHelper,
