@@ -26,7 +26,7 @@ type WithdrawTx struct {
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
-	ToAddress         string
+	ToAddress         *big.Int
 }
 
 type WithdrawTxConstraints struct {
@@ -64,7 +64,7 @@ func SetWithdrawTxWitness(tx *WithdrawTx) (witness WithdrawTxConstraints) {
 	return witness
 }
 
-func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromWithdrawTx(api API, tx WithdrawTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,
@@ -97,8 +97,7 @@ func VerifyWithdrawTx(
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// should have enough assets
-	tx.AssetAmount = UnpackAmount(api, tx.AssetAmount)
-	tx.GasFeeAssetAmount = UnpackAmount(api, tx.GasFeeAssetAmount)
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
 }
