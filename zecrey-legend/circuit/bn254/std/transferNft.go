@@ -79,21 +79,6 @@ func ComputeHashFromTransferNftTx(tx TransferNftTxConstraints, nonce Variable, e
 	return hashVal
 }
 
-/*
-	VerifyGenericTransferTx:
-	accounts order is:
-	- FromAccount
-		- Assets
-			- AssetGas
-		- Nft
-			- nft index
-	- ToAccount
-		- Nft
-			- nft index
-	- GasAccount
-		- Assets
-			- AssetGas
-*/
 func VerifyTransferNftTx(
 	api API,
 	flag Variable,

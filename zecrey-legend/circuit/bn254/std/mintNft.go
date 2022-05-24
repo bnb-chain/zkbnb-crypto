@@ -89,19 +89,6 @@ func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, expiredAt
 	return hashVal
 }
 
-/*
-	VerifyMintNftTx:
-	accounts order is:
-	- FromAccount
-		- Assets
-			- AssetGas
-	- ToAccount
-		- Nft
-			- empty
-	- GasAccount
-		- Assets
-			- AssetGas
-*/
 func VerifyMintNftTx(
 	api API, flag Variable,
 	tx *MintNftTxConstraints,

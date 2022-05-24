@@ -52,13 +52,6 @@ func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints) {
 	return witness
 }
 
-/*
-	VerifyDepositTx:
-	accounts order is:
-	- FromAccount
-		- Assets
-			- AssetA
-*/
 func VerifyDepositTx(
 	api API, flag Variable,
 	tx DepositTxConstraints,

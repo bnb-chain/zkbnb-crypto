@@ -116,25 +116,6 @@ func ComputeHashFromSwapTx(tx SwapTxConstraints, nonce Variable, expiredAt Varia
 	return hashVal
 }
 
-/*
-	VerifySwapTx:
-	accounts order is:
-	- FromAccount
-		- Assets:
-			- AssetA
-			- AssetB
-			- AssetGas
-	- ToAccount
-		- Liquidity
-			- AssetA
-			- AssetB
-	- TreasuryAccount
-		- Assets
-			- AssetA
-	- GasAccount
-		- Assets:
-			- AssetGas
-*/
 func VerifySwapTx(
 	api API, flag Variable,
 	tx *SwapTxConstraints,

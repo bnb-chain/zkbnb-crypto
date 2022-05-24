@@ -88,18 +88,6 @@ func ComputeHashFromWithdrawNftTx(tx WithdrawNftTxConstraints, nonce Variable, e
 	return hashVal
 }
 
-/*
-	VerifyWithdrawNftTx:
-	accounts order is:
-	- FromAccount
-		- Assets:
-			- AssetGas
-		- Nft
-			- nft index
-	- GasAccount
-		- Assets:
-			- AssetGas
-*/
 func VerifyWithdrawNftTx(
 	api API,
 	flag Variable,

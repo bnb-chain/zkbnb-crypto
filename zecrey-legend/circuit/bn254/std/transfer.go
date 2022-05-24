@@ -95,20 +95,6 @@ func ComputeHashFromTransferTx(tx TransferTxConstraints, nonce Variable, expired
 	return hashVal
 }
 
-/*
-	VerifyGenericTransferTx:
-	accounts order is:
-	- FromAccount
-		- Assets
-			- AssetA
-			- AssetGas
-	- ToAccount
-		- Assets
-			- AssetA
-	- GasAccount
-		- Assets
-			- AssetGas
-*/
 func VerifyTransferTx(
 	api API, flag Variable,
 	tx *TransferTxConstraints,
