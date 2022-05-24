@@ -23,23 +23,24 @@ type Tx struct {
 	// tx type
 	TxType uint8
 	// different transactions
-	RegisterZnsTxInfo     *RegisterZnsTx
-	CreatePairTxInfo      *CreatePairTx
-	UpdatePairRateTxInfo  *UpdatePairRateTx
-	DepositTxInfo         *DepositTx
-	DepositNftTxInfo      *DepositNftTx
-	TransferTxInfo        *TransferTx
-	SwapTxInfo            *SwapTx
-	AddLiquidityTxInfo    *AddLiquidityTx
-	RemoveLiquidityTxInfo *RemoveLiquidityTx
-	MintNftTxInfo         *MintNftTx
-	TransferNftTxInfo     *TransferNftTx
-	AtomicMatchTxInfo     *AtomicMatchTx
-	CancelTxInfo          *CancelOfferTx
-	WithdrawTxInfo        *WithdrawTx
-	WithdrawNftTxInfo     *WithdrawNftTx
-	FullExitTxInfo        *FullExitTx
-	FullExitNftTxInfo     *FullExitNftTx
+	RegisterZnsTxInfo      *RegisterZnsTx
+	CreatePairTxInfo       *CreatePairTx
+	UpdatePairRateTxInfo   *UpdatePairRateTx
+	DepositTxInfo          *DepositTx
+	DepositNftTxInfo       *DepositNftTx
+	TransferTxInfo         *TransferTx
+	SwapTxInfo             *SwapTx
+	AddLiquidityTxInfo     *AddLiquidityTx
+	RemoveLiquidityTxInfo  *RemoveLiquidityTx
+	CreateCollectionTxInfo *CreateCollectionTx
+	MintNftTxInfo          *MintNftTx
+	TransferNftTxInfo      *TransferNftTx
+	AtomicMatchTxInfo      *AtomicMatchTx
+	CancelTxInfo           *CancelOfferTx
+	WithdrawTxInfo         *WithdrawTx
+	WithdrawNftTxInfo      *WithdrawNftTx
+	FullExitTxInfo         *FullExitTx
+	FullExitNftTxInfo      *FullExitNftTx
 	// nonce
 	Nonce int64
 	// expired at

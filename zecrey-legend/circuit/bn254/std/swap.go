@@ -59,7 +59,6 @@ type SwapTxConstraints struct {
 	AssetBAmountDelta Variable
 	PoolAAmount       Variable
 	PoolBAmount       Variable
-	FeeRate           Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
@@ -76,7 +75,6 @@ func EmptySwapTxWitness() (witness SwapTxConstraints) {
 		AssetBAmountDelta: ZeroInt,
 		PoolAAmount:       ZeroInt,
 		PoolBAmount:       ZeroInt,
-		FeeRate:           ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
@@ -94,7 +92,6 @@ func SetSwapTxWitness(tx *SwapTx) (witness SwapTxConstraints) {
 		AssetBAmountDelta: tx.AssetBAmountDelta,
 		PoolAAmount:       tx.PoolAAmount,
 		PoolBAmount:       tx.PoolBAmount,
-		FeeRate:           tx.FeeRate,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
@@ -102,21 +99,19 @@ func SetSwapTxWitness(tx *SwapTx) (witness SwapTxConstraints) {
 	return witness
 }
 
-func ComputeHashFromSwapTx(tx SwapTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromSwapTx(tx SwapTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,
 		tx.PairIndex,
-		tx.AssetAId,
 		tx.AssetAAmount,
-		tx.AssetBId,
 		tx.AssetBMinAmount,
-		tx.FeeRate,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
+		expiredAt,
+		nonce,
 	)
-	hFunc.Write(nonce)
 	hashVal = hFunc.Sum()
 	return hashVal
 }
@@ -194,8 +189,8 @@ func VerifySwapTx(
 	IsVariableLessOrEqual(api, isSameAsset, tx.PoolBAmount, liquidityBefore.AssetB)
 	IsVariableLessOrEqual(api, isDifferentAsset, tx.PoolAAmount, liquidityBefore.AssetB)
 	IsVariableLessOrEqual(api, isDifferentAsset, tx.PoolBAmount, liquidityBefore.AssetA)
-	IsVariableEqual(api, flag, tx.FeeRate, liquidityBefore.FeeRate)
-	IsVariableLessOrEqual(api, flag, tx.FeeRate, RateBase)
+	IsVariableEqual(api, flag, liquidityBefore.FeeRate, liquidityBefore.FeeRate)
+	IsVariableLessOrEqual(api, flag, liquidityBefore.FeeRate, RateBase)
 	assetAAmount := api.Select(isSameAsset, tx.AssetAAmount, tx.AssetBAmountDelta)
 	assetBAmount := api.Select(isSameAsset, tx.AssetBAmountDelta, tx.AssetAAmount)
 	// verify AMM

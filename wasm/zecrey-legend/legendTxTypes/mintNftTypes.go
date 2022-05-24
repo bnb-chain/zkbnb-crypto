@@ -81,7 +81,11 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash := ComputeMintNftMsgHash(txInfo, hFunc)
+	msgHash, err := ComputeMintNftMsgHash(txInfo, hFunc)
+	if err != nil {
+		log.Println("[ConstructMintNftTxInfo] unable to compute hash:", err)
+		return nil, err
+	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
@@ -113,20 +117,26 @@ type MintNftTxInfo struct {
 	Sig                 []byte
 }
 
-func ComputeMintNftMsgHash(txInfo *MintNftTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeMintNftMsgHash(txInfo *MintNftTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
+	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		return nil, err
+	}
 	WriteInt64IntoBuf(&buf, txInfo.CreatorAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
 	buf.Write(common.FromHex(txInfo.NftContentHash))
-	WriteInt64IntoBuf(&buf, txInfo.CreatorFeeRate)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, packedFee)
+	WriteInt64IntoBuf(&buf, txInfo.CreatorFeeRate)
+	WriteInt64IntoBuf(&buf, txInfo.CollectionId)
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
-	return msgHash
+	return msgHash, nil
 }

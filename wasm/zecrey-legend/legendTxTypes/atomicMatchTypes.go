@@ -108,13 +108,28 @@ type AtomicMatchTxInfo struct {
 func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
+	packedBuyAmount, err := ToPackedAmount(txInfo.BuyOffer.AssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		return nil, err
+	}
+	packedSellAmount, err := ToPackedAmount(txInfo.SellOffer.AssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		return nil, err
+	}
+	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		return nil, err
+	}
 	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.Type)
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.OfferId)
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.AccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.NftIndex)
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.AssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.BuyOffer.AssetAmount)
+	WriteInt64IntoBuf(&buf, packedBuyAmount)
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.ListedAt)
 	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.ExpiredAt)
 	var (
@@ -133,7 +148,7 @@ func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgH
 	WriteInt64IntoBuf(&buf, txInfo.SellOffer.AccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.SellOffer.NftIndex)
 	WriteInt64IntoBuf(&buf, txInfo.SellOffer.AssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.SellOffer.AssetAmount)
+	WriteInt64IntoBuf(&buf, packedSellAmount)
 	WriteInt64IntoBuf(&buf, txInfo.SellOffer.ListedAt)
 	WriteInt64IntoBuf(&buf, txInfo.SellOffer.ExpiredAt)
 	_, err = sellerSig.SetBytes(txInfo.SellOffer.Sig)
@@ -146,7 +161,7 @@ func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgH
 	buf.Write(sellerSig.S[:])
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, packedFee)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

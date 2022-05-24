@@ -18,17 +18,6 @@
 package std
 
 type MintNftTx struct {
-	/*
-		- creator account index
-		- to account index
-		- nft token id
-		- nft content hash
-		- asset id
-		- asset amount
-		- gas account index
-		- gas fee asset id
-		- gas fee asset amount
-	*/
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
 	NftIndex            int64
@@ -37,6 +26,7 @@ type MintNftTx struct {
 	GasAccountIndex     int64
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   int64
+	CollectionId        int64
 }
 
 type MintNftTxConstraints struct {
@@ -48,6 +38,7 @@ type MintNftTxConstraints struct {
 	GasAccountIndex     Variable
 	GasFeeAssetId       Variable
 	GasFeeAssetAmount   Variable
+	CollectionId        Variable
 }
 
 func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
@@ -60,6 +51,7 @@ func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 		GasAccountIndex:     ZeroInt,
 		GasFeeAssetId:       ZeroInt,
 		GasFeeAssetAmount:   ZeroInt,
+		CollectionId:        ZeroInt,
 	}
 }
 
@@ -73,11 +65,12 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 		GasAccountIndex:     tx.GasAccountIndex,
 		GasFeeAssetId:       tx.GasFeeAssetId,
 		GasFeeAssetAmount:   tx.GasFeeAssetAmount,
+		CollectionId:        tx.CollectionId,
 	}
 	return witness
 }
 
-func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.CreatorAccountIndex,
@@ -87,8 +80,11 @@ func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, hFunc MiM
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
+		tx.CreatorTreasuryRate,
+		tx.CollectionId,
+		expiredAt,
+		nonce,
 	)
-	hFunc.Write(nonce)
 	hashVal = hFunc.Sum()
 	return hashVal
 }

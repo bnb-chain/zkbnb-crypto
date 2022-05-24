@@ -20,23 +20,12 @@ package std
 import "math/big"
 
 type WithdrawNftTx struct {
-	/*
-		- account index
-		- nft token id
-		- to address
-		- proxy address
-		- gas account index
-		- gas fee asset id
-		- gas fee asset amount
-		- nonce
-	*/
 	AccountIndex      int64
 	NftIndex          int64
 	NftContentHash    []byte
 	NftL1Address      string
 	NftL1TokenId      *big.Int
 	ToAddress         string
-	ProxyAddress      string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
@@ -49,7 +38,6 @@ type WithdrawNftTxConstraints struct {
 	NftL1Address      Variable
 	NftL1TokenId      Variable
 	ToAddress         Variable
-	ProxyAddress      Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
@@ -63,7 +51,6 @@ func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
 		NftL1Address:      ZeroInt,
 		NftL1TokenId:      ZeroInt,
 		ToAddress:         ZeroInt,
-		ProxyAddress:      ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
@@ -78,7 +65,6 @@ func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraint
 		NftL1Address:      tx.NftL1Address,
 		NftL1TokenId:      tx.NftL1TokenId,
 		ToAddress:         tx.ToAddress,
-		ProxyAddress:      tx.ProxyAddress,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
@@ -86,18 +72,18 @@ func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraint
 	return witness
 }
 
-func ComputeHashFromWithdrawNftTx(tx WithdrawNftTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromWithdrawNftTx(tx WithdrawNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.AccountIndex,
 		tx.NftIndex,
 		tx.ToAddress,
-		tx.ProxyAddress,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
+		expiredAt,
+		nonce,
 	)
-	hFunc.Write(nonce)
 	hashVal = hFunc.Sum()
 	return hashVal
 }

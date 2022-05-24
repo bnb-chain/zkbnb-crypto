@@ -17,63 +17,59 @@
 
 package std
 
-import "math/big"
-
-type WithdrawTx struct {
-	FromAccountIndex  int64
-	AssetId           int64
-	AssetAmount       *big.Int
+type CreateCollectionTx struct {
+	AccountIndex      int64
+	CollectionId      int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
-	ToAddress         string
+	ExpiredAt         int64
+	Nonce             int64
 }
 
-type WithdrawTxConstraints struct {
-	FromAccountIndex  Variable
-	AssetId           Variable
-	AssetAmount       Variable
+type CreateCollectionTxConstraints struct {
+	AccountIndex      Variable
+	CollectionId      Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
-	ToAddress         Variable
+	ExpiredAt         Variable
+	Nonce             Variable
 }
 
-func EmptyWithdrawTxWitness() (witness WithdrawTxConstraints) {
-	return WithdrawTxConstraints{
-		FromAccountIndex:  ZeroInt,
-		AssetId:           ZeroInt,
-		AssetAmount:       ZeroInt,
+func EmptyCreateCollectionTxWitness() (witness CreateCollectionTxConstraints) {
+	return CreateCollectionTxConstraints{
+		AccountIndex:      ZeroInt,
+		CollectionId:      ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
-		ToAddress:         ZeroInt,
+		ExpiredAt:         ZeroInt,
+		Nonce:             ZeroInt,
 	}
 }
 
-func SetWithdrawTxWitness(tx *WithdrawTx) (witness WithdrawTxConstraints) {
-	witness = WithdrawTxConstraints{
-		FromAccountIndex:  tx.FromAccountIndex,
-		AssetId:           tx.AssetId,
-		AssetAmount:       tx.AssetAmount,
+func SetCreateCollectionTxWitness(tx *CreateCollectionTx) (witness CreateCollectionTxConstraints) {
+	witness = CreateCollectionTxConstraints{
+		AccountIndex:      tx.AccountIndex,
+		CollectionId:      tx.CollectionId,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
-		ToAddress:         tx.ToAddress,
+		ExpiredAt:         tx.ExpiredAt,
+		Nonce:             tx.Nonce,
 	}
 	return witness
 }
 
-func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromCreateCollectionTx(tx CreateCollectionTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		tx.FromAccountIndex,
-		tx.AssetId,
-		tx.AssetAmount,
+		tx.AccountIndex,
+		tx.CollectionId,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
-		tx.ToAddress,
 		expiredAt,
 		nonce,
 	)
@@ -81,24 +77,23 @@ func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, expired
 	return hashVal
 }
 
-func VerifyWithdrawTx(
+func VerifyCreateCollectionTx(
 	api API, flag Variable,
-	tx *WithdrawTxConstraints,
+	tx *CreateCollectionTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	hFunc *MiMC,
 ) {
-	CollectPubDataFromWithdraw(api, flag, *tx, hFunc)
+	CollectPubDataFromCreateCollection(api, flag, *tx, hFunc)
 	// verify params
 	// account index
-	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
+	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
 	// asset id
-	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+	// collection id
+	IsVariableEqual(api, flag, tx.CollectionId, api.Add(accountsBefore[0].CollectionNonce, 1))
 	// should have enough assets
-	tx.AssetAmount = UnpackAmount(api, tx.AssetAmount)
 	tx.GasFeeAssetAmount = UnpackAmount(api, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
 }

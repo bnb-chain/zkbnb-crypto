@@ -32,6 +32,7 @@ type CancelOfferSegmentFormat struct {
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
+	ExpiredAt         int64  `json:"expired_at"`
 	Nonce             int64  `json:"nonce"`
 }
 
@@ -56,13 +57,18 @@ func ConstructCancelOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Canc
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
+		ExpiredAt:         segmentFormat.ExpiredAt,
 		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash := ComputeCancelOfferMsgHash(txInfo, hFunc)
+	msgHash, err := ComputeCancelOfferMsgHash(txInfo, hFunc)
+	if err != nil {
+		log.Println("[ConstructMintNftTxInfo] unable to compute hash:", err)
+		return nil, err
+	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
@@ -80,20 +86,27 @@ type CancelOfferTxInfo struct {
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
+	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
 }
 
-func ComputeCancelOfferMsgHash(txInfo *CancelOfferTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeCancelOfferMsgHash(txInfo *CancelOfferTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
+	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		return nil, err
+	}
 	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.OfferId)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, packedFee)
+	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
-	return msgHash
+	return msgHash, nil
 }

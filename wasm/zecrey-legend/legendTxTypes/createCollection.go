@@ -68,7 +68,11 @@ func ConstructCreateCollectionTxInfo(sk *PrivateKey, segmentStr string) (txInfo 
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash := ComputeCreateCollectionMsgHash(txInfo, hFunc)
+	msgHash, err := ComputeCreateCollectionMsgHash(txInfo, hFunc)
+	if err != nil {
+		log.Println("[ConstructCreateCollectionTxInfo] unable to compute hash:", err)
+		return nil, err
+	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
@@ -93,17 +97,22 @@ type CreateCollectionTxInfo struct {
 	Sig               []byte
 }
 
-func ComputeCreateCollectionMsgHash(txInfo *CreateCollectionTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeCreateCollectionMsgHash(txInfo *CreateCollectionTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
+	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		return nil, err
+	}
 	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.CollectionId)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, packedFee)
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
-	return msgHash
+	return msgHash, nil
 }
