@@ -60,13 +60,6 @@ func SetFullExitNftTxWitness(tx *FullExitNftTx) (witness FullExitNftTxConstraint
 	return witness
 }
 
-/*
-	VerifyFullExitNftTx:
-	accounts order is:
-	- FromAccount
-		- Assets
-			- AssetA
-*/
 func VerifyFullExitNftTx(
 	api API, flag Variable,
 	tx FullExitNftTxConstraints,

@@ -105,24 +105,6 @@ func ComputeHashFromRemoveLiquidityTx(tx RemoveLiquidityTxConstraints, nonce Var
 	return hashVal
 }
 
-/*
-	VerifyRemoveLiquidityTx:
-	accounts order is:
-	- FromAccount
-		- Assets:
-			- AssetA
-			- AssetB
-			- AssetGas
-		- Liquidity:
-			- LpAmount
-	- ToAccount
-		- Liquidity
-			- AssetA
-			- AssetB
-	- GasAccount
-		- Assets:
-			- AssetGas
-*/
 func VerifyRemoveLiquidityTx(
 	api API, flag Variable,
 	tx *RemoveLiquidityTxConstraints,

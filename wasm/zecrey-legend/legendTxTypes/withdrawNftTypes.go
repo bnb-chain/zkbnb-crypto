@@ -81,14 +81,11 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 
 type WithdrawNftTxInfo struct {
 	AccountIndex int64
-	// TODO not sure if we need to add it here
-	AccountNameHash   string
 	NftType           uint8
 	NftIndex          int64
 	NftContentHash    string
 	NftL1Address      string
 	NftL1TokenId      *big.Int
-	Amount            int64
 	ToAddress         string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64

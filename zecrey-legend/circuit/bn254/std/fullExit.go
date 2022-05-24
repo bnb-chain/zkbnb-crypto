@@ -52,13 +52,6 @@ func SetFullExitTxWitness(tx *FullExitTx) (witness FullExitTxConstraints) {
 	return witness
 }
 
-/*
-	VerifyFullExitTx:
-	accounts order is:
-	- FromAccount
-		- Assets
-			- AssetA
-*/
 func VerifyFullExitTx(
 	api API, flag Variable,
 	tx FullExitTxConstraints,

@@ -129,24 +129,6 @@ func ComputeHashFromAddLiquidityTx(tx AddLiquidityTxConstraints, nonce Variable,
 	return hashVal
 }
 
-/*
-	VerifyAddLiquidityTx:
-	accounts order is:
-	- FromAccount
-		- Assets:
-			- AssetA
-			- AssetB
-			- LpAmount
-			- AssetGas
-	- GasAccount
-		- Assets
-			- AssetGas
-	- FromAccount
-		- Assets
-			- AssetA
-			- AssetB
-			- AssetGas
-*/
 func VerifyAddLiquidityTx(
 	api API, flag Variable,
 	tx *AddLiquidityTxConstraints,
