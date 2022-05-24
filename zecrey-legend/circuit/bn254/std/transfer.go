@@ -77,7 +77,7 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints) {
 	return witness
 }
 
-func ComputeHashFromTransferTx(api API, tx TransferTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromTransferTx(tx TransferTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,

@@ -142,7 +142,7 @@ func VerifyTransaction(
 
 	// get hash value from tx based on tx type
 	// transfer tx
-	hashVal := std.ComputeHashFromTransferTx(api, tx.TransferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal := std.ComputeHashFromTransferTx(tx.TransferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	// swap tx
 	hashValCheck := std.ComputeHashFromSwapTx(tx.SwapTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isSwapTx, hashValCheck, hashVal)
@@ -153,7 +153,7 @@ func VerifyTransaction(
 	hashValCheck = std.ComputeHashFromRemoveLiquidityTx(tx.RemoveLiquidityTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isRemoveLiquidityTx, hashValCheck, hashVal)
 	// withdraw tx
-	hashValCheck = std.ComputeHashFromWithdrawTx(tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = std.ComputeHashFromWithdrawTx(api, tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isWithdrawTx, hashValCheck, hashVal)
 	// createCollection tx
 	hashValCheck = std.ComputeHashFromCreateCollectionTx(tx.CreateCollectionTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
