@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
@@ -30,9 +29,7 @@ import (
 type WithdrawNftSegmentFormat struct {
 	AccountIndex      int64  `json:"account_index"`
 	NftIndex          int64  `json:"nft_index"`
-	NftContentHash    string `json:"nft_content_hash"`
 	ToAddress         string `json:"to_address"`
-	ProxyAddress      string `json:"proxy_address"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -55,9 +52,7 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 	txInfo = &WithdrawNftTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
 		NftIndex:          segmentFormat.NftIndex,
-		NftContentHash:    segmentFormat.NftContentHash,
 		ToAddress:         segmentFormat.ToAddress,
-		ProxyAddress:      segmentFormat.ProxyAddress,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -68,7 +63,11 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash := ComputeWithdrawNftMsgHash(txInfo, hFunc)
+	msgHash, err := ComputeWithdrawNftMsgHash(txInfo, hFunc)
+	if err != nil {
+		log.Println("[ConstructWithdrawNftTxInfo] unable to compute hash:", err)
+		return nil, err
+	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
@@ -91,7 +90,6 @@ type WithdrawNftTxInfo struct {
 	NftL1TokenId      *big.Int
 	Amount            int64
 	ToAddress         string
-	ProxyAddress      string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
@@ -100,32 +98,23 @@ type WithdrawNftTxInfo struct {
 	Sig               []byte
 }
 
-func ComputeWithdrawNftMsgHash(txInfo *WithdrawNftTxInfo, hFunc hash.Hash) (msgHash []byte) {
-	/*
-		hFunc.Write(
-			tx.BuyerAccountIndex,
-			tx.NftIndex,
-			tx.ToAddress,
-			tx.ProxyAddress,
-			tx.GasAccountIndex,
-			tx.GasFeeAssetId,
-			tx.GasFeeAssetAmount,
-		)
-		hFunc.Write(nonce)
-	*/
+func ComputeWithdrawNftMsgHash(txInfo *WithdrawNftTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
+	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		return nil, err
+	}
 	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
-	buf.Write(common.FromHex(txInfo.NftContentHash))
 	buf.Write(PaddingStringToBytes32(txInfo.ToAddress))
-	buf.Write(PaddingStringToBytes32(txInfo.ProxyAddress))
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, packedFee)
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
-	return msgHash
+	return msgHash, nil
 }

@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
@@ -75,7 +74,11 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 	callDataHash := hFunc.Sum(nil)
 	txInfo.CallDataHash = callDataHash
 	hFunc.Reset()
-	msgHash := ComputeTransferNftMsgHash(txInfo, hFunc)
+	msgHash, err := ComputeTransferNftMsgHash(txInfo, hFunc)
+	if err != nil {
+		log.Println("[ConstructTransferNftTxInfo] unable to compute hash:", err)
+		return nil, err
+	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
@@ -103,20 +106,24 @@ type TransferNftTxInfo struct {
 	Sig               []byte
 }
 
-func ComputeTransferNftMsgHash(txInfo *TransferNftTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeTransferNftMsgHash(txInfo *TransferNftTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
+	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		return nil, err
+	}
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
-	buf.Write(common.FromHex(txInfo.NftContentHash))
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, packedFee)
 	buf.Write(txInfo.CallDataHash)
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
-	return msgHash
+	return msgHash, nil
 }

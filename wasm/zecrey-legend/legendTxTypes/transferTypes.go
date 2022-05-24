@@ -83,7 +83,11 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 	txInfo.CallDataHash = callDataHash
 	hFunc.Reset()
 	// compute msg hash
-	msgHash := ComputeTransferMsgHash(txInfo, hFunc)
+	msgHash, err := ComputeTransferMsgHash(txInfo, hFunc)
+	if err != nil {
+		log.Println("[ConstructGenericTransferTxInfo] unable to compute hash:", err.Error())
+		return nil, err
+	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
@@ -112,22 +116,30 @@ type TransferTxInfo struct {
 	Sig               []byte
 }
 
-func ComputeTransferMsgHash(txInfo *TransferTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeTransferMsgHash(txInfo *TransferTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
+	packedAmount, err := ToPackedAmount(txInfo.AssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		return nil, err
+	}
+	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		return nil, err
+	}
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
-	accountNameBytes := PaddingStringToBytes32(txInfo.ToAccountName)
-	buf.Write(accountNameBytes)
 	WriteInt64IntoBuf(&buf, txInfo.AssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)
+	WriteInt64IntoBuf(&buf, packedAmount)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, int64(packedFee))
 	buf.Write(txInfo.CallDataHash)
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
-	return msgHash
+	return msgHash, nil
 }

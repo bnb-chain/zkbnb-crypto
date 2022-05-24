@@ -89,7 +89,11 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash := ComputeAddLiquidityMsgHash(txInfo, hFunc)
+	msgHash, err := ComputeAddLiquidityMsgHash(txInfo, hFunc)
+	if err != nil {
+		log.Println("[ConstructAddLiquidityTxInfo] unable to compute hash:", err)
+		return nil, err
+	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
@@ -102,38 +106,51 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 }
 
 type AddLiquidityTxInfo struct {
-	FromAccountIndex     int64
-	PairIndex            int64
-	AssetAId             int64
-	AssetAAmount         *big.Int
-	AssetBId             int64
-	AssetBAmount         *big.Int
-	LpAmount             *big.Int
-	PoolAAmount          *big.Int
-	PoolBAmount          *big.Int
-	GasAccountIndex      int64
-	GasFeeAssetId        int64
-	GasFeeAssetAmount    *big.Int
-	ExpiredAt            int64
-	Nonce                int64
-	Sig                  []byte
+	FromAccountIndex  int64
+	PairIndex         int64
+	AssetAId          int64
+	AssetAAmount      *big.Int
+	AssetBId          int64
+	AssetBAmount      *big.Int
+	LpAmount          *big.Int
+	PoolAAmount       *big.Int
+	PoolBAmount       *big.Int
+	GasAccountIndex   int64
+	GasFeeAssetId     int64
+	GasFeeAssetAmount *big.Int
+	ExpiredAt         int64
+	Nonce             int64
+	Sig               []byte
 }
 
-func ComputeAddLiquidityMsgHash(txInfo *AddLiquidityTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeAddLiquidityMsgHash(txInfo *AddLiquidityTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
+	packedAAmount, err := ToPackedAmount(txInfo.AssetAAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		return nil, err
+	}
+	packedBAmount, err := ToPackedAmount(txInfo.AssetBAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		return nil, err
+	}
+	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		return nil, err
+	}
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.PairIndex)
-	WriteInt64IntoBuf(&buf, txInfo.AssetAId)
-	WriteBigIntIntoBuf(&buf, txInfo.AssetAAmount)
-	WriteInt64IntoBuf(&buf, txInfo.AssetBId)
-	WriteBigIntIntoBuf(&buf, txInfo.AssetBAmount)
+	WriteInt64IntoBuf(&buf, packedAAmount)
+	WriteInt64IntoBuf(&buf, packedBAmount)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.GasFeeAssetAmount)
+	WriteInt64IntoBuf(&buf, packedFee)
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
-	return msgHash
+	return msgHash, nil
 }
