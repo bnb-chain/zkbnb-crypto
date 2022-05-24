@@ -64,7 +64,7 @@ func SetWithdrawTxWitness(tx *WithdrawTx) (witness WithdrawTxConstraints) {
 	return witness
 }
 
-func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,
@@ -74,23 +74,13 @@ func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, hFunc M
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
 		tx.ToAddress,
+		expiredAt,
+		nonce,
 	)
-	hFunc.Write(nonce)
 	hashVal = hFunc.Sum()
 	return hashVal
 }
 
-/*
-	VerifyWithdrawTx:
-	accounts order is:
-	- FromAccount
-		- Assets:
-			- AssetA
-			- AssetGas
-	- GasAccount
-		- Assets:
-			- AssetGas
-*/
 func VerifyWithdrawTx(
 	api API, flag Variable,
 	tx *WithdrawTxConstraints,

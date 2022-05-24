@@ -62,7 +62,7 @@ func SetTransferNftTxWitness(tx *TransferNftTx) (witness TransferNftTxConstraint
 	return witness
 }
 
-func ComputeHashFromTransferNftTx(tx TransferNftTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromTransferNftTx(tx TransferNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,
@@ -72,8 +72,9 @@ func ComputeHashFromTransferNftTx(tx TransferNftTxConstraints, nonce Variable, h
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
 		tx.CallDataHash,
+		expiredAt,
+		nonce,
 	)
-	hFunc.Write(nonce)
 	hashVal = hFunc.Sum()
 	return hashVal
 }

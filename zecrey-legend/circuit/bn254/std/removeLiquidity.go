@@ -87,21 +87,20 @@ func SetRemoveLiquidityTxWitness(tx *RemoveLiquidityTx) (witness RemoveLiquidity
 	return witness
 }
 
-func ComputeHashFromRemoveLiquidityTx(tx RemoveLiquidityTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromRemoveLiquidityTx(tx RemoveLiquidityTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,
 		tx.PairIndex,
-		tx.AssetAId,
 		tx.AssetAMinAmount,
-		tx.AssetBId,
 		tx.AssetBMinAmount,
 		tx.LpAmount,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
+		expiredAt,
+		nonce,
 	)
-	hFunc.Write(nonce)
 	hashVal = hFunc.Sum()
 	return hashVal
 }

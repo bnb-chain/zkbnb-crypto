@@ -77,7 +77,7 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints) {
 	return witness
 }
 
-func ComputeHashFromTransferTx(tx TransferTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromTransferTx(api API, tx TransferTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,
@@ -88,8 +88,9 @@ func ComputeHashFromTransferTx(tx TransferTxConstraints, nonce Variable, hFunc M
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
 		tx.CallDataHash,
+		expiredAt,
+		nonce,
 	)
-	hFunc.Write(nonce)
 	hashVal = hFunc.Sum()
 	return hashVal
 }
@@ -127,6 +128,7 @@ func VerifyTransferTx(
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	// should have enough balance
 	tx.AssetAmount = UnpackAmount(api, tx.AssetAmount)
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	//tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)

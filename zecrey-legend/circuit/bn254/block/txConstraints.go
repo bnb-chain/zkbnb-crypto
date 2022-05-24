@@ -28,23 +28,24 @@ type TxConstraints struct {
 	// tx type
 	TxType Variable
 	// different transactions
-	RegisterZnsTxInfo     RegisterZnsTxConstraints
-	CreatePairTxInfo      CreatePairTxConstraints
-	UpdatePairRateTxInfo  UpdatePairRateTxConstraints
-	DepositTxInfo         DepositTxConstraints
-	DepositNftTxInfo      DepositNftTxConstraints
-	TransferTxInfo        TransferTxConstraints
-	SwapTxInfo            SwapTxConstraints
-	AddLiquidityTxInfo    AddLiquidityTxConstraints
-	RemoveLiquidityTxInfo RemoveLiquidityTxConstraints
-	MintNftTxInfo         MintNftTxConstraints
-	TransferNftTxInfo     TransferNftTxConstraints
-	AtomicMatchTxInfo     AtomicMatchTxConstraints
-	CancelOfferTxInfo     CancelOfferTxConstraints
-	WithdrawTxInfo        WithdrawTxConstraints
-	WithdrawNftTxInfo     WithdrawNftTxConstraints
-	FullExitTxInfo        FullExitTxConstraints
-	FullExitNftTxInfo     FullExitNftTxConstraints
+	RegisterZnsTxInfo      RegisterZnsTxConstraints
+	CreatePairTxInfo       CreatePairTxConstraints
+	UpdatePairRateTxInfo   UpdatePairRateTxConstraints
+	DepositTxInfo          DepositTxConstraints
+	DepositNftTxInfo       DepositNftTxConstraints
+	TransferTxInfo         TransferTxConstraints
+	SwapTxInfo             SwapTxConstraints
+	AddLiquidityTxInfo     AddLiquidityTxConstraints
+	RemoveLiquidityTxInfo  RemoveLiquidityTxConstraints
+	CreateCollectionTxInfo CreateCollectionTxConstraints
+	MintNftTxInfo          MintNftTxConstraints
+	TransferNftTxInfo      TransferNftTxConstraints
+	AtomicMatchTxInfo      AtomicMatchTxConstraints
+	CancelOfferTxInfo      CancelOfferTxConstraints
+	WithdrawTxInfo         WithdrawTxConstraints
+	WithdrawNftTxInfo      WithdrawNftTxConstraints
+	FullExitTxInfo         FullExitTxConstraints
+	FullExitNftTxInfo      FullExitNftTxConstraints
 	// nonce
 	Nonce Variable
 	// expired at
@@ -124,38 +125,6 @@ func VerifyTransaction(
 	isFullExitTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeFullExit))
 	isFullExitNftTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeFullExitNft))
 
-	// get hash value from tx based on tx type
-	// transfer tx
-	hashVal := std.ComputeHashFromTransferTx(tx.TransferTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	// swap tx
-	hashValCheck := std.ComputeHashFromSwapTx(tx.SwapTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isSwapTx, hashValCheck, hashVal)
-	// add liquidity tx
-	hashValCheck = std.ComputeHashFromAddLiquidityTx(tx.AddLiquidityTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isAddLiquidityTx, hashValCheck, hashVal)
-	// remove liquidity tx
-	hashValCheck = std.ComputeHashFromRemoveLiquidityTx(tx.RemoveLiquidityTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isRemoveLiquidityTx, hashValCheck, hashVal)
-	// withdraw tx
-	hashValCheck = std.ComputeHashFromWithdrawTx(tx.WithdrawTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isWithdrawTx, hashValCheck, hashVal)
-	// mint nft tx
-	hashValCheck = std.ComputeHashFromMintNftTx(tx.MintNftTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isMintNftTx, hashValCheck, hashVal)
-	// transfer nft tx
-	hashValCheck = std.ComputeHashFromTransferNftTx(tx.TransferNftTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isTransferNftTx, hashValCheck, hashVal)
-	// set nft price tx
-	hashValCheck = std.ComputeHashFromAtomicMatchTx(tx.AtomicMatchTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isAtomicMatchTx, hashValCheck, hashVal)
-	// buy nft tx
-	hashValCheck = std.ComputeHashFromCancelOfferTx(tx.CancelOfferTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isCancelOfferTx, hashValCheck, hashVal)
-	// withdraw nft tx
-	hashValCheck = std.ComputeHashFromWithdrawNftTx(tx.WithdrawNftTxInfo, tx.AccountsInfoBefore[0].Nonce, hFunc)
-	hashVal = api.Select(isWithdrawNftTx, hashValCheck, hashVal)
-	hFunc.Reset()
-
 	// verify nonce
 	isLayer2Tx := api.Add(
 		isTransferTx,
@@ -170,6 +139,42 @@ func VerifyTransaction(
 		isCancelOfferTx,
 		isWithdrawNftTx,
 	)
+
+	// get hash value from tx based on tx type
+	// transfer tx
+	hashVal := std.ComputeHashFromTransferTx(api, tx.TransferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	// swap tx
+	hashValCheck := std.ComputeHashFromSwapTx(tx.SwapTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal = api.Select(isSwapTx, hashValCheck, hashVal)
+	// add liquidity tx
+	hashValCheck = std.ComputeHashFromAddLiquidityTx(tx.AddLiquidityTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal = api.Select(isAddLiquidityTx, hashValCheck, hashVal)
+	// remove liquidity tx
+	hashValCheck = std.ComputeHashFromRemoveLiquidityTx(tx.RemoveLiquidityTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal = api.Select(isRemoveLiquidityTx, hashValCheck, hashVal)
+	// withdraw tx
+	hashValCheck = std.ComputeHashFromWithdrawTx(tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal = api.Select(isWithdrawTx, hashValCheck, hashVal)
+	// createCollection tx
+	hashValCheck = std.ComputeHashFromCreateCollectionTx(tx.CreateCollectionTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal = api.Select(isCreateCollectionTx, hashValCheck, hashVal)
+	// mint nft tx
+	hashValCheck = std.ComputeHashFromMintNftTx(tx.MintNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal = api.Select(isMintNftTx, hashValCheck, hashVal)
+	// transfer nft tx
+	hashValCheck = std.ComputeHashFromTransferNftTx(tx.TransferNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal = api.Select(isTransferNftTx, hashValCheck, hashVal)
+	// set nft price tx
+	hashValCheck = std.ComputeHashFromAtomicMatchTx(tx.AtomicMatchTxInfo, tx.Nonce, hFunc)
+	hashVal = api.Select(isAtomicMatchTx, hashValCheck, hashVal)
+	// buy nft tx
+	hashValCheck = std.ComputeHashFromCancelOfferTx(tx.CancelOfferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal = api.Select(isCancelOfferTx, hashValCheck, hashVal)
+	// withdraw nft tx
+	hashValCheck = std.ComputeHashFromWithdrawNftTx(tx.WithdrawNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal = api.Select(isWithdrawNftTx, hashValCheck, hashVal)
+	hFunc.Reset()
+
 	std.IsVariableEqual(api, isLayer2Tx, api.Add(tx.AccountsInfoBefore[0].Nonce, 1), tx.Nonce)
 	// verify signature
 	err := std.VerifyEddsaSig(
@@ -195,6 +200,7 @@ func VerifyTransaction(
 	std.VerifySwapTx(api, isSwapTx, &tx.SwapTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore, &pubdataHashFunc)
 	std.VerifyAddLiquidityTx(api, isAddLiquidityTx, &tx.AddLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore, &pubdataHashFunc)
 	std.VerifyRemoveLiquidityTx(api, isRemoveLiquidityTx, &tx.RemoveLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore, &pubdataHashFunc)
+	std.VerifyCreateCollectionTx(api, isCreateCollectionTx, &tx.CreateCollectionTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
 	std.VerifyWithdrawTx(api, isWithdrawTx, &tx.WithdrawTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
 	std.VerifyMintNftTx(api, isMintNftTx, &tx.MintNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
 	std.VerifyTransferNftTx(api, isTransferNftTx, &tx.TransferNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
@@ -509,6 +515,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	witness.SwapTxInfo = std.EmptySwapTxWitness()
 	witness.AddLiquidityTxInfo = std.EmptyAddLiquidityTxWitness()
 	witness.RemoveLiquidityTxInfo = std.EmptyRemoveLiquidityTxWitness()
+	witness.CreateCollectionTxInfo = std.EmptyCreateCollectionTxWitness()
 	witness.MintNftTxInfo = std.EmptyMintNftTxWitness()
 	witness.TransferNftTxInfo = std.EmptyTransferNftTxWitness()
 	witness.AtomicMatchTxInfo = std.EmptyAtomicMatchTxWitness()
@@ -564,6 +571,12 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		break
 	case std.TxTypeWithdraw:
 		witness.WithdrawTxInfo = std.SetWithdrawTxWitness(oTx.WithdrawTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
+		break
+	case std.TxTypeCreateCollection:
+		witness.CreateCollectionTxInfo = std.SetCreateCollectionTxWitness(oTx.CreateCollectionTxInfo)
 		witness.Signature.R.X = oTx.Signature.R.X
 		witness.Signature.R.Y = oTx.Signature.R.Y
 		witness.Signature.S = oTx.Signature.S[:]

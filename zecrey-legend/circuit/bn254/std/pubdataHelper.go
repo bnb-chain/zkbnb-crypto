@@ -236,6 +236,26 @@ func CollectPubDataFromWithdraw(api API, flag Variable, txInfo WithdrawTxConstra
 	}
 }
 
+func CollectPubDataFromCreateCollection(api API, flag Variable, txInfo CreateCollectionTxConstraints, hFunc *MiMC) {
+	isTxVar := api.Sub(flag, 1)
+	isTx := api.Compiler().IsBoolean(isTxVar)
+	if isTx {
+		txTypeBits := api.ToBinary(TxTypeDeposit, TxTypeBitsSize)
+		accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
+		collectionIdBits := api.ToBinary(txInfo.CollectionId, AccountIndexBitsSize)
+		gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
+		gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
+		gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
+		ABits := append(accountIndexBits, txTypeBits...)
+		ABits = append(collectionIdBits, ABits...)
+		ABits = append(gasAccountIndexBits, ABits...)
+		ABits = append(gasFeeAssetIdBits, ABits...)
+		ABits = append(gasFeeAssetAmountBits, ABits...)
+		A := api.FromBinary(ABits...)
+		hFunc.Write(A)
+	}
+}
+
 func CollectPubDataFromMintNft(api API, flag Variable, txInfo MintNftTxConstraints, hFunc *MiMC) {
 	isTxVar := api.Sub(flag, 1)
 	isTx := api.Compiler().IsBoolean(isTxVar)
@@ -293,7 +313,6 @@ func CollectPubDataFromWithdrawNft(api API, flag Variable, txInfo WithdrawNftTxC
 		nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
 		nftL1AddressBits := api.ToBinary(txInfo.NftL1Address, AddressBitsSize)
 		toAddressBits := api.ToBinary(txInfo.ToAddress, AddressBitsSize)
-		proxyAddressBits := api.ToBinary(txInfo.ProxyAddress, AddressBitsSize)
 		gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
 		gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
 		gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
@@ -301,16 +320,14 @@ func CollectPubDataFromWithdrawNft(api API, flag Variable, txInfo WithdrawNftTxC
 		ABits = append(nftIndexBits, ABits...)
 		ABits = append(nftL1AddressBits, ABits...)
 		ABits = append(toAddressBits[144:], ABits...)
-		BBits := append(proxyAddressBits[48:], toAddressBits[:144]...)
-		CBits := append(gasAccountIndexBits, proxyAddressBits[:48]...)
-		CBits = append(gasFeeAssetIdBits, CBits...)
-		CBits = append(gasFeeAssetAmountBits, CBits...)
+		BBits := append(gasAccountIndexBits, toAddressBits[:144]...)
+		BBits = append(gasFeeAssetIdBits, BBits...)
+		BBits = append(gasFeeAssetAmountBits, BBits...)
 		A := api.FromBinary(ABits...)
 		B := api.FromBinary(BBits...)
-		C := api.FromBinary(CBits...)
-		D := txInfo.NftContentHash
-		E := txInfo.NftL1TokenId
-		hFunc.Write(A, B, C, D, E)
+		C := txInfo.NftContentHash
+		D := txInfo.NftL1TokenId
+		hFunc.Write(A, B, C, D)
 	}
 }
 
