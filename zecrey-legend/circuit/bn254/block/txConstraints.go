@@ -90,7 +90,7 @@ func (circuit TxConstraints) Define(api API) error {
 		return err
 	}
 
-	err = VerifyTransaction(api, circuit, hFunc, pubdataHashFunc, 0)
+	err = VerifyTransaction(api, circuit, hFunc, pubdataHashFunc, 1633400952228)
 	if err != nil {
 		return err
 	}

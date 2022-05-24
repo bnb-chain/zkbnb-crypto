@@ -291,16 +291,16 @@ func GetAssetDeltasAndLiquidityDeltaFromAddLiquidity(
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
-		// asset lp
-		{
-			BalanceDelta:             std.ZeroInt,
-			LpDelta:                  txInfo.LpAmount,
-			OfferCanceledOrFinalized: std.ZeroInt,
-		},
 		// asset gas
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
 			LpDelta:                  std.ZeroInt,
+			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		// asset lp
+		{
+			BalanceDelta:             std.ZeroInt,
+			LpDelta:                  txInfo.LpAmount,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
 	}
@@ -371,16 +371,16 @@ func GetAssetDeltasAndLiquidityDeltaFromRemoveLiquidity(
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
-		// asset lp
-		{
-			BalanceDelta:             std.ZeroInt,
-			LpDelta:                  txInfo.LpAmount,
-			OfferCanceledOrFinalized: std.ZeroInt,
-		},
 		// asset gas
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
 			LpDelta:                  std.ZeroInt,
+			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		// asset lp
+		{
+			BalanceDelta:             std.ZeroInt,
+			LpDelta:                  txInfo.LpAmount,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
 	}
