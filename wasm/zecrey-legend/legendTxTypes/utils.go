@@ -20,6 +20,7 @@ package legendTxTypes
 import (
 	"bytes"
 	"errors"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"log"
 	"math/big"
@@ -60,6 +61,10 @@ func PaddingStringToBytes32(name string) []byte {
 	buf := make([]byte, 32)
 	copy(buf, name)
 	return buf
+}
+
+func PaddingAddressToBytes32(addr string) []byte {
+	return new(big.Int).SetBytes(common.FromHex(addr)).FillBytes(make([]byte, 32))
 }
 
 /*
