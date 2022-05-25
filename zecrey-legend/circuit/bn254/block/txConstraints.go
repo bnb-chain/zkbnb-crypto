@@ -153,13 +153,13 @@ func VerifyTransaction(
 	hashValCheck = std.ComputeHashFromRemoveLiquidityTx(tx.RemoveLiquidityTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isRemoveLiquidityTx, hashValCheck, hashVal)
 	// withdraw tx
-	hashValCheck = std.ComputeHashFromWithdrawTx(api, tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = std.ComputeHashFromWithdrawTx(tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isWithdrawTx, hashValCheck, hashVal)
 	// createCollection tx
 	hashValCheck = std.ComputeHashFromCreateCollectionTx(tx.CreateCollectionTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isCreateCollectionTx, hashValCheck, hashVal)
 	// mint nft tx
-	hashValCheck = std.ComputeHashFromMintNftTx(tx.MintNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = std.ComputeHashFromMintNftTx(api, tx.MintNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isMintNftTx, hashValCheck, hashVal)
 	// transfer nft tx
 	hashValCheck = std.ComputeHashFromTransferNftTx(tx.TransferNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
@@ -248,6 +248,7 @@ func VerifyTransaction(
 		NftL1Address:        tx.NftBefore.NftL1Address,
 		NftL1TokenId:        tx.NftBefore.NftL1TokenId,
 		CreatorTreasuryRate: tx.NftBefore.CreatorTreasuryRate,
+		CollectionId:        tx.NftBefore.CollectionId,
 	}
 
 	// register

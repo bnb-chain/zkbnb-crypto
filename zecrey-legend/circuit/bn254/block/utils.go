@@ -68,6 +68,7 @@ func SelectNftDeltas(
 	deltaRes.NftL1Address = api.Select(flag, delta.NftL1Address, deltaCheck.NftL1Address)
 	deltaRes.NftL1TokenId = api.Select(flag, delta.NftL1TokenId, deltaCheck.NftL1TokenId)
 	deltaRes.CreatorTreasuryRate = api.Select(flag, delta.CreatorTreasuryRate, deltaCheck.CreatorTreasuryRate)
+	deltaRes.CollectionId = api.Select(flag, delta.CollectionId, deltaCheck.CollectionId)
 	return deltaRes
 }
 

@@ -20,6 +20,7 @@ package std
 type MintNftTx struct {
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
+	ToAccountNameHash   []byte
 	NftIndex            int64
 	NftContentHash      []byte
 	CreatorTreasuryRate int64
@@ -27,11 +28,13 @@ type MintNftTx struct {
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   int64
 	CollectionId        int64
+	ExpiredAt           int64
 }
 
 type MintNftTxConstraints struct {
 	CreatorAccountIndex Variable
 	ToAccountIndex      Variable
+	ToAccountNameHash   Variable
 	NftIndex            Variable
 	NftContentHash      Variable
 	CreatorTreasuryRate Variable
@@ -39,12 +42,14 @@ type MintNftTxConstraints struct {
 	GasFeeAssetId       Variable
 	GasFeeAssetAmount   Variable
 	CollectionId        Variable
+	ExpiredAt           Variable
 }
 
 func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 	return MintNftTxConstraints{
 		CreatorAccountIndex: ZeroInt,
 		ToAccountIndex:      ZeroInt,
+		ToAccountNameHash:   ZeroInt,
 		NftIndex:            ZeroInt,
 		NftContentHash:      ZeroInt,
 		CreatorTreasuryRate: ZeroInt,
@@ -52,6 +57,7 @@ func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 		GasFeeAssetId:       ZeroInt,
 		GasFeeAssetAmount:   ZeroInt,
 		CollectionId:        ZeroInt,
+		ExpiredAt:           ZeroInt,
 	}
 }
 
@@ -59,6 +65,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 	witness = MintNftTxConstraints{
 		CreatorAccountIndex: tx.CreatorAccountIndex,
 		ToAccountIndex:      tx.ToAccountIndex,
+		ToAccountNameHash:   tx.ToAccountNameHash,
 		NftIndex:            tx.NftIndex,
 		NftContentHash:      tx.NftContentHash,
 		CreatorTreasuryRate: tx.CreatorTreasuryRate,
@@ -66,15 +73,17 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 		GasFeeAssetId:       tx.GasFeeAssetId,
 		GasFeeAssetAmount:   tx.GasFeeAssetAmount,
 		CollectionId:        tx.CollectionId,
+		ExpiredAt:           tx.ExpiredAt,
 	}
 	return witness
 }
 
-func ComputeHashFromMintNftTx(tx MintNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.CreatorAccountIndex,
 		tx.ToAccountIndex,
+		tx.ToAccountNameHash,
 		tx.NftIndex,
 		tx.NftContentHash,
 		tx.GasAccountIndex,
@@ -101,11 +110,10 @@ func VerifyMintNftTx(
 	CheckEmptyNftNode(api, flag, nftBefore)
 	// account index
 	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
 	// gas asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)

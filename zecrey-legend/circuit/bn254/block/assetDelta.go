@@ -183,7 +183,8 @@ func GetNftDeltaFromDepositNft(
 		NftContentHash:      txInfo.NftContentHash,
 		NftL1Address:        txInfo.NftL1Address,
 		NftL1TokenId:        txInfo.NftL1TokenId,
-		CreatorTreasuryRate: txInfo.CreatorTreasuryRate,
+		CreatorTreasuryRate: std.ZeroInt,
+		CollectionId:        std.ZeroInt,
 	}
 	return nftDelta
 }
@@ -551,6 +552,7 @@ func GetAssetDeltasAndNftDeltaFromMintNft(
 		NftL1Address:        std.ZeroInt,
 		NftL1TokenId:        std.ZeroInt,
 		CreatorTreasuryRate: txInfo.CreatorTreasuryRate,
+		CollectionId:        txInfo.CollectionId,
 	}
 	return deltas, nftDelta
 }
@@ -597,6 +599,7 @@ func GetAssetDeltasAndNftDeltaFromTransferNft(
 		NftL1Address:        nftBefore.NftL1Address,
 		NftL1TokenId:        nftBefore.NftL1TokenId,
 		CreatorTreasuryRate: nftBefore.CreatorTreasuryRate,
+		CollectionId:        nftBefore.CollectionId,
 	}
 	return deltas, nftDelta
 }
@@ -708,6 +711,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		NftL1Address:        nftBefore.NftL1Address,
 		NftL1TokenId:        nftBefore.NftL1TokenId,
 		CreatorTreasuryRate: nftBefore.CreatorTreasuryRate,
+		CollectionId:        nftBefore.CollectionId,
 	}
 	return deltas, nftDelta
 }
@@ -804,6 +808,7 @@ func GetAssetDeltasAndNftDeltaFromWithdrawNft(
 		NftL1Address:        std.ZeroInt,
 		NftL1TokenId:        std.ZeroInt,
 		CreatorTreasuryRate: std.ZeroInt,
+		CollectionId:        std.ZeroInt,
 	}
 	return deltas, nftDelta
 }
@@ -842,6 +847,7 @@ func GetNftDeltaFromFullExitNft() (nftDelta NftDeltaConstraints) {
 		NftL1Address:        std.ZeroInt,
 		NftL1TokenId:        std.ZeroInt,
 		CreatorTreasuryRate: std.ZeroInt,
+		CollectionId:        std.ZeroInt,
 	}
 	return nftDelta
 }
