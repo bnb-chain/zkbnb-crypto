@@ -282,6 +282,9 @@ func VerifyTransaction(
 	// deposit nft
 	nftDeltaCheck := GetNftDeltaFromDepositNft(tx.DepositNftTxInfo)
 	nftDelta = SelectNftDeltas(api, isDepositNftTx, nftDeltaCheck, nftDelta)
+	// create collection
+	assetDeltasCheck = GetAssetDeltasFromCreateCollection(api, tx.CreateCollectionTxInfo)
+	assetDeltas = SelectAssetDeltas(api, isCreateCollectionTx, assetDeltasCheck, assetDeltas)
 	// mint nft
 	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromMintNft(api, tx.MintNftTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isMintNftTx, assetDeltasCheck, assetDeltas)
@@ -314,6 +317,7 @@ func VerifyTransaction(
 	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isRegisterZnsTx, accountDelta.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
 	// update nonce
 	AccountsInfoAfter[0].Nonce = api.Add(AccountsInfoAfter[0].Nonce, isLayer2Tx)
+	AccountsInfoAfter[0].CollectionNonce = api.Add(AccountsInfoAfter[0].CollectionNonce, isCreateCollectionTx)
 	// update liquidity
 	LiquidityAfter := UpdateLiquidity(api, tx.LiquidityBefore, liquidityDelta)
 	// update nft
