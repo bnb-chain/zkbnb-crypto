@@ -19,7 +19,6 @@ package std
 
 import (
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/circuit/bn254/std"
-	"math/big"
 )
 
 type AddLiquidityTx struct {
@@ -30,8 +29,6 @@ type AddLiquidityTx struct {
 	AssetBId          int64
 	AssetBAmount      int64
 	LpAmount          int64
-	PoolAAmount       *big.Int
-	PoolBAmount       *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
@@ -79,8 +76,6 @@ func SetAddLiquidityTxWitness(tx *AddLiquidityTx) (witness AddLiquidityTxConstra
 		AssetBId:          tx.AssetBId,
 		AssetBAmount:      tx.AssetBAmount,
 		LpAmount:          tx.LpAmount,
-		PoolAAmount:       tx.PoolAAmount,
-		PoolBAmount:       tx.PoolBAmount,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,

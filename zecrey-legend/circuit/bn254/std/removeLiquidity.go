@@ -17,11 +17,6 @@
 
 package std
 
-import (
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
-	"math/big"
-)
-
 type RemoveLiquidityTx struct {
 	FromAccountIndex  int64
 	PairIndex         int64
@@ -115,16 +110,17 @@ func VerifyRemoveLiquidityTx(
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, liquidityBefore.TreasuryAccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
 	// asset id
 	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[0].AssetsInfo[1].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[3].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetAId, liquidityBefore.AssetAId)
 	IsVariableEqual(api, flag, tx.AssetBId, liquidityBefore.AssetBId)
 	// should have enough lp
-	IsVariableLessOrEqual(api, flag, tx.LpAmount, accountsBefore[0].AssetsInfo[2].LpAmount)
+	IsVariableLessOrEqual(api, flag, tx.LpAmount, accountsBefore[0].AssetsInfo[3].LpAmount)
 	// enough balance
 	tx.AssetAMinAmount = UnpackAmount(api, tx.AssetAMinAmount)
 	tx.AssetAAmountDelta = UnpackAmount(api, tx.AssetAAmountDelta)
@@ -136,34 +132,8 @@ func VerifyRemoveLiquidityTx(
 	// TODO verify LP
 	sLp := ComputeSLp(api, flag, liquidityBefore.AssetA, liquidityBefore.AssetB, liquidityBefore.KLast, liquidityBefore.FeeRate, liquidityBefore.TreasuryRate)
 	poolLpVar := api.Sub(liquidityBefore.LpAmount, sLp)
-	assetA, _ := api.Compiler().ConstantValue(liquidityBefore.AssetA)
-	if assetA == nil {
-		assetA = big.NewInt(0)
-	}
-	assetB, _ := api.Compiler().ConstantValue(liquidityBefore.AssetB)
-	if assetB == nil {
-		assetB = big.NewInt(0)
-	}
-	lpAmount, _ := api.Compiler().ConstantValue(tx.LpAmount)
-	if lpAmount == nil {
-		lpAmount = big.NewInt(0)
-	}
-	poolLp, _ := api.Compiler().ConstantValue(poolLpVar)
-	if poolLp == nil {
-		poolLp = big.NewInt(0)
-	}
-	var (
-		assetADelta, assetBDelta *big.Int
-	)
-	if poolLp.Cmp(big.NewInt(0)) == 0 {
-		assetADelta = big.NewInt(0)
-		assetBDelta = big.NewInt(0)
-	} else {
-		assetADelta = ffmath.Div(ffmath.Multiply(lpAmount, assetA), poolLp)
-		assetBDelta = ffmath.Div(ffmath.Multiply(lpAmount, assetB), poolLp)
-	}
-	IsVariableEqual(api, flag, tx.AssetAAmountDelta, assetADelta)
-	IsVariableEqual(api, flag, tx.AssetBAmountDelta, assetBDelta)
+	IsVariableLessOrEqual(api, flag, api.Mul(tx.AssetAAmountDelta, poolLpVar), api.Mul(tx.LpAmount, liquidityBefore.AssetA))
+	IsVariableLessOrEqual(api, flag, api.Mul(tx.AssetBAmountDelta, poolLpVar), api.Mul(tx.LpAmount, liquidityBefore.AssetB))
 	IsVariableLessOrEqual(api, flag, tx.AssetAMinAmount, tx.AssetAAmountDelta)
 	IsVariableLessOrEqual(api, flag, tx.AssetBMinAmount, tx.AssetBAmountDelta)
 }

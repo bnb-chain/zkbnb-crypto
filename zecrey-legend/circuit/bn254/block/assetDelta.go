@@ -380,7 +380,7 @@ func GetAssetDeltasAndLiquidityDeltaFromRemoveLiquidity(
 		// asset lp
 		{
 			BalanceDelta:             std.ZeroInt,
-			LpDelta:                  txInfo.LpAmount,
+			LpDelta:                  api.Neg(txInfo.LpAmount),
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
 	}

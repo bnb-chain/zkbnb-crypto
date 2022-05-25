@@ -149,6 +149,11 @@ func ComputeRemoveLiquidityMsgHash(txInfo *RemoveLiquidityTxInfo, hFunc hash.Has
 		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
 		return nil, err
 	}
+	lpAmount, err := ToPackedAmount(txInfo.LpAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		return nil, err
+	}
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
 	if err != nil {
 		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
@@ -158,7 +163,7 @@ func ComputeRemoveLiquidityMsgHash(txInfo *RemoveLiquidityTxInfo, hFunc hash.Has
 	WriteInt64IntoBuf(&buf, txInfo.PairIndex)
 	WriteInt64IntoBuf(&buf, packedAAmount)
 	WriteInt64IntoBuf(&buf, packedBAmount)
-	WriteBigIntIntoBuf(&buf, txInfo.LpAmount)
+	WriteInt64IntoBuf(&buf, lpAmount)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteInt64IntoBuf(&buf, packedFee)
