@@ -17,23 +17,11 @@
 
 package std
 
-import "math/big"
+import (
+	"math/big"
+)
 
 type SwapTx struct {
-	/*
-		- from account index
-		- to account index
-		- pair index
-		- asset a id
-		- asset a amount
-		- asset b id
-		- asset b min amount
-		- fee rate
-		- treasury rate
-		- gas account index
-		- gas fee asset id
-		- gas fee asset amount
-	*/
 	FromAccountIndex  int64
 	PairIndex         int64
 	AssetAId          int64
@@ -43,7 +31,6 @@ type SwapTx struct {
 	AssetBAmountDelta int64
 	PoolAAmount       *big.Int
 	PoolBAmount       *big.Int
-	FeeRate           int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
@@ -126,13 +113,12 @@ func VerifySwapTx(
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
 	// pair index
 	IsVariableEqual(api, flag, tx.PairIndex, liquidityBefore.PairIndex)
 	// asset id
 	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[0].AssetsInfo[1].AssetId)
-	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[1].AssetsInfo[0].AssetId)
 	isSameAsset := api.IsZero(
 		api.And(
 			api.IsZero(api.Sub(tx.AssetAId, liquidityBefore.AssetAId)),
@@ -154,7 +140,7 @@ func VerifySwapTx(
 		1,
 	)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// should have enough assets
 	tx.AssetAAmount = UnpackAmount(api, tx.AssetAAmount)
 	tx.AssetBMinAmount = UnpackAmount(api, tx.AssetBMinAmount)
@@ -175,13 +161,13 @@ func VerifySwapTx(
 	assetAAmount := api.Select(isSameAsset, tx.AssetAAmount, tx.AssetBAmountDelta)
 	assetBAmount := api.Select(isSameAsset, tx.AssetBAmountDelta, tx.AssetAAmount)
 	// verify AMM
-	r := api.Mul(api.Mul(tx.PoolAAmount, tx.PoolBAmount), RateBase)
+	r := api.Mul(api.Mul(liquidityBefore.AssetA, liquidityBefore.AssetB), RateBase)
 	l := api.Mul(
 		api.Sub(
-			api.Mul(RateBase, api.Add(assetAAmount, tx.PoolAAmount)),
+			api.Mul(RateBase, api.Add(assetAAmount, liquidityBefore.AssetA)),
 			api.Mul(liquidityBefore.FeeRate, assetAAmount),
 		),
-		assetBAmount,
+		api.Add(assetBAmount, liquidityBefore.AssetB),
 	)
 	IsVariableLessOrEqual(api, flag, r, l)
 }

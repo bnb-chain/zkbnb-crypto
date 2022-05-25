@@ -221,7 +221,7 @@ func GetAssetDeltasAndLiquidityDeltaFromSwap(
 		},
 		// asset B
 		{
-			BalanceDelta:             txInfo.AssetAAmount,
+			BalanceDelta:             txInfo.AssetBAmountDelta,
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
