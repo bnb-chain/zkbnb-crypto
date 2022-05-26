@@ -165,7 +165,7 @@ func VerifyTransaction(
 	hashValCheck = std.ComputeHashFromTransferNftTx(tx.TransferNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isTransferNftTx, hashValCheck, hashVal)
 	// set nft price tx
-	hashValCheck = std.ComputeHashFromAtomicMatchTx(tx.AtomicMatchTxInfo, tx.Nonce, hFunc)
+	hashValCheck = std.ComputeHashFromAtomicMatchTx(tx.AtomicMatchTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isAtomicMatchTx, hashValCheck, hashVal)
 	// buy nft tx
 	hashValCheck = std.ComputeHashFromCancelOfferTx(tx.CancelOfferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)

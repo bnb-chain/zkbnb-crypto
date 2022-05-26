@@ -27,7 +27,7 @@ type AtomicMatchTx struct {
 	SellOffer         *OfferTx
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount string
+	GasFeeAssetAmount int64
 }
 
 type AtomicMatchTxConstraints struct {
@@ -61,6 +61,7 @@ func ComputeHashFromOfferTx(tx OfferTxConstraints, hFunc MiMC) (hashVal Variable
 		tx.AssetAmount,
 		tx.ListedAt,
 		tx.ExpiredAt,
+		tx.TreasuryRate,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal
@@ -78,7 +79,7 @@ func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraint
 	return witness
 }
 
-func ComputeHashFromAtomicMatchTx(tx AtomicMatchTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromAtomicMatchTx(tx AtomicMatchTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.AccountIndex,
@@ -107,6 +108,7 @@ func ComputeHashFromAtomicMatchTx(tx AtomicMatchTxConstraints, nonce Variable, h
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
+		expiredAt,
 		nonce,
 	)
 	hashVal = hFunc.Sum()
