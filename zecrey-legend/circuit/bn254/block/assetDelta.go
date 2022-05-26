@@ -137,6 +137,43 @@ func GetAssetDeltasFromDeposit(
 	return deltas
 }
 
+func GetAssetDeltasFromCreateCollection(
+	api API,
+	txInfo CreateCollectionTxConstraints,
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
+	// from account
+	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+		{
+			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
+			LpDelta:                  std.ZeroInt,
+			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+	}
+	// gas account
+	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+		{
+			BalanceDelta:             txInfo.GasFeeAssetAmount,
+			LpDelta:                  std.ZeroInt,
+			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+	}
+	for i := 2; i < NbAccountsPerTx; i++ {
+		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+			EmptyAccountAssetDeltaConstraints(),
+			EmptyAccountAssetDeltaConstraints(),
+			EmptyAccountAssetDeltaConstraints(),
+			EmptyAccountAssetDeltaConstraints(),
+		}
+	}
+	return deltas
+}
+
 func GetNftDeltaFromDepositNft(
 	txInfo DepositNftTxConstraints,
 ) (nftDelta NftDeltaConstraints) {
@@ -146,7 +183,8 @@ func GetNftDeltaFromDepositNft(
 		NftContentHash:      txInfo.NftContentHash,
 		NftL1Address:        txInfo.NftL1Address,
 		NftL1TokenId:        txInfo.NftL1TokenId,
-		CreatorTreasuryRate: txInfo.CreatorTreasuryRate,
+		CreatorTreasuryRate: std.ZeroInt,
+		CollectionId:        std.ZeroInt,
 	}
 	return nftDelta
 }
@@ -221,7 +259,7 @@ func GetAssetDeltasAndLiquidityDeltaFromSwap(
 		},
 		// asset B
 		{
-			BalanceDelta:             txInfo.AssetAAmount,
+			BalanceDelta:             txInfo.AssetBAmountDelta,
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
@@ -291,16 +329,16 @@ func GetAssetDeltasAndLiquidityDeltaFromAddLiquidity(
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
-		// asset lp
-		{
-			BalanceDelta:             std.ZeroInt,
-			LpDelta:                  txInfo.LpAmount,
-			OfferCanceledOrFinalized: std.ZeroInt,
-		},
 		// asset gas
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
 			LpDelta:                  std.ZeroInt,
+			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		// asset lp
+		{
+			BalanceDelta:             std.ZeroInt,
+			LpDelta:                  txInfo.LpAmount,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
 	}
@@ -371,16 +409,16 @@ func GetAssetDeltasAndLiquidityDeltaFromRemoveLiquidity(
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
-		// asset lp
-		{
-			BalanceDelta:             std.ZeroInt,
-			LpDelta:                  txInfo.LpAmount,
-			OfferCanceledOrFinalized: std.ZeroInt,
-		},
 		// asset gas
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
 			LpDelta:                  std.ZeroInt,
+			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		// asset lp
+		{
+			BalanceDelta:             std.ZeroInt,
+			LpDelta:                  api.Neg(txInfo.LpAmount),
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
 	}
@@ -514,6 +552,7 @@ func GetAssetDeltasAndNftDeltaFromMintNft(
 		NftL1Address:        std.ZeroInt,
 		NftL1TokenId:        std.ZeroInt,
 		CreatorTreasuryRate: txInfo.CreatorTreasuryRate,
+		CollectionId:        txInfo.CollectionId,
 	}
 	return deltas, nftDelta
 }
@@ -560,6 +599,7 @@ func GetAssetDeltasAndNftDeltaFromTransferNft(
 		NftL1Address:        nftBefore.NftL1Address,
 		NftL1TokenId:        nftBefore.NftL1TokenId,
 		CreatorTreasuryRate: nftBefore.CreatorTreasuryRate,
+		CollectionId:        nftBefore.CollectionId,
 	}
 	return deltas, nftDelta
 }
@@ -582,19 +622,12 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
+	// TODO
 	creatorAmountVar := api.Mul(txInfo.BuyOffer.AssetAmount, nftBefore.CreatorTreasuryRate)
 	treasuryAmountVar := api.Mul(txInfo.BuyOffer.AssetAmount, txInfo.BuyOffer.TreasuryRate)
-	creatorAmount, _ := api.Compiler().ConstantValue(creatorAmountVar)
-	if creatorAmount == nil {
-		creatorAmount = big.NewInt(0)
-	}
-	treasuryAmount, _ := api.Compiler().ConstantValue(treasuryAmountVar)
-	if treasuryAmount == nil {
-		treasuryAmount = big.NewInt(0)
-	}
-	creatorAmount = new(big.Int).Div(creatorAmount, big.NewInt(RateBase))
-	treasuryAmount = new(big.Int).Div(treasuryAmount, big.NewInt(RateBase))
-	sellerAmount := api.Sub(api.Sub(txInfo.BuyOffer.AssetAmount, creatorAmount), treasuryAmount)
+	creatorAmountVar = api.Div(creatorAmountVar, RateBase)
+	treasuryAmountVar = api.Div(treasuryAmountVar, RateBase)
+	sellerAmount := api.Sub(txInfo.BuyOffer.AssetAmount, api.Add(creatorAmountVar, treasuryAmountVar))
 	buyerDelta := api.Neg(txInfo.BuyOffer.AssetAmount)
 	sellerDelta := sellerAmount
 	// buyer
@@ -610,9 +643,13 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		{
 			BalanceDelta:             buyerDelta,
 			LpDelta:                  std.ZeroInt,
+			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		{
+			BalanceDelta:             std.ZeroInt,
+			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: buyOfferCanceledOrFinalized,
 		},
-		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
@@ -629,9 +666,13 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		{
 			BalanceDelta:             sellerDelta,
 			LpDelta:                  std.ZeroInt,
+			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		{
+			BalanceDelta:             std.ZeroInt,
+			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: sellOfferCanceledOrFinalized,
 		},
-		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
@@ -639,7 +680,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	deltas[3] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		// asset A
 		{
-			BalanceDelta:             creatorAmount,
+			BalanceDelta:             creatorAmountVar,
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
@@ -651,7 +692,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	deltas[4] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		// asset A
 		{
-			BalanceDelta:             treasuryAmount,
+			BalanceDelta:             treasuryAmountVar,
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
@@ -666,11 +707,12 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	}
 	nftDelta = NftDeltaConstraints{
 		CreatorAccountIndex: nftBefore.CreatorAccountIndex,
-		OwnerAccountIndex:   nftBefore.OwnerAccountIndex,
+		OwnerAccountIndex:   txInfo.BuyOffer.AccountIndex,
 		NftContentHash:      nftBefore.NftContentHash,
 		NftL1Address:        nftBefore.NftL1Address,
 		NftL1TokenId:        nftBefore.NftL1TokenId,
 		CreatorTreasuryRate: nftBefore.CreatorTreasuryRate,
+		CollectionId:        nftBefore.CollectionId,
 	}
 	return deltas, nftDelta
 }
@@ -767,6 +809,7 @@ func GetAssetDeltasAndNftDeltaFromWithdrawNft(
 		NftL1Address:        std.ZeroInt,
 		NftL1TokenId:        std.ZeroInt,
 		CreatorTreasuryRate: std.ZeroInt,
+		CollectionId:        std.ZeroInt,
 	}
 	return deltas, nftDelta
 }
@@ -805,6 +848,7 @@ func GetNftDeltaFromFullExitNft() (nftDelta NftDeltaConstraints) {
 		NftL1Address:        std.ZeroInt,
 		NftL1TokenId:        std.ZeroInt,
 		CreatorTreasuryRate: std.ZeroInt,
+		CollectionId:        std.ZeroInt,
 	}
 	return nftDelta
 }
