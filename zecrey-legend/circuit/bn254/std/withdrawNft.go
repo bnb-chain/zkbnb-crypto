@@ -88,9 +88,6 @@ func ComputeHashFromWithdrawNftTx(tx WithdrawNftTxConstraints, nonce Variable, e
 	hFunc.Reset()
 	hFunc.Write(
 		tx.AccountIndex,
-		tx.CreatorAccountIndex,
-		tx.CreatorAccountNameHash,
-		tx.CreatorTreasuryRate,
 		tx.NftIndex,
 		tx.ToAddress,
 		tx.GasAccountIndex,
