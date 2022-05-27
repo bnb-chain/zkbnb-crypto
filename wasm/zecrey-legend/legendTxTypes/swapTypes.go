@@ -34,8 +34,6 @@ type SwapSegmentFormat struct {
 	AssetBId          int64  `json:"asset_b_id"`
 	AssetBMinAmount   string `json:"asset_b_min_amount"`
 	AssetBAmountDelta string `json:"asset_b_amount_delta"`
-	PoolAAmount       string `json:"pool_a_amount"`
-	PoolBAmount       string `json:"pool_b_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
