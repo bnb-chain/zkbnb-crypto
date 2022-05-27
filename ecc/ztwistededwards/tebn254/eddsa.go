@@ -99,7 +99,6 @@ func GenerateKey(r io.Reader) (*PrivateKey, error) {
 
 	var pk = &PrivateKey{}
 	// make sure pk is not nil
-	pk.PublicKey = pub
 
 	_, err = pk.SetBytes(res[:])
 
