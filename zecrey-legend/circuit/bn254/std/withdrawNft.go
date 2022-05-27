@@ -107,6 +107,9 @@ func VerifyWithdrawNftTx(
 	// nft info
 	IsVariableEqual(api, flag, tx.NftIndex, nftBefore.NftIndex)
 	IsVariableEqual(api, flag, tx.AccountIndex, nftBefore.OwnerAccountIndex)
+	IsVariableEqual(api, flag, tx.NftContentHash, nftBefore.NftContentHash)
+	IsVariableEqual(api, flag, tx.NftL1TokenId, nftBefore.NftL1TokenId)
+	IsVariableEqual(api, flag, tx.NftL1Address, nftBefore.NftL1Address)
 	// have enough assets
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
