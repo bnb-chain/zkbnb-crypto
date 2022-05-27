@@ -76,8 +76,6 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 		AssetBId:          segmentFormat.AssetBId,
 		AssetBMinAmount:   assetBMinAmount,
 		AssetBAmountDelta: assetBAmountDelta,
-		PoolAAmount:       ZeroBigInt,
-		PoolBAmount:       ZeroBigInt,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -109,8 +107,6 @@ type SwapTxInfo struct {
 	AssetBId          int64
 	AssetBMinAmount   *big.Int
 	AssetBAmountDelta *big.Int
-	PoolAAmount       *big.Int
-	PoolBAmount       *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
