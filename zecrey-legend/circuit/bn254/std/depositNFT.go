@@ -64,13 +64,6 @@ func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) 
 	return witness
 }
 
-/*
-	VerifyDepositNftTx:
-	accounts order is:
-	- FromAccount
-		- Nft
-			- nft index
-*/
 func VerifyDepositNftTx(
 	api API,
 	flag Variable,

@@ -20,42 +20,54 @@ package std
 import "math/big"
 
 type FullExitNftTx struct {
-	AccountIndex    int64
-	AccountNameHash []byte
-	NftIndex        int64
-	NftContentHash  []byte
-	NftL1Address    string
-	NftL1TokenId    *big.Int
+	AccountIndex           int64
+	AccountNameHash        []byte
+	CreatorAccountIndex    int64
+	CreatorAccountNameHash []byte
+	CreatorTreasuryRate    int64
+	NftIndex               int64
+	NftContentHash         []byte
+	NftL1Address           string
+	NftL1TokenId           *big.Int
 }
 
 type FullExitNftTxConstraints struct {
-	AccountIndex    Variable
-	AccountNameHash Variable
-	NftIndex        Variable
-	NftContentHash  Variable
-	NftL1Address    Variable
-	NftL1TokenId    Variable
+	AccountIndex           Variable
+	AccountNameHash        Variable
+	CreatorAccountIndex    Variable
+	CreatorAccountNameHash Variable
+	CreatorTreasuryRate    Variable
+	NftIndex               Variable
+	NftContentHash         Variable
+	NftL1Address           Variable
+	NftL1TokenId           Variable
 }
 
 func EmptyFullExitNftTxWitness() (witness FullExitNftTxConstraints) {
 	return FullExitNftTxConstraints{
-		AccountIndex:    ZeroInt,
-		AccountNameHash: ZeroInt,
-		NftIndex:        ZeroInt,
-		NftContentHash:  ZeroInt,
-		NftL1Address:    ZeroInt,
-		NftL1TokenId:    ZeroInt,
+		AccountIndex:           ZeroInt,
+		AccountNameHash:        ZeroInt,
+		CreatorAccountIndex:    ZeroInt,
+		CreatorAccountNameHash: ZeroInt,
+		CreatorTreasuryRate:    ZeroInt,
+		NftIndex:               ZeroInt,
+		NftContentHash:         ZeroInt,
+		NftL1Address:           ZeroInt,
+		NftL1TokenId:           ZeroInt,
 	}
 }
 
 func SetFullExitNftTxWitness(tx *FullExitNftTx) (witness FullExitNftTxConstraints) {
 	witness = FullExitNftTxConstraints{
-		AccountIndex:    tx.AccountIndex,
-		AccountNameHash: tx.AccountNameHash,
-		NftIndex:        tx.NftIndex,
-		NftContentHash:  tx.NftContentHash,
-		NftL1Address:    tx.NftL1Address,
-		NftL1TokenId:    tx.NftL1TokenId,
+		AccountIndex:           tx.AccountIndex,
+		AccountNameHash:        tx.AccountNameHash,
+		CreatorAccountIndex:    tx.CreatorAccountIndex,
+		CreatorAccountNameHash: tx.CreatorAccountNameHash,
+		CreatorTreasuryRate:    tx.CreatorTreasuryRate,
+		NftIndex:               tx.NftIndex,
+		NftContentHash:         tx.NftContentHash,
+		NftL1Address:           tx.NftL1Address,
+		NftL1TokenId:           tx.NftL1TokenId,
 	}
 	return witness
 }
@@ -71,6 +83,10 @@ func VerifyFullExitNftTx(
 	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.NftIndex, nftBefore.NftIndex)
+	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, tx.CreatorAccountNameHash, accountsBefore[1].AccountNameHash)
+	IsVariableEqual(api, flag, tx.CreatorAccountIndex, nftBefore.CreatorAccountIndex)
+	IsVariableEqual(api, flag, tx.CreatorTreasuryRate, nftBefore.CreatorTreasuryRate)
 	isOwner := api.And(api.IsZero(api.Sub(tx.AccountIndex, nftBefore.OwnerAccountIndex)), flag)
 	IsVariableEqual(api, isOwner, tx.NftContentHash, nftBefore.NftContentHash)
 	IsVariableEqual(api, isOwner, tx.NftL1Address, nftBefore.NftL1Address)

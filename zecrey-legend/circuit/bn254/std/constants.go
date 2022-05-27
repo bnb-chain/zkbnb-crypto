@@ -39,6 +39,8 @@ const (
 
 	NbAccountAssetsPerAccount = 4
 	NbAccountsPerTx           = 5
+
+	OfferSizePerAsset = 128
 )
 
 const (

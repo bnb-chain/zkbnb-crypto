@@ -34,8 +34,6 @@ type SwapSegmentFormat struct {
 	AssetBId          int64  `json:"asset_b_id"`
 	AssetBMinAmount   string `json:"asset_b_min_amount"`
 	AssetBAmountDelta string `json:"asset_b_amount_delta"`
-	PoolAAmount       string `json:"pool_a_amount"`
-	PoolBAmount       string `json:"pool_b_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -78,8 +76,6 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 		AssetBId:          segmentFormat.AssetBId,
 		AssetBMinAmount:   assetBMinAmount,
 		AssetBAmountDelta: assetBAmountDelta,
-		PoolAAmount:       ZeroBigInt,
-		PoolBAmount:       ZeroBigInt,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -111,8 +107,6 @@ type SwapTxInfo struct {
 	AssetBId          int64
 	AssetBMinAmount   *big.Int
 	AssetBAmountDelta *big.Int
-	PoolAAmount       *big.Int
-	PoolBAmount       *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
