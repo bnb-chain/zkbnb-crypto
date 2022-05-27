@@ -17,10 +17,6 @@
 
 package std
 
-import (
-	"math/big"
-)
-
 type SwapTx struct {
 	FromAccountIndex  int64
 	PairIndex         int64
@@ -29,8 +25,6 @@ type SwapTx struct {
 	AssetBId          int64
 	AssetBMinAmount   int64
 	AssetBAmountDelta int64
-	PoolAAmount       *big.Int
-	PoolBAmount       *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
@@ -44,8 +38,6 @@ type SwapTxConstraints struct {
 	AssetBId          Variable
 	AssetBMinAmount   Variable
 	AssetBAmountDelta Variable
-	PoolAAmount       Variable
-	PoolBAmount       Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
@@ -60,8 +52,6 @@ func EmptySwapTxWitness() (witness SwapTxConstraints) {
 		AssetBId:          ZeroInt,
 		AssetBMinAmount:   ZeroInt,
 		AssetBAmountDelta: ZeroInt,
-		PoolAAmount:       ZeroInt,
-		PoolBAmount:       ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
@@ -77,8 +67,6 @@ func SetSwapTxWitness(tx *SwapTx) (witness SwapTxConstraints) {
 		AssetBId:          tx.AssetBId,
 		AssetBMinAmount:   tx.AssetBMinAmount,
 		AssetBAmountDelta: tx.AssetBAmountDelta,
-		PoolAAmount:       tx.PoolAAmount,
-		PoolBAmount:       tx.PoolBAmount,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
@@ -152,10 +140,6 @@ func VerifySwapTx(
 	// pool info
 	isSameAsset = api.And(flag, isSameAsset)
 	isDifferentAsset = api.And(flag, isSameAsset)
-	IsVariableLessOrEqual(api, isSameAsset, tx.PoolAAmount, liquidityBefore.AssetA)
-	IsVariableLessOrEqual(api, isSameAsset, tx.PoolBAmount, liquidityBefore.AssetB)
-	IsVariableLessOrEqual(api, isDifferentAsset, tx.PoolAAmount, liquidityBefore.AssetB)
-	IsVariableLessOrEqual(api, isDifferentAsset, tx.PoolBAmount, liquidityBefore.AssetA)
 	IsVariableEqual(api, flag, liquidityBefore.FeeRate, liquidityBefore.FeeRate)
 	IsVariableLessOrEqual(api, flag, liquidityBefore.FeeRate, RateBase)
 	assetAAmount := api.Select(isSameAsset, tx.AssetAAmount, tx.AssetBAmountDelta)
