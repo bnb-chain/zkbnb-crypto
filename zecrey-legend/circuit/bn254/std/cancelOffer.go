@@ -17,14 +17,12 @@
 
 package std
 
-import "math/big"
-
 type CancelOfferTx struct {
 	AccountIndex      int64
 	OfferId           int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount *big.Int
+	GasFeeAssetAmount int64
 }
 
 type CancelOfferTxConstraints struct {
@@ -81,13 +79,11 @@ func VerifyCancelOfferTx(
 	// verify params
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
-	offerId, _ := api.Compiler().ConstantValue(tx.OfferId)
-	if offerId == nil {
-		offerId = big.NewInt(0)
-	}
-	assetId := new(big.Int).Div(offerId, big.NewInt(128))
-	IsVariableEqual(api, flag, assetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	offerIdBits := api.ToBinary(tx.OfferId, 24)
+	assetId := api.FromBinary(offerIdBits[7:]...)
+	IsVariableEqual(api, flag, assetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	// should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)

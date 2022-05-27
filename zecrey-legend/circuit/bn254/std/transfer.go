@@ -18,19 +18,9 @@
 package std
 
 type TransferTx struct {
-	/*
-		- from account index
-		- to account index
-		- to account name
-		- asset id
-		- asset amount
-		- gas account index
-		- gas fee asset id
-		- gas fee asset amount
-		- call data hash
-	*/
 	FromAccountIndex  int64
 	ToAccountIndex    int64
+	ToAccountNameHash []byte
 	AssetId           int64
 	AssetAmount       int64
 	GasAccountIndex   int64
@@ -42,6 +32,7 @@ type TransferTx struct {
 type TransferTxConstraints struct {
 	FromAccountIndex  Variable
 	ToAccountIndex    Variable
+	ToAccountNameHash Variable
 	AssetId           Variable
 	AssetAmount       Variable
 	GasAccountIndex   Variable
@@ -54,6 +45,7 @@ func EmptyTransferTxWitness() (witness TransferTxConstraints) {
 	return TransferTxConstraints{
 		FromAccountIndex:  ZeroInt,
 		ToAccountIndex:    ZeroInt,
+		ToAccountNameHash: ZeroInt,
 		AssetId:           ZeroInt,
 		AssetAmount:       ZeroInt,
 		GasAccountIndex:   ZeroInt,
@@ -67,6 +59,7 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints) {
 	witness = TransferTxConstraints{
 		FromAccountIndex:  tx.FromAccountIndex,
 		ToAccountIndex:    tx.ToAccountIndex,
+		ToAccountNameHash: tx.ToAccountNameHash,
 		AssetId:           tx.AssetId,
 		AssetAmount:       tx.AssetAmount,
 		GasAccountIndex:   tx.GasAccountIndex,
@@ -82,6 +75,7 @@ func ComputeHashFromTransferTx(tx TransferTxConstraints, nonce Variable, expired
 	hFunc.Write(
 		tx.FromAccountIndex,
 		tx.ToAccountIndex,
+		tx.ToAccountNameHash,
 		tx.AssetId,
 		tx.AssetAmount,
 		tx.GasAccountIndex,
@@ -107,11 +101,15 @@ func VerifyTransferTx(
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
+	// account name hash
+	IsVariableEqual(api, flag, tx.ToAccountNameHash, accountsBefore[1].AccountNameHash)
 	// asset id
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// gas asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[1].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 	// should have enough balance
 	tx.AssetAmount = UnpackAmount(api, tx.AssetAmount)
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)

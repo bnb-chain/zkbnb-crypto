@@ -90,7 +90,7 @@ func (circuit TxConstraints) Define(api API) error {
 		return err
 	}
 
-	err = VerifyTransaction(api, circuit, hFunc, pubdataHashFunc, 0)
+	err = VerifyTransaction(api, circuit, hFunc, pubdataHashFunc, 1633400952228)
 	if err != nil {
 		return err
 	}
@@ -153,19 +153,19 @@ func VerifyTransaction(
 	hashValCheck = std.ComputeHashFromRemoveLiquidityTx(tx.RemoveLiquidityTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isRemoveLiquidityTx, hashValCheck, hashVal)
 	// withdraw tx
-	hashValCheck = std.ComputeHashFromWithdrawTx(api, tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = std.ComputeHashFromWithdrawTx(tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isWithdrawTx, hashValCheck, hashVal)
 	// createCollection tx
 	hashValCheck = std.ComputeHashFromCreateCollectionTx(tx.CreateCollectionTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isCreateCollectionTx, hashValCheck, hashVal)
 	// mint nft tx
-	hashValCheck = std.ComputeHashFromMintNftTx(tx.MintNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = std.ComputeHashFromMintNftTx(api, tx.MintNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isMintNftTx, hashValCheck, hashVal)
 	// transfer nft tx
 	hashValCheck = std.ComputeHashFromTransferNftTx(tx.TransferNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isTransferNftTx, hashValCheck, hashVal)
 	// set nft price tx
-	hashValCheck = std.ComputeHashFromAtomicMatchTx(tx.AtomicMatchTxInfo, tx.Nonce, hFunc)
+	hashValCheck = std.ComputeHashFromAtomicMatchTx(tx.AtomicMatchTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isAtomicMatchTx, hashValCheck, hashVal)
 	// buy nft tx
 	hashValCheck = std.ComputeHashFromCancelOfferTx(tx.CancelOfferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
@@ -248,6 +248,7 @@ func VerifyTransaction(
 		NftL1Address:        tx.NftBefore.NftL1Address,
 		NftL1TokenId:        tx.NftBefore.NftL1TokenId,
 		CreatorTreasuryRate: tx.NftBefore.CreatorTreasuryRate,
+		CollectionId:        tx.NftBefore.CollectionId,
 	}
 
 	// register
@@ -282,6 +283,9 @@ func VerifyTransaction(
 	// deposit nft
 	nftDeltaCheck := GetNftDeltaFromDepositNft(tx.DepositNftTxInfo)
 	nftDelta = SelectNftDeltas(api, isDepositNftTx, nftDeltaCheck, nftDelta)
+	// create collection
+	assetDeltasCheck = GetAssetDeltasFromCreateCollection(api, tx.CreateCollectionTxInfo)
+	assetDeltas = SelectAssetDeltas(api, isCreateCollectionTx, assetDeltasCheck, assetDeltas)
 	// mint nft
 	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromMintNft(api, tx.MintNftTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isMintNftTx, assetDeltasCheck, assetDeltas)
@@ -291,11 +295,11 @@ func VerifyTransaction(
 	assetDeltas = SelectAssetDeltas(api, isTransferNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isTransferNftTx, nftDeltaCheck, nftDelta)
 	// set nft price
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromAtomicMatch(api, tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
+	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromAtomicMatch(api, isAtomicMatchTx, tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	assetDeltas = SelectAssetDeltas(api, isAtomicMatchTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isAtomicMatchTx, nftDeltaCheck, nftDelta)
 	// buy nft
-	assetDeltasCheck = GetAssetDeltasFromCancelOffer(api, tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
+	assetDeltasCheck = GetAssetDeltasFromCancelOffer(api, isCancelOfferTx, tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
 	assetDeltas = SelectAssetDeltas(api, isCancelOfferTx, assetDeltasCheck, assetDeltas)
 	// withdraw nft
 	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromWithdrawNft(api, tx.WithdrawNftTxInfo)
@@ -314,6 +318,7 @@ func VerifyTransaction(
 	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isRegisterZnsTx, accountDelta.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
 	// update nonce
 	AccountsInfoAfter[0].Nonce = api.Add(AccountsInfoAfter[0].Nonce, isLayer2Tx)
+	AccountsInfoAfter[0].CollectionNonce = api.Add(AccountsInfoAfter[0].CollectionNonce, isCreateCollectionTx)
 	// update liquidity
 	LiquidityAfter := UpdateLiquidity(api, tx.LiquidityBefore, liquidityDelta)
 	// update nft
@@ -600,7 +605,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeCancelOffer:
-		witness.CancelOfferTxInfo = std.SetCancelOfferTxWitness(oTx.CancelTxInfo)
+		witness.CancelOfferTxInfo = std.SetCancelOfferTxWitness(oTx.CancelOfferTxInfo)
 		witness.Signature.R.X = oTx.Signature.R.X
 		witness.Signature.R.Y = oTx.Signature.R.Y
 		witness.Signature.S = oTx.Signature.S[:]

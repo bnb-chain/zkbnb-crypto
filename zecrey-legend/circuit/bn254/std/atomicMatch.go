@@ -17,17 +17,13 @@
 
 package std
 
-import (
-	"math/big"
-)
-
 type AtomicMatchTx struct {
 	AccountIndex      int64
 	BuyOffer          *OfferTx
 	SellOffer         *OfferTx
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount string
+	GasFeeAssetAmount int64
 }
 
 type AtomicMatchTxConstraints struct {
@@ -61,6 +57,7 @@ func ComputeHashFromOfferTx(tx OfferTxConstraints, hFunc MiMC) (hashVal Variable
 		tx.AssetAmount,
 		tx.ListedAt,
 		tx.ExpiredAt,
+		tx.TreasuryRate,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal
@@ -78,7 +75,7 @@ func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraint
 	return witness
 }
 
-func ComputeHashFromAtomicMatchTx(tx AtomicMatchTxConstraints, nonce Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromAtomicMatchTx(tx AtomicMatchTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.AccountIndex,
@@ -107,6 +104,7 @@ func ComputeHashFromAtomicMatchTx(tx AtomicMatchTxConstraints, nonce Variable, h
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
+		expiredAt,
 		nonce,
 	)
 	hashVal = hFunc.Sum()
@@ -132,6 +130,7 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[2].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[3].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[4].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[4].AssetsInfo[1].AssetId)
 	IsVariableLessOrEqual(api, flag, blockCreatedAt, tx.BuyOffer.ExpiredAt)
 	IsVariableLessOrEqual(api, flag, blockCreatedAt, tx.SellOffer.ExpiredAt)
@@ -164,25 +163,31 @@ func VerifyAtomicMatchTx(
 	// gas
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[4].AccountIndex)
 	// verify buy offer id
-	buyOfferId, _ := api.Compiler().ConstantValue(tx.BuyOffer.OfferId)
-	if buyOfferId == nil {
-		buyOfferId = big.NewInt(0)
+	buyOfferIdBits := api.ToBinary(tx.BuyOffer.OfferId, 24)
+	buyAssetId := api.FromBinary(buyOfferIdBits[7:]...)
+	buyOfferIndex := api.Sub(tx.BuyOffer.OfferId, api.Mul(buyAssetId, OfferSizePerAsset))
+	buyOfferIndexBits := api.ToBinary(accountsBefore[1].AssetsInfo[1].OfferCanceledOrFinalized, OfferSizePerAsset)
+	for i := 0; i < OfferSizePerAsset; i++ {
+		isZero := api.IsZero(api.Sub(buyOfferIndex, i))
+		isCheckVar := api.And(isZero, flag)
+		isCheck := api.Compiler().IsBoolean(isCheckVar)
+		if isCheck {
+			IsVariableEqual(api, 1, buyOfferIndexBits[i], 0)
+		}
 	}
-	buyAssetId := new(big.Int).Div(buyOfferId, big.NewInt(128))
-	IsVariableEqual(api, flag, buyAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
-	buyOfferIndex := new(big.Int).Sub(buyOfferId, buyAssetId)
-	buyOfferIndexBits := api.ToBinary(accountsBefore[1].AssetsInfo[0].OfferCanceledOrFinalized, 128)
-	IsVariableEqual(api, flag, buyOfferIndexBits[buyOfferIndex.Int64()], 0)
 	// verify sell offer id
-	sellOfferId, _ := api.Compiler().ConstantValue(tx.SellOffer.OfferId)
-	if sellOfferId == nil {
-		sellOfferId = big.NewInt(0)
+	sellOfferIdBits := api.ToBinary(tx.SellOffer.OfferId, 24)
+	sellAssetId := api.FromBinary(sellOfferIdBits[7:]...)
+	sellOfferIndex := api.Sub(tx.SellOffer.OfferId, api.Mul(sellAssetId, OfferSizePerAsset))
+	sellOfferIndexBits := api.ToBinary(accountsBefore[2].AssetsInfo[1].OfferCanceledOrFinalized, OfferSizePerAsset)
+	for i := 0; i < OfferSizePerAsset; i++ {
+		isZero := api.IsZero(api.Sub(sellOfferIndex, i))
+		isCheckVar := api.And(isZero, flag)
+		isCheck := api.Compiler().IsBoolean(isCheckVar)
+		if isCheck {
+			IsVariableEqual(api, 1, sellOfferIndexBits[i], 0)
+		}
 	}
-	sellAssetId := new(big.Int).Div(sellOfferId, big.NewInt(128))
-	IsVariableEqual(api, flag, sellAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
-	sellOfferIndex := new(big.Int).Sub(sellOfferId, sellAssetId)
-	sellOfferIndexBits := api.ToBinary(accountsBefore[2].AssetsInfo[0].OfferCanceledOrFinalized, 128)
-	IsVariableEqual(api, flag, sellOfferIndexBits[sellOfferIndex.Int64()], 0)
 	// buyer should have enough balance
 	tx.BuyOffer.AssetAmount = UnpackAmount(api, tx.BuyOffer.AssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.BuyOffer.AssetAmount, accountsBefore[1].AssetsInfo[0].Balance)

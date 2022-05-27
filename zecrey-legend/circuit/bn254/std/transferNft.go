@@ -20,6 +20,7 @@ package std
 type TransferNftTx struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
+	ToAccountNameHash []byte
 	NftIndex          int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
@@ -30,6 +31,7 @@ type TransferNftTx struct {
 type TransferNftTxConstraints struct {
 	FromAccountIndex  Variable
 	ToAccountIndex    Variable
+	ToAccountNameHash Variable
 	NftIndex          Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
@@ -41,6 +43,7 @@ func EmptyTransferNftTxWitness() (witness TransferNftTxConstraints) {
 	return TransferNftTxConstraints{
 		FromAccountIndex:  ZeroInt,
 		ToAccountIndex:    ZeroInt,
+		ToAccountNameHash: ZeroInt,
 		NftIndex:          ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
@@ -53,6 +56,7 @@ func SetTransferNftTxWitness(tx *TransferNftTx) (witness TransferNftTxConstraint
 	witness = TransferNftTxConstraints{
 		FromAccountIndex:  tx.FromAccountIndex,
 		ToAccountIndex:    tx.ToAccountIndex,
+		ToAccountNameHash: tx.ToAccountNameHash,
 		NftIndex:          tx.NftIndex,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
@@ -67,6 +71,7 @@ func ComputeHashFromTransferNftTx(tx TransferNftTxConstraints, nonce Variable, e
 	hFunc.Write(
 		tx.FromAccountIndex,
 		tx.ToAccountIndex,
+		tx.ToAccountNameHash,
 		tx.NftIndex,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,

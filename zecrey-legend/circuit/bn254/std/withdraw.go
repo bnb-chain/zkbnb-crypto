@@ -64,7 +64,7 @@ func SetWithdrawTxWitness(tx *WithdrawTx) (witness WithdrawTxConstraints) {
 	return witness
 }
 
-func ComputeHashFromWithdrawTx(api API, tx WithdrawTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
 		tx.FromAccountIndex,

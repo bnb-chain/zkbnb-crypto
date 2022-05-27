@@ -35,8 +35,6 @@ type AddLiquiditySegmentFormat struct {
 	AssetBId          int64  `json:"asset_b_id"`
 	AssetBAmount      string `json:"asset_b_amount"`
 	LpAmount          string `json:"lp_amount"`
-	PoolAAmount       string `json:"pool_a_amount"`
-	PoolBAmount       string `json:"pool_b_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -77,8 +75,6 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 		AssetBId:          segmentFormat.AssetBId,
 		AssetBAmount:      assetBAmount,
 		LpAmount:          lpAmount,
-		PoolAAmount:       ZeroBigInt,
-		PoolBAmount:       ZeroBigInt,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -113,8 +109,6 @@ type AddLiquidityTxInfo struct {
 	AssetBId          int64
 	AssetBAmount      *big.Int
 	LpAmount          *big.Int
-	PoolAAmount       *big.Int
-	PoolBAmount       *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
