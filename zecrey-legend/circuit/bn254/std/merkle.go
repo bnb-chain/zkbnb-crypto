@@ -31,7 +31,7 @@ func VerifyMerkleProof(api API, isEnabled Variable, h MiMC, merkleRoot Variable,
 		node = nodeSum(h, d1, d2)
 	}
 	// Compare our calculated Merkle root to the desired Merkle root.
-	IsVariableEqual(api, isEnabled, node, merkleRoot)
+	IsVariableEqual(api, isEnabled, merkleRoot, node)
 }
 
 func UpdateMerkleProof(api API, h MiMC, node Variable, proofSet, helper []Variable) (root Variable) {

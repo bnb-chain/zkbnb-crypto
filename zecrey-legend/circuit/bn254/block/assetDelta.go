@@ -723,25 +723,27 @@ func GetAssetDeltasFromCancelOffer(
 	accountsBefore [NbAccountsPerTx]std.AccountConstraints,
 ) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
 	// from account
-	fromOfferId, _ := api.Compiler().ConstantValue(txInfo.OfferId)
-	if fromOfferId == nil {
-		fromOfferId = big.NewInt(0)
+	offerIdBits := api.ToBinary(txInfo.OfferId, 32)
+	assetId := api.FromBinary(offerIdBits[7:]...)
+	offerIndex := api.Sub(txInfo.OfferId, api.Mul(assetId, OfferSizePerAsset))
+	fromOfferBits := api.ToBinary(accountsBefore[0].AssetsInfo[1].OfferCanceledOrFinalized)
+	// TODO need to optimize here
+	for i := 0; i < OfferSizePerAsset; i++ {
+		isZero := api.IsZero(api.Sub(offerIndex, i))
+		fromOfferBits[i] = api.Select(isZero, 1, fromOfferBits[i])
 	}
-	fromOfferIndex := new(big.Int).Div(fromOfferId, big.NewInt(OfferSizePerAsset))
-	fromOfferBits := api.ToBinary(accountsBefore[0].AssetsInfo[0].OfferCanceledOrFinalized)
-	fromOfferBits[fromOfferIndex.Int64()] = 1
 	fromOfferCanceledOrFinalized := api.FromBinary(fromOfferBits...)
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             std.ZeroInt,
-			LpDelta:                  std.ZeroInt,
-			OfferCanceledOrFinalized: fromOfferCanceledOrFinalized,
-		},
 		// asset Gas
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
 			LpDelta:                  std.ZeroInt,
 			OfferCanceledOrFinalized: std.ZeroInt,
+		},
+		{
+			BalanceDelta:             std.ZeroInt,
+			LpDelta:                  std.ZeroInt,
+			OfferCanceledOrFinalized: fromOfferCanceledOrFinalized,
 		},
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),

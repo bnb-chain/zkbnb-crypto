@@ -68,7 +68,10 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash := ComputeOfferMsgHash(txInfo, hFunc)
+	msgHash, err := ComputeOfferMsgHash(txInfo, hFunc)
+	if err != nil {
+		return nil, err
+	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
@@ -93,19 +96,24 @@ type OfferTxInfo struct {
 	Sig          []byte
 }
 
-func ComputeOfferMsgHash(txInfo *OfferTxInfo, hFunc hash.Hash) (msgHash []byte) {
+func ComputeOfferMsgHash(txInfo *OfferTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
+	packedAmount, err := ToPackedAmount(txInfo.AssetAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		return nil, err
+	}
 	WriteInt64IntoBuf(&buf, txInfo.Type)
 	WriteInt64IntoBuf(&buf, txInfo.OfferId)
 	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
 	WriteInt64IntoBuf(&buf, txInfo.AssetId)
-	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)
+	WriteInt64IntoBuf(&buf, packedAmount)
 	WriteInt64IntoBuf(&buf, txInfo.ListedAt)
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.TreasuryRate)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
-	return msgHash
+	return msgHash, nil
 }

@@ -21,6 +21,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/ethereum/go-ethereum/common"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"hash"
 	"log"
 	"math/big"
@@ -29,9 +32,8 @@ import (
 type TransferNftSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
 	ToAccountIndex    int64  `json:"to_account_index"`
-	ToAccountName     string `json:"to_account_name"`
+	ToAccountNameHash string `json:"to_account_name"`
 	NftIndex          int64  `json:"nft_index"`
-	NftContentHash    string `json:"nft_content_hash"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -58,9 +60,8 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 	txInfo = &TransferNftTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
-		ToAccountName:     segmentFormat.ToAccountName,
+		ToAccountNameHash: segmentFormat.ToAccountNameHash,
 		NftIndex:          segmentFormat.NftIndex,
-		NftContentHash:    segmentFormat.NftContentHash,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -93,9 +94,8 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 type TransferNftTxInfo struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
-	ToAccountName     string
+	ToAccountNameHash string
 	NftIndex          int64
-	NftContentHash    string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
@@ -116,11 +116,12 @@ func ComputeTransferNftMsgHash(txInfo *TransferNftTxInfo, hFunc hash.Hash) (msgH
 	}
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
+	buf.Write(ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus).FillBytes(make([]byte, 32)))
 	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteInt64IntoBuf(&buf, packedFee)
-	buf.Write(txInfo.CallDataHash)
+	buf.Write(ffmath.Mod(new(big.Int).SetBytes(txInfo.CallDataHash), curve.Modulus).FillBytes(make([]byte, 32)))
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())

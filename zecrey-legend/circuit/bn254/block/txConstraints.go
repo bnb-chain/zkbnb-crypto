@@ -605,7 +605,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case std.TxTypeCancelOffer:
-		witness.CancelOfferTxInfo = std.SetCancelOfferTxWitness(oTx.CancelTxInfo)
+		witness.CancelOfferTxInfo = std.SetCancelOfferTxWitness(oTx.CancelOfferTxInfo)
 		witness.Signature.R.X = oTx.Signature.R.X
 		witness.Signature.R.Y = oTx.Signature.R.Y
 		witness.Signature.S = oTx.Signature.S[:]

@@ -35,6 +35,7 @@ type AtomicMatchSegmentFormat struct {
 	GasFeeAssetId     int64
 	GasFeeAssetAmount string
 	Nonce             int64
+	ExpiredAt         int64
 }
 
 /*
@@ -73,6 +74,7 @@ func ConstructAtomicMatchTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Atom
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
 		Nonce:             segmentFormat.Nonce,
+		ExpiredAt:         segmentFormat.ExpiredAt,
 		Sig:               nil,
 	}
 	// compute call data hash
@@ -102,6 +104,7 @@ type AtomicMatchTxInfo struct {
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
 	Nonce             int64
+	ExpiredAt         int64
 	Sig               []byte
 }
 
@@ -162,6 +165,7 @@ func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgH
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteInt64IntoBuf(&buf, packedFee)
+	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
