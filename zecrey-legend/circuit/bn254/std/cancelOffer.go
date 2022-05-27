@@ -24,7 +24,7 @@ type CancelOfferTx struct {
 	OfferId           int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
-	GasFeeAssetAmount *big.Int
+	GasFeeAssetAmount int64
 }
 
 type CancelOfferTxConstraints struct {
@@ -87,7 +87,7 @@ func VerifyCancelOfferTx(
 		offerId = big.NewInt(0)
 	}
 	assetId := new(big.Int).Div(offerId, big.NewInt(128))
-	IsVariableEqual(api, flag, assetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, assetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	// should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)

@@ -21,6 +21,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/ethereum/go-ethereum/common"
+	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"hash"
 	"log"
 	"math/big"
@@ -29,7 +32,7 @@ import (
 type TransferSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
 	ToAccountIndex    int64  `json:"to_account_index"`
-	ToAccountName     string `json:"to_account_name"`
+	ToAccountNameHash string `json:"to_account_name"`
 	AssetId           int64  `json:"asset_id"`
 	AssetAmount       string `json:"asset_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
@@ -64,7 +67,7 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 	txInfo = &TransferTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
-		ToAccountName:     segmentFormat.ToAccountName,
+		ToAccountNameHash: segmentFormat.ToAccountNameHash,
 		AssetId:           segmentFormat.AssetId,
 		AssetAmount:       assetAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
@@ -102,7 +105,7 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 type TransferTxInfo struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
-	ToAccountName     string
+	ToAccountNameHash string
 	AssetId           int64
 	AssetAmount       *big.Int
 	GasAccountIndex   int64
@@ -131,12 +134,13 @@ func ComputeTransferMsgHash(txInfo *TransferTxInfo, hFunc hash.Hash) (msgHash []
 	}
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
+	buf.Write(ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus).FillBytes(make([]byte, 32)))
 	WriteInt64IntoBuf(&buf, txInfo.AssetId)
 	WriteInt64IntoBuf(&buf, packedAmount)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteInt64IntoBuf(&buf, int64(packedFee))
-	buf.Write(txInfo.CallDataHash)
+	buf.Write(ffmath.Mod(new(big.Int).SetBytes(txInfo.CallDataHash), curve.Modulus).FillBytes(make([]byte, 32)))
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
 	hFunc.Write(buf.Bytes())

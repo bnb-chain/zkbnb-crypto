@@ -36,7 +36,7 @@ type Tx struct {
 	MintNftTxInfo          *MintNftTx
 	TransferNftTxInfo      *TransferNftTx
 	AtomicMatchTxInfo      *AtomicMatchTx
-	CancelTxInfo           *CancelOfferTx
+	CancelOfferTxInfo      *CancelOfferTx
 	WithdrawTxInfo         *WithdrawTx
 	WithdrawNftTxInfo      *WithdrawNftTx
 	FullExitTxInfo         *FullExitTx

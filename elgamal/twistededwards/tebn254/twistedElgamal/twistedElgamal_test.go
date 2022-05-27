@@ -146,6 +146,7 @@ func TestEddsa(t *testing.T) {
 	hFunc.Write([]byte("gavin"))
 	seedBytes = hFunc.Sum(nil)
 	seed = common.Bytes2Hex(seedBytes)
+	fmt.Println(seed)
 	key, err = curve.GenerateEddsaPrivateKey(seed)
 	if err != nil {
 		panic(err)
