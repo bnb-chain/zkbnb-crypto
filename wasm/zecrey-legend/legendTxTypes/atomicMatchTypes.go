@@ -103,6 +103,8 @@ type AtomicMatchTxInfo struct {
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
+	CreatorAmount     *big.Int
+	TreasuryAmount    *big.Int
 	Nonce             int64
 	ExpiredAt         int64
 	Sig               []byte
