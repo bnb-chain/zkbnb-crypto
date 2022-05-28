@@ -26,6 +26,7 @@ type FullExitNftTx struct {
 	CreatorAccountNameHash []byte
 	CreatorTreasuryRate    int64
 	NftIndex               int64
+	CollectionId           int64
 	NftContentHash         []byte
 	NftL1Address           string
 	NftL1TokenId           *big.Int
@@ -38,6 +39,7 @@ type FullExitNftTxConstraints struct {
 	CreatorAccountNameHash Variable
 	CreatorTreasuryRate    Variable
 	NftIndex               Variable
+	CollectionId           Variable
 	NftContentHash         Variable
 	NftL1Address           Variable
 	NftL1TokenId           Variable
@@ -51,6 +53,7 @@ func EmptyFullExitNftTxWitness() (witness FullExitNftTxConstraints) {
 		CreatorAccountNameHash: ZeroInt,
 		CreatorTreasuryRate:    ZeroInt,
 		NftIndex:               ZeroInt,
+		CollectionId:           ZeroInt,
 		NftContentHash:         ZeroInt,
 		NftL1Address:           ZeroInt,
 		NftL1TokenId:           ZeroInt,
@@ -65,6 +68,7 @@ func SetFullExitNftTxWitness(tx *FullExitNftTx) (witness FullExitNftTxConstraint
 		CreatorAccountNameHash: tx.CreatorAccountNameHash,
 		CreatorTreasuryRate:    tx.CreatorTreasuryRate,
 		NftIndex:               tx.NftIndex,
+		CollectionId:           tx.CollectionId,
 		NftContentHash:         tx.NftContentHash,
 		NftL1Address:           tx.NftL1Address,
 		NftL1TokenId:           tx.NftL1TokenId,

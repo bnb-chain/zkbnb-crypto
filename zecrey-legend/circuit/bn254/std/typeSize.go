@@ -19,6 +19,9 @@ package std
 
 const (
 	TxTypeBitsSize              = 8
+	CollectionIdBitsSize        = 16
+	OfferIdBitsSize             = 24
+	FeeRateBitsSize             = 16
 	AccountIndexBitsSize        = 32
 	PairIndexBitsSize           = 16
 	AssetIdBitsSize             = 16

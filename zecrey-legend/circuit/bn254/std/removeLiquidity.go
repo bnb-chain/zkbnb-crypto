@@ -25,6 +25,8 @@ type RemoveLiquidityTx struct {
 	AssetBId          int64
 	AssetBMinAmount   int64
 	LpAmount          int64
+	KLast             int64
+	TreasuryAmount    int64
 	AssetAAmountDelta int64
 	AssetBAmountDelta int64
 	GasAccountIndex   int64
@@ -40,6 +42,8 @@ type RemoveLiquidityTxConstraints struct {
 	AssetBId          Variable
 	AssetBMinAmount   Variable
 	LpAmount          Variable
+	KLast             Variable
+	TreasuryAmount    Variable
 	AssetAAmountDelta Variable
 	AssetBAmountDelta Variable
 	GasAccountIndex   Variable
@@ -56,6 +60,8 @@ func EmptyRemoveLiquidityTxWitness() (witness RemoveLiquidityTxConstraints) {
 		AssetBId:          ZeroInt,
 		AssetBMinAmount:   ZeroInt,
 		LpAmount:          ZeroInt,
+		KLast:             ZeroInt,
+		TreasuryAmount:    ZeroInt,
 		AssetAAmountDelta: ZeroInt,
 		AssetBAmountDelta: ZeroInt,
 		GasAccountIndex:   ZeroInt,
@@ -73,6 +79,8 @@ func SetRemoveLiquidityTxWitness(tx *RemoveLiquidityTx) (witness RemoveLiquidity
 		AssetBId:          tx.AssetBId,
 		AssetBMinAmount:   tx.AssetBMinAmount,
 		LpAmount:          tx.LpAmount,
+		KLast:             tx.KLast,
+		TreasuryAmount:    tx.TreasuryAmount,
 		AssetAAmountDelta: tx.AssetAAmountDelta,
 		AssetBAmountDelta: tx.AssetBAmountDelta,
 		GasAccountIndex:   tx.GasAccountIndex,

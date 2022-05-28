@@ -21,6 +21,8 @@ type AtomicMatchTx struct {
 	AccountIndex      int64
 	BuyOffer          *OfferTx
 	SellOffer         *OfferTx
+	CreatorAmount     int64
+	TreasuryAmount    int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
@@ -30,6 +32,8 @@ type AtomicMatchTxConstraints struct {
 	AccountIndex      Variable
 	BuyOffer          OfferTxConstraints
 	SellOffer         OfferTxConstraints
+	CreatorAmount     Variable
+	TreasuryAmount    Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
@@ -40,6 +44,8 @@ func EmptyAtomicMatchTxWitness() (witness AtomicMatchTxConstraints) {
 		AccountIndex:      ZeroInt,
 		BuyOffer:          EmptyOfferTxWitness(),
 		SellOffer:         EmptyOfferTxWitness(),
+		CreatorAmount:     ZeroInt,
+		TreasuryAmount:    ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
@@ -68,6 +74,8 @@ func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraint
 		AccountIndex:      tx.AccountIndex,
 		BuyOffer:          SetOfferTxWitness(tx.BuyOffer),
 		SellOffer:         SetOfferTxWitness(tx.SellOffer),
+		CreatorAmount:     tx.CreatorAmount,
+		TreasuryAmount:    tx.TreasuryAmount,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
