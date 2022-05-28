@@ -29,6 +29,8 @@ type AddLiquidityTx struct {
 	AssetBId          int64
 	AssetBAmount      int64
 	LpAmount          int64
+	KLast             int64
+	TreasuryAmount    int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
@@ -42,8 +44,8 @@ type AddLiquidityTxConstraints struct {
 	AssetBId          Variable
 	AssetBAmount      Variable
 	LpAmount          Variable
-	PoolAAmount       Variable
-	PoolBAmount       Variable
+	KLast             Variable
+	TreasuryAmount    Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
@@ -58,8 +60,8 @@ func EmptyAddLiquidityTxWitness() (witness AddLiquidityTxConstraints) {
 		AssetBId:          ZeroInt,
 		AssetBAmount:      ZeroInt,
 		LpAmount:          ZeroInt,
-		PoolAAmount:       ZeroInt,
-		PoolBAmount:       ZeroInt,
+		KLast:             ZeroInt,
+		TreasuryAmount:    ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
@@ -76,6 +78,8 @@ func SetAddLiquidityTxWitness(tx *AddLiquidityTx) (witness AddLiquidityTxConstra
 		AssetBId:          tx.AssetBId,
 		AssetBAmount:      tx.AssetBAmount,
 		LpAmount:          tx.LpAmount,
+		KLast:             tx.KLast,
+		TreasuryAmount:    tx.TreasuryAmount,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
@@ -130,8 +134,6 @@ func VerifyAddLiquidityTx(
 	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.AssetBAmount, accountsBefore[0].AssetsInfo[1].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[2].Balance)
-	IsVariableEqual(api, flag, tx.PoolAAmount, liquidityBefore.AssetA)
-	IsVariableEqual(api, flag, tx.PoolBAmount, liquidityBefore.AssetB)
 	// TODO verify ratio
 	l := api.Mul(liquidityBefore.AssetA, tx.AssetAAmount)
 	r := api.Mul(liquidityBefore.AssetB, tx.AssetBAmount)
