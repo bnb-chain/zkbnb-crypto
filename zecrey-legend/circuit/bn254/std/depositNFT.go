@@ -21,12 +21,14 @@ import "math/big"
 
 type DepositNftTx struct {
 	AccountIndex        int64
-	AccountNameHash     []byte
 	NftIndex            int64
-	NftContentHash      []byte
 	NftL1Address        string
+	AccountNameHash     []byte
+	NftContentHash      []byte
 	NftL1TokenId        *big.Int
+	CreatorAccountIndex int64
 	CreatorTreasuryRate int64
+	CollectionId        int64
 }
 
 type DepositNftTxConstraints struct {
@@ -36,7 +38,9 @@ type DepositNftTxConstraints struct {
 	NftContentHash      Variable
 	NftL1Address        Variable
 	NftL1TokenId        Variable
+	CreatorAccountIndex Variable
 	CreatorTreasuryRate Variable
+	CollectionId        Variable
 }
 
 func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
@@ -47,7 +51,9 @@ func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
 		NftContentHash:      ZeroInt,
 		NftL1Address:        ZeroInt,
 		NftL1TokenId:        ZeroInt,
+		CreatorAccountIndex: ZeroInt,
 		CreatorTreasuryRate: ZeroInt,
+		CollectionId:        ZeroInt,
 	}
 }
 
@@ -59,7 +65,9 @@ func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) 
 		NftContentHash:      tx.NftContentHash,
 		NftL1Address:        tx.NftL1Address,
 		NftL1TokenId:        tx.NftL1TokenId,
+		CreatorAccountIndex: tx.CreatorAccountIndex,
 		CreatorTreasuryRate: tx.CreatorTreasuryRate,
+		CollectionId:        tx.CollectionId,
 	}
 	return witness
 }
