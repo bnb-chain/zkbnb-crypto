@@ -85,6 +85,7 @@ func VerifyCreateCollectionTx(
 ) {
 	CollectPubDataFromCreateCollection(api, flag, *tx, hFunc)
 	// verify params
+	IsVariableLessOrEqual(api, flag, tx.CollectionId, 65535)
 	// account index
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
