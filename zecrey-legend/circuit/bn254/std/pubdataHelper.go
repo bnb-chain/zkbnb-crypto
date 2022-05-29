@@ -97,16 +97,20 @@ func CollectPubDataFromDepositNft(api API, flag Variable, txInfo DepositNftTxCon
 		accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
 		nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
 		nftL1AddressBits := api.ToBinary(txInfo.NftL1Address, AddressBitsSize)
+		creatorAccountIndexBits := api.ToBinary(txInfo.CreatorAccountIndex, AccountIndexBitsSize)
 		creatorTreasuryRateBits := api.ToBinary(txInfo.CreatorTreasuryRate, CreatorTreasuryRateBitsSize)
+		collectionIdBits := api.ToBinary(txInfo.CollectionId, CollectionIdBitsSize)
 		ABits := append(accountIndexBits, txTypeBits...)
 		ABits = append(nftIndexBits, ABits...)
 		ABits = append(nftL1AddressBits, ABits...)
-		ABits = append(creatorTreasuryRateBits, ABits...)
 		A := api.FromBinary(ABits...)
-		B := txInfo.AccountNameHash
+		BBits := append(creatorTreasuryRateBits, creatorAccountIndexBits...)
+		BBits = append(collectionIdBits, BBits...)
+		B := api.FromBinary(BBits...)
 		C := txInfo.NftContentHash
 		D := txInfo.NftL1TokenId
-		hFunc.Write(A, B, C, D)
+		E := txInfo.AccountNameHash
+		hFunc.Write(A, B, C, D, E)
 	}
 }
 
@@ -376,6 +380,7 @@ func CollectPubDataFromWithdrawNft(api API, flag Variable, txInfo WithdrawNftTxC
 		creatorAccountIndexBits := api.ToBinary(txInfo.CreatorAccountIndex, AccountIndexBitsSize)
 		creatorTreasuryRateBits := api.ToBinary(txInfo.CreatorTreasuryRate, FeeRateBitsSize)
 		nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
+		collectionIdBits := api.ToBinary(txInfo.CollectionId, CollectionIdBitsSize)
 		toAddressBits := api.ToBinary(txInfo.ToAddress, AddressBitsSize)
 		gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
 		gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
@@ -384,6 +389,7 @@ func CollectPubDataFromWithdrawNft(api API, flag Variable, txInfo WithdrawNftTxC
 		ABits = append(creatorAccountIndexBits, ABits...)
 		ABits = append(creatorTreasuryRateBits, ABits...)
 		ABits = append(nftIndexBits, ABits...)
+		ABits = append(collectionIdBits, ABits...)
 		A := api.FromBinary(ABits...)
 		B := txInfo.NftL1Address
 		CBits := append(gasAccountIndexBits, toAddressBits...)

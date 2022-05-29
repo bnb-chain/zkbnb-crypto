@@ -177,13 +177,13 @@ func GetNftDeltaFromDepositNft(
 	txInfo DepositNftTxConstraints,
 ) (nftDelta NftDeltaConstraints) {
 	nftDelta = NftDeltaConstraints{
-		CreatorAccountIndex: txInfo.AccountIndex,
+		CreatorAccountIndex: txInfo.CreatorAccountIndex,
 		OwnerAccountIndex:   txInfo.AccountIndex,
 		NftContentHash:      txInfo.NftContentHash,
 		NftL1Address:        txInfo.NftL1Address,
 		NftL1TokenId:        txInfo.NftL1TokenId,
-		CreatorTreasuryRate: std.ZeroInt,
-		CollectionId:        std.ZeroInt,
+		CreatorTreasuryRate: txInfo.CreatorTreasuryRate,
+		CollectionId:        txInfo.CollectionId,
 	}
 	return nftDelta
 }
