@@ -118,7 +118,6 @@ func ComputeMintNftMsgHash(txInfo *MintNftTxInfo, hFunc hash.Hash) (msgHash []by
 	WriteInt64IntoBuf(&buf, txInfo.CreatorAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
 	WriteBigIntIntoBuf(&buf, ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus))
-	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
 	WriteBigIntIntoBuf(&buf, ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.NftContentHash)), curve.Modulus))
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)

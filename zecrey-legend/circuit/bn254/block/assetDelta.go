@@ -527,6 +527,12 @@ func GetAssetDeltasAndNftDeltaFromMintNft(
 		EmptyAccountAssetDeltaConstraints(),
 	}
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+	}
+	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             txInfo.GasFeeAssetAmount,
 			LpDelta:                  std.ZeroInt,
@@ -536,7 +542,7 @@ func GetAssetDeltasAndNftDeltaFromMintNft(
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
-	for i := 2; i < NbAccountsPerTx; i++ {
+	for i := 3; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
@@ -572,8 +578,14 @@ func GetAssetDeltasAndNftDeltaFromTransferNft(
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
-	// gas account
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+		EmptyAccountAssetDeltaConstraints(),
+	}
+	// gas account
+	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             txInfo.GasFeeAssetAmount,
 			LpDelta:                  std.ZeroInt,
@@ -583,7 +595,7 @@ func GetAssetDeltasAndNftDeltaFromTransferNft(
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
-	for i := 2; i < NbAccountsPerTx; i++ {
+	for i := 3; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
