@@ -72,6 +72,17 @@ func SelectNftDeltas(
 	return deltaRes
 }
 
+func SelectPubData(
+	api API,
+	flag Variable,
+	delta, deltaCheck [std.PubDataSizePerTx]Variable,
+) (deltaRes [std.PubDataSizePerTx]Variable) {
+	for i := 0; i < std.PubDataSizePerTx; i++ {
+		deltaRes[i] = api.Select(flag, delta[i], deltaCheck[i])
+	}
+	return deltaRes
+}
+
 func EmptySignatureWitness() (sig eddsa.Signature) {
 	sig.R.X = std.ZeroInt
 	sig.R.Y = std.ZeroInt

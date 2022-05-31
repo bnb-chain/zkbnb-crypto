@@ -80,9 +80,8 @@ func VerifyFullExitNftTx(
 	api API, flag Variable,
 	tx FullExitNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromFullExitNft(api, flag, tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromFullExitNft(api, tx)
 	// verify params
 	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
@@ -100,4 +99,5 @@ func VerifyFullExitNftTx(
 	tx.NftContentHash = api.Select(isOwner, tx.NftContentHash, 0)
 	tx.NftL1Address = api.Select(isOwner, tx.NftL1Address, 0)
 	tx.NftL1TokenId = api.Select(isOwner, tx.NftL1TokenId, 0)
+	return pubData
 }

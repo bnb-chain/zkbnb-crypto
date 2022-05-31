@@ -101,9 +101,8 @@ func VerifyMintNftTx(
 	api API, flag Variable,
 	tx *MintNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromMintNft(api, flag, *tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromMintNft(api, *tx)
 	// verify params
 	// check empty nft
 	CheckEmptyNftNode(api, flag, nftBefore)
@@ -122,4 +121,5 @@ func VerifyMintNftTx(
 	// should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	return pubData
 }

@@ -95,9 +95,8 @@ func VerifySwapTx(
 	api API, flag Variable,
 	tx *SwapTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromSwap(api, flag, *tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromSwap(api, *tx)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
@@ -154,4 +153,5 @@ func VerifySwapTx(
 		api.Add(assetBAmount, liquidityBefore.AssetB),
 	)
 	IsVariableLessOrEqual(api, flag, r, l)
+	return pubData
 }

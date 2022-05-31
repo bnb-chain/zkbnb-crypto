@@ -125,9 +125,9 @@ func VerifyAtomicMatchTx(
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
 	blockCreatedAt Variable,
-	hFunc *MiMC,
-) (err error) {
-	CollectPubDataFromAtomicMatch(api, flag, *tx, hFunc)
+	hFunc MiMC,
+) (pubData [PubDataSizePerTx]Variable, err error) {
+	pubData = CollectPubDataFromAtomicMatch(api, *tx)
 	// verify params
 	IsVariableEqual(api, flag, tx.BuyOffer.Type, 0)
 	IsVariableEqual(api, flag, tx.SellOffer.Type, 1)
@@ -146,18 +146,18 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.BuyOffer.TreasuryRate, tx.SellOffer.TreasuryRate)
 	// verify signature
 	hFunc.Reset()
-	buyOfferHash := ComputeHashFromOfferTx(tx.BuyOffer, *hFunc)
+	buyOfferHash := ComputeHashFromOfferTx(tx.BuyOffer, hFunc)
 	hFunc.Reset()
-	err = VerifyEddsaSig(flag, api, *hFunc, buyOfferHash, accountsBefore[1].AccountPk, tx.BuyOffer.Sig)
+	err = VerifyEddsaSig(flag, api, hFunc, buyOfferHash, accountsBefore[1].AccountPk, tx.BuyOffer.Sig)
 	if err != nil {
-		return err
+		return pubData, err
 	}
 	hFunc.Reset()
-	sellOfferHash := ComputeHashFromOfferTx(tx.SellOffer, *hFunc)
+	sellOfferHash := ComputeHashFromOfferTx(tx.SellOffer, hFunc)
 	hFunc.Reset()
-	err = VerifyEddsaSig(flag, api, *hFunc, sellOfferHash, accountsBefore[2].AccountPk, tx.SellOffer.Sig)
+	err = VerifyEddsaSig(flag, api, hFunc, sellOfferHash, accountsBefore[2].AccountPk, tx.SellOffer.Sig)
 	if err != nil {
-		return err
+		return pubData, err
 	}
 	// verify account index
 	// submitter
@@ -202,5 +202,5 @@ func VerifyAtomicMatchTx(
 	// submitter should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
-	return nil
+	return pubData, nil
 }

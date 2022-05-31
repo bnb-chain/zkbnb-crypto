@@ -108,9 +108,8 @@ func VerifyAddLiquidityTx(
 	api API, flag Variable,
 	tx *AddLiquidityTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromAddLiquidity(api, flag, *tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromAddLiquidity(api, *tx)
 	// check params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
@@ -152,4 +151,5 @@ func VerifyAddLiquidityTx(
 		// lpAmount = \Delta{x} / x * poolLp
 		IsVariableEqual(api, flag, api.Mul(tx.LpAmount, liquidityBefore.AssetA), api.Mul(tx.AssetAAmount, liquidityBefore.LpAmount))
 	}
+	return pubData
 }

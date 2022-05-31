@@ -81,9 +81,8 @@ func VerifyCreateCollectionTx(
 	api API, flag Variable,
 	tx *CreateCollectionTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromCreateCollection(api, flag, *tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromCreateCollection(api, *tx)
 	// verify params
 	IsVariableLessOrEqual(api, flag, tx.CollectionId, 65535)
 	// account index
@@ -97,4 +96,5 @@ func VerifyCreateCollectionTx(
 	// should have enough assets
 	tx.GasFeeAssetAmount = UnpackAmount(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	return pubData
 }

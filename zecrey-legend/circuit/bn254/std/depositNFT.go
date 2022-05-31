@@ -78,9 +78,8 @@ func VerifyDepositNftTx(
 	tx DepositNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromDepositNft(api, flag, tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromDepositNft(api, tx)
 	// verify params
 	// check empty nft
 	CheckEmptyNftNode(api, flag, nftBefore)
@@ -88,4 +87,5 @@ func VerifyDepositNftTx(
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	// account name hash
 	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)
+	return pubData
 }
