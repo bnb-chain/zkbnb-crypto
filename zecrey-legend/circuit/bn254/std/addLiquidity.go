@@ -108,9 +108,8 @@ func VerifyAddLiquidityTx(
 	api API, flag Variable,
 	tx *AddLiquidityTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromAddLiquidity(api, flag, *tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromAddLiquidity(api, *tx)
 	// check params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
@@ -143,13 +142,11 @@ func VerifyAddLiquidityTx(
 	lrDelta := api.Sub(l, r)
 	IsVariableLessOrEqual(api, flag, lrDelta, maxDelta)
 	// TODO verify lp amount
-	zeroFlag := api.Compiler().IsBoolean(api.Add(liquidityBefore.AssetA, 1))
-	if zeroFlag {
-		// lpAmount = \sqrt{x * y}
-		lpAmountSquare := api.Mul(tx.AssetAAmount, tx.AssetBAmount)
-		IsVariableEqual(api, flag, api.Mul(tx.LpAmount, tx.LpAmount), lpAmountSquare)
-	} else {
-		// lpAmount = \Delta{x} / x * poolLp
-		IsVariableEqual(api, flag, api.Mul(tx.LpAmount, liquidityBefore.AssetA), api.Mul(tx.AssetAAmount, liquidityBefore.LpAmount))
-	}
+	isZero := api.IsZero(liquidityBefore.AssetA)
+	isZero = api.And(isZero, flag)
+	lpAmountSquare := api.Mul(tx.AssetAAmount, tx.AssetBAmount)
+	IsVariableLessOrEqual(api, isZero, api.Mul(tx.LpAmount, tx.LpAmount), lpAmountSquare)
+	notZero := api.IsZero(isZero)
+	IsVariableEqual(api, notZero, api.Mul(tx.LpAmount, liquidityBefore.AssetA), api.Mul(tx.AssetAAmount, liquidityBefore.LpAmount))
+	return pubData
 }

@@ -110,9 +110,8 @@ func VerifyWithdrawNftTx(
 	tx *WithdrawNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromWithdrawNft(api, flag, *tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromWithdrawNft(api, *tx)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
@@ -136,4 +135,5 @@ func VerifyWithdrawNftTx(
 	// have enough assets
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	return pubData
 }

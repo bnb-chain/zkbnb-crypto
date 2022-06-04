@@ -73,9 +73,8 @@ func VerifyCancelOfferTx(
 	api API, flag Variable,
 	tx *CancelOfferTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromCancelOffer(api, flag, *tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromCancelOffer(api, *tx)
 	// verify params
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
@@ -87,4 +86,5 @@ func VerifyCancelOfferTx(
 	// should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
+	return pubData
 }

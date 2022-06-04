@@ -139,7 +139,8 @@ func TestEddsa(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("sher:", common.Bytes2Hex(key.PublicKey.Bytes()))
+	fmt.Println("sher:", common.Bytes2Hex(key.PublicKey.A.X.Marshal()))
+	fmt.Println("sher:", common.Bytes2Hex(key.PublicKey.A.Y.Marshal()))
 	fmt.Println(key.Bytes())
 
 	hFunc.Reset()
@@ -151,18 +152,8 @@ func TestEddsa(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("gavin:", common.Bytes2Hex(key.PublicKey.Bytes()))
-	fmt.Println(key.Bytes())
-
-	hFunc.Reset()
-	hFunc.Write([]byte("pool"))
-	seedBytes = hFunc.Sum(nil)
-	seed = common.Bytes2Hex(seedBytes)
-	key, err = curve.GenerateEddsaPrivateKey(seed)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("pool:", common.Bytes2Hex(key.PublicKey.Bytes()))
+	fmt.Println("gavin:", common.Bytes2Hex(key.PublicKey.A.X.Marshal()))
+	fmt.Println("gavin:", common.Bytes2Hex(key.PublicKey.A.Y.Marshal()))
 	fmt.Println(key.Bytes())
 
 	hFunc.Reset()
@@ -173,9 +164,9 @@ func TestEddsa(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("treasury:", common.Bytes2Hex(key.PublicKey.Bytes()))
+	fmt.Println("treasury:", common.Bytes2Hex(key.PublicKey.A.X.Marshal()))
+	fmt.Println("treasury:", common.Bytes2Hex(key.PublicKey.A.Y.Marshal()))
 	fmt.Println(key.Bytes())
-
 	hFunc.Reset()
 	hFunc.Write([]byte("gas"))
 	seedBytes = hFunc.Sum(nil)
@@ -184,6 +175,7 @@ func TestEddsa(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("gas:", common.Bytes2Hex(key.PublicKey.Bytes()))
+	fmt.Println("gas:", common.Bytes2Hex(key.PublicKey.A.X.Marshal()))
+	fmt.Println("gas:", common.Bytes2Hex(key.PublicKey.A.Y.Marshal()))
 	fmt.Println(key.Bytes())
 }

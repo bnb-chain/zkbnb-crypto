@@ -85,12 +85,7 @@ func (circuit TxConstraints) Define(api API) error {
 		return err
 	}
 
-	pubdataHashFunc, err := mimc.NewMiMC(api)
-	if err != nil {
-		return err
-	}
-
-	err = VerifyTransaction(api, circuit, hFunc, pubdataHashFunc, 1633400952228)
+	_, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228)
 	if err != nil {
 		return err
 	}
@@ -101,9 +96,8 @@ func VerifyTransaction(
 	api API,
 	tx TxConstraints,
 	hFunc MiMC,
-	pubdataHashFunc MiMC,
 	blockCreatedAt Variable,
-) error {
+) (isOnChainOp Variable, pubData [std.PubDataSizePerTx]Variable, err error) {
 	// compute tx type
 	isEmptyTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeEmptyTx))
 	isRegisterZnsTx := api.IsZero(api.Sub(tx.TxType, std.TxTypeRegisterZns))
@@ -138,6 +132,18 @@ func VerifyTransaction(
 		isAtomicMatchTx,
 		isCancelOfferTx,
 		isWithdrawNftTx,
+	)
+
+	isOnChainOp = api.Add(
+		isRegisterZnsTx,
+		isDepositTx,
+		isDepositNftTx,
+		isCreatePairTx,
+		isUpdatePairRateTx,
+		isWithdrawTx,
+		isWithdrawNftTx,
+		isFullExitTx,
+		isFullExitNftTx,
 	)
 
 	// get hash value from tx based on tx type
@@ -177,7 +183,7 @@ func VerifyTransaction(
 
 	std.IsVariableEqual(api, isLayer2Tx, api.Add(tx.AccountsInfoBefore[0].Nonce, 1), tx.Nonce)
 	// verify signature
-	err := std.VerifyEddsaSig(
+	err = std.VerifyEddsaSig(
 		isLayer2Tx,
 		api,
 		hFunc,
@@ -187,31 +193,52 @@ func VerifyTransaction(
 	)
 	if err != nil {
 		log.Println("[VerifyTx] invalid signature:", err)
-		return err
+		return nil, pubData, err
 	}
 
 	// verify transactions
-	std.VerifyRegisterZNSTx(api, isRegisterZnsTx, tx.RegisterZnsTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
-	std.VerifyCreatePairTx(api, isCreatePairTx, tx.CreatePairTxInfo, tx.LiquidityBefore, &pubdataHashFunc)
-	std.VerifyUpdatePairRateTx(api, isUpdatePairRateTx, tx.UpdatePairRateTxInfo, tx.LiquidityBefore, &pubdataHashFunc)
-	std.VerifyDepositTx(api, isDepositTx, tx.DepositTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
-	std.VerifyDepositNftTx(api, isDepositNftTx, tx.DepositNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
-	std.VerifyTransferTx(api, isTransferTx, &tx.TransferTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
-	std.VerifySwapTx(api, isSwapTx, &tx.SwapTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore, &pubdataHashFunc)
-	std.VerifyAddLiquidityTx(api, isAddLiquidityTx, &tx.AddLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore, &pubdataHashFunc)
-	std.VerifyRemoveLiquidityTx(api, isRemoveLiquidityTx, &tx.RemoveLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore, &pubdataHashFunc)
-	std.VerifyCreateCollectionTx(api, isCreateCollectionTx, &tx.CreateCollectionTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
-	std.VerifyWithdrawTx(api, isWithdrawTx, &tx.WithdrawTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
-	std.VerifyMintNftTx(api, isMintNftTx, &tx.MintNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
-	std.VerifyTransferNftTx(api, isTransferNftTx, &tx.TransferNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
-	err = std.VerifyAtomicMatchTx(api, isAtomicMatchTx, &tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore, blockCreatedAt, &pubdataHashFunc)
+	pubData = std.VerifyRegisterZNSTx(api, isRegisterZnsTx, tx.RegisterZnsTxInfo, tx.AccountsInfoBefore)
+	pubDataCheck := std.VerifyCreatePairTx(api, isCreatePairTx, tx.CreatePairTxInfo, tx.LiquidityBefore)
+	pubData = SelectPubData(api, isCreatePairTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyUpdatePairRateTx(api, isUpdatePairRateTx, tx.UpdatePairRateTxInfo, tx.LiquidityBefore)
+	pubData = SelectPubData(api, isUpdatePairRateTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyDepositTx(api, isDepositTx, tx.DepositTxInfo, tx.AccountsInfoBefore)
+	pubData = SelectPubData(api, isDepositTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyDepositNftTx(api, isDepositNftTx, tx.DepositNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
+	pubData = SelectPubData(api, isDepositNftTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyTransferTx(api, isTransferTx, &tx.TransferTxInfo, tx.AccountsInfoBefore)
+	pubData = SelectPubData(api, isTransferTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifySwapTx(api, isSwapTx, &tx.SwapTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
+	pubData = SelectPubData(api, isSwapTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyAddLiquidityTx(api, isAddLiquidityTx, &tx.AddLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
+	pubData = SelectPubData(api, isAddLiquidityTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyRemoveLiquidityTx(api, isRemoveLiquidityTx, &tx.RemoveLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
+	pubData = SelectPubData(api, isRemoveLiquidityTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyCreateCollectionTx(api, isCreateCollectionTx, &tx.CreateCollectionTxInfo, tx.AccountsInfoBefore)
+	pubData = SelectPubData(api, isCreateCollectionTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyWithdrawTx(api, isWithdrawTx, &tx.WithdrawTxInfo, tx.AccountsInfoBefore)
+	pubData = SelectPubData(api, isWithdrawTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyMintNftTx(api, isMintNftTx, &tx.MintNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
+	pubData = SelectPubData(api, isMintNftTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyTransferNftTx(api, isTransferNftTx, &tx.TransferNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
+	pubData = SelectPubData(api, isTransferNftTx, pubDataCheck, pubData)
+	hFunc.Reset()
+	pubDataCheck, err = std.VerifyAtomicMatchTx(
+		api, isAtomicMatchTx, &tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore, blockCreatedAt,
+		hFunc,
+	)
 	if err != nil {
-		return err
+		return nil, pubData, err
 	}
-	std.VerifyCancelOfferTx(api, isCancelOfferTx, &tx.CancelOfferTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
-	std.VerifyWithdrawNftTx(api, isWithdrawNftTx, &tx.WithdrawNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
-	std.VerifyFullExitTx(api, isFullExitTx, tx.FullExitTxInfo, tx.AccountsInfoBefore, &pubdataHashFunc)
-	std.VerifyFullExitNftTx(api, isFullExitNftTx, tx.FullExitNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore, &pubdataHashFunc)
+	pubData = SelectPubData(api, isAtomicMatchTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyCancelOfferTx(api, isCancelOfferTx, &tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
+	pubData = SelectPubData(api, isCancelOfferTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyWithdrawNftTx(api, isWithdrawNftTx, &tx.WithdrawNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
+	pubData = SelectPubData(api, isWithdrawNftTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyFullExitTx(api, isFullExitTx, tx.FullExitTxInfo, tx.AccountsInfoBefore)
+	pubData = SelectPubData(api, isFullExitTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyFullExitNftTx(api, isFullExitNftTx, tx.FullExitNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
+	pubData = SelectPubData(api, isFullExitNftTx, pubDataCheck, pubData)
 
 	// verify timestamp
 	std.IsVariableLessOrEqual(api, isLayer2Tx, blockCreatedAt, tx.ExpiredAt)
@@ -505,8 +532,7 @@ func VerifyTransaction(
 	)
 	newStateRoot := hFunc.Sum()
 	std.IsVariableEqual(api, 1, newStateRoot, tx.StateRootAfter)
-
-	return nil
+	return isOnChainOp, pubData, nil
 }
 
 func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {

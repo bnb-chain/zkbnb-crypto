@@ -62,10 +62,10 @@ func VerifyCreatePairTx(
 	api API, flag Variable,
 	tx CreatePairTxConstraints,
 	liquidityBefore LiquidityConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromCreatePair(api, flag, tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromCreatePair(api, tx)
 	// verify params
 	IsVariableEqual(api, flag, tx.PairIndex, liquidityBefore.PairIndex)
 	CheckEmptyLiquidityNode(api, flag, liquidityBefore)
+	return pubData
 }

@@ -85,6 +85,8 @@ const (
 	RateBase                  = std.RateBase
 	OfferSizePerAsset         = 128
 
+	NbTxsPerBlock = 1
+
 	LastAccountIndex   = 4294967295
 	LastAccountAssetId = 65535
 )

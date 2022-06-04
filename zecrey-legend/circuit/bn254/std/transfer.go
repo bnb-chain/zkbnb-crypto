@@ -93,10 +93,9 @@ func VerifyTransferTx(
 	api API, flag Variable,
 	tx *TransferTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
-	hFunc *MiMC,
-) {
+) (pubData [PubDataSizePerTx]Variable) {
 	// collect pubdata
-	CollectPubDataFromTransfer(api, flag, *tx, hFunc)
+	pubData = CollectPubDataFromTransfer(api, *tx)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
@@ -116,4 +115,5 @@ func VerifyTransferTx(
 	//tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
+	return pubData
 }
