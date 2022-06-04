@@ -148,14 +148,18 @@ func VerifyAtomicMatchTx(
 	hFunc.Reset()
 	buyOfferHash := ComputeHashFromOfferTx(tx.BuyOffer, hFunc)
 	hFunc.Reset()
-	err = VerifyEddsaSig(flag, api, hFunc, buyOfferHash, accountsBefore[1].AccountPk, tx.BuyOffer.Sig)
+	notBuyer := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.BuyOffer.AccountIndex)))
+	notBuyer = api.And(flag, notBuyer)
+	err = VerifyEddsaSig(notBuyer, api, hFunc, buyOfferHash, accountsBefore[1].AccountPk, tx.BuyOffer.Sig)
 	if err != nil {
 		return pubData, err
 	}
 	hFunc.Reset()
 	sellOfferHash := ComputeHashFromOfferTx(tx.SellOffer, hFunc)
 	hFunc.Reset()
-	err = VerifyEddsaSig(flag, api, hFunc, sellOfferHash, accountsBefore[2].AccountPk, tx.SellOffer.Sig)
+	notSeller := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.SellOffer.AccountIndex)))
+	notSeller = api.And(flag, notSeller)
+	err = VerifyEddsaSig(notSeller, api, hFunc, sellOfferHash, accountsBefore[2].AccountPk, tx.SellOffer.Sig)
 	if err != nil {
 		return pubData, err
 	}

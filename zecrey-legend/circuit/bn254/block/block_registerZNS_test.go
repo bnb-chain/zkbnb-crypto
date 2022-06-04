@@ -49,12 +49,14 @@ func TestVerifyBlock_RegisterZNS(t *testing.T) {
 	var buf bytes.Buffer
 	buf.WriteByte(oTx.TxType)
 	buf.Write(new(big.Int).SetInt64(oTx.RegisterZnsTxInfo.AccountIndex).FillBytes(make([]byte, 4)))
-	chunk := new(big.Int).SetBytes(buf.Bytes()).FillBytes(make([]byte, 32))
+	chunk := make([]byte, 32)
+	copy(chunk[:], buf.Bytes()[:])
 	hFunc.Write(chunk)
+	log.Println(new(big.Int).SetBytes(chunk).String())
 	hFunc.Write(new(big.Int).SetBytes(oTx.RegisterZnsTxInfo.AccountName).FillBytes(make([]byte, 32)))
 	hFunc.Write(new(big.Int).SetBytes(oTx.RegisterZnsTxInfo.AccountNameHash).FillBytes(make([]byte, 32)))
 	hFunc.Write(new(big.Int).SetBytes(oTx.RegisterZnsTxInfo.PubKey.A.X.Marshal()).FillBytes(make([]byte, 32)))
-	hFunc.Write(new(big.Int).SetInt64(0).FillBytes(make([]byte, 32)))
+	hFunc.Write(new(big.Int).SetBytes(oTx.RegisterZnsTxInfo.PubKey.A.Y.Marshal()).FillBytes(make([]byte, 32)))
 	hFunc.Write(new(big.Int).SetInt64(0).FillBytes(make([]byte, 32)))
 	// ops count
 	hFunc.Write(new(big.Int).SetInt64(1).FillBytes(make([]byte, 32)))

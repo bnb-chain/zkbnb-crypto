@@ -25,6 +25,7 @@ import (
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
+	"github.com/ethereum/go-ethereum/common"
 	"log"
 	"math/big"
 	"testing"
@@ -41,6 +42,11 @@ func TestVerifyBlock_Deposit(t *testing.T) {
 	var oBlock *Block
 	createdAt := time.Now().UnixMilli()
 	hFunc := mimc.NewMiMC()
+	b := big.NewInt(1).FillBytes(make([]byte, 2))
+	hFunc.Write(b)
+	a := hFunc.Sum(nil)
+	log.Println(common.Bytes2Hex(a))
+	hFunc.Reset()
 	hFunc.Write(new(big.Int).SetInt64(1).FillBytes(make([]byte, 32)))
 	hFunc.Write(new(big.Int).SetInt64(createdAt).FillBytes(make([]byte, 32)))
 	hFunc.Write(new(big.Int).SetBytes(oTx.StateRootBefore).FillBytes(make([]byte, 32)))
@@ -51,7 +57,8 @@ func TestVerifyBlock_Deposit(t *testing.T) {
 	buf.Write(new(big.Int).SetInt64(oTx.DepositTxInfo.AccountIndex).FillBytes(make([]byte, 4)))
 	buf.Write(new(big.Int).SetInt64(oTx.DepositTxInfo.AssetId).FillBytes(make([]byte, 2)))
 	buf.Write(new(big.Int).Set(oTx.DepositTxInfo.AssetAmount).FillBytes(make([]byte, 16)))
-	chunk := new(big.Int).SetBytes(buf.Bytes()).FillBytes(make([]byte, 32))
+	chunk := make([]byte, 32)
+	copy(chunk[:], buf.Bytes()[:])
 	buf.Reset()
 	buf.Write(chunk)
 	buf.Write(oTx.DepositTxInfo.AccountNameHash)

@@ -21,11 +21,17 @@ func CollectPubDataFromRegisterZNS(api API, txInfo RegisterZnsTxConstraints) (pu
 	txTypeBits := api.ToBinary(TxTypeRegisterZns, TxTypeBitsSize)
 	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
 	ABits := append(accountIndexBits, txTypeBits...)
+	var paddingSize [216]Variable
+	for i := 0; i < 216; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = txInfo.AccountName
 	pubData[2] = txInfo.AccountNameHash
 	pubData[3] = txInfo.PubKey.A.X
-	for i := 4; i < PubDataSizePerTx; i++ {
+	pubData[4] = txInfo.PubKey.A.Y
+	for i := 5; i < PubDataSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
@@ -45,6 +51,11 @@ func CollectPubDataFromCreatePair(api API, txInfo CreatePairTxConstraints) (pubD
 	ABits = append(FeeRateBits, ABits...)
 	ABits = append(TreasuryAccountIndexBits, ABits...)
 	ABits = append(TreasuryRateBits, ABits...)
+	var paddingSize [136]Variable
+	for i := 0; i < 136; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	for i := 1; i < PubDataSizePerTx; i++ {
 		pubData[i] = 0
@@ -62,6 +73,11 @@ func CollectPubDataFromUpdatePairRate(api API, txInfo UpdatePairRateTxConstraint
 	ABits = append(FeeRateBits, ABits...)
 	ABits = append(TreasuryAccountIndexBits, ABits...)
 	ABits = append(TreasuryRateBits, ABits...)
+	var paddingSize [168]Variable
+	for i := 0; i < 168; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	for i := 1; i < PubDataSizePerTx; i++ {
 		pubData[i] = 0
@@ -77,6 +93,11 @@ func CollectPubDataFromDeposit(api API, txInfo DepositTxConstraints) (pubData [P
 	ABits := append(accountIndexBits, txTypeBits...)
 	ABits = append(assetIdBits, ABits...)
 	ABits = append(assetAmountBits, ABits...)
+	var paddingSize [72]Variable
+	for i := 0; i < 72; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = txInfo.AccountNameHash
 	for i := 2; i < PubDataSizePerTx; i++ {
@@ -96,6 +117,11 @@ func CollectPubDataFromDepositNft(api API, txInfo DepositNftTxConstraints) (pubD
 	ABits := append(accountIndexBits, txTypeBits...)
 	ABits = append(nftIndexBits, ABits...)
 	ABits = append(nftL1AddressBits, ABits...)
+	var paddingSize [16]Variable
+	for i := 0; i < 16; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	BBits := append(creatorTreasuryRateBits, creatorAccountIndexBits...)
 	BBits = append(collectionIdBits, BBits...)
@@ -125,6 +151,11 @@ func CollectPubDataFromTransfer(api API, txInfo TransferTxConstraints) (pubData 
 	ABits = append(gasAccountIndexBits, ABits...)
 	ABits = append(gasFeeAssetIdBits, ABits...)
 	ABits = append(gasFeeAssetAmountBits, ABits...)
+	var paddingSize [64]Variable
+	for i := 0; i < 64; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = txInfo.CallDataHash
 	for i := 2; i < PubDataSizePerTx; i++ {
@@ -149,6 +180,11 @@ func CollectPubDataFromSwap(api API, txInfo SwapTxConstraints) (pubData [PubData
 	ABits = append(gasAccountIndexBits, ABits...)
 	ABits = append(gasFeeAssetIdBits, ABits...)
 	ABits = append(gasFeeAssetAmountBits, ABits...)
+	var paddingSize [56]Variable
+	for i := 0; i < 56; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	for i := 1; i < PubDataSizePerTx; i++ {
 		pubData[i] = 0
@@ -177,6 +213,11 @@ func CollectPubDataFromAddLiquidity(api API, txInfo AddLiquidityTxConstraints) (
 	BBits := append(gasAccountIndexBits, treasuryAmountBits...)
 	BBits = append(gasFeeAssetIdBits, ABits...)
 	BBits = append(gasFeeAssetAmountBits, ABits...)
+	var paddingSize [40]Variable
+	for i := 0; i < 40; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = api.FromBinary(BBits...)
 	for i := 2; i < PubDataSizePerTx; i++ {
@@ -206,6 +247,11 @@ func CollectPubDataFromRemoveLiquidity(api API, txInfo RemoveLiquidityTxConstrai
 	BBits := append(gasAccountIndexBits, treasuryAmountBits...)
 	BBits = append(gasFeeAssetIdBits, ABits...)
 	BBits = append(gasFeeAssetAmountBits, ABits...)
+	var paddingSize [40]Variable
+	for i := 0; i < 40; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = api.FromBinary(BBits...)
 	for i := 2; i < PubDataSizePerTx; i++ {
@@ -229,6 +275,11 @@ func CollectPubDataFromWithdraw(api API, txInfo WithdrawTxConstraints) (pubData 
 	BBits := append(gasAccountIndexBits, assetAmountBits...)
 	BBits = append(gasFeeAssetIdBits, BBits...)
 	BBits = append(gasFeeAssetAmountBits, BBits...)
+	var paddingSize [40]Variable
+	for i := 0; i < 40; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = api.FromBinary(BBits...)
 	for i := 2; i < PubDataSizePerTx; i++ {
@@ -249,6 +300,11 @@ func CollectPubDataFromCreateCollection(api API, txInfo CreateCollectionTxConstr
 	ABits = append(gasAccountIndexBits, ABits...)
 	ABits = append(gasFeeAssetIdBits, ABits...)
 	ABits = append(gasFeeAssetAmountBits, ABits...)
+	var paddingSize [136]Variable
+	for i := 0; i < 136; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	for i := 1; i < PubDataSizePerTx; i++ {
 		pubData[i] = 0
@@ -274,6 +330,11 @@ func CollectPubDataFromMintNft(api API, txInfo MintNftTxConstraints) (pubData [P
 	ABits = append(gasFeeAssetAmountBits, ABits...)
 	ABits = append(creatorTreasuryRateBits, ABits...)
 	ABits = append(collectionIdBits, ABits...)
+	var paddingSize [48]Variable
+	for i := 0; i < 48; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = txInfo.NftContentHash
 	for i := 2; i < PubDataSizePerTx; i++ {
@@ -296,6 +357,11 @@ func CollectPubDataFromTransferNft(api API, txInfo TransferNftTxConstraints) (pu
 	ABits = append(gasAccountIndexBits, ABits...)
 	ABits = append(gasFeeAssetIdBits, ABits...)
 	ABits = append(gasFeeAssetAmountBits, ABits...)
+	var paddingSize [80]Variable
+	for i := 0; i < 80; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = txInfo.CallDataHash
 	for i := 2; i < PubDataSizePerTx; i++ {
@@ -324,6 +390,11 @@ func CollectPubDataFromAtomicMatch(api API, txInfo AtomicMatchTxConstraints) (pu
 	ABits = append(sellerAccountIndexBits, ABits...)
 	ABits = append(sellerOfferIdBits, ABits...)
 	ABits = append(assetIdBits, ABits...)
+	var paddingSize [88]Variable
+	for i := 0; i < 88; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	BBits := append(creatorAmountBits, assetAmountBits...)
 	BBits = append(treasuryAmountBits, BBits...)
 	BBits = append(gasAccountIndexBits, BBits...)
@@ -349,6 +420,11 @@ func CollectPubDataFromCancelOffer(api API, txInfo CancelOfferTxConstraints) (pu
 	ABits = append(gasAccountIndexBits, ABits...)
 	ABits = append(gasFeeAssetIdBits, ABits...)
 	ABits = append(gasFeeAssetAmountBits, ABits...)
+	var paddingSize [128]Variable
+	for i := 0; i < 128; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	for i := 1; i < PubDataSizePerTx; i++ {
 		pubData[i] = 0
@@ -372,6 +448,11 @@ func CollectPubDataFromWithdrawNft(api API, txInfo WithdrawNftTxConstraints) (pu
 	ABits = append(creatorTreasuryRateBits, ABits...)
 	ABits = append(nftIndexBits, ABits...)
 	ABits = append(collectionIdBits, ABits...)
+	var paddingSize [112]Variable
+	for i := 0; i < 112; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = txInfo.NftL1Address
 	CBits := append(gasAccountIndexBits, toAddressBits...)
@@ -392,6 +473,11 @@ func CollectPubDataFromFullExit(api API, txInfo FullExitTxConstraints) (pubData 
 	ABits := append(accountIndexBits, txTypeBits...)
 	ABits = append(assetIdBits, ABits...)
 	ABits = append(assetAmountBits, ABits...)
+	var paddingSize [72]Variable
+	for i := 0; i < 72; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = txInfo.AccountNameHash
 	for i := 2; i < PubDataSizePerTx; i++ {
@@ -412,6 +498,11 @@ func CollectPubDataFromFullExitNft(api API, txInfo FullExitNftTxConstraints) (pu
 	ABits = append(creatorTreasuryRateBits, ABits...)
 	ABits = append(nftIndexBits, ABits...)
 	ABits = append(collectionIdBits, ABits...)
+	var paddingSize [128]Variable
+	for i := 0; i < 128; i++ {
+		paddingSize[i] = 0
+	}
+	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = txInfo.NftL1Address
 	pubData[2] = txInfo.AccountNameHash
