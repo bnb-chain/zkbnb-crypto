@@ -40,6 +40,8 @@ const (
 	NbAccountAssetsPerAccount = 4
 	NbAccountsPerTx           = 5
 
+	PubDataSizePerTx = 6
+
 	OfferSizePerAsset = 128
 )
 

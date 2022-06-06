@@ -21,6 +21,8 @@ type AtomicMatchTx struct {
 	AccountIndex      int64
 	BuyOffer          *OfferTx
 	SellOffer         *OfferTx
+	CreatorAmount     int64
+	TreasuryAmount    int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
@@ -30,6 +32,8 @@ type AtomicMatchTxConstraints struct {
 	AccountIndex      Variable
 	BuyOffer          OfferTxConstraints
 	SellOffer         OfferTxConstraints
+	CreatorAmount     Variable
+	TreasuryAmount    Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
@@ -40,6 +44,8 @@ func EmptyAtomicMatchTxWitness() (witness AtomicMatchTxConstraints) {
 		AccountIndex:      ZeroInt,
 		BuyOffer:          EmptyOfferTxWitness(),
 		SellOffer:         EmptyOfferTxWitness(),
+		CreatorAmount:     ZeroInt,
+		TreasuryAmount:    ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
@@ -68,6 +74,8 @@ func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraint
 		AccountIndex:      tx.AccountIndex,
 		BuyOffer:          SetOfferTxWitness(tx.BuyOffer),
 		SellOffer:         SetOfferTxWitness(tx.SellOffer),
+		CreatorAmount:     tx.CreatorAmount,
+		TreasuryAmount:    tx.TreasuryAmount,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
@@ -117,9 +125,9 @@ func VerifyAtomicMatchTx(
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
 	blockCreatedAt Variable,
-	hFunc *MiMC,
-) (err error) {
-	CollectPubDataFromAtomicMatch(api, flag, *tx, hFunc)
+	hFunc MiMC,
+) (pubData [PubDataSizePerTx]Variable, err error) {
+	pubData = CollectPubDataFromAtomicMatch(api, *tx)
 	// verify params
 	IsVariableEqual(api, flag, tx.BuyOffer.Type, 0)
 	IsVariableEqual(api, flag, tx.SellOffer.Type, 1)
@@ -138,18 +146,22 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.BuyOffer.TreasuryRate, tx.SellOffer.TreasuryRate)
 	// verify signature
 	hFunc.Reset()
-	buyOfferHash := ComputeHashFromOfferTx(tx.BuyOffer, *hFunc)
+	buyOfferHash := ComputeHashFromOfferTx(tx.BuyOffer, hFunc)
 	hFunc.Reset()
-	err = VerifyEddsaSig(flag, api, *hFunc, buyOfferHash, accountsBefore[1].AccountPk, tx.BuyOffer.Sig)
+	notBuyer := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.BuyOffer.AccountIndex)))
+	notBuyer = api.And(flag, notBuyer)
+	err = VerifyEddsaSig(notBuyer, api, hFunc, buyOfferHash, accountsBefore[1].AccountPk, tx.BuyOffer.Sig)
 	if err != nil {
-		return err
+		return pubData, err
 	}
 	hFunc.Reset()
-	sellOfferHash := ComputeHashFromOfferTx(tx.SellOffer, *hFunc)
+	sellOfferHash := ComputeHashFromOfferTx(tx.SellOffer, hFunc)
 	hFunc.Reset()
-	err = VerifyEddsaSig(flag, api, *hFunc, sellOfferHash, accountsBefore[2].AccountPk, tx.SellOffer.Sig)
+	notSeller := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.SellOffer.AccountIndex)))
+	notSeller = api.And(flag, notSeller)
+	err = VerifyEddsaSig(notSeller, api, hFunc, sellOfferHash, accountsBefore[2].AccountPk, tx.SellOffer.Sig)
 	if err != nil {
-		return err
+		return pubData, err
 	}
 	// verify account index
 	// submitter
@@ -194,5 +206,5 @@ func VerifyAtomicMatchTx(
 	// submitter should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
-	return nil
+	return pubData, nil
 }

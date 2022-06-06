@@ -109,6 +109,8 @@ type AddLiquidityTxInfo struct {
 	AssetBId          int64
 	AssetBAmount      *big.Int
 	LpAmount          *big.Int
+	KLast             *big.Int
+	TreasuryAmount    *big.Int
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int

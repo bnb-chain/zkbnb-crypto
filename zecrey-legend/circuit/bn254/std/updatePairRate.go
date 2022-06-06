@@ -54,10 +54,10 @@ func VerifyUpdatePairRateTx(
 	api API, flag Variable,
 	tx UpdatePairRateTxConstraints,
 	liquidityBefore LiquidityConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromUpdatePairRate(api, flag, tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromUpdatePairRate(api, tx)
 	// verify params
 	IsVariableEqual(api, flag, tx.PairIndex, liquidityBefore.PairIndex)
 	IsVariableLessOrEqual(api, flag, tx.TreasuryRate, tx.FeeRate)
+	return pubData
 }

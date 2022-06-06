@@ -32,6 +32,7 @@ type WithdrawNftTx struct {
 	GasAccountIndex        int64
 	GasFeeAssetId          int64
 	GasFeeAssetAmount      int64
+	CollectionId           int64
 }
 
 type WithdrawNftTxConstraints struct {
@@ -47,6 +48,7 @@ type WithdrawNftTxConstraints struct {
 	GasAccountIndex        Variable
 	GasFeeAssetId          Variable
 	GasFeeAssetAmount      Variable
+	CollectionId           Variable
 }
 
 func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
@@ -63,6 +65,7 @@ func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
 		GasAccountIndex:        ZeroInt,
 		GasFeeAssetId:          ZeroInt,
 		GasFeeAssetAmount:      ZeroInt,
+		CollectionId:           ZeroInt,
 	}
 }
 
@@ -80,6 +83,7 @@ func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraint
 		GasAccountIndex:        tx.GasAccountIndex,
 		GasFeeAssetId:          tx.GasFeeAssetId,
 		GasFeeAssetAmount:      tx.GasFeeAssetAmount,
+		CollectionId:           tx.CollectionId,
 	}
 	return witness
 }
@@ -106,9 +110,8 @@ func VerifyWithdrawNftTx(
 	tx *WithdrawNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
-	hFunc *MiMC,
-) {
-	CollectPubDataFromWithdrawNft(api, flag, *tx, hFunc)
+) (pubData [PubDataSizePerTx]Variable) {
+	pubData = CollectPubDataFromWithdrawNft(api, *tx)
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
@@ -116,6 +119,8 @@ func VerifyWithdrawNftTx(
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
 	// account name hash
 	IsVariableEqual(api, flag, tx.CreatorAccountNameHash, accountsBefore[1].AccountNameHash)
+	// collection id
+	IsVariableEqual(api, flag, tx.CollectionId, nftBefore.CollectionId)
 	// asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
@@ -130,4 +135,5 @@ func VerifyWithdrawNftTx(
 	// have enough assets
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	return pubData
 }

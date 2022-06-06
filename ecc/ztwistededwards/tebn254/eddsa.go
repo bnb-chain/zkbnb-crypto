@@ -20,11 +20,10 @@ package tebn254
 import (
 	"bytes"
 	"crypto/subtle"
-	"io"
-
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 	"golang.org/x/crypto/blake2b"
+	"io"
 	"math/big"
 )
 
@@ -36,9 +35,7 @@ func GenerateEddsaPrivateKey(seed string) (sk *PrivateKey, err error) {
 	copy(buf, seed)
 	reader := bytes.NewReader(buf)
 	sk, err = GenerateKey(reader)
-
 	return sk, err
-
 }
 
 const (
@@ -50,8 +47,8 @@ func GenerateKey(r io.Reader) (*PrivateKey, error) {
 	c := twistededwards.GetEdwardsCurve()
 
 	var (
-		randSrc [32]byte
-		scalar  [32]byte
+		randSrc = make([]byte, 32)
+		scalar  = make([]byte, 32)
 		pub     PublicKey
 	)
 
@@ -81,11 +78,16 @@ func GenerateKey(r io.Reader) (*PrivateKey, error) {
 
 	// reverse first bytes because setBytes interpret stream as big endian
 	// but in eddsa specs s is the first 32 bytes in little endian
-	for i, j := 0, sizeFr-1; i < j; i, j = i+1, j-1 {
+	for i, j := 0, sizeFr; i < j; i, j = i+1, j-1 {
 		h[i], h[j] = h[j], h[i]
 	}
 
-	copy(scalar[:], h[:sizeFr])
+	a := new(big.Int).SetBytes(h[:sizeFr])
+	for i := 253; i < 256; i++ {
+		a.SetBit(a, i, 0)
+	}
+
+	copy(scalar[:], a.Bytes())
 
 	var bscalar big.Int
 	bscalar.SetBytes(scalar[:])
