@@ -25,7 +25,7 @@ import (
 )
 
 func TestGenerateEddsaPrivateKey(t *testing.T) {
-	sk, err := GenerateEddsaPrivateKey("testeeetgcxsaahtrwewfsee")
+	sk, err := GenerateEddsaPrivateKey("testeeetgcxsaahsadcastzxbmjhgmgjhcarwewfseasdasdavacsafaewe")
 	if err != nil {
 		t.Fatal(err)
 	}
