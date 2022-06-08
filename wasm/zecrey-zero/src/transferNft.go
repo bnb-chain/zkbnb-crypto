@@ -15,66 +15,58 @@
  *
  */
 
-package zecrey_zero
+package src
 
 import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
 	"syscall/js"
 )
 
 /*
-	ProveMintNft: helper function for the frontend for building mint nft tx
+	ProveTransferNft: helper function for the frontend for building transfer nft tx
 	@segmentInfo: segmentInfo JSON string
 */
-func ProveMintNft() js.Func {
+func ProveTransferNft() js.Func {
 	proveFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// length of args should be 1
 		if len(args) != 1 {
-			log.Println("[ProveMintNft] invalid size")
-			return errors.New("[ProveMintNft] invalid size").Error()
+			log.Println("[ProveTransferNft] invalid size")
+			return errors.New("[PorveMintNft] invalid size").Error()
 		}
 		// read segmentInfo JSON str
 		segmentInfo := args[0].String()
 		// parse segmentInfo
-		segment, errStr := FromMintNftSegmentJSON(segmentInfo)
+		segment, errStr := FromTransferNftSegmentJSON(segmentInfo)
 		if errStr != Success {
-			log.Println("[ProveMintNft] invalid params:", errStr)
+			log.Println("[ProveTransferNft] invalid params:", errStr)
 			return errStr
 		}
-		// compute content hash
-		contentHash := zecrey.ComputeContentHash(segment.NftName, segment.NftUrl, segment.NftIntroduction, segment.NftAttributes)
 		// create withdraw relation
-		relation, err := zecrey.NewMintNftRelation(
+		relation, err := zecrey.NewTransferNftRelation(
 			segment.Pk,
-			MintNft,
-			contentHash,
+			TransferNft,
+			segment.NftIndex,
 			segment.ReceiverAccountIndex,
 			segment.Sk,
 			segment.C_fee, segment.B_fee, segment.GasFeeAssetId, segment.GasFee,
 		)
 		if err != nil {
-			log.Println("[ProveMintNft] err info:", err)
+			log.Println("[ProveTransferNft] err info:", err)
 			return ErrInvalidWithdrawRelationParams
 		}
 		// create withdraw proof
-		proof, err := zecrey.ProveMintNft(relation)
+		proof, err := zecrey.ProveTransferNft(relation)
 		if err != nil {
-			log.Println("[ProveMintNft] err info:", err)
+			log.Println("[ProveTransferNft] err info:", err)
 			return err.Error()
 		}
-		tx := &MintNftTxInfo{
+		tx := &TransferNftTxInfo{
 			AccountIndex:         segment.AccountIndex,
-			NftName:              segment.NftName,
-			NftUrl:               segment.NftUrl,
-			NftCollectionId:      segment.NftCollectionId,
-			NftIntroduction:      segment.NftIntroduction,
-			NftContentHash:       common.Bytes2Hex(contentHash),
-			NftAttributes:        segment.NftAttributes,
+			NftIndex:             segment.NftIndex,
 			ReceiverAccountIndex: segment.ReceiverAccountIndex,
 			GasFeeAssetId:        segment.GasFeeAssetId,
 			GasFee:               segment.GasFee,
@@ -82,7 +74,7 @@ func ProveMintNft() js.Func {
 		}
 		txBytes, err := json.Marshal(tx)
 		if err != nil {
-			log.Println("[ProveMintNft] err info:", err)
+			log.Println("[ProveTransferNft] err info:", err)
 			return ErrMarshalTx
 		}
 		return base64.StdEncoding.EncodeToString(txBytes)

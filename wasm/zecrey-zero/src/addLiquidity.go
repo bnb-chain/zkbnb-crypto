@@ -15,69 +15,69 @@
  *
  */
 
-package zecrey_zero
+package src
 
 import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
+	"log"
 	"syscall/js"
 )
 
 /*
-	ProveSwap: helper function for the frontend for building swap tx
-	@segmentInfo: segmentInfo JSON string
+	ProveAddLiquidity: add liquidity
+	@segmentInfo: string JSON format
 */
-func ProveSwap() js.Func {
-	proveSwapFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		// length of args should be 8
+func ProveAddLiquidity() js.Func {
+	proveAddLiquidityFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		// length of args should be 1
 		if len(args) != 1 {
-			return ErrInvalidSwapParams
+			return ErrInvalidAddLiquidityParams
 		}
-		// read segmentInfo JSON str
+		// segment info
 		segmentInfo := args[0].String()
 		// parse segmentInfo
-		segment, errStr := FromSwapSegmentJSON(segmentInfo)
+		segment, errStr := FromAddLiquiditySegmentJSON(segmentInfo)
 		if errStr != Success {
 			return errStr
 		}
-		// create withdraw relation
-		relation, err := zecrey.NewSwapRelation(
-			segment.C_uA,
-			segment.Pk_u, segment.Pk_treasury,
+		// check Balance is correct
+		relation, err := zecrey.NewAddLiquidityRelation(
+			segment.C_uA, segment.C_uB,
+			segment.Pk_pool, segment.Pk_u,
 			segment.AssetAId, segment.AssetBId,
-			segment.B_A_Delta, segment.B_u_A,
-			segment.MinB_B_Delta,
-			segment.FeeRate, segment.TreasuryRate,
+			segment.B_uA, segment.B_uB,
+			segment.B_A_Delta, segment.B_B_Delta,
 			segment.Sk_u,
 			segment.C_fee, segment.B_fee, segment.GasFeeAssetId, segment.GasFee,
 		)
 		if err != nil {
-			return ErrInvalidSwapRelationParams
+			log.Println("[ProveAddLiquidity] err info:", err)
+			return err.Error()
 		}
-		// create withdraw proof
-		proof, err := zecrey.ProveSwap(relation)
+		proof, err := zecrey.ProveAddLiquidity(relation)
 		if err != nil {
-			return ErrProveSwap
+			log.Println("[ProveAddLiquidity] err info:", err)
+			return err.Error()
 		}
-		swapTx := &SwapTxInfo{
+		addLiquidityTx := &AddLiquidityTxInfo{
 			PairIndex:     segment.PairIndex,
 			AccountIndex:  segment.AccountIndex,
 			AssetAId:      segment.AssetAId,
 			AssetBId:      segment.AssetBId,
+			B_A_Delta:     segment.B_A_Delta,
+			B_B_Delta:     segment.B_B_Delta,
 			GasFeeAssetId: segment.GasFeeAssetId,
 			GasFee:        segment.GasFee,
-			FeeRate:       segment.FeeRate,
-			TreasuryRate:  segment.TreasuryRate,
-			B_A_Delta:     segment.B_A_Delta,
-			MinB_B_Delta:  segment.MinB_B_Delta,
 			Proof:         proof.String(),
 		}
-		txBytes, err := json.Marshal(swapTx)
+		txBytes, err := json.Marshal(addLiquidityTx)
 		if err != nil {
+			log.Println("[ProveAddLiquidity] err info:", err)
 			return ErrMarshalTx
 		}
 		return base64.StdEncoding.EncodeToString(txBytes)
 	})
-	return proveSwapFunc
+	return proveAddLiquidityFunc
 }

@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey_zero
+package src
 
 import (
 	"encoding/json"
@@ -27,17 +27,16 @@ import (
 )
 
 /*
-	WithdrawNftSegment: which is used to construct withdraw nft proof
+	SetNftPriceSegment: which is used to construct set nft price proof
 */
-type WithdrawNftSegment struct {
+type SetNftPriceSegment struct {
 	AccountIndex uint32
 	Pk           *Point
 	Sk           *big.Int
 	// common input part
-	NftIndex     uint32
-	ReceiverAddr string
-	ProxyAddr    string
-	ChainId      uint32
+	NftIndex    uint32
+	AssetId     uint32
+	AssetAmount uint64
 	// fee part
 	C_fee         *ElGamalEnc
 	B_fee         uint64
@@ -46,9 +45,9 @@ type WithdrawNftSegment struct {
 }
 
 /*
-	WithdrawNftSegmentFormat: format version of WithdrawNftSegment
+	SetNftPriceSegmentFormat: format version of SetNftPriceSegment
 */
-type WithdrawNftSegmentFormat struct {
+type SetNftPriceSegmentFormat struct {
 	// account index
 	AccountIndex int `json:"account_index"`
 	// public key
@@ -56,10 +55,9 @@ type WithdrawNftSegmentFormat struct {
 	// private key
 	Sk string `json:"sk"`
 	// common input part
-	NftIndex     int    `json:"nft_index"`
-	ReceiverAddr string `json:"receiver_addr"`
-	ProxyAddr    string `json:"proxy_addr"`
-	ChainId      int    `json:"chain_id"`
+	NftIndex    int   `json:"nft_index"`
+	AssetId     int   `json:"asset_id"`
+	AssetAmount int64 `json:"asset_amount"`
 	// fee part
 	// encryption of balance of the gas fee asset
 	C_fee string `json:"c_fee"`
@@ -71,8 +69,8 @@ type WithdrawNftSegmentFormat struct {
 	GasFee int64 `json:"gas_fee"`
 }
 
-func FromWithdrawNftSegmentJSON(segmentStr string) (*WithdrawNftSegment, string) {
-	var segmentFormat *WithdrawNftSegmentFormat
+func FromSetNftPriceSegmentJSON(segmentStr string) (*SetNftPriceSegment, string) {
+	var segmentFormat *SetNftPriceSegmentFormat
 	err := json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
 		log.Println("[FromTransferNftSegmentJSON] err info:", err)
@@ -102,14 +100,13 @@ func FromWithdrawNftSegmentJSON(segmentStr string) (*WithdrawNftSegment, string)
 		log.Println("[FromTransferNftSegmentJSON] invalid params")
 		return nil, ErrParseEnc
 	}
-	segment := &WithdrawNftSegment{
+	segment := &SetNftPriceSegment{
 		AccountIndex:  uint32(segmentFormat.AccountIndex),
 		Pk:            Pk,
 		Sk:            Sk,
 		NftIndex:      uint32(segmentFormat.NftIndex),
-		ReceiverAddr:  segmentFormat.ReceiverAddr,
-		ProxyAddr:     segmentFormat.ProxyAddr,
-		ChainId:       uint32(segmentFormat.ChainId),
+		AssetId:       uint32(segmentFormat.AssetId),
+		AssetAmount:   uint64(segmentFormat.AssetAmount),
 		C_fee:         C_fee,
 		B_fee:         uint64(segmentFormat.B_fee),
 		GasFeeAssetId: uint32(segmentFormat.GasFeeAssetId),
@@ -118,14 +115,13 @@ func FromWithdrawNftSegmentJSON(segmentStr string) (*WithdrawNftSegment, string)
 	return segment, Success
 }
 
-type WithdrawNftTxInfo struct {
+type SetNftPriceTxInfo struct {
 	// zecrey-legend index
 	AccountIndex uint32
 	// common input part
-	NftIndex     uint32
-	ReceiverAddr string
-	ProxyAddr    string
-	ChainId      uint32
+	NftIndex    uint32
+	AssetId     uint32
+	AssetAmount uint64
 	// gas fee part
 	GasFeeAssetId uint32
 	GasFee        uint64

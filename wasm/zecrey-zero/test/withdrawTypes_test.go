@@ -15,16 +15,17 @@
  *
  */
 
-package zecrey_zero
+package test
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/zecrey-labs/zecrey-crypto/wasm/zecrey-zero/src"
 	"testing"
 )
 
 func TestFromWithdrawSegmentJSON(t *testing.T) {
-	segment := &WithdrawSegmentFormat{
+	segment := &src.WithdrawSegmentFormat{
 		AccountIndex:  1,
 		C:             "m3jEfxmLrL9xXmr8hRjw2ddRuS9LD+ylbdr3w0JMuRZMdG3aiLo+hfDOezMSeXXiw+Jk2U/967RLC99qhgBTqA==",
 		Pk:            "fhtYaJmDcV93EuGRJUkiPQkgk+dr4mLKFdayOsiPKZo=",

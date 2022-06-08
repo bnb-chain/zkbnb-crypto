@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey_zero
+package src
 
 import (
 	"github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"

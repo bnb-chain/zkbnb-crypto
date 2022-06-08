@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey_zero
+package src
 
 import (
 	"encoding/base64"
@@ -27,54 +27,56 @@ import (
 )
 
 /*
-	ProveTransferNft: helper function for the frontend for building transfer nft tx
+	ProveSetNftPrice: helper function for the frontend for building set nft price tx
 	@segmentInfo: segmentInfo JSON string
 */
-func ProveTransferNft() js.Func {
+func ProveSetNftPrice() js.Func {
 	proveFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// length of args should be 1
 		if len(args) != 1 {
-			log.Println("[ProveTransferNft] invalid size")
-			return errors.New("[PorveMintNft] invalid size").Error()
+			log.Println("[ProveSetNftPrice] invalid size")
+			return errors.New("[ProveSetNftPrice] invalid size").Error()
 		}
 		// read segmentInfo JSON str
 		segmentInfo := args[0].String()
 		// parse segmentInfo
-		segment, errStr := FromTransferNftSegmentJSON(segmentInfo)
+		segment, errStr := FromSetNftPriceSegmentJSON(segmentInfo)
 		if errStr != Success {
-			log.Println("[ProveTransferNft] invalid params:", errStr)
+			log.Println("[ProveSetNftPrice] invalid params:", errStr)
 			return errStr
 		}
 		// create withdraw relation
-		relation, err := zecrey.NewTransferNftRelation(
+		relation, err := zecrey.NewSetNftPriceRelation(
 			segment.Pk,
-			TransferNft,
+			SetNftPrice,
 			segment.NftIndex,
-			segment.ReceiverAccountIndex,
+			segment.AssetId,
+			segment.AssetAmount,
 			segment.Sk,
 			segment.C_fee, segment.B_fee, segment.GasFeeAssetId, segment.GasFee,
 		)
 		if err != nil {
-			log.Println("[ProveTransferNft] err info:", err)
+			log.Println("[ProveSetNftPrice] err info:", err)
 			return ErrInvalidWithdrawRelationParams
 		}
 		// create withdraw proof
-		proof, err := zecrey.ProveTransferNft(relation)
+		proof, err := zecrey.ProveSetNftPrice(relation)
 		if err != nil {
-			log.Println("[ProveTransferNft] err info:", err)
+			log.Println("[ProveSetNftPrice] err info:", err)
 			return err.Error()
 		}
-		tx := &TransferNftTxInfo{
-			AccountIndex:         segment.AccountIndex,
-			NftIndex:             segment.NftIndex,
-			ReceiverAccountIndex: segment.ReceiverAccountIndex,
-			GasFeeAssetId:        segment.GasFeeAssetId,
-			GasFee:               segment.GasFee,
-			Proof:                proof.String(),
+		tx := &SetNftPriceTxInfo{
+			AccountIndex:  segment.AccountIndex,
+			NftIndex:      segment.NftIndex,
+			AssetId:       segment.AssetId,
+			AssetAmount:   segment.AssetAmount,
+			GasFeeAssetId: segment.GasFeeAssetId,
+			GasFee:        segment.GasFee,
+			Proof:         proof.String(),
 		}
 		txBytes, err := json.Marshal(tx)
 		if err != nil {
-			log.Println("[ProveTransferNft] err info:", err)
+			log.Println("[ProveSetNftPrice] err info:", err)
 			return ErrMarshalTx
 		}
 		return base64.StdEncoding.EncodeToString(txBytes)

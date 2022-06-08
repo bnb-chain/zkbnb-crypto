@@ -15,73 +15,72 @@
  *
  */
 
-package zecrey_zero
+package src
 
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"github.com/zecrey-labs/zecrey-crypto/zecrey/twistededwards/tebn254/zecrey"
 	"log"
 	"syscall/js"
 )
 
 /*
-	ProveBuyNft: helper function for the frontend for building buy nft tx
+	ProveWithdraw: helper function for the frontend for building withdraw tx
 	@segmentInfo: segmentInfo JSON string
 */
-func ProveBuyNft() js.Func {
-	proveFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+func ProveWithdraw() js.Func {
+	proveWithdrawFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		// length of args should be 1
 		if len(args) != 1 {
-			log.Println("[ProveBuyNft] invalid size")
-			return errors.New("[ProveBuyNft] invalid size")
+			log.Println("[ProveWithdraw] invalid size")
+			return ErrInvalidWithdrawParams
 		}
 		// read segmentInfo JSON str
 		segmentInfo := args[0].String()
 		// parse segmentInfo
-		segment, errStr := FromBuyNftSegmentJSON(segmentInfo)
+		segment, errStr := FromWithdrawSegmentJSON(segmentInfo)
 		if errStr != Success {
-			log.Println("[ProveBuyNft] invalid params")
+			log.Println("[ProveWithdraw] invalid params")
 			return errStr
 		}
 		// create withdraw relation
-		relation, err := zecrey.NewBuyNftRelation(
+		relation, err := zecrey.NewWithdrawRelation(
+			segment.ChainId,
 			segment.C,
 			segment.Pk,
 			segment.B,
+			segment.BStar,
 			segment.Sk,
-			segment.NftIndex,
-			segment.AssetId, segment.AssetAmount,
+			segment.AssetId, segment.ReceiveAddr,
 			segment.C_fee, segment.B_fee, segment.GasFeeAssetId, segment.GasFee,
-			segment.FeeRate,
 		)
 		if err != nil {
-			log.Println("[ProveBuyNft] err info:", err)
+			log.Println("[ProveWithdraw] err info:", err)
 			return ErrInvalidWithdrawRelationParams
 		}
 		// create withdraw proof
-		proof, err := zecrey.ProveBuyNft(relation)
+		proof, err := zecrey.ProveWithdraw(relation)
 		if err != nil {
-			log.Println("[ProveBuyNft] err info:", err)
-			return errors.New("[ProveBuyNft] err info:" + err.Error()).Error()
+			log.Println("[ProveWithdraw] err info:", err)
+			return ErrProveWithdraw
 		}
-		withdrawTx := &BuyNftTxInfo{
-			AccountIndex:      segment.AccountIndex,
-			OwnerAccountIndex: segment.OwnerAccountIndex,
-			NftIndex:          segment.NftIndex,
-			AssetId:           segment.AssetId,
-			AssetAmount:       segment.AssetAmount,
-			GasFeeAssetId:     segment.GasFeeAssetId,
-			GasFee:            segment.GasFee,
-			Proof:             proof.String(),
+		withdrawTx := &WithdrawTxInfo{
+			ChainId:       segment.ChainId,
+			AssetId:       segment.AssetId,
+			AccountIndex:  segment.AccountIndex,
+			ReceiveAddr:   segment.ReceiveAddr,
+			BStar:         segment.BStar,
+			GasFeeAssetId: segment.GasFeeAssetId,
+			GasFee:        segment.GasFee,
+			Proof:         proof.String(),
 		}
 		txBytes, err := json.Marshal(withdrawTx)
 		if err != nil {
-			log.Println("[ProveBuyNft] err info:", err)
+			log.Println("[ProveWithdraw] err info:", err)
 			return ErrMarshalTx
 		}
 		return base64.StdEncoding.EncodeToString(txBytes)
 	})
-	return proveFunc
+	return proveWithdrawFunc
 }
