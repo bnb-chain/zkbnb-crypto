@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey_legend
+package src
 
 import (
 	"encoding/json"
