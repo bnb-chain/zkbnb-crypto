@@ -8,6 +8,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.17
 	github.com/magiconair/properties v1.8.5
 	github.com/stretchr/testify v1.7.1
+	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064
 	gotest.tools v2.2.0+incompatible
 )
 
@@ -44,7 +45,6 @@ require (
 	github.com/tklauser/go-sysconf v0.3.5 // indirect
 	github.com/tklauser/numcpus v0.2.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064 // indirect
 	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect

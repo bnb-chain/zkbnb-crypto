@@ -376,8 +376,13 @@ func (t *Tree) BuildMerkleProofs(index int64) (
 			index /= 2
 			node = node.Parent
 		}
+		for node.Parent != nil && node.Parent.Right == node {
+			proofs = append(proofs, t.NilHashValueConst[node.Height])
+			proofHelpers = append(proofHelpers, Right)
+			node = node.Parent
+		}
 		proofs = append(proofs, node.Value)
-		proofHelpers = append(proofHelpers, Right)
+		proofHelpers = append(proofHelpers, Left)
 		node = node.Parent
 		for node.Parent != nil {
 			if node.Parent.Left == node {
