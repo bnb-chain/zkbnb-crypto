@@ -210,15 +210,15 @@ func CollectPubDataFromAddLiquidity(api API, txInfo AddLiquidityTxConstraints) (
 	ABits = append(assetBAmountBits, ABits...)
 	ABits = append(lpAmountBits, ABits...)
 	ABits = append(kLastBits, ABits...)
-	BBits := append(gasAccountIndexBits, treasuryAmountBits...)
-	BBits = append(gasFeeAssetIdBits, ABits...)
-	BBits = append(gasFeeAssetAmountBits, ABits...)
 	var paddingSize [40]Variable
 	for i := 0; i < 40; i++ {
 		paddingSize[i] = 0
 	}
 	ABits = append(paddingSize[:], ABits...)
 	pubData[0] = api.FromBinary(ABits...)
+	BBits := append(gasAccountIndexBits, treasuryAmountBits...)
+	BBits = append(gasFeeAssetIdBits, BBits...)
+	BBits = append(gasFeeAssetAmountBits, BBits...)
 	pubData[1] = api.FromBinary(BBits...)
 	for i := 2; i < PubDataSizePerTx; i++ {
 		pubData[i] = 0
@@ -244,14 +244,14 @@ func CollectPubDataFromRemoveLiquidity(api API, txInfo RemoveLiquidityTxConstrai
 	ABits = append(assetBAmountBits, ABits...)
 	ABits = append(lpAmountBits, ABits...)
 	ABits = append(kLastBits, ABits...)
-	BBits := append(gasAccountIndexBits, treasuryAmountBits...)
-	BBits = append(gasFeeAssetIdBits, ABits...)
-	BBits = append(gasFeeAssetAmountBits, ABits...)
 	var paddingSize [40]Variable
 	for i := 0; i < 40; i++ {
 		paddingSize[i] = 0
 	}
 	ABits = append(paddingSize[:], ABits...)
+	BBits := append(gasAccountIndexBits, treasuryAmountBits...)
+	BBits = append(gasFeeAssetIdBits, BBits...)
+	BBits = append(gasFeeAssetAmountBits, BBits...)
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = api.FromBinary(BBits...)
 	for i := 2; i < PubDataSizePerTx; i++ {
@@ -372,6 +372,7 @@ func CollectPubDataFromTransferNft(api API, txInfo TransferNftTxConstraints) (pu
 
 func CollectPubDataFromAtomicMatch(api API, txInfo AtomicMatchTxConstraints) (pubData [PubDataSizePerTx]Variable) {
 	txTypeBits := api.ToBinary(TxTypeAtomicMatch, TxTypeBitsSize)
+	nftIndexBits := api.ToBinary(txInfo.BuyOffer.NftIndex, NftIndexBitsSize)
 	submitterAccountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
 	buyerAccountIndexBits := api.ToBinary(txInfo.BuyOffer.AccountIndex, AccountIndexBitsSize)
 	buyerOfferIdBits := api.ToBinary(txInfo.BuyOffer.OfferId, OfferIdBitsSize)
@@ -389,9 +390,10 @@ func CollectPubDataFromAtomicMatch(api API, txInfo AtomicMatchTxConstraints) (pu
 	ABits = append(buyerOfferIdBits, ABits...)
 	ABits = append(sellerAccountIndexBits, ABits...)
 	ABits = append(sellerOfferIdBits, ABits...)
+	ABits = append(nftIndexBits, ABits...)
 	ABits = append(assetIdBits, ABits...)
-	var paddingSize [88]Variable
-	for i := 0; i < 88; i++ {
+	var paddingSize [48]Variable
+	for i := 0; i < 48; i++ {
 		paddingSize[i] = 0
 	}
 	ABits = append(paddingSize[:], ABits...)
