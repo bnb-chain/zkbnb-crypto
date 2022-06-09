@@ -78,11 +78,11 @@ func GenerateKey(r io.Reader) (*PrivateKey, error) {
 
 	// reverse first bytes because setBytes interpret stream as big endian
 	// but in eddsa specs s is the first 32 bytes in little endian
-	for i, j := 0, sizeFr; i < j; i, j = i+1, j-1 {
-		h[i], h[j] = h[j], h[i]
+	for i, j := 0, sizeFr-1; i < sizeFr; i, j = i+1, j-1 {
+		scalar[i] = h[j]
 	}
 
-	a := new(big.Int).SetBytes(h[:sizeFr])
+	a := new(big.Int).SetBytes(scalar[:])
 	for i := 253; i < 256; i++ {
 		a.SetBit(a, i, 0)
 	}
@@ -99,10 +99,10 @@ func GenerateKey(r io.Reader) (*PrivateKey, error) {
 	subtle.ConstantTimeCopy(1, res[sizeFr:2*sizeFr], scalar[:])
 	subtle.ConstantTimeCopy(1, res[2*sizeFr:], randSrc[:])
 
-	var pk = &PrivateKey{}
-	// make sure pk is not nil
+	var sk = &PrivateKey{}
+	// make sure sk is not nil
 
-	_, err = pk.SetBytes(res[:])
+	_, err = sk.SetBytes(res[:])
 
-	return pk, err
+	return sk, err
 }

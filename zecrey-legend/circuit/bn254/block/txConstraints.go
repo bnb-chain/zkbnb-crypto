@@ -535,6 +535,50 @@ func VerifyTransaction(
 	return isOnChainOp, pubData, nil
 }
 
+func EmptyTx() (oTx *Tx) {
+	oTx = &Tx{
+		TxType:            std.TxTypeEmptyTx,
+		Nonce:             0,
+		ExpiredAt:         0,
+		Signature:         std.EmptySignature(),
+		AccountRootBefore: make([]byte, 32),
+		AccountsInfoBefore: [5]*std.Account{
+			std.EmptyAccount(0, make([]byte, 32)),
+			std.EmptyAccount(0, make([]byte, 32)),
+			std.EmptyAccount(0, make([]byte, 32)),
+			std.EmptyAccount(0, make([]byte, 32)),
+			std.EmptyAccount(0, make([]byte, 32)),
+		},
+		LiquidityRootBefore:             make([]byte, 32),
+		LiquidityBefore:                 std.EmptyLiquidity(0),
+		NftRootBefore:                   make([]byte, 32),
+		NftBefore:                       std.EmptyNft(0),
+		StateRootBefore:                 make([]byte, 32),
+		MerkleProofsAccountAssetsBefore: [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte{},
+		MerkleProofsAccountBefore:       [NbAccountsPerTx][AccountMerkleLevels][]byte{},
+		MerkleProofsLiquidityBefore:     [LiquidityMerkleLevels][]byte{},
+		MerkleProofsNftBefore:           [NftMerkleLevels][]byte{},
+		StateRootAfter:                  make([]byte, 32),
+	}
+	for i := 0; i < NbAccountsPerTx; i++ {
+		for j := 0; j < NbAccountAssetsPerAccount; j++ {
+			for k := 0; k < AssetMerkleLevels; k++ {
+				oTx.MerkleProofsAccountAssetsBefore[i][j][k] = make([]byte, 32)
+			}
+		}
+		for j := 0; j < AccountMerkleLevels; j++ {
+			oTx.MerkleProofsAccountBefore[i][j] = make([]byte, 32)
+		}
+	}
+	for i := 0; i < LiquidityMerkleLevels; i++ {
+		oTx.MerkleProofsLiquidityBefore[i] = make([]byte, 32)
+	}
+	for i := 0; i < NftMerkleLevels; i++ {
+		oTx.MerkleProofsNftBefore[i] = make([]byte, 32)
+	}
+	return oTx
+}
+
 func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	witness.TxType = int64(oTx.TxType)
 	witness.RegisterZnsTxInfo = std.EmptyRegisterZnsTxWitness()

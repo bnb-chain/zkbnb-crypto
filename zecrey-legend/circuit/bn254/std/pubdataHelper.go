@@ -64,7 +64,7 @@ func CollectPubDataFromCreatePair(api API, txInfo CreatePairTxConstraints) (pubD
 }
 
 func CollectPubDataFromUpdatePairRate(api API, txInfo UpdatePairRateTxConstraints) (pubData [PubDataSizePerTx]Variable) {
-	txTypeBits := api.ToBinary(TxTypeCreatePair, TxTypeBitsSize)
+	txTypeBits := api.ToBinary(TxTypeUpdatePairRate, TxTypeBitsSize)
 	pairIndexBits := api.ToBinary(txInfo.PairIndex, PairIndexBitsSize)
 	FeeRateBits := api.ToBinary(txInfo.FeeRate, PackedFeeBitsSize)
 	TreasuryAccountIndexBits := api.ToBinary(txInfo.TreasuryAccountIndex, AccountIndexBitsSize)
@@ -289,7 +289,7 @@ func CollectPubDataFromWithdraw(api API, txInfo WithdrawTxConstraints) (pubData 
 }
 
 func CollectPubDataFromCreateCollection(api API, txInfo CreateCollectionTxConstraints) (pubData [PubDataSizePerTx]Variable) {
-	txTypeBits := api.ToBinary(TxTypeDeposit, TxTypeBitsSize)
+	txTypeBits := api.ToBinary(TxTypeCreateCollection, TxTypeBitsSize)
 	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
 	collectionIdBits := api.ToBinary(txInfo.CollectionId, CollectionIdBitsSize)
 	gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
@@ -498,8 +498,8 @@ func CollectPubDataFromFullExitNft(api API, txInfo FullExitNftTxConstraints) (pu
 	ABits = append(creatorTreasuryRateBits, ABits...)
 	ABits = append(nftIndexBits, ABits...)
 	ABits = append(collectionIdBits, ABits...)
-	var paddingSize [128]Variable
-	for i := 0; i < 128; i++ {
+	var paddingSize [112]Variable
+	for i := 0; i < 112; i++ {
 		paddingSize[i] = 0
 	}
 	ABits = append(paddingSize[:], ABits...)
