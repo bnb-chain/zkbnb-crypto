@@ -62,10 +62,6 @@ func VerifyBlock(
 	pubdataHashFunc.Write(block.CreatedAt)
 	pubdataHashFunc.Write(block.OldStateRoot)
 	pubdataHashFunc.Write(block.NewStateRoot)
-	api.Println(block.BlockNumber)
-	api.Println(block.CreatedAt)
-	api.Println(block.OldStateRoot)
-	api.Println(block.NewStateRoot)
 	api.AssertIsEqual(block.OldStateRoot, block.Txs[0].StateRootBefore)
 	api.AssertIsEqual(block.NewStateRoot, block.Txs[NbTxsPerBlock-1].StateRootAfter)
 	var (
@@ -79,7 +75,6 @@ func VerifyBlock(
 		return err
 	}
 	for i := 0; i < std.PubDataSizePerTx; i++ {
-		api.Println(pendingPubData[i])
 		pubdataHashFunc.Write(pendingPubData[i])
 	}
 	onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
@@ -97,7 +92,6 @@ func VerifyBlock(
 		onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 	}
 	pubdataHashFunc.Write(onChainOpsCount)
-	api.Println(onChainOpsCount)
 	commitment := pubdataHashFunc.Sum()
 	api.AssertIsEqual(commitment, block.BlockCommitment)
 	return nil
