@@ -28,14 +28,19 @@ import (
 )
 
 type AtomicMatchSegmentFormat struct {
-	AccountIndex      int64
-	BuyOffer          string
-	SellOffer         string
-	GasAccountIndex   int64
-	GasFeeAssetId     int64
-	GasFeeAssetAmount string
-	Nonce             int64
-	ExpiredAt         int64
+	AccountIndex int64  `json:"account_index"`
+	BuyOffer     string `json:"buy_offer"`
+	// OfferTxInfo Type
+	SellOffer string `json:"sell_offer"`
+	// OfferTxInfo Type
+	GasAccountIndex   int64  `json:"gas_account_index"`
+	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
+	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
+	Nonce             int64  `json:"nonce"`
+	// transaction amount +1 for fromAccountIndex
+	ExpiredAt int64 `json:"expired_at"`
+	// transaction expire time in milli-second type
+	// eg. current timestamp + 1 week
 }
 
 /*
@@ -56,12 +61,12 @@ func ConstructAtomicMatchTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Atom
 	var (
 		buyOffer, sellOffer *OfferTxInfo
 	)
-	err = json.Unmarshal([]byte(segmentFormat.BuyOffer), buyOffer)
+	err = json.Unmarshal([]byte(segmentFormat.BuyOffer), &buyOffer)
 	if err != nil {
 		log.Println("[ConstructBuyNftTxInfo] unable to unmarshal offer", err.Error())
 		return nil, err
 	}
-	err = json.Unmarshal([]byte(segmentFormat.SellOffer), sellOffer)
+	err = json.Unmarshal([]byte(segmentFormat.SellOffer), &sellOffer)
 	if err != nil {
 		log.Println("[ConstructBuyNftTxInfo] unable to unmarshal offer", err.Error())
 		return nil, err
