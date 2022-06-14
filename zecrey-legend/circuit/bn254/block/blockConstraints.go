@@ -92,8 +92,8 @@ func VerifyBlock(
 		onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 	}
 	pubdataHashFunc.Write(onChainOpsCount)
-	//commitment := pubdataHashFunc.Sum()
-	//api.AssertIsEqual(commitment, block.BlockCommitment)
+	commitment := pubdataHashFunc.Sum()
+	api.AssertIsEqual(commitment, block.BlockCommitment)
 	return nil
 }
 
