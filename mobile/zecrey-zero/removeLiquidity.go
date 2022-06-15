@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey
+package zecrey_zero
 
 import (
 	"encoding/base64"
@@ -25,50 +25,50 @@ import (
 )
 
 /*
-	ProveWithdraw: helper function for the frontend for building withdraw tx
-	@segmentInfo: segmentInfo JSON string
+	ProveRemoveLiquidity: remove liquidity
+	@segmentInfo: string JSON format
 */
-func ProveWithdraw(segmentInfo string) (txInfo string, err error) {
+func ProveRemoveLiquidity(segmentInfo string) (txInfo string, err error) {
 	// parse segmentInfo
-	segment, err := FromWithdrawSegmentJSON(segmentInfo)
+	segment, err := FromRemoveLiquiditySegmentJSON(segmentInfo)
 	if err != nil {
-		log.Println("[ProveWithdraw] invalid params:", err)
 		return "", err
 	}
-	// create withdraw relation
-	relation, err := zecrey.NewWithdrawRelation(
-		segment.ChainId,
-		segment.C,
-		segment.Pk,
-		segment.B,
-		segment.BStar,
-		segment.Sk,
-		segment.AssetId, segment.ReceiveAddr,
+	// check Balance is correct
+	relation, err := zecrey.NewRemoveLiquidityRelation(
+		segment.C_u_LP,
+		segment.Pk_u,
+		segment.B_LP,
+		segment.Delta_LP,
+		segment.MinB_A_Delta, segment.MinB_B_Delta,
+		segment.AssetAId, segment.AssetBId,
+		segment.Sk_u,
 		segment.C_fee, segment.B_fee, segment.GasFeeAssetId, segment.GasFee,
 	)
 	if err != nil {
-		log.Println("[ProveWithdraw] err info:", err)
+		log.Println("[ProveRemoveLiquidity] err info:", err)
 		return "", err
 	}
-	// create withdraw proof
-	proof, err := zecrey.ProveWithdraw(relation)
+	proof, err := zecrey.ProveRemoveLiquidity(relation)
 	if err != nil {
-		log.Println("[ProveWithdraw] err info:", err)
+		log.Println("[ProveRemoveLiquidity] err info:", err)
 		return "", err
 	}
-	withdrawTx := &WithdrawTxInfo{
-		ChainId:       segment.ChainId,
-		AssetId:       segment.AssetId,
+	removeLiquidityTx := &RemoveLiquidityTxInfo{
+		PairIndex:     segment.PairIndex,
 		AccountIndex:  segment.AccountIndex,
-		ReceiveAddr:   segment.ReceiveAddr,
-		BStar:         segment.BStar,
+		AssetAId:      segment.AssetAId,
+		AssetBId:      segment.AssetBId,
+		MinB_A_Delta:  segment.MinB_A_Delta,
+		MinB_B_Delta:  segment.MinB_B_Delta,
+		Delta_LP:      segment.Delta_LP,
 		GasFeeAssetId: segment.GasFeeAssetId,
 		GasFee:        segment.GasFee,
 		Proof:         proof.String(),
 	}
-	txBytes, err := json.Marshal(withdrawTx)
+	txBytes, err := json.Marshal(removeLiquidityTx)
 	if err != nil {
-		log.Println("[ProveWithdraw] err info:", err)
+		log.Println("[ProveRemoveLiquidity] err info: ", ErrMarshalTx)
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(txBytes), nil

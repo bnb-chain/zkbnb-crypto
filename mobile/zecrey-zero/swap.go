@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey
+package zecrey_zero
 
 import (
 	"encoding/base64"

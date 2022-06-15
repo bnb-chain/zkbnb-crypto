@@ -15,23 +15,14 @@
  *
  */
 
-package zecrey
+package zecrey_zero
 
 import (
-	"errors"
-	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"math/big"
+	"github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/zecrey-labs/zecrey-crypto/elgamal/twistededwards/tebn254/twistedElgamal"
 )
 
-/*
-	GetL2PublicKey: help the user generates the public key
-*/
-func GetL2PublicKey(skStr string) (pkStr string, err error) {
-	sk, b := new(big.Int).SetString(skStr, 10)
-	if !b {
-		return "", errors.New("[GetL2PublicKey] invalid private key, should be big integer")
-	}
-	// pk = g^{Sk}
-	pk := curve.ScalarBaseMul(sk)
-	return curve.ToString(pk), nil
-}
+type (
+	Point      = tebn254.Point
+	ElGamalEnc = twistedElgamal.ElGamalEnc
+)
