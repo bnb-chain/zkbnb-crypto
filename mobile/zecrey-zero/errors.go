@@ -15,7 +15,7 @@
  *
  */
 
-package zecrey
+package zecrey_zero
 
 const (
 	ErrUnmarshal                     = "ErrUnmarshal"
@@ -25,17 +25,17 @@ const (
 	ErrParseBigInt                   = "ErrParseBigInt"
 	ErrInvalidWithdrawRelationParams = "ErrInvalidWithdrawRelationParams"
 	ErrProveWithdraw                 = "ErrProveWithdraw"
-	ErrProveSwap = "ErrProveSwap"
+	ErrProveSwap                     = "ErrProveSwap"
 	ErrMarshalTx                     = "ErrMarshalTx"
 
 	ErrInvalidTransferParams         = "ErrInvalidTransferParams"
 	ErrInvalidTransferRelationParams = "ErrInvalidTransferRelationParams"
 	ErrProveTransfer                 = "ErrProveTransfer"
-	ErrProveUnlock = "ErrProveUnlock"
+	ErrProveUnlock                   = "ErrProveUnlock"
 
 	ErrInvalidUnlockParams = "ErrInvalidUnlockParams"
 
-	ErrReplicatedAccounts       = "ErrReplicatedAccounts"
+	ErrReplicatedAccounts = "ErrReplicatedAccounts"
 
 	ErrL2SkParams = "ErrL2SkParams"
 
