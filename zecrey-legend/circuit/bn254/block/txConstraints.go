@@ -210,9 +210,15 @@ func VerifyTransaction(
 	pubData = SelectPubData(api, isTransferTx, pubDataCheck, pubData)
 	pubDataCheck = std.VerifySwapTx(api, isSwapTx, &tx.SwapTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
 	pubData = SelectPubData(api, isSwapTx, pubDataCheck, pubData)
-	pubDataCheck = std.VerifyAddLiquidityTx(api, isAddLiquidityTx, &tx.AddLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
+	pubDataCheck, err = std.VerifyAddLiquidityTx(api, isAddLiquidityTx, &tx.AddLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
+	if err != nil {
+		return nil, pubData, err
+	}
 	pubData = SelectPubData(api, isAddLiquidityTx, pubDataCheck, pubData)
-	pubDataCheck = std.VerifyRemoveLiquidityTx(api, isRemoveLiquidityTx, &tx.RemoveLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
+	pubDataCheck, err = std.VerifyRemoveLiquidityTx(api, isRemoveLiquidityTx, &tx.RemoveLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
+	if err != nil {
+		return nil, pubData, err
+	}
 	pubData = SelectPubData(api, isRemoveLiquidityTx, pubDataCheck, pubData)
 	pubDataCheck = std.VerifyCreateCollectionTx(api, isCreateCollectionTx, &tx.CreateCollectionTxInfo, tx.AccountsInfoBefore)
 	pubData = SelectPubData(api, isCreateCollectionTx, pubDataCheck, pubData)

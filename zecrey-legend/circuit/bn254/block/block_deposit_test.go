@@ -26,6 +26,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/zecrey-labs/zecrey-crypto/zecrey-legend/circuit/bn254/std"
 	"log"
 	"math/big"
 	"testing"
@@ -88,5 +89,6 @@ func TestVerifyBlock_Deposit(t *testing.T) {
 	assert.SolvingSucceeded(
 		&circuit, &witness, test.WithBackends(backend.GROTH16),
 		test.WithCurves(ecc.BN254),
+		test.WithProverOpts(backend.WithHints(std.Keccak256, std.ComputeSLp)),
 		test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
 }

@@ -112,7 +112,7 @@ func VerifyRemoveLiquidityTx(
 	api API, flag Variable,
 	tx *RemoveLiquidityTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataSizePerTx]Variable, err error) {
 	pubData = CollectPubDataFromRemoveLiquidity(api, *tx)
 	// verify params
 	// account index
@@ -134,14 +134,23 @@ func VerifyRemoveLiquidityTx(
 	tx.AssetBMinAmount = UnpackAmount(api, tx.AssetBMinAmount)
 	tx.AssetBAmountDelta = UnpackAmount(api, tx.AssetBAmountDelta)
 	tx.LpAmount = UnpackAmount(api, tx.LpAmount)
+	tx.TreasuryAmount = UnpackAmount(api, tx.TreasuryAmount)
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[3].Balance)
 	// TODO verify LP
-	sLp := ComputeSLp(api, flag, liquidityBefore.AssetA, liquidityBefore.AssetB, liquidityBefore.KLast, liquidityBefore.FeeRate, liquidityBefore.TreasuryRate)
+	kCurrent := api.Mul(liquidityBefore.AssetA, liquidityBefore.AssetB)
+	IsVariableLessOrEqual(api, flag, liquidityBefore.KLast, kCurrent)
+	IsVariableLessOrEqual(api, flag, liquidityBefore.TreasuryRate, liquidityBefore.FeeRate)
+	sLps, err := api.Compiler().NewHint(ComputeSLp, 1, liquidityBefore.AssetA, liquidityBefore.AssetB, liquidityBefore.KLast, liquidityBefore.FeeRate, liquidityBefore.TreasuryRate)
+	if err != nil {
+		return pubData, err
+	}
+	sLp := sLps[0]
+	IsVariableEqual(api, flag, tx.TreasuryAmount, sLp)
 	poolLpVar := api.Sub(liquidityBefore.LpAmount, sLp)
 	IsVariableLessOrEqual(api, flag, api.Mul(tx.AssetAAmountDelta, poolLpVar), api.Mul(tx.LpAmount, liquidityBefore.AssetA))
 	IsVariableLessOrEqual(api, flag, api.Mul(tx.AssetBAmountDelta, poolLpVar), api.Mul(tx.LpAmount, liquidityBefore.AssetB))
 	IsVariableLessOrEqual(api, flag, tx.AssetAMinAmount, tx.AssetAAmountDelta)
 	IsVariableLessOrEqual(api, flag, tx.AssetBMinAmount, tx.AssetBAmountDelta)
-	return pubData
+	return pubData, nil
 }

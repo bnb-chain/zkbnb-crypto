@@ -15,12 +15,13 @@ import (
 type HintConstraints struct {
 	A Variable
 	B Variable
+	C Variable
 }
 
 func Keccak256(curveID ecc.ID, inputs []*big.Int, outputs []*big.Int) error {
 	var buf bytes.Buffer
-	for i := 0; i < len(outputs); i++ {
-		buf.Write(inputs[i].Bytes())
+	for i := 0; i < len(inputs); i++ {
+		buf.Write(inputs[i].FillBytes(make([]byte, 32)))
 	}
 	hashVal := crypto.Keccak256Hash(buf.Bytes())
 	result := outputs[0]
@@ -29,21 +30,25 @@ func Keccak256(curveID ecc.ID, inputs []*big.Int, outputs []*big.Int) error {
 }
 
 func (circuit HintConstraints) Define(api API) error {
-	hashVals, err := api.Compiler().NewHint(Keccak256, 1, circuit.A)
+	hashVals, err := api.Compiler().NewHint(Keccak256, 1, circuit.A, circuit.B)
 	if err != nil {
 		return err
 	}
-	api.AssertIsEqual(hashVals[0], circuit.B)
+	api.AssertIsEqual(hashVals[0], circuit.C)
 	return nil
 }
 
 func TestHint(t *testing.T) {
-	hashVal := crypto.Keccak256Hash(big.NewInt(1).Bytes())
+	var buf bytes.Buffer
+	buf.Write(new(big.Int).SetInt64(1).FillBytes(make([]byte, 32)))
+	buf.Write(new(big.Int).SetInt64(2).FillBytes(make([]byte, 32)))
+	hashVal := crypto.Keccak256Hash(buf.Bytes())
 	log.Println(new(big.Int).SetBytes(hashVal.Bytes()).String())
 	assert := test.NewAssert(t)
 	var circuit, witness HintConstraints
 	witness.A = 1
-	witness.B = hashVal.Bytes()
+	witness.B = 2
+	witness.C = hashVal.Bytes()
 	assert.SolvingSucceeded(
 		&circuit, &witness, test.WithBackends(backend.GROTH16),
 		test.WithProverOpts(backend.WithHints(Keccak256)),
