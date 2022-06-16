@@ -57,17 +57,19 @@ func VerifyBlock(
 	hFunc MiMC,
 	pubdataHashFunc MiMC,
 ) (err error) {
+	var (
+		onChainOpsCount       Variable
+		isOnChainOp           Variable
+		pendingCommitmentData [std.PubDataSizePerTx*NbTxsPerBlock + 5]Variable
+		count                 = 4
+	)
 	// write basic info into hFunc
-	pubdataHashFunc.Write(block.BlockNumber)
-	pubdataHashFunc.Write(block.CreatedAt)
-	pubdataHashFunc.Write(block.OldStateRoot)
-	pubdataHashFunc.Write(block.NewStateRoot)
+	pendingCommitmentData[0] = block.BlockNumber
+	pendingCommitmentData[1] = block.CreatedAt
+	pendingCommitmentData[2] = block.OldStateRoot
+	pendingCommitmentData[3] = block.NewStateRoot
 	api.AssertIsEqual(block.OldStateRoot, block.Txs[0].StateRootBefore)
 	api.AssertIsEqual(block.NewStateRoot, block.Txs[NbTxsPerBlock-1].StateRootAfter)
-	var (
-		onChainOpsCount Variable
-		isOnChainOp     Variable
-	)
 	onChainOpsCount = 0
 	isOnChainOp, pendingPubData, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt)
 	if err != nil {
@@ -75,7 +77,8 @@ func VerifyBlock(
 		return err
 	}
 	for i := 0; i < std.PubDataSizePerTx; i++ {
-		pubdataHashFunc.Write(pendingPubData[i])
+		pendingCommitmentData[count] = pendingPubData[i]
+		count++
 	}
 	onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 	for i := 1; i < NbTxsPerBlock; i++ {
@@ -87,13 +90,15 @@ func VerifyBlock(
 			return err
 		}
 		for j := 0; j < std.PubDataSizePerTx; j++ {
-			pubdataHashFunc.Write(pendingPubData[j])
+			pendingCommitmentData[count] = pendingPubData[i]
+			count++
 		}
 		onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 	}
-	pubdataHashFunc.Write(onChainOpsCount)
-	commitment := pubdataHashFunc.Sum()
-	api.AssertIsEqual(commitment, block.BlockCommitment)
+	pendingCommitmentData[count] = onChainOpsCount
+	//commitment := pubdataHashFunc.Sum()
+	commitments, _ := api.Compiler().NewHint(std.Keccak256, 1, pendingCommitmentData[:]...)
+	api.AssertIsEqual(commitments[0], block.BlockCommitment)
 	return nil
 }
 

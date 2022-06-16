@@ -108,7 +108,7 @@ func VerifyAddLiquidityTx(
 	api API, flag Variable,
 	tx *AddLiquidityTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints, liquidityBefore LiquidityConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataSizePerTx]Variable, err error) {
 	pubData = CollectPubDataFromAddLiquidity(api, *tx)
 	// check params
 	// account index
@@ -133,9 +133,19 @@ func VerifyAddLiquidityTx(
 	IsVariableLessOrEqual(api, flag, tx.AssetAAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	IsVariableLessOrEqual(api, flag, tx.AssetBAmount, accountsBefore[0].AssetsInfo[1].Balance)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[2].Balance)
+	// verify treasury amount
+	kCurrent := api.Mul(liquidityBefore.AssetA, liquidityBefore.AssetB)
+	IsVariableLessOrEqual(api, flag, liquidityBefore.KLast, kCurrent)
+	IsVariableLessOrEqual(api, flag, liquidityBefore.TreasuryRate, liquidityBefore.FeeRate)
+	sLps, err := api.Compiler().NewHint(ComputeSLp, 1, liquidityBefore.AssetA, liquidityBefore.AssetB, liquidityBefore.KLast, liquidityBefore.FeeRate, liquidityBefore.TreasuryRate)
+	if err != nil {
+		return pubData, err
+	}
+	sLp := sLps[0]
+	IsVariableEqual(api, flag, tx.TreasuryAmount, sLp)
 	// TODO verify ratio
-	l := api.Mul(liquidityBefore.AssetA, tx.AssetAAmount)
-	r := api.Mul(liquidityBefore.AssetB, tx.AssetBAmount)
+	l := api.Mul(liquidityBefore.AssetA, tx.AssetBAmount)
+	r := api.Mul(liquidityBefore.AssetB, tx.AssetAAmount)
 	maxDelta := std.Max(api, liquidityBefore.AssetA, liquidityBefore.AssetB)
 	l = std.Max(api, l, r)
 	r = std.Min(api, l, r)
@@ -148,5 +158,5 @@ func VerifyAddLiquidityTx(
 	IsVariableLessOrEqual(api, isZero, api.Mul(tx.LpAmount, tx.LpAmount), lpAmountSquare)
 	notZero := api.IsZero(isZero)
 	IsVariableEqual(api, notZero, api.Mul(tx.LpAmount, liquidityBefore.AssetA), api.Mul(tx.AssetAAmount, liquidityBefore.LpAmount))
-	return pubData
+	return pubData, nil
 }

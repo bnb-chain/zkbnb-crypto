@@ -342,11 +342,10 @@ func GetAssetDeltasAndLiquidityDeltaFromAddLiquidity(
 		},
 	}
 	// treasury account
-	sLp := std.ComputeSLp(api, 1, liquidityBefore.AssetA, liquidityBefore.AssetB, liquidityBefore.KLast, liquidityBefore.FeeRate, liquidityBefore.TreasuryRate)
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             std.ZeroInt,
-			LpDelta:                  sLp,
+			LpDelta:                  txInfo.TreasuryAmount,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
 		EmptyAccountAssetDeltaConstraints(),
@@ -422,11 +421,10 @@ func GetAssetDeltasAndLiquidityDeltaFromRemoveLiquidity(
 		},
 	}
 	// treasury account
-	sLp := std.ComputeSLp(api, 1, liquidityBefore.AssetA, liquidityBefore.AssetB, liquidityBefore.KLast, liquidityBefore.FeeRate, liquidityBefore.TreasuryRate)
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             std.ZeroInt,
-			LpDelta:                  sLp,
+			LpDelta:                  txInfo.TreasuryAmount,
 			OfferCanceledOrFinalized: std.ZeroInt,
 		},
 		EmptyAccountAssetDeltaConstraints(),
