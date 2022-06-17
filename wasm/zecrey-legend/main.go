@@ -29,6 +29,8 @@ import (
 
 func main() {
 	fmt.Println("Zecrey-legend Crypto Assembly")
+	// account
+	js.Global().Set("getAccountNameHash", src.AccountNameHash())
 	// eddsa
 	js.Global().Set("getEddsaPublicKey", src.GetEddsaPublicKey())
 	js.Global().Set("generateEddsaKey", src.GenerateEddsaKey())
