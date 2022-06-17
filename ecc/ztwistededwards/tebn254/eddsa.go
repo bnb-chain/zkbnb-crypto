@@ -87,7 +87,7 @@ func GenerateKey(r io.Reader) (*PrivateKey, error) {
 		a.SetBit(a, i, 0)
 	}
 
-	copy(scalar[:], a.Bytes())
+	copy(scalar[:], a.FillBytes(make([]byte, 32)))
 
 	var bscalar big.Int
 	bscalar.SetBytes(scalar[:])

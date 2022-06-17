@@ -178,4 +178,13 @@ func TestEddsa(t *testing.T) {
 	fmt.Println("gas:", common.Bytes2Hex(key.PublicKey.A.X.Marshal()))
 	fmt.Println("gas:", common.Bytes2Hex(key.PublicKey.A.Y.Marshal()))
 	fmt.Println(key.Bytes())
+
+	seed = "ee823a72698fd05c70fbdf36ba2ea467d33cf628c94ef030383efcb39581e43f"
+	key, err = curve.GenerateEddsaPrivateKey(seed)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(new(big.Int).SetBytes(key.Bytes()[32:64]).Bit(245))
+	fmt.Println("amber:", common.Bytes2Hex(key.PublicKey.A.X.Marshal()))
+	fmt.Println("amber:", common.Bytes2Hex(key.PublicKey.A.Y.Marshal()))
 }
