@@ -18,6 +18,7 @@
 package src
 
 import (
+	"bytes"
 	"encoding/hex"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -36,7 +37,10 @@ func GetEddsaPublicKey() js.Func {
 		if err != nil {
 			return err.Error()
 		}
-		return hex.EncodeToString(sk.PublicKey.Bytes())
+		var buf bytes.Buffer
+		buf.Write(sk.PublicKey.A.X.Marshal())
+		buf.Write(sk.PublicKey.A.Y.Marshal())
+		return hex.EncodeToString(buf.Bytes())
 	})
 	return helperFunc
 }
