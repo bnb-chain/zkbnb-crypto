@@ -34,7 +34,6 @@ type AddLiquiditySegmentFormat struct {
 	AssetAAmount      string `json:"asset_a_amount"`
 	AssetBId          int64  `json:"asset_b_id"`
 	AssetBAmount      string `json:"asset_b_amount"`
-	LpAmount          string `json:"lp_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
