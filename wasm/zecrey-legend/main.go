@@ -33,6 +33,7 @@ func main() {
 	js.Global().Set("getAccountNameHash", src.AccountNameHash())
 	// eddsa
 	js.Global().Set("getEddsaPublicKey", src.GetEddsaPublicKey())
+	js.Global().Set("getEddsaCompressedPublicKey", src.GetEddsaCompressedPublicKey())
 	js.Global().Set("generateEddsaKey", src.GenerateEddsaKey())
 	js.Global().Set("eddsaSign", src.EddsaSign())
 	js.Global().Set("eddsaVerify", src.EddsaVerify())
