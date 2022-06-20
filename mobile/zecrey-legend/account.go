@@ -26,7 +26,7 @@ func ComputeAccountNameHash(accountName string) (res string, err error) {
 	return res, nil
 }
 
-func AccountNameHash(accountName string) (hashVal string, err error) {
+func GetAccountNameHash(accountName string) (hashVal string, err error) {
 	// xxx.legend
 	nameHash, err := ComputeAccountNameHash(accountName)
 	if err != nil {
