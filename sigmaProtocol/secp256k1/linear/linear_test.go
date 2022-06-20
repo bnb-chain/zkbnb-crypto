@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
-	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
+	"github.com/bnb-chain/zkbas-crypto/ecc/zp256"
 )
 
 func TestProveVerify(t *testing.T) {

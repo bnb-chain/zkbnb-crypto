@@ -17,7 +17,7 @@
 
 package chaum_pedersen
 
-import "github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
+import "github.com/bnb-chain/zkbas-crypto/ecc/zp256"
 
 var (
 	Order = zp256.Curve.N

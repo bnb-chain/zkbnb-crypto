@@ -21,7 +21,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"math/big"
-	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
+	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
 )
 
 type RangeProof struct {

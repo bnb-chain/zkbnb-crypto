@@ -23,11 +23,11 @@ import (
 	"errors"
 	"log"
 	"math/big"
-	"github.com/zecrey-labs/zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
-	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
-	"github.com/zecrey-labs/zecrey-crypto/util"
+	"github.com/bnb-chain/zkbas-crypto/commitment/twistededwards/tebn254/pedersen"
+	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
+	"github.com/bnb-chain/zkbas-crypto/hash/bn254/zmimc"
+	"github.com/bnb-chain/zkbas-crypto/util"
 )
 
 func Prove(b int64, g, h *Point) (r *big.Int, proof *RangeProof, err error) {

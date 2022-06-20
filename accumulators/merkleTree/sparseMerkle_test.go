@@ -23,7 +23,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
+	"github.com/bnb-chain/zkbas-crypto/hash/bn254/zmimc"
 	"log"
 	"strconv"
 	"testing"

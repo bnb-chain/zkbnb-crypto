@@ -23,9 +23,9 @@ import (
 	"errors"
 	"math/big"
 	"strconv"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
-	"github.com/zecrey-labs/zecrey-crypto/util"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
+	"github.com/bnb-chain/zkbas-crypto/hash/bn254/zmimc"
+	"github.com/bnb-chain/zkbas-crypto/util"
 )
 
 const (

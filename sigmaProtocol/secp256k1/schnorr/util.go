@@ -20,8 +20,8 @@ package schnorr
 import (
 	"bytes"
 	"math/big"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
-	"github.com/zecrey-labs/zecrey-crypto/util"
+	"github.com/bnb-chain/zkbas-crypto/hash/bn254/zmimc"
+	"github.com/bnb-chain/zkbas-crypto/util"
 )
 
 func HashSchnorr(A *P256, R *P256) *big.Int {

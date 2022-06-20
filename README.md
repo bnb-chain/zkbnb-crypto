@@ -1,6 +1,6 @@
-# zecrey-crypto
+# zkbas-crypto
 
-`github.com/zecrey-labs/zecrey-crypto` is the crypto library for Zecrey Protocol. It implements not only basic cryptography algorithms, such as `commitment scheme`, `ECC utils`, `finite field utils`, `ElGamal Encryption`, .etc, but also advanced cryptography algorithms, such as `BulletProofs`, `Twisted ElGamal Encryption`, `Sigma Protocols`, `Zecrey Privacy Proofs`. What's more, it provides many implementations based on different Elliptic Curves. It also includes the core crypto algorithm of the Zecrey Protocol, such as `ComRangeProof`, `Privacy Proof`, `circuit of Zecrey`. Zecrey is based on the curve which is called `baby jubjub` or `twisted bn254`, so the implementation of `baby jubjub` is the core part.
+`github.com/bnb-chain/zkbas-crypto` is the crypto library for Zecrey Protocol. It implements not only basic cryptography algorithms, such as `commitment scheme`, `ECC utils`, `finite field utils`, `ElGamal Encryption`, .etc, but also advanced cryptography algorithms, such as `BulletProofs`, `Twisted ElGamal Encryption`, `Sigma Protocols`, `Zecrey Privacy Proofs`. What's more, it provides many implementations based on different Elliptic Curves. It also includes the core crypto algorithm of the Zecrey Protocol, such as `ComRangeProof`, `Privacy Proof`, `circuit of Zecrey`. Zecrey is based on the curve which is called `baby jubjub` or `twisted bn254`, so the implementation of `baby jubjub` is the core part.
 
 ## Project Structure
 
@@ -49,7 +49,7 @@ ZECREY-CRYPTO
 │          ├─binaryRange // binary range proofs
 │          ├─bulletProofs // bullet proofs
 │          ├─commitRange
-│          └─ctrange // confidential transaction range proof(core algorithms of Zecrey)
+│          └─ctrange // confidential transaction range proof(core algorithms of zkbas)
 ├─sigmaProtocol // basic sigma protocols
 │  ├─secp256k1
 │  │  ├─binary
@@ -65,23 +65,22 @@ ZECREY-CRYPTO
 │          ├─okamoto
 │          └─schnorr
 ├─util // common utils
-├─wasm // wasm for Zecrey algorithms
-└─zecrey // zecrey related algorithms
-    ├─circuit // circuit implementation
-    │  └─bn254
-    │      ├─groth16
-    │      ├─mockAccount
-    │      ├─plonk
-    │      ├─solidity
-    │      ├─std // zecrey algorithms circuit
-    │      ├─transactions // core circuit
-    │      └─zsha256
-    └─twistededwards // Zecrey privacy proof implementation
-        └─tebn254
-            └─zecrey
+├─wasm // wasm for zkbas algorithms
+├─circuit // circuit implementation
+│  └─bn254
+│      ├─groth16
+│      ├─mockAccount
+│      ├─plonk
+│      ├─solidity
+│      ├─std // zkbas algorithms circuit
+│      ├─transactions // core circuit
+│      └─zsha256
+└─twistededwards // zkbas privacy proof implementation
+   └─tebn254
+      ─zecrey
 ```
 
-## Zecrey Privacy Proofs
+## ZKbas Privacy Proofs
 
 ### CTRange Proof
 
@@ -117,7 +116,7 @@ func TestVerify(t *testing.T) {
 
 #### Example
 
-`zecrey/twistededwards/tebn254/zecrey/unlock.go`:
+`twistededwards/tebn254/zero/unlock.go`:
 
 ```go
 func TestUnlockProof_Verify(t *testing.T) {
@@ -156,7 +155,7 @@ func TestUnlockProof_Verify(t *testing.T) {
 
 #### Example
 
-`zecrey/twistededwards/tebn254/zecrey/transfer_test.go`:
+`zero/twistededwards/tebn254/zero/transfer_test.go`:
 
 ```go
 func TestCorrectInfoProve(t *testing.T) {
@@ -225,7 +224,7 @@ func TestCorrectInfoProve(t *testing.T) {
 
 #### Example
 
-`zecrey/twistededwards/tebn254/zecrey/swap_test.go`:
+`zero/twistededwards/tebn254/zero/swap_test.go`:
 
 ```go
 func TestSwapProof2_Verify(t *testing.T) {
@@ -295,7 +294,7 @@ func TestSwapProof2_Verify(t *testing.T) {
 
 #### Example
 
-`zecrey/twistededwards/tebn254/zecrey/addLiquidity_test.go`:
+`zero/twistededwards/tebn254/zero/addLiquidity_test.go`:
 
 ```go
 func TestAddLiquidityProof_Verify(t *testing.T) {
@@ -358,7 +357,7 @@ func TestAddLiquidityProof_Verify(t *testing.T) {
 
 #### Example
 
-`zecrey/twistededwards/tebn254/zecrey/removeLiquidity_test.go`:
+`zero/twistededwards/tebn254/zero/removeLiquidity_test.go`:
 
 ```go
 func TestRemoveLiquidityProof_Verify(t *testing.T) {
@@ -429,7 +428,7 @@ func TestRemoveLiquidityProof_Verify(t *testing.T) {
 
 #### Example
 
-`zecrey/twistededwards/tebn254/zecrey/withdraw_test.go`:
+`zero/twistededwards/tebn254/zero/withdraw_test.go`:
 
 ```go
 func TestProveWithdraw(t *testing.T) {
@@ -482,7 +481,7 @@ func TestProveWithdraw(t *testing.T) {
 }
 ```
 
-## Zecrey Proofs Circuit
+## ZkBAS Proofs Circuit
 
 ### Account Related Constraints
 
@@ -635,7 +634,5 @@ type BlockConstraints struct {
 
 ## Contributions
 
-This project is licensed under the Apache 2 License - see the [LICENSE](https://github.com/zecrey-labs/github.com/zecrey-labs/zecrey-crypto/LICENSE) file for details
-
-Welcome to make contributions to `github.com/zecrey-labs/zecrey-crypto`. Thanks!
+Welcome to make contributions to `github.com/bnb-chain/zkbas-crypto`. Thanks!
 

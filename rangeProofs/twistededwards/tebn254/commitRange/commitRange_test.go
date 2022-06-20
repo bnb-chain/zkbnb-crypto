@@ -23,9 +23,9 @@ import (
 	"math/big"
 	"testing"
 	"time"
-	"github.com/zecrey-labs/zecrey-crypto/commitment/twistededwards/tebn254/pedersen"
-	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"github.com/bnb-chain/zkbas-crypto/commitment/twistededwards/tebn254/pedersen"
+	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
 )
 
 func TestProveAndVerify(t *testing.T) {

@@ -20,8 +20,8 @@ package schnorr
 import (
 	"gotest.tools/assert"
 	"testing"
-	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
-	"github.com/zecrey-labs/zecrey-crypto/elgamal/secp256k1/twistedElgamal"
+	"github.com/bnb-chain/zkbas-crypto/ecc/zp256"
+	"github.com/bnb-chain/zkbas-crypto/elgamal/secp256k1/twistedElgamal"
 )
 
 // pk = g^{sk}

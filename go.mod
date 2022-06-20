@@ -1,4 +1,4 @@
-module github.com/zecrey-labs/zecrey-crypto
+module github.com/bnb-chain/zkbas-crypto
 
 go 1.17
 

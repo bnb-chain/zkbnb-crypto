@@ -20,10 +20,10 @@ package bulletProofs
 import (
 	"bytes"
 	"math/big"
-	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
-	"github.com/zecrey-labs/zecrey-crypto/hash/bn254/zmimc"
-	"github.com/zecrey-labs/zecrey-crypto/util"
+	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
+	"github.com/bnb-chain/zkbas-crypto/hash/bn254/zmimc"
+	"github.com/bnb-chain/zkbas-crypto/util"
 )
 
 /*

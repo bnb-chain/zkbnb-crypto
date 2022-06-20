@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
-	"github.com/zecrey-labs/zecrey-crypto/commitment/secp256k1/pedersen"
-	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
+	"github.com/bnb-chain/zkbas-crypto/commitment/secp256k1/pedersen"
+	"github.com/bnb-chain/zkbas-crypto/ecc/zp256"
 )
 
 func TestProveAndVerify(t *testing.T) {

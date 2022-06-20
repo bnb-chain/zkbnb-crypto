@@ -19,8 +19,8 @@ package chaum_pedersen
 
 import (
 	"math/big"
-	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
 )
 
 type Point = curve.Point

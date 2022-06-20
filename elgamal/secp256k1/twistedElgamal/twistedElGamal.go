@@ -19,9 +19,9 @@ package twistedElgamal
 
 import (
 	"math/big"
-	"github.com/zecrey-labs/zecrey-crypto/commitment/secp256k1/pedersen"
-	curve "github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"github.com/bnb-chain/zkbas-crypto/commitment/secp256k1/pedersen"
+	curve "github.com/bnb-chain/zkbas-crypto/ecc/zp256"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
 )
 
 var (

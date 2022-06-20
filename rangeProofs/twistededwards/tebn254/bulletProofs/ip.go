@@ -21,8 +21,8 @@ import (
 	"errors"
 	"math/big"
 	"strconv"
-	curve "github.com/zecrey-labs/zecrey-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
 )
 
 /*

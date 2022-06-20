@@ -19,7 +19,7 @@ package bulletProofs
 
 import (
 	"math/big"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
 )
 
 func DecomposeVec(xs []*big.Int, u int64, l int64) ([]int64, error) {

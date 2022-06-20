@@ -19,8 +19,8 @@ package linear
 
 import (
 	"math/big"
-	"github.com/zecrey-labs/zecrey-crypto/ecc/zp256"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
+	"github.com/bnb-chain/zkbas-crypto/ecc/zp256"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
 )
 
 type P256 = zp256.P256
