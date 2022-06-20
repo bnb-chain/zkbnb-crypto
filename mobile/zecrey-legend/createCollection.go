@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func ProveCreateCollection(seed string, segmentInfo string) (txInfo string, err error) {
+func SignCreateCollection(seed string, segmentInfo string) (txInfo string, err error) {
 	// parse segmentInfo
 	sk, err := curve.GenerateEddsaPrivateKey(seed)
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func ProveAtomicMatch(seed string, segmentInfo string) (txInfo string, err error) {
+func SignAtomicMatch(seed string, segmentInfo string) (txInfo string, err error) {
 	// parse segmentInfo
 	sk, err := curve.GenerateEddsaPrivateKey(seed)
 	if err != nil {
