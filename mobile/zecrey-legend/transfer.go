@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func ProveTransfer(seed string, segmentInfo string) (txInfo string, err error) {
+func SignTransfer(seed string, segmentInfo string) (txInfo string, err error) {
 	// parse segmentInfo
 	sk, err := curve.GenerateEddsaPrivateKey(seed)
 	if err != nil {

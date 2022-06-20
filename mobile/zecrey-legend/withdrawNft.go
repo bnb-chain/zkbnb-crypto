@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func ProveWithdrawNft(seed string, segmentInfo string) (txInfo string, err error) {
+func SignWithdrawNft(seed string, segmentInfo string) (txInfo string, err error) {
 	// parse segmentInfo
 	sk, err := curve.GenerateEddsaPrivateKey(seed)
 	if err != nil {
