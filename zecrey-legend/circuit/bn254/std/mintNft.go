@@ -92,6 +92,7 @@ func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, 
 		tx.CollectionId,
 		expiredAt,
 		nonce,
+		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal

@@ -86,6 +86,7 @@ func ComputeHashFromSwapTx(tx SwapTxConstraints, nonce Variable, expiredAt Varia
 		tx.GasFeeAssetAmount,
 		expiredAt,
 		nonce,
+		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal

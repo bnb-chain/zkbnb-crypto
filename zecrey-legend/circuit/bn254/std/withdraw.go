@@ -76,6 +76,7 @@ func ComputeHashFromWithdrawTx(tx WithdrawTxConstraints, nonce Variable, expired
 		tx.ToAddress,
 		expiredAt,
 		nonce,
+		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal

@@ -103,6 +103,7 @@ func ComputeHashFromRemoveLiquidityTx(tx RemoveLiquidityTxConstraints, nonce Var
 		tx.GasFeeAssetAmount,
 		expiredAt,
 		nonce,
+		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal

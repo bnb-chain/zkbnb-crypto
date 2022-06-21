@@ -64,6 +64,7 @@ func ComputeHashFromCancelOfferTx(tx CancelOfferTxConstraints, nonce Variable, e
 		tx.GasFeeAssetAmount,
 		expiredAt,
 		nonce,
+		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal

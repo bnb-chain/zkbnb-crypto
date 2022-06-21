@@ -45,6 +45,24 @@ func GetEddsaPublicKey() js.Func {
 	return helperFunc
 }
 
+func GetEddsaCompressedPublicKey() js.Func {
+	helperFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		if len(args) != 1 {
+			return "invalid params"
+		}
+		// read seed
+		seed := args[0].String()
+		sk, err := curve.GenerateEddsaPrivateKey(seed)
+		if err != nil {
+			return err.Error()
+		}
+		var buf bytes.Buffer
+		buf.Write(sk.PublicKey.Bytes())
+		return hex.EncodeToString(buf.Bytes())
+	})
+	return helperFunc
+}
+
 func GenerateEddsaKey() js.Func {
 	helperFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if len(args) != 1 {
