@@ -19,6 +19,7 @@ package legendTxTypes
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	"github.com/zecrey-labs/zecrey-crypto/common"
 	"math/big"
 )
 
@@ -29,4 +30,5 @@ type (
 
 var (
 	ZeroBigInt = big.NewInt(0)
+	ChainId    = int64(common.ChainId)
 )

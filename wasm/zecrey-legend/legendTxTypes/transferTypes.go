@@ -143,6 +143,7 @@ func ComputeTransferMsgHash(txInfo *TransferTxInfo, hFunc hash.Hash) (msgHash []
 	buf.Write(ffmath.Mod(new(big.Int).SetBytes(txInfo.CallDataHash), curve.Modulus).FillBytes(make([]byte, 32)))
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
+	WriteInt64IntoBuf(&buf, ChainId)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash, nil

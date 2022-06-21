@@ -72,6 +72,7 @@ func ComputeHashFromCreateCollectionTx(tx CreateCollectionTxConstraints, nonce V
 		tx.GasFeeAssetAmount,
 		expiredAt,
 		nonce,
+		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal

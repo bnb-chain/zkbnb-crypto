@@ -22,6 +22,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/hash/mimc"
 	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
+	"github.com/zecrey-labs/zecrey-crypto/common"
 	"math/big"
 )
 
@@ -43,6 +44,8 @@ const (
 	PubDataSizePerTx = 6
 
 	OfferSizePerAsset = 128
+
+	ChainId = common.ChainId
 )
 
 const (

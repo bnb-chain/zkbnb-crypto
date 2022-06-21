@@ -114,6 +114,7 @@ func ComputeWithdrawNftMsgHash(txInfo *WithdrawNftTxInfo, hFunc hash.Hash) (msgH
 	WriteInt64IntoBuf(&buf, packedFee)
 	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.Nonce)
+	WriteInt64IntoBuf(&buf, ChainId)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash, nil

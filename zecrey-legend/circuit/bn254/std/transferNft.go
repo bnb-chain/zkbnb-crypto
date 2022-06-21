@@ -79,6 +79,7 @@ func ComputeHashFromTransferNftTx(tx TransferNftTxConstraints, nonce Variable, e
 		tx.CallDataHash,
 		expiredAt,
 		nonce,
+		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal

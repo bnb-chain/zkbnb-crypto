@@ -49,6 +49,9 @@ func WriteBigIntIntoBuf(buf *bytes.Buffer, a *big.Int) {
 }
 
 func StringToBigInt(a string) (res *big.Int, err error) {
+	if a == "" {
+		return big.NewInt(0), nil
+	}
 	res, isValid := new(big.Int).SetString(a, 10)
 	if !isValid {
 		log.Println("[StringToBigInt] invalid string to big int")
