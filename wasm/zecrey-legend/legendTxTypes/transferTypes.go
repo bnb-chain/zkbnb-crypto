@@ -51,17 +51,17 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 	var segmentFormat *TransferSegmentFormat
 	err = json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
-		log.Println("[ConstructGenericTransferTxInfo] err info:", err)
+		log.Println("[ConstructTransferTxInfo] err info:", err)
 		return nil, err
 	}
 	assetAmount, err := StringToBigInt(segmentFormat.AssetAmount)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructTransferTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructTransferTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	txInfo = &TransferTxInfo{
@@ -88,14 +88,14 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 	// compute msg hash
 	msgHash, err := ComputeTransferMsgHash(txInfo, hFunc)
 	if err != nil {
-		log.Println("[ConstructGenericTransferTxInfo] unable to compute hash:", err.Error())
+		log.Println("[ConstructTransferTxInfo] unable to compute hash:", err.Error())
 		return nil, err
 	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
 	if err != nil {
-		log.Println("[ConstructGenericTransferTxInfo] unable to sign:", err)
+		log.Println("[ConstructTransferTxInfo] unable to sign:", err)
 		return nil, err
 	}
 	txInfo.Sig = sigBytes

@@ -54,7 +54,7 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 	}
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructTransferNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	txInfo = &TransferNftTxInfo{
