@@ -104,7 +104,7 @@ func ComputeWithdrawMsgHash(txInfo *WithdrawTxInfo, hFunc hash.Hash) (msgHash []
 	var buf bytes.Buffer
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		log.Println("[ComputeTransferMsgHash] unable to packed amount: ", err.Error())
 		return nil, err
 	}
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)

@@ -124,12 +124,12 @@ func ComputeTransferMsgHash(txInfo *TransferTxInfo, hFunc hash.Hash) (msgHash []
 	var buf bytes.Buffer
 	packedAmount, err := ToPackedAmount(txInfo.AssetAmount)
 	if err != nil {
-		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
