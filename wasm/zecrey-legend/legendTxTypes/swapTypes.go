@@ -50,22 +50,22 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 	}
 	assetAAmount, err := StringToBigInt(segmentFormat.AssetAAmount)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructSwapTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	assetBMinAmount, err := StringToBigInt(segmentFormat.AssetBMinAmount)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructSwapTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	assetBAmountDelta, err := StringToBigInt(segmentFormat.AssetBAmountDelta)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructSwapTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructSwapTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	txInfo = &SwapTxInfo{

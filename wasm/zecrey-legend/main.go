@@ -29,6 +29,9 @@ import (
 
 func main() {
 	fmt.Println("Zecrey-legend Crypto Assembly")
+	// util
+	js.Global().Set("cleanPackedAmount", src.CleanPackedAmountUtil())
+	js.Global().Set("cleanPackedFee", src.CleanPackedFeeUtil())
 	// account
 	js.Global().Set("getAccountNameHash", src.AccountNameHash())
 	// eddsa

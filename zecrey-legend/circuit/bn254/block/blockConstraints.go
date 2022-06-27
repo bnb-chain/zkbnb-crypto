@@ -90,7 +90,7 @@ func VerifyBlock(
 			return err
 		}
 		for j := 0; j < std.PubDataSizePerTx; j++ {
-			pendingCommitmentData[count] = pendingPubData[i]
+			pendingCommitmentData[count] = pendingPubData[j]
 			count++
 		}
 		onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)

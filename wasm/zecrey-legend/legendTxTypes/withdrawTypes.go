@@ -42,17 +42,17 @@ func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Withdra
 	var segmentFormat *WithdrawSegmentFormat
 	err = json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
-		log.Println("[ConstructRemoveLiquidityTxInfo] err info:", err)
+		log.Println("[ConstructWithdrawTxInfo] err info:", err)
 		return nil, err
 	}
 	assetAmount, err := StringToBigInt(segmentFormat.AssetAmount)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructWithdrawTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructWithdrawTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	txInfo = &WithdrawTxInfo{
@@ -72,14 +72,14 @@ func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Withdra
 	// compute msg hash
 	msgHash, err := ComputeWithdrawMsgHash(txInfo, hFunc)
 	if err != nil {
-		log.Println("[ConstructRemoveLiquidityTxInfo] unable to compute hash:", err)
+		log.Println("[ConstructWithdrawTxInfo] unable to compute hash:", err)
 		return nil, err
 	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
 	if err != nil {
-		log.Println("[ConstructRemoveLiquidityTxInfo] unable to sign:", err)
+		log.Println("[ConstructWithdrawTxInfo] unable to sign:", err)
 		return nil, err
 	}
 	txInfo.Sig = sigBytes
@@ -104,7 +104,7 @@ func ComputeWithdrawMsgHash(txInfo *WithdrawTxInfo, hFunc hash.Hash) (msgHash []
 	var buf bytes.Buffer
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		log.Println("[ComputeTransferMsgHash] unable to packed amount: ", err.Error())
 		return nil, err
 	}
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)

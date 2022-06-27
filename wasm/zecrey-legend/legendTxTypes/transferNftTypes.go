@@ -54,7 +54,7 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 	}
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructTransferNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	txInfo = &TransferNftTxInfo{
@@ -111,7 +111,7 @@ func ComputeTransferNftMsgHash(txInfo *TransferNftTxInfo, hFunc hash.Hash) (msgH
 	var buf bytes.Buffer
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ComputeTransferMsgHash] unable to packed amount: %s", err.Error())
+		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
