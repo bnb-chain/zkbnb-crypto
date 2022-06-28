@@ -66,7 +66,6 @@ func ComputeHashFromCreateCollectionTx(tx CreateCollectionTxConstraints, nonce V
 	hFunc.Reset()
 	hFunc.Write(
 		tx.AccountIndex,
-		tx.CollectionId,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
