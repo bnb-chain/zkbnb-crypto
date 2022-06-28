@@ -28,7 +28,6 @@ import (
 
 type CreateCollectionSegmentFormat struct {
 	AccountIndex      int64  `json:"account_index"`
-	CollectionId      int64  `json:"collection_id"`
 	Name              string `json:"name"`
 	Introduction      string `json:"introduction"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
@@ -55,7 +54,6 @@ func ConstructCreateCollectionTxInfo(sk *PrivateKey, segmentStr string) (txInfo 
 	}
 	txInfo = &CreateCollectionTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
-		CollectionId:      segmentFormat.CollectionId,
 		Name:              segmentFormat.Name,
 		Introduction:      segmentFormat.Introduction,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
@@ -106,7 +104,6 @@ func ComputeCreateCollectionMsgHash(txInfo *CreateCollectionTxInfo, hFunc hash.H
 		return nil, err
 	}
 	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.CollectionId)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
 	WriteInt64IntoBuf(&buf, packedFee)
