@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/zecrey-labs/zecrey-crypto/ffmath"
 	"hash"
 	"log"
 	"math/big"
@@ -54,18 +53,19 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 		log.Println("[ConstructAddLiquidityTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	assetAAmount, _ = CleanPackedAmount(assetAAmount)
 	assetBAmount, err := StringToBigInt(segmentFormat.AssetBAmount)
 	if err != nil {
 		log.Println("[ConstructAddLiquidityTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	assetBAmount, _ = CleanPackedAmount(assetBAmount)
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
 	if err != nil {
 		log.Println("[ConstructAddLiquidityTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
-	lpSquare := ffmath.Multiply(assetAAmount, assetBAmount)
-	lpAmount := new(big.Int).Sqrt(lpSquare)
+	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	txInfo = &AddLiquidityTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		PairIndex:         segmentFormat.PairIndex,
@@ -73,7 +73,6 @@ func ConstructAddLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Add
 		AssetAAmount:      assetAAmount,
 		AssetBId:          segmentFormat.AssetBId,
 		AssetBAmount:      assetBAmount,
-		LpAmount:          lpAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,

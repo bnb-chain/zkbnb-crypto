@@ -55,31 +55,37 @@ func ConstructRemoveLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	assetAMinAmount, _ = CleanPackedAmount(assetAMinAmount)
 	assetBMinAmount, err := StringToBigInt(segmentFormat.AssetBMinAmount)
 	if err != nil {
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	assetBMinAmount, _ = CleanPackedAmount(assetBMinAmount)
 	lpAmount, err := StringToBigInt(segmentFormat.LpAmount)
 	if err != nil {
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	lpAmount, _ = CleanPackedAmount(lpAmount)
 	assetAAmountDelta, err := StringToBigInt(segmentFormat.AssetAAmountDelta)
 	if err != nil {
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	assetAAmountDelta, _ = CleanPackedAmount(assetAAmountDelta)
 	assetBAmountDelta, err := StringToBigInt(segmentFormat.AssetBAmountDelta)
 	if err != nil {
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	assetBAmountDelta, _ = CleanPackedAmount(assetBAmountDelta)
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
 	if err != nil {
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	txInfo = &RemoveLiquidityTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		PairIndex:         segmentFormat.PairIndex,

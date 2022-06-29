@@ -58,6 +58,7 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	txInfo = &MintNftTxInfo{
 		CreatorAccountIndex: segmentFormat.CreatorAccountIndex,
 		ToAccountIndex:      segmentFormat.ToAccountIndex,

@@ -49,6 +49,7 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	txInfo = &WithdrawNftTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
 		NftIndex:          segmentFormat.NftIndex,

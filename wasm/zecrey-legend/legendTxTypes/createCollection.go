@@ -52,6 +52,7 @@ func ConstructCreateCollectionTxInfo(sk *PrivateKey, segmentStr string) (txInfo 
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	txInfo = &CreateCollectionTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
 		Name:              segmentFormat.Name,

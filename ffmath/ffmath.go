@@ -78,7 +78,7 @@ func Xor(a, b *big.Int) *big.Int {
 }
 
 func Equal(a, b *big.Int) bool {
-	return a.String() == b.String()
+	return a.Cmp(b) == 0
 }
 
 func Neg(a *big.Int) *big.Int {
