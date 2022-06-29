@@ -58,6 +58,7 @@ func ConstructAtomicMatchTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Atom
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	var (
 		buyOffer, sellOffer *OfferTxInfo
 	)

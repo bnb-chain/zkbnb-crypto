@@ -51,6 +51,7 @@ func ConstructCancelOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Canc
 		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	txInfo = &CancelOfferTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
 		OfferId:           segmentFormat.OfferId,

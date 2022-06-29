@@ -50,11 +50,13 @@ func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Withdra
 		log.Println("[ConstructWithdrawTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	assetAmount, _ = CleanPackedAmount(assetAmount)
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
 	if err != nil {
 		log.Println("[ConstructWithdrawTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	txInfo = &WithdrawTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		AssetId:           segmentFormat.AssetId,

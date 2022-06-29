@@ -53,6 +53,7 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 		log.Println("[ConstructOfferTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	assetAmount, _ = CleanPackedAmount(assetAmount)
 	txInfo = &OfferTxInfo{
 		Type:         segmentFormat.Type,
 		OfferId:      segmentFormat.OfferId,

@@ -59,11 +59,13 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 		log.Println("[ConstructTransferTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	assetAmount, _ = CleanPackedAmount(assetAmount)
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
 	if err != nil {
 		log.Println("[ConstructTransferTxInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
+	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	txInfo = &TransferTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
