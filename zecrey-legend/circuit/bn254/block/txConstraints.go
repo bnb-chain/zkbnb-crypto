@@ -197,8 +197,12 @@ func VerifyTransaction(
 	}
 
 	// verify transactions
-	pubData = std.VerifyRegisterZNSTx(api, isRegisterZnsTx, tx.RegisterZnsTxInfo, tx.AccountsInfoBefore)
-	pubDataCheck := std.VerifyCreatePairTx(api, isCreatePairTx, tx.CreatePairTxInfo, tx.LiquidityBefore)
+	for i := 0; i < std.PubDataSizePerTx; i++ {
+		pubData[i] = 0
+	}
+	pubDataCheck := std.VerifyRegisterZNSTx(api, isRegisterZnsTx, tx.RegisterZnsTxInfo, tx.AccountsInfoBefore)
+	pubData = SelectPubData(api, isRegisterZnsTx, pubDataCheck, pubData)
+	pubDataCheck = std.VerifyCreatePairTx(api, isCreatePairTx, tx.CreatePairTxInfo, tx.LiquidityBefore)
 	pubData = SelectPubData(api, isCreatePairTx, pubDataCheck, pubData)
 	pubDataCheck = std.VerifyUpdatePairRateTx(api, isUpdatePairRateTx, tx.UpdatePairRateTxInfo, tx.LiquidityBefore)
 	pubData = SelectPubData(api, isUpdatePairRateTx, pubDataCheck, pubData)
@@ -365,10 +369,10 @@ func VerifyTransaction(
 		tx.NftRootBefore,
 	)
 	oldStateRoot := hFunc.Sum()
-	std.IsVariableEqual(api, 1, oldStateRoot, tx.StateRootBefore)
+	notEmptyTx := api.IsZero(isEmptyTx)
+	std.IsVariableEqual(api, notEmptyTx, oldStateRoot, tx.StateRootBefore)
 
 	NewAccountRoot := tx.AccountRootBefore
-	notEmptyTx := api.IsZero(isEmptyTx)
 	for i := 0; i < NbAccountsPerTx; i++ {
 		var (
 			NewAccountAssetsRoot = tx.AccountsInfoBefore[i].AssetRoot
@@ -537,7 +541,7 @@ func VerifyTransaction(
 		NewNftRoot,
 	)
 	newStateRoot := hFunc.Sum()
-	std.IsVariableEqual(api, 1, newStateRoot, tx.StateRootAfter)
+	std.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
 	return isOnChainOp, pubData, nil
 }
 
