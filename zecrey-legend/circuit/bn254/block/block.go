@@ -23,5 +23,5 @@ type Block struct {
 	OldStateRoot    []byte
 	NewStateRoot    []byte
 	BlockCommitment []byte
-	Txs             [NbTxsPerBlock]*Tx
+	Txs             []*Tx
 }
