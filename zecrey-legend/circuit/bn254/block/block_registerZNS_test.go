@@ -90,7 +90,7 @@ func TestVerifyBlock_RegisterZNS(t *testing.T) {
 		OldStateRoot:    oTx.StateRootBefore,
 		NewStateRoot:    oTx.StateRootAfter,
 		BlockCommitment: commitment[:],
-		Txs:             [NbTxsPerBlock]*Tx{oTx},
+		Txs:             []*Tx{oTx},
 	}
 	assert := test.NewAssert(t)
 	var circuit, witness BlockConstraints

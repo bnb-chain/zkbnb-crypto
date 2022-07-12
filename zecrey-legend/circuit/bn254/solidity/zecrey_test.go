@@ -40,46 +40,53 @@ import (
 )
 
 func TestExportSol(t *testing.T) {
-	var circuit block.BlockConstraints
+	differentBlockSizes := []int{1, 10}
+	for i := 0; i < len(differentBlockSizes); i++ {
+		var circuit block.BlockConstraints
+		circuit.TxsCount = differentBlockSizes[i]
+		circuit.Txs = make([]block.TxConstraints, circuit.TxsCount)
+		for i := 0; i < circuit.TxsCount; i++ {
+			circuit.Txs[i] = block.GetZeroTxConstraint()
+		}
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+		if err != nil {
+			panic(err)
+		}
 
-	oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	if err != nil {
-		panic(err)
-	}
+		pk, vk, err := groth16.Setup(oR1cs)
+		if err != nil {
+			panic(err)
+		}
+		{
+			f, err := os.Create("zecrey-legend" + fmt.Sprint(differentBlockSizes[i]) + ".vk")
+			if err != nil {
+				panic(err)
+			}
+			_, err = vk.WriteRawTo(f)
+			if err != nil {
+				panic(err)
+			}
+		}
+		{
+			f, err := os.Create("zecrey-legend" + fmt.Sprint(differentBlockSizes[i]) + ".pk")
+			if err != nil {
+				panic(err)
+			}
+			_, err = pk.WriteRawTo(f)
+			if err != nil {
+				panic(err)
+			}
+		}
 
-	pk, vk, err := groth16.Setup(oR1cs)
-	if err != nil {
-		panic(err)
-	}
-	{
-		f, err := os.Create("zecrey-legend.vk")
-		if err != nil {
-			panic(err)
-		}
-		_, err = vk.WriteRawTo(f)
-		if err != nil {
-			panic(err)
-		}
-	}
-	{
-		f, err := os.Create("zecrey-legend.pk")
-		if err != nil {
-			panic(err)
-		}
-		_, err = pk.WriteRawTo(f)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	{
-		f, err := os.Create("ZecreyVerifier.sol")
-		if err != nil {
-			panic(err)
-		}
-		err = vk.ExportSolidity(f)
-		if err != nil {
-			panic(err)
+		{
+			f, err := os.Create("ZecreyVerifier" + fmt.Sprint(differentBlockSizes[i]) + ".sol")
+			if err != nil {
+				panic(err)
+			}
+			err = vk.ExportSolidity(f)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }
