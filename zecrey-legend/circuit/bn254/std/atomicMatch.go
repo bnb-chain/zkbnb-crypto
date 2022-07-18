@@ -182,11 +182,7 @@ func VerifyAtomicMatchTx(
 	buyOfferIndexBits := api.ToBinary(accountsBefore[1].AssetsInfo[1].OfferCanceledOrFinalized, OfferSizePerAsset)
 	for i := 0; i < OfferSizePerAsset; i++ {
 		isZero := api.IsZero(api.Sub(buyOfferIndex, i))
-		isCheckVar := api.And(isZero, flag)
-		isCheck := api.Compiler().IsBoolean(isCheckVar)
-		if isCheck {
-			IsVariableEqual(api, 1, buyOfferIndexBits[i], 0)
-		}
+		IsVariableEqual(api, isZero, buyOfferIndexBits[i], 0)
 	}
 	// verify sell offer id
 	sellOfferIdBits := api.ToBinary(tx.SellOffer.OfferId, 24)
@@ -195,11 +191,7 @@ func VerifyAtomicMatchTx(
 	sellOfferIndexBits := api.ToBinary(accountsBefore[2].AssetsInfo[1].OfferCanceledOrFinalized, OfferSizePerAsset)
 	for i := 0; i < OfferSizePerAsset; i++ {
 		isZero := api.IsZero(api.Sub(sellOfferIndex, i))
-		isCheckVar := api.And(isZero, flag)
-		isCheck := api.Compiler().IsBoolean(isCheckVar)
-		if isCheck {
-			IsVariableEqual(api, 1, sellOfferIndexBits[i], 0)
-		}
+		IsVariableEqual(api, isZero, sellOfferIndexBits[i], 0)
 	}
 	// buyer should have enough balance
 	tx.BuyOffer.AssetAmount = UnpackAmount(api, tx.BuyOffer.AssetAmount)
