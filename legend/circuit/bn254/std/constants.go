@@ -18,11 +18,11 @@
 package std
 
 import (
+	"github.com/bnb-chain/zkbas-crypto/common"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/hash/mimc"
 	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
-	"github.com/zecrey-labs/zecrey-crypto/common"
 	"math/big"
 )
 

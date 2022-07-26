@@ -19,7 +19,7 @@ package legendTxTypes
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	"github.com/zecrey-labs/zecrey-crypto/common"
+	"github.com/bnb-chain/zkbas-crypto/common"
 	"math/big"
 )
 
