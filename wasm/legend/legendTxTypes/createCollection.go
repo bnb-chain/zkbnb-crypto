@@ -107,14 +107,6 @@ func ValidateCreateCollectionTxInfo(txInfo *CreateCollectionTxInfo) error {
 		return fmt.Errorf("AccountIndex should not be larger than %d", maxAccountIndex)
 	}
 
-	// CollectionId
-	if txInfo.CollectionId < minCollectionId {
-		return fmt.Errorf("CollectionId should not be less than %d", minCollectionId)
-	}
-	if txInfo.CollectionId > maxCollectionId {
-		return fmt.Errorf("CollectionId should not be larger than %d", maxCollectionId)
-	}
-
 	// Name
 	if len(txInfo.Name) < minCollectionNameLength {
 		return fmt.Errorf("length of Name should not be less than %d", minCollectionNameLength)
