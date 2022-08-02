@@ -40,10 +40,10 @@ func TestValidateOfferTxInfo(t *testing.T) {
 		},
 		// OfferId
 		{
-			fmt.Errorf("OfferId should be larger than 0"),
+			fmt.Errorf("OfferId should not be less than 0"),
 			&OfferTxInfo{
 				Type:    1,
-				OfferId: 0,
+				OfferId: -1,
 			},
 		},
 		// AccountIndex
