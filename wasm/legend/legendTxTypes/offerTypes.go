@@ -20,10 +20,17 @@ package legendTxTypes
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"fmt"
 	"hash"
 	"log"
 	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+)
+
+const (
+	BuyOfferType  = 0
+	SellOfferType = 1
 )
 
 type OfferSegmentFormat struct {
@@ -95,6 +102,72 @@ type OfferTxInfo struct {
 	ExpiredAt    int64
 	TreasuryRate int64
 	Sig          []byte
+}
+
+func ValidateOfferTxInfo(txInfo *OfferTxInfo) error {
+	// Type
+	if txInfo.Type != BuyOfferType && txInfo.Type != SellOfferType {
+		return fmt.Errorf("Type should only be buy(%d) and sell(%d)", BuyOfferType, SellOfferType)
+	}
+
+	// OfferId
+	if txInfo.OfferId <= 0 {
+		return fmt.Errorf("OfferId should be larger than 0")
+	}
+
+	// AccountIndex
+	if txInfo.AccountIndex < minAccountIndex {
+		return fmt.Errorf("AccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.AccountIndex > maxAccountIndex {
+		return fmt.Errorf("AccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// NftIndex
+	if txInfo.NftIndex < minNftIndex {
+		return fmt.Errorf("NftIndex should not be less than %d", minNftIndex)
+	}
+	if txInfo.NftIndex > maxNftIndex {
+		return fmt.Errorf("NftIndex should not be larger than %d", maxNftIndex)
+	}
+
+	// AssetId
+	if txInfo.AssetId < minAssetId {
+		return fmt.Errorf("AssetId should not be less than %d", minAssetId)
+	}
+	if txInfo.AssetId > maxAssetId {
+		return fmt.Errorf("AssetId should not be larger than %d", maxAssetId)
+	}
+
+	// AssetAmount
+	if txInfo.AssetAmount == nil {
+		return fmt.Errorf("AssetAmount should not be nil")
+	}
+	if txInfo.AssetAmount.Cmp(minAssetAmount) < 0 {
+		return fmt.Errorf("AssetAmount should not be less than %s", minAssetAmount.String())
+	}
+	if txInfo.AssetAmount.Cmp(maxAssetAmount) > 0 {
+		return fmt.Errorf("AssetAmount should not be larger than %s", maxAssetAmount.String())
+	}
+
+	// ListedAt
+	if txInfo.ListedAt <= 0 {
+		return fmt.Errorf("ListedAt should be larger than 0")
+	}
+
+	// ExpiredAt
+	if txInfo.ExpiredAt <= 0 {
+		return fmt.Errorf("ExpiredAt should be larger than 0")
+	}
+
+	// TreasuryRate
+	if txInfo.TreasuryRate < minTreasuryRate {
+		return fmt.Errorf("TreasuryRate should  not be less than %d", minTreasuryRate)
+	}
+	if txInfo.TreasuryRate > maxTreasuryRate {
+		return fmt.Errorf("TreasuryRate should not be larger than %d", maxTreasuryRate)
+	}
+	return nil
 }
 
 func ComputeOfferMsgHash(txInfo *OfferTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {

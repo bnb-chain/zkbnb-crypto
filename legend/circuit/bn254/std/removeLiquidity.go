@@ -137,7 +137,7 @@ func VerifyRemoveLiquidityTx(
 	tx.LpAmount = UnpackAmount(api, tx.LpAmount)
 	tx.TreasuryAmount = UnpackAmount(api, tx.TreasuryAmount)
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[3].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[2].Balance)
 	// TODO verify LP
 	kCurrent := api.Mul(liquidityBefore.AssetA, liquidityBefore.AssetB)
 	IsVariableLessOrEqual(api, flag, liquidityBefore.KLast, kCurrent)
