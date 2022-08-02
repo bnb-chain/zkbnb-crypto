@@ -29,7 +29,7 @@ func TestValidateCancelOfferTxInfo(t *testing.T) {
 		},
 		// OfferId
 		{
-			fmt.Errorf("OfferId should be larger than 0"),
+			fmt.Errorf("OfferId should not be less than 0"),
 			&CancelOfferTxInfo{
 				AccountIndex: 1,
 				OfferId:      -1,

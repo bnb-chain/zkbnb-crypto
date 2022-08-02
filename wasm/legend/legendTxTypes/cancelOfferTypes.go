@@ -104,8 +104,8 @@ func ValidateCancelOfferTxInfo(txInfo *CancelOfferTxInfo) error {
 	}
 
 	// OfferId
-	if txInfo.OfferId <= 0 {
-		return fmt.Errorf("OfferId should be larger than 0")
+	if txInfo.OfferId < 0 {
+		return fmt.Errorf("OfferId should not be less than 0")
 	}
 
 	// GasAccountIndex

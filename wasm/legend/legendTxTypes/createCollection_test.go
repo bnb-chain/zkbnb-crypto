@@ -28,21 +28,6 @@ func TestValidateCreateCollectionTxInfo(t *testing.T) {
 				AccountIndex: maxAccountIndex + 1,
 			},
 		},
-		// CollectionId
-		{
-			fmt.Errorf("CollectionId should not be less than %d", minCollectionId),
-			&CreateCollectionTxInfo{
-				AccountIndex: 1,
-				CollectionId: minCollectionId - 1,
-			},
-		},
-		{
-			fmt.Errorf("CollectionId should not be larger than %d", maxCollectionId),
-			&CreateCollectionTxInfo{
-				AccountIndex: 1,
-				CollectionId: maxCollectionId + 1,
-			},
-		},
 		// Name
 		{
 			fmt.Errorf("length of Name should not be less than %d", minCollectionNameLength),
