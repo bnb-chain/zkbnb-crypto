@@ -19,11 +19,14 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"fmt"
 	"hash"
 	"log"
 	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
 type WithdrawNftSegmentFormat struct {
@@ -97,6 +100,112 @@ type WithdrawNftTxInfo struct {
 	ExpiredAt              int64
 	Nonce                  int64
 	Sig                    []byte
+}
+
+func ValidateWithdrawNftTxInfo(txInfo *WithdrawNftTxInfo) error {
+	// AccountIndex
+	if txInfo.AccountIndex < minAccountIndex {
+		return fmt.Errorf("AccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.AccountIndex > maxAccountIndex {
+		return fmt.Errorf("AccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// CreatorAccountIndex
+	if txInfo.CreatorAccountIndex < minAccountIndex {
+		return fmt.Errorf("CreatorAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.CreatorAccountIndex > maxAccountIndex {
+		return fmt.Errorf("CreatorAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// CreatorAccountNameHash
+	if !IsValidHashBytes(txInfo.CreatorAccountNameHash) {
+		return fmt.Errorf("CreatorAccountNameHash(%s) is invalid", hex.EncodeToString(txInfo.CreatorAccountNameHash))
+	}
+
+	// CreatorTreasuryRate
+	if txInfo.CreatorTreasuryRate < minTreasuryRate {
+		return fmt.Errorf("CreatorTreasuryRate should  not be less than %d", minTreasuryRate)
+	}
+	if txInfo.CreatorTreasuryRate > maxTreasuryRate {
+		return fmt.Errorf("CreatorTreasuryRate should not be larger than %d", maxTreasuryRate)
+	}
+
+	// NftIndex
+	if txInfo.NftIndex < minNftIndex {
+		return fmt.Errorf("NftIndex should not be less than %d", minNftIndex)
+	}
+	if txInfo.NftIndex > maxNftIndex {
+		return fmt.Errorf("NftIndex should not be larger than %d", maxNftIndex)
+	}
+
+	// NftContentHash
+	if !IsValidHashBytes(txInfo.NftContentHash) {
+		return fmt.Errorf("NftContentHash(%s) is invalid", hex.EncodeToString(txInfo.NftContentHash))
+	}
+
+	// NftL1Address
+	if txInfo.NftL1Address != "" && !IsValidL1Address(txInfo.NftL1Address) {
+		return fmt.Errorf("NftL1Address(%s) is invalid", txInfo.NftL1Address)
+	}
+
+	// NftL1TokenId
+	if txInfo.NftL1TokenId != nil && txInfo.NftL1TokenId.Cmp(big.NewInt(0)) < 0 {
+		return fmt.Errorf("NftL1TokenId should not be less than 0")
+	}
+
+	// CollectionId
+	if txInfo.CollectionId < minCollectionId {
+		return fmt.Errorf("CollectionId should not be less than %d", minCollectionId)
+	}
+	if txInfo.CollectionId > maxCollectionId {
+		return fmt.Errorf("CollectionId should not be larger than %d", maxCollectionId)
+	}
+
+	// ToAddress
+	if !IsValidL1Address(txInfo.ToAddress) {
+		return fmt.Errorf("ToAddress(%s) is invalid", txInfo.ToAddress)
+	}
+
+	// GasAccountIndex
+	if txInfo.GasAccountIndex < minAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.GasAccountIndex > maxAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// GasFeeAssetId
+	if txInfo.GasFeeAssetId < minAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+	}
+	if txInfo.GasFeeAssetId > maxAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+	}
+
+	// GasFeeAssetAmount
+	if txInfo.GasFeeAssetAmount == nil {
+		return fmt.Errorf("GasFeeAssetAmount should not be nil")
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+	}
+
+	// ExpiredAt
+	if txInfo.ExpiredAt <= 0 {
+		return fmt.Errorf("ExpiredAt should be larger than 0")
+	}
+
+	// Nonce
+	if txInfo.Nonce < minNonce {
+		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+	}
+
+	return nil
 }
 
 func ComputeWithdrawNftMsgHash(txInfo *WithdrawNftTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {

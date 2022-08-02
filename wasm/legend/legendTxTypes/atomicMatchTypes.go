@@ -20,11 +20,13 @@ package legendTxTypes
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	"fmt"
 	"hash"
 	"log"
 	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 )
 
 type AtomicMatchSegmentFormat struct {
@@ -114,6 +116,93 @@ type AtomicMatchTxInfo struct {
 	Nonce             int64
 	ExpiredAt         int64
 	Sig               []byte
+}
+
+func ValidateAtomicMatchTxInfo(txInfo *AtomicMatchTxInfo) error {
+	// AccountIndex
+	if txInfo.AccountIndex < minAccountIndex {
+		return fmt.Errorf("AccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.AccountIndex > maxAccountIndex {
+		return fmt.Errorf("AccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// BuyOffer
+	if txInfo.BuyOffer == nil {
+		return fmt.Errorf("BuyOffer should not be nil")
+	}
+	if err := ValidateOfferTxInfo(txInfo.BuyOffer); err != nil {
+		return fmt.Errorf("BuyOffer is invalid, %s", err.Error())
+	}
+
+	// SellOffer
+	if txInfo.SellOffer == nil {
+		return fmt.Errorf("SellOffer should not be nil")
+	}
+	if err := ValidateOfferTxInfo(txInfo.SellOffer); err != nil {
+		return fmt.Errorf("SellOffer is invalid, %s", err.Error())
+	}
+
+	// GasAccountIndex
+	if txInfo.GasAccountIndex < minAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.GasAccountIndex > maxAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// GasFeeAssetId
+	if txInfo.GasFeeAssetId < minAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+	}
+	if txInfo.GasFeeAssetId > maxAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+	}
+
+	// GasFeeAssetAmount
+	if txInfo.GasFeeAssetAmount == nil {
+		return fmt.Errorf("GasFeeAssetAmount should not be nil")
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+	}
+
+	// ExpiredAt
+	if txInfo.ExpiredAt <= 0 {
+		return fmt.Errorf("ExpiredAt should be larger than 0")
+	}
+
+	// Nonce
+	if txInfo.Nonce < minNonce {
+		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+	}
+
+	// CreatorAmount
+	if txInfo.CreatorAmount == nil {
+		return fmt.Errorf("CreatorAmount should not be nil")
+	}
+	if txInfo.CreatorAmount.Cmp(minAssetAmount) < 0 {
+		return fmt.Errorf("CreatorAmount should not be less than %s", minAssetAmount.String())
+	}
+	if txInfo.CreatorAmount.Cmp(maxAssetAmount) > 0 {
+		return fmt.Errorf("CreatorAmount should not be larger than %s", maxAssetAmount.String())
+	}
+
+	// TreasuryAmount
+	if txInfo.TreasuryAmount == nil {
+		return fmt.Errorf("TreasuryAmount should not be nil")
+	}
+	if txInfo.TreasuryAmount.Cmp(minAssetAmount) < 0 {
+		return fmt.Errorf("TreasuryAmount should not be less than %s", minAssetAmount.String())
+	}
+	if txInfo.TreasuryAmount.Cmp(maxAssetAmount) > 0 {
+		return fmt.Errorf("TreasuryAmount should not be larger than %s", maxAssetAmount.String())
+	}
+
+	return nil
 }
 
 func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
