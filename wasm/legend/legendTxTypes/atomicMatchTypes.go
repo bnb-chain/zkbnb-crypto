@@ -24,6 +24,7 @@ import (
 	"hash"
 	"log"
 	"math/big"
+	"time"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -171,8 +172,8 @@ func ValidateAtomicMatchTxInfo(txInfo *AtomicMatchTxInfo) error {
 	}
 
 	// ExpiredAt
-	if txInfo.ExpiredAt <= 0 {
-		return fmt.Errorf("ExpiredAt should be larger than 0")
+	if txInfo.ExpiredAt < time.Now().UnixMilli() {
+		return fmt.Errorf("ExpiredAt(ms) should be after now")
 	}
 
 	// Nonce
@@ -189,17 +190,6 @@ func ValidateAtomicMatchTxInfo(txInfo *AtomicMatchTxInfo) error {
 	}
 	if txInfo.CreatorAmount.Cmp(maxAssetAmount) > 0 {
 		return fmt.Errorf("CreatorAmount should not be larger than %s", maxAssetAmount.String())
-	}
-
-	// TreasuryAmount
-	if txInfo.TreasuryAmount == nil {
-		return fmt.Errorf("TreasuryAmount should not be nil")
-	}
-	if txInfo.TreasuryAmount.Cmp(minAssetAmount) < 0 {
-		return fmt.Errorf("TreasuryAmount should not be less than %s", minAssetAmount.String())
-	}
-	if txInfo.TreasuryAmount.Cmp(maxAssetAmount) > 0 {
-		return fmt.Errorf("TreasuryAmount should not be larger than %s", maxAssetAmount.String())
 	}
 
 	return nil

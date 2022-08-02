@@ -19,12 +19,12 @@ package legendTxTypes
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"hash"
 	"log"
 	"math/big"
+	"time"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
@@ -111,56 +111,12 @@ func ValidateWithdrawNftTxInfo(txInfo *WithdrawNftTxInfo) error {
 		return fmt.Errorf("AccountIndex should not be larger than %d", maxAccountIndex)
 	}
 
-	// CreatorAccountIndex
-	if txInfo.CreatorAccountIndex < minAccountIndex {
-		return fmt.Errorf("CreatorAccountIndex should not be less than %d", minAccountIndex)
-	}
-	if txInfo.CreatorAccountIndex > maxAccountIndex {
-		return fmt.Errorf("CreatorAccountIndex should not be larger than %d", maxAccountIndex)
-	}
-
-	// CreatorAccountNameHash
-	if !IsValidHashBytes(txInfo.CreatorAccountNameHash) {
-		return fmt.Errorf("CreatorAccountNameHash(%s) is invalid", hex.EncodeToString(txInfo.CreatorAccountNameHash))
-	}
-
-	// CreatorTreasuryRate
-	if txInfo.CreatorTreasuryRate < minTreasuryRate {
-		return fmt.Errorf("CreatorTreasuryRate should  not be less than %d", minTreasuryRate)
-	}
-	if txInfo.CreatorTreasuryRate > maxTreasuryRate {
-		return fmt.Errorf("CreatorTreasuryRate should not be larger than %d", maxTreasuryRate)
-	}
-
 	// NftIndex
 	if txInfo.NftIndex < minNftIndex {
 		return fmt.Errorf("NftIndex should not be less than %d", minNftIndex)
 	}
 	if txInfo.NftIndex > maxNftIndex {
 		return fmt.Errorf("NftIndex should not be larger than %d", maxNftIndex)
-	}
-
-	// NftContentHash
-	if !IsValidHashBytes(txInfo.NftContentHash) {
-		return fmt.Errorf("NftContentHash(%s) is invalid", hex.EncodeToString(txInfo.NftContentHash))
-	}
-
-	// NftL1Address
-	if txInfo.NftL1Address != "" && !IsValidL1Address(txInfo.NftL1Address) {
-		return fmt.Errorf("NftL1Address(%s) is invalid", txInfo.NftL1Address)
-	}
-
-	// NftL1TokenId
-	if txInfo.NftL1TokenId != nil && txInfo.NftL1TokenId.Cmp(big.NewInt(0)) < 0 {
-		return fmt.Errorf("NftL1TokenId should not be less than 0")
-	}
-
-	// CollectionId
-	if txInfo.CollectionId < minCollectionId {
-		return fmt.Errorf("CollectionId should not be less than %d", minCollectionId)
-	}
-	if txInfo.CollectionId > maxCollectionId {
-		return fmt.Errorf("CollectionId should not be larger than %d", maxCollectionId)
 	}
 
 	// ToAddress
@@ -196,8 +152,8 @@ func ValidateWithdrawNftTxInfo(txInfo *WithdrawNftTxInfo) error {
 	}
 
 	// ExpiredAt
-	if txInfo.ExpiredAt <= 0 {
-		return fmt.Errorf("ExpiredAt should be larger than 0")
+	if txInfo.ExpiredAt < time.Now().UnixMilli() {
+		return fmt.Errorf("ExpiredAt(ms) should be after now")
 	}
 
 	// Nonce

@@ -24,6 +24,7 @@ import (
 	"hash"
 	"log"
 	"math/big"
+	"time"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/ethereum/go-ethereum/common"
@@ -182,8 +183,8 @@ func ValidateMintNftTxInfo(txInfo *MintNftTxInfo) error {
 	}
 
 	// ExpiredAt
-	if txInfo.ExpiredAt <= 0 {
-		return fmt.Errorf("ExpiredAt should be larger than 0")
+	if txInfo.ExpiredAt < time.Now().UnixMilli() {
+		return fmt.Errorf("ExpiredAt(ms) should be after now")
 	}
 
 	// Nonce

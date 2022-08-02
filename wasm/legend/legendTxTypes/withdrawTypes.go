@@ -24,6 +24,7 @@ import (
 	"hash"
 	"log"
 	"math/big"
+	"time"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
@@ -152,13 +153,19 @@ func ValidateWithdrawTxInfo(txInfo *WithdrawTxInfo) error {
 		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
 	}
 
-	if txInfo.ExpiredAt <= 0 {
-		return fmt.Errorf("ExpiredAt should be larger than 0")
+	if txInfo.ExpiredAt < time.Now().UnixMilli() {
+		return fmt.Errorf("ExpiredAt(ms) should be after now")
 	}
 
 	if txInfo.Nonce < minNonce {
 		return fmt.Errorf("Nonce should not be less than %d", minNonce)
 	}
+
+	// ToAddress
+	if !IsValidL1Address(txInfo.ToAddress) {
+		return fmt.Errorf("ToAddress(%s) is invalid", txInfo.ToAddress)
+	}
+
 	return nil
 }
 

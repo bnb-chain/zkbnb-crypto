@@ -59,23 +59,6 @@ func TestValidateAddLiquidityTxInfo(t *testing.T) {
 				PairIndex:        maxAccountIndex + 1,
 			},
 		},
-		// AssetAId
-		{
-			fmt.Errorf("AssetAId should not be less than %d", minAssetId),
-			&AddLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         minAssetId - 1,
-			},
-		},
-		{
-			fmt.Errorf("AssetAId should not be larger than %d", maxAssetId),
-			&AddLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         maxAssetId + 1,
-			},
-		},
 		// AssetAAmount
 		{
 			fmt.Errorf("AssetAAmount should not be nil"),
@@ -101,27 +84,6 @@ func TestValidateAddLiquidityTxInfo(t *testing.T) {
 				PairIndex:        1,
 				AssetAId:         1,
 				AssetAAmount:     big.NewInt(0).Add(maxAssetAmount, big.NewInt(1)),
-			},
-		},
-		// AssetBId
-		{
-			fmt.Errorf("AssetBId should not be less than %d", minAssetId),
-			&AddLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         1,
-				AssetAAmount:     big.NewInt(1),
-				AssetBId:         minAssetId - 1,
-			},
-		},
-		{
-			fmt.Errorf("AssetBId should not be larger than %d", maxAssetId),
-			&AddLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         1,
-				AssetAAmount:     big.NewInt(1),
-				AssetBId:         maxAssetId + 1,
 			},
 		},
 		// AssetBAmount
@@ -155,42 +117,6 @@ func TestValidateAddLiquidityTxInfo(t *testing.T) {
 				AssetAAmount:     big.NewInt(1),
 				AssetBId:         1,
 				AssetBAmount:     big.NewInt(0).Add(maxAssetAmount, big.NewInt(1)),
-			},
-		},
-		// LpAmount
-		{
-			fmt.Errorf("LpAmount should not be nil"),
-			&AddLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         1,
-				AssetAAmount:     big.NewInt(1),
-				AssetBId:         1,
-				AssetBAmount:     big.NewInt(1),
-			},
-		},
-		{
-			fmt.Errorf("LpAmount should not be less than %s", minAssetAmount.String()),
-			&AddLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         1,
-				AssetAAmount:     big.NewInt(1),
-				AssetBId:         1,
-				AssetBAmount:     big.NewInt(1),
-				LpAmount:         big.NewInt(-1),
-			},
-		},
-		{
-			fmt.Errorf("LpAmount should not be larger than %s", maxAssetAmount.String()),
-			&AddLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         1,
-				AssetAAmount:     big.NewInt(1),
-				AssetBId:         1,
-				AssetBAmount:     big.NewInt(1),
-				LpAmount:         big.NewInt(0).Add(maxAssetAmount, big.NewInt(1)),
 			},
 		},
 		// GasAccountIndex
@@ -296,7 +222,7 @@ func TestValidateAddLiquidityTxInfo(t *testing.T) {
 		},
 		// ExpiredAt
 		{
-			fmt.Errorf("ExpiredAt should be larger than 0"),
+			fmt.Errorf("ExpiredAt(ms) should be after now"),
 			&AddLiquidityTxInfo{
 				FromAccountIndex:  1,
 				PairIndex:         1,
@@ -325,7 +251,7 @@ func TestValidateAddLiquidityTxInfo(t *testing.T) {
 				GasAccountIndex:   1,
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(1),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 			},
 		},
 		// true
@@ -342,7 +268,7 @@ func TestValidateAddLiquidityTxInfo(t *testing.T) {
 				GasAccountIndex:   1,
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(1),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             1,
 			},
 		},

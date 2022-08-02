@@ -24,6 +24,7 @@ import (
 	"hash"
 	"log"
 	"math/big"
+	"time"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
@@ -170,16 +171,6 @@ func ValidateSwapTxInfo(txInfo *SwapTxInfo) error {
 		return fmt.Errorf("AssetBMinAmount should not be larger than %s", maxAssetAmount.String())
 	}
 
-	if txInfo.AssetBAmountDelta == nil {
-		return fmt.Errorf("AssetBAmountDelta should not be nil")
-	}
-	if txInfo.AssetBAmountDelta.Cmp(minAssetAmount) < 0 {
-		return fmt.Errorf("AssetBAmountDelta should not be less than %s", minAssetAmount.String())
-	}
-	if txInfo.AssetBAmountDelta.Cmp(maxAssetAmount) > 0 {
-		return fmt.Errorf("AssetBAmountDelta should not be larger than %s", maxAssetAmount.String())
-	}
-
 	if txInfo.GasAccountIndex < minAccountIndex {
 		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
 	}
@@ -204,8 +195,8 @@ func ValidateSwapTxInfo(txInfo *SwapTxInfo) error {
 		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
 	}
 
-	if txInfo.ExpiredAt <= 0 {
-		return fmt.Errorf("ExpiredAt should be larger than 0")
+	if txInfo.ExpiredAt < time.Now().UnixMilli() {
+		return fmt.Errorf("ExpiredAt(ms) should be after now")
 	}
 
 	if txInfo.Nonce < minNonce {

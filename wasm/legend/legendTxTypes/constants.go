@@ -45,7 +45,7 @@ const (
 	minAssetId int64 = 0
 	maxAssetId int64 = (1 << 16) - 1
 
-	minNftIndex int64 = 1
+	minNftIndex int64 = 0
 	maxNftIndex int64 = (1 << 40) - 1
 
 	minCollectionId int64 = 1
