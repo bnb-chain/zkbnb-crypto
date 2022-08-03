@@ -59,23 +59,6 @@ func TestValidateRemoveLiquidityTxInfo(t *testing.T) {
 				PairIndex:        maxAccountIndex + 1,
 			},
 		},
-		// AssetAId
-		{
-			fmt.Errorf("AssetAId should not be less than %d", minAssetId),
-			&RemoveLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         minAssetId - 1,
-			},
-		},
-		{
-			fmt.Errorf("AssetAId should not be larger than %d", maxAssetId),
-			&RemoveLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         maxAssetId + 1,
-			},
-		},
 		// AssetAMinAmount
 		{
 			fmt.Errorf("AssetAMinAmount should not be nil"),
@@ -101,27 +84,6 @@ func TestValidateRemoveLiquidityTxInfo(t *testing.T) {
 				PairIndex:        1,
 				AssetAId:         1,
 				AssetAMinAmount:  big.NewInt(0).Add(maxAssetAmount, big.NewInt(1)),
-			},
-		},
-		// AssetBId
-		{
-			fmt.Errorf("AssetBId should not be less than %d", minAssetId),
-			&RemoveLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         1,
-				AssetAMinAmount:  big.NewInt(1),
-				AssetBId:         minAssetId - 1,
-			},
-		},
-		{
-			fmt.Errorf("AssetBId should not be larger than %d", maxAssetId),
-			&RemoveLiquidityTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         1,
-				AssetAMinAmount:  big.NewInt(1),
-				AssetBId:         maxAssetId + 1,
 			},
 		},
 		// AssetBMinAmount

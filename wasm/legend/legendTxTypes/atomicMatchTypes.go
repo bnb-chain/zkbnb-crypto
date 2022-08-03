@@ -181,17 +181,6 @@ func ValidateAtomicMatchTxInfo(txInfo *AtomicMatchTxInfo) error {
 		return fmt.Errorf("Nonce should not be less than %d", minNonce)
 	}
 
-	// CreatorAmount
-	if txInfo.CreatorAmount == nil {
-		return fmt.Errorf("CreatorAmount should not be nil")
-	}
-	if txInfo.CreatorAmount.Cmp(minAssetAmount) < 0 {
-		return fmt.Errorf("CreatorAmount should not be less than %s", minAssetAmount.String())
-	}
-	if txInfo.CreatorAmount.Cmp(maxAssetAmount) > 0 {
-		return fmt.Errorf("CreatorAmount should not be larger than %s", maxAssetAmount.String())
-	}
-
 	return nil
 }
 

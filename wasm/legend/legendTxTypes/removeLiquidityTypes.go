@@ -160,13 +160,6 @@ func ValidateRemoveLiquidityTxInfo(txInfo *RemoveLiquidityTxInfo) error {
 		return fmt.Errorf("PairIndex should not be larger than %d", maxPairIndex)
 	}
 
-	if txInfo.AssetAId < minAssetId {
-		return fmt.Errorf("AssetAId should not be less than %d", minAssetId)
-	}
-	if txInfo.AssetAId > maxAssetId {
-		return fmt.Errorf("AssetAId should not be larger than %d", maxAssetId)
-	}
-
 	if txInfo.AssetAMinAmount == nil {
 		return fmt.Errorf("AssetAMinAmount should not be nil")
 	}
@@ -176,14 +169,7 @@ func ValidateRemoveLiquidityTxInfo(txInfo *RemoveLiquidityTxInfo) error {
 	if txInfo.AssetAMinAmount.Cmp(maxAssetAmount) > 0 {
 		return fmt.Errorf("AssetAMinAmount should not be larger than %s", maxAssetAmount.String())
 	}
-
-	if txInfo.AssetBId < minAssetId {
-		return fmt.Errorf("AssetBId should not be less than %d", minAssetId)
-	}
-	if txInfo.AssetBId > maxAssetId {
-		return fmt.Errorf("AssetBId should not be larger than %d", maxAssetId)
-	}
-
+	
 	if txInfo.AssetBMinAmount == nil {
 		return fmt.Errorf("AssetBMinAmount should not be nil")
 	}
