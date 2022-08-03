@@ -153,48 +153,6 @@ func TestValidateAtomicMatchTxInfo(t *testing.T) {
 				Nonce:             0,
 			},
 		},
-		// CreatorAmount
-		{
-			fmt.Errorf("CreatorAmount should not be nil"),
-			&AtomicMatchTxInfo{
-				AccountIndex:      1,
-				BuyOffer:          validOffer,
-				SellOffer:         validOffer,
-				GasAccountIndex:   0,
-				GasFeeAssetId:     3,
-				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
-				Nonce:             1,
-			},
-		},
-		{
-			fmt.Errorf("CreatorAmount should not be less than %s", minAssetAmount.String()),
-			&AtomicMatchTxInfo{
-				AccountIndex:      1,
-				BuyOffer:          validOffer,
-				SellOffer:         validOffer,
-				GasAccountIndex:   0,
-				GasFeeAssetId:     3,
-				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
-				Nonce:             1,
-				CreatorAmount:     big.NewInt(0).Sub(minAssetAmount, big.NewInt(1)),
-			},
-		},
-		{
-			fmt.Errorf("CreatorAmount should not be larger than %s", maxAssetAmount.String()),
-			&AtomicMatchTxInfo{
-				AccountIndex:      1,
-				BuyOffer:          validOffer,
-				SellOffer:         validOffer,
-				GasAccountIndex:   0,
-				GasFeeAssetId:     3,
-				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
-				Nonce:             1,
-				CreatorAmount:     big.NewInt(0).Add(maxAssetAmount, big.NewInt(1)),
-			},
-		},
 	}
 
 	for _, testCase := range testCases {
