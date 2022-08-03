@@ -85,7 +85,7 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 				FromAccountIndex:  1,
 				ToAccountIndex:    2,
 				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftIndex:          0,
+				NftIndex:          minNftIndex - 1,
 			},
 		},
 		{
@@ -203,7 +203,7 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 		},
 		// ExpiredAt
 		{
-			fmt.Errorf("ExpiredAt should be larger than 0"),
+			fmt.Errorf("ExpiredAt(ms) should be after now"),
 			&TransferNftTxInfo{
 				FromAccountIndex:  1,
 				ToAccountIndex:    2,
@@ -228,7 +228,7 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(100),
 				CallDataHash:      bytes.Repeat([]byte{1}, 32),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             0,
 			},
 		},

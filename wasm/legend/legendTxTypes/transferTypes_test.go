@@ -18,6 +18,8 @@
 package legendTxTypes
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"testing"
@@ -184,7 +186,7 @@ func TestValidateTransferTxInfo(t *testing.T) {
 		},
 		// ExpiredAt
 		{
-			fmt.Errorf("ExpiredAt should be larger than 0"),
+			fmt.Errorf("ExpiredAt(ms) should be after now"),
 			&TransferTxInfo{
 				FromAccountIndex:  1,
 				ToAccountIndex:    1,
@@ -207,8 +209,72 @@ func TestValidateTransferTxInfo(t *testing.T) {
 				GasAccountIndex:   0,
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             0,
+			},
+		},
+		// ToAccountNameHash
+		{
+			fmt.Errorf("ToAccountNameHash(0000000000000000000000000000000000000000000000000000000000000000) is invalid"),
+			&TransferTxInfo{
+				FromAccountIndex:  1,
+				ToAccountIndex:    1,
+				AssetId:           1,
+				AssetAmount:       big.NewInt(1),
+				GasAccountIndex:   0,
+				GasFeeAssetId:     3,
+				GasFeeAssetAmount: big.NewInt(100),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
+				Nonce:             1,
+				ToAccountNameHash: "0000000000000000000000000000000000000000000000000000000000000000",
+			},
+		},
+		{
+			fmt.Errorf("ToAccountNameHash(01010101010101010101010101010101010101010101010101010101010101) is invalid"),
+			&TransferTxInfo{
+				FromAccountIndex:  1,
+				ToAccountIndex:    1,
+				AssetId:           1,
+				AssetAmount:       big.NewInt(1),
+				GasAccountIndex:   0,
+				GasFeeAssetId:     3,
+				GasFeeAssetAmount: big.NewInt(100),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
+				Nonce:             1,
+				ToAccountNameHash: "01010101010101010101010101010101010101010101010101010101010101",
+			},
+		},
+		// CallDataHash
+		{
+			fmt.Errorf("CallDataHash(0000000000000000000000000000000000000000000000000000000000000000) is invalid"),
+			&TransferTxInfo{
+				FromAccountIndex:  1,
+				ToAccountIndex:    1,
+				AssetId:           1,
+				AssetAmount:       big.NewInt(1),
+				GasAccountIndex:   0,
+				GasFeeAssetId:     3,
+				GasFeeAssetAmount: big.NewInt(100),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
+				Nonce:             1,
+				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				CallDataHash:      bytes.Repeat([]byte{0}, 32),
+			},
+		},
+		{
+			fmt.Errorf("CallDataHash(01010101010101010101010101010101010101010101010101010101010101) is invalid"),
+			&TransferTxInfo{
+				FromAccountIndex:  1,
+				ToAccountIndex:    1,
+				AssetId:           1,
+				AssetAmount:       big.NewInt(1),
+				GasAccountIndex:   0,
+				GasFeeAssetId:     3,
+				GasFeeAssetAmount: big.NewInt(100),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
+				Nonce:             1,
+				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				CallDataHash:      bytes.Repeat([]byte{1}, 31),
 			},
 		},
 		// true
@@ -222,8 +288,10 @@ func TestValidateTransferTxInfo(t *testing.T) {
 				GasAccountIndex:   0,
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             1,
+				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				CallDataHash:      bytes.Repeat([]byte{1}, 32),
 			},
 		},
 	}

@@ -24,6 +24,7 @@ import (
 	"hash"
 	"log"
 	"math/big"
+	"time"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
@@ -134,13 +135,6 @@ func ValidateAddLiquidityTxInfo(txInfo *AddLiquidityTxInfo) error {
 		return fmt.Errorf("PairIndex should not be larger than %d", maxPairIndex)
 	}
 
-	if txInfo.AssetAId < minAssetId {
-		return fmt.Errorf("AssetAId should not be less than %d", minAssetId)
-	}
-	if txInfo.AssetAId > maxAssetId {
-		return fmt.Errorf("AssetAId should not be larger than %d", maxAssetId)
-	}
-
 	if txInfo.AssetAAmount == nil {
 		return fmt.Errorf("AssetAAmount should not be nil")
 	}
@@ -151,13 +145,6 @@ func ValidateAddLiquidityTxInfo(txInfo *AddLiquidityTxInfo) error {
 		return fmt.Errorf("AssetAAmount should not be larger than %s", maxAssetAmount.String())
 	}
 
-	if txInfo.AssetBId < minAssetId {
-		return fmt.Errorf("AssetBId should not be less than %d", minAssetId)
-	}
-	if txInfo.AssetBId > maxAssetId {
-		return fmt.Errorf("AssetBId should not be larger than %d", maxAssetId)
-	}
-
 	if txInfo.AssetBAmount == nil {
 		return fmt.Errorf("AssetBAmount should not be nil")
 	}
@@ -166,16 +153,6 @@ func ValidateAddLiquidityTxInfo(txInfo *AddLiquidityTxInfo) error {
 	}
 	if txInfo.AssetBAmount.Cmp(maxAssetAmount) > 0 {
 		return fmt.Errorf("AssetBAmount should not be larger than %s", maxAssetAmount.String())
-	}
-
-	if txInfo.LpAmount == nil {
-		return fmt.Errorf("LpAmount should not be nil")
-	}
-	if txInfo.LpAmount.Cmp(minAssetAmount) < 0 {
-		return fmt.Errorf("LpAmount should not be less than %s", minAssetAmount.String())
-	}
-	if txInfo.LpAmount.Cmp(maxAssetAmount) > 0 {
-		return fmt.Errorf("LpAmount should not be larger than %s", maxAssetAmount.String())
 	}
 
 	if txInfo.GasAccountIndex < minAccountIndex {
@@ -202,8 +179,8 @@ func ValidateAddLiquidityTxInfo(txInfo *AddLiquidityTxInfo) error {
 		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
 	}
 
-	if txInfo.ExpiredAt <= 0 {
-		return fmt.Errorf("ExpiredAt should be larger than 0")
+	if txInfo.ExpiredAt < time.Now().UnixMilli() {
+		return fmt.Errorf("ExpiredAt(ms) should be after now")
 	}
 
 	if txInfo.Nonce < minNonce {

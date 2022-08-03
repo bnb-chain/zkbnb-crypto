@@ -296,7 +296,7 @@ func TestValidateSwapTxInfo(t *testing.T) {
 		},
 		// ExpiredAt
 		{
-			fmt.Errorf("ExpiredAt should be larger than 0"),
+			fmt.Errorf("ExpiredAt(ms) should be after now"),
 			&SwapTxInfo{
 				FromAccountIndex:  1,
 				PairIndex:         1,
@@ -325,7 +325,7 @@ func TestValidateSwapTxInfo(t *testing.T) {
 				GasAccountIndex:   1,
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(1),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 			},
 		},
 		// true
@@ -342,7 +342,7 @@ func TestValidateSwapTxInfo(t *testing.T) {
 				GasAccountIndex:   1,
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(1),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             1,
 			},
 		},

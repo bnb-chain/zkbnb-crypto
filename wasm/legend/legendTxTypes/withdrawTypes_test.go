@@ -158,7 +158,7 @@ func TestValidateWithdrawTxInfo(t *testing.T) {
 		},
 		// ExpiredAt
 		{
-			fmt.Errorf("ExpiredAt should be larger than 0"),
+			fmt.Errorf("ExpiredAt(ms) should be after now"),
 			&WithdrawTxInfo{
 				FromAccountIndex:  1,
 				AssetId:           1,
@@ -181,8 +181,23 @@ func TestValidateWithdrawTxInfo(t *testing.T) {
 				GasFeeAssetId:     3,
 				ToAddress:         "0x299d17c8b4e9967385dc9a3bb78f2a43f5a13bd0",
 				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             0,
+			},
+		},
+		//  ToAddress
+		{
+			fmt.Errorf("ToAddress(0x299d17c8b4e9967385dc9a3bb78f2a43f5a13bd) is invalid"),
+			&WithdrawTxInfo{
+				FromAccountIndex:  1,
+				AssetId:           1,
+				AssetAmount:       big.NewInt(1),
+				GasAccountIndex:   0,
+				GasFeeAssetId:     3,
+				ToAddress:         "0x299d17c8b4e9967385dc9a3bb78f2a43f5a13bd",
+				GasFeeAssetAmount: big.NewInt(100),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
+				Nonce:             1,
 			},
 		},
 		// true
@@ -196,7 +211,7 @@ func TestValidateWithdrawTxInfo(t *testing.T) {
 				GasFeeAssetId:     3,
 				ToAddress:         "0x299d17c8b4e9967385dc9a3bb78f2a43f5a13bd0",
 				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             1,
 			},
 		},

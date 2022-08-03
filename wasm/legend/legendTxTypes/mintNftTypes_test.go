@@ -220,7 +220,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 		},
 		// ExpiredAt
 		{
-			fmt.Errorf("ExpiredAt should be larger than 0"),
+			fmt.Errorf("ExpiredAt(ms) should be after now"),
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
@@ -247,7 +247,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 				GasAccountIndex:     0,
 				GasFeeAssetId:       3,
 				GasFeeAssetAmount:   big.NewInt(100),
-				ExpiredAt:           time.Now().Unix(),
+				ExpiredAt:           time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:               0,
 			},
 		},
@@ -264,7 +264,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 				GasAccountIndex:     0,
 				GasFeeAssetId:       3,
 				GasFeeAssetAmount:   big.NewInt(100),
-				ExpiredAt:           time.Now().Unix(),
+				ExpiredAt:           time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:               1,
 			},
 		},

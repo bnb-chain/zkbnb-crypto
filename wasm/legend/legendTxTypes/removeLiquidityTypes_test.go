@@ -310,7 +310,7 @@ func TestValidateRemoveLiquidityTxInfo(t *testing.T) {
 		},
 		// ExpiredAt
 		{
-			fmt.Errorf("ExpiredAt should be larger than 0"),
+			fmt.Errorf("ExpiredAt(ms) should be after now"),
 			&RemoveLiquidityTxInfo{
 				FromAccountIndex:  1,
 				PairIndex:         1,
@@ -343,7 +343,7 @@ func TestValidateRemoveLiquidityTxInfo(t *testing.T) {
 				GasAccountIndex:   1,
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(1),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 			},
 		},
 		// true
@@ -362,7 +362,7 @@ func TestValidateRemoveLiquidityTxInfo(t *testing.T) {
 				GasAccountIndex:   1,
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(1),
-				ExpiredAt:         time.Now().Unix(),
+				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             1,
 			},
 		},
