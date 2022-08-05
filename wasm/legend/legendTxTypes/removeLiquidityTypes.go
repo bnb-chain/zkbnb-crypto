@@ -20,10 +20,13 @@ package legendTxTypes
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"fmt"
 	"hash"
 	"log"
 	"math/big"
+	"time"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
 type RemoveLiquiditySegmentFormat struct {
@@ -140,6 +143,85 @@ type RemoveLiquidityTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+}
+
+func ValidateRemoveLiquidityTxInfo(txInfo *RemoveLiquidityTxInfo) error {
+	if txInfo.FromAccountIndex < minAccountIndex {
+		return fmt.Errorf("FromAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.FromAccountIndex > maxAccountIndex {
+		return fmt.Errorf("FromAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	if txInfo.PairIndex < minPairIndex {
+		return fmt.Errorf("PairIndex should not be less than %d", minPairIndex)
+	}
+	if txInfo.PairIndex > maxPairIndex {
+		return fmt.Errorf("PairIndex should not be larger than %d", maxPairIndex)
+	}
+
+	if txInfo.AssetAMinAmount == nil {
+		return fmt.Errorf("AssetAMinAmount should not be nil")
+	}
+	if txInfo.AssetAMinAmount.Cmp(minAssetAmount) < 0 {
+		return fmt.Errorf("AssetAMinAmount should not be less than %s", minAssetAmount.String())
+	}
+	if txInfo.AssetAMinAmount.Cmp(maxAssetAmount) > 0 {
+		return fmt.Errorf("AssetAMinAmount should not be larger than %s", maxAssetAmount.String())
+	}
+	
+	if txInfo.AssetBMinAmount == nil {
+		return fmt.Errorf("AssetBMinAmount should not be nil")
+	}
+	if txInfo.AssetBMinAmount.Cmp(minAssetAmount) < 0 {
+		return fmt.Errorf("AssetBMinAmount should not be less than %s", minAssetAmount.String())
+	}
+	if txInfo.AssetBMinAmount.Cmp(maxAssetAmount) > 0 {
+		return fmt.Errorf("AssetBMinAmount should not be larger than %s", maxAssetAmount.String())
+	}
+
+	if txInfo.LpAmount == nil {
+		return fmt.Errorf("LpAmount should not be nil")
+	}
+	if txInfo.LpAmount.Cmp(minAssetAmount) < 0 {
+		return fmt.Errorf("LpAmount should not be less than %s", minAssetAmount.String())
+	}
+	if txInfo.LpAmount.Cmp(maxAssetAmount) > 0 {
+		return fmt.Errorf("LpAmount should not be larger than %s", maxAssetAmount.String())
+	}
+
+	if txInfo.GasAccountIndex < minAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.GasAccountIndex > maxAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	if txInfo.GasFeeAssetId < minAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+	}
+	if txInfo.GasFeeAssetId > maxAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+	}
+
+	if txInfo.GasFeeAssetAmount == nil {
+		return fmt.Errorf("GasFeeAssetAmount should not be nil")
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+	}
+
+	if txInfo.ExpiredAt < time.Now().UnixMilli() {
+		return fmt.Errorf("ExpiredAt(ms) should be after now")
+	}
+
+	if txInfo.Nonce < minNonce {
+		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+	}
+	return nil
 }
 
 func ComputeRemoveLiquidityMsgHash(txInfo *RemoveLiquidityTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {

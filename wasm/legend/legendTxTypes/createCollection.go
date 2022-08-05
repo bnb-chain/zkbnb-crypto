@@ -20,10 +20,13 @@ package legendTxTypes
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"fmt"
 	"hash"
 	"log"
 	"math/big"
+	"time"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
 type CreateCollectionSegmentFormat struct {
@@ -94,6 +97,68 @@ type CreateCollectionTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+}
+
+func ValidateCreateCollectionTxInfo(txInfo *CreateCollectionTxInfo) error {
+	// AccountIndex
+	if txInfo.AccountIndex < minAccountIndex {
+		return fmt.Errorf("AccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.AccountIndex > maxAccountIndex {
+		return fmt.Errorf("AccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// Name
+	if len(txInfo.Name) < minCollectionNameLength {
+		return fmt.Errorf("length of Name should not be less than %d", minCollectionNameLength)
+	}
+	if len(txInfo.Name) > maxCollectionNameLength {
+		return fmt.Errorf("length of Name should not be larger than %d", maxCollectionNameLength)
+	}
+
+	// Introduction
+	if len(txInfo.Introduction) > maxCollectionIntroductionLength {
+		return fmt.Errorf("length of Introduction should not be larger than %d", maxCollectionIntroductionLength)
+	}
+
+	// GasAccountIndex
+	if txInfo.GasAccountIndex < minAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.GasAccountIndex > maxAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// GasFeeAssetId
+	if txInfo.GasFeeAssetId < minAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+	}
+	if txInfo.GasFeeAssetId > maxAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+	}
+
+	// GasFeeAssetAmount
+	if txInfo.GasFeeAssetAmount == nil {
+		return fmt.Errorf("GasFeeAssetAmount should not be nil")
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+	}
+
+	// ExpiredAt
+	if txInfo.ExpiredAt < time.Now().UnixMilli() {
+		return fmt.Errorf("ExpiredAt(ms) should be after now")
+	}
+
+	// Nonce
+	if txInfo.Nonce < minNonce {
+		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+	}
+
+	return nil
 }
 
 func ComputeCreateCollectionMsgHash(txInfo *CreateCollectionTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {

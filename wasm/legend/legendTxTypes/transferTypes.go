@@ -19,14 +19,18 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/ethereum/go-ethereum/common"
-	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
+	"fmt"
 	"hash"
 	"log"
 	"math/big"
+	"time"
+
+	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type TransferSegmentFormat struct {
@@ -119,6 +123,84 @@ type TransferTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+}
+
+func ValidateTransferTxInfo(txInfo *TransferTxInfo) error {
+	if txInfo.FromAccountIndex < minAccountIndex {
+		return fmt.Errorf("FromAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.FromAccountIndex > maxAccountIndex {
+		return fmt.Errorf("FromAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	if txInfo.ToAccountIndex < minAccountIndex {
+		return fmt.Errorf("ToAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.ToAccountIndex > maxAccountIndex {
+		return fmt.Errorf("ToAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	if txInfo.AssetId < minAssetId {
+		return fmt.Errorf("AssetId should not be less than %d", minAssetId)
+	}
+	if txInfo.AssetId > maxAssetId {
+		return fmt.Errorf("AssetId should not be larger than %d", maxAssetId)
+	}
+
+	if txInfo.AssetAmount == nil {
+		return fmt.Errorf("AssetAmount should not be nil")
+	}
+	if txInfo.AssetAmount.Cmp(minAssetAmount) < 0 {
+		return fmt.Errorf("AssetAmount should not be less than %s", minAssetAmount.String())
+	}
+	if txInfo.AssetAmount.Cmp(maxAssetAmount) > 0 {
+		return fmt.Errorf("AssetAmount should not be larger than %s", maxAssetAmount.String())
+	}
+
+	if txInfo.GasAccountIndex < minAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.GasAccountIndex > maxAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	if txInfo.GasFeeAssetId < minAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+	}
+	if txInfo.GasFeeAssetId > maxAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+	}
+
+	if txInfo.GasFeeAssetAmount == nil {
+		return fmt.Errorf("GasFeeAssetAmount should not be nil")
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+	}
+
+	// ExpiredAt
+	if txInfo.ExpiredAt < time.Now().UnixMilli() {
+		return fmt.Errorf("ExpiredAt(ms) should be after now")
+	}
+
+	if txInfo.Nonce < minNonce {
+		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+	}
+
+	// ToAccountNameHash
+	if !IsValidHash(txInfo.ToAccountNameHash) {
+		return fmt.Errorf("ToAccountNameHash(%s) is invalid", txInfo.ToAccountNameHash)
+	}
+
+	// CallDataHash
+	if !IsValidHashBytes(txInfo.CallDataHash) {
+		return fmt.Errorf("CallDataHash(%s) is invalid", hex.EncodeToString(txInfo.CallDataHash))
+	}
+
+	return nil
 }
 
 func ComputeTransferMsgHash(txInfo *TransferTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {

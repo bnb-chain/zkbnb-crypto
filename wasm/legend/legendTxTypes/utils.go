@@ -19,11 +19,14 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/bnb-chain/zkbas-crypto/util"
 	"log"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/bnb-chain/zkbas-crypto/util"
 )
 
 func WriteUint64IntoBuf(buf *bytes.Buffer, a uint64) {
@@ -80,4 +83,48 @@ func ToPackedFee(amount *big.Int) (res int64, err error) {
 
 func CleanPackedFee(amount *big.Int) (nAmount *big.Int, err error) {
 	return util.CleanPackedFee(amount)
+}
+
+func FromHex(s string) ([]byte, error) {
+	if len(s) >= 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X') {
+		s = s[2:]
+	}
+
+	if len(s)%2 == 1 {
+		s = "0" + s
+	}
+	return hex.DecodeString(s)
+}
+
+func IsValidHashBytes(bytes []byte) bool {
+	if len(bytes) != HashLength {
+		return false
+	}
+
+	return !isZeroByteSlice(bytes)
+}
+
+func IsValidHash(hash string) bool {
+	hashBytes, err := FromHex(hash)
+	if err != nil {
+		return false
+	}
+	if len(hashBytes) != HashLength {
+		return false
+	}
+
+	return !isZeroByteSlice(hashBytes)
+}
+
+func isZeroByteSlice(bytes []byte) bool {
+	for _, s := range bytes {
+		if s != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func IsValidL1Address(address string) bool {
+	return common.IsHexAddress(address)
 }

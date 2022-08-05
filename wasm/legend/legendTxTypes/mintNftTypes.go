@@ -20,13 +20,17 @@ package legendTxTypes
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/ethereum/go-ethereum/common"
-	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
+	"fmt"
 	"hash"
 	"log"
 	"math/big"
+	"time"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/ethereum/go-ethereum/common"
+
+	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbas-crypto/ffmath"
 )
 
 type MintNftSegmentFormat struct {
@@ -106,6 +110,89 @@ type MintNftTxInfo struct {
 	ExpiredAt           int64
 	Nonce               int64
 	Sig                 []byte
+}
+
+func ValidateMintNftTxInfo(txInfo *MintNftTxInfo) error {
+	// CreatorAccountIndex
+	if txInfo.CreatorAccountIndex < minAccountIndex {
+		return fmt.Errorf("CreatorAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.CreatorAccountIndex > maxAccountIndex {
+		return fmt.Errorf("CreatorAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// ToAccountIndex
+	if txInfo.ToAccountIndex < minAccountIndex {
+		return fmt.Errorf("ToAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.ToAccountIndex > maxAccountIndex {
+		return fmt.Errorf("ToAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// ToAccountNameHash
+	if !IsValidHash(txInfo.ToAccountNameHash) {
+		return fmt.Errorf("ToAccountNameHash(%s) is invalid", txInfo.ToAccountNameHash)
+	}
+
+	// NftContentHash
+	if !IsValidHash(txInfo.NftContentHash) {
+		return fmt.Errorf("NftContentHash(%s) is invalid", txInfo.NftContentHash)
+	}
+
+	// NftCollectionId
+	if txInfo.NftCollectionId < minCollectionId {
+		return fmt.Errorf("NftCollectionId should not be less than %d", minCollectionId)
+	}
+	if txInfo.NftCollectionId > maxCollectionId {
+		return fmt.Errorf("NftCollectionId should not be larger than %d", maxCollectionId)
+	}
+
+	// CreatorTreasuryRate
+	if txInfo.CreatorTreasuryRate < minTreasuryRate {
+		return fmt.Errorf("CreatorTreasuryRate should  not be less than %d", minTreasuryRate)
+	}
+	if txInfo.CreatorTreasuryRate > maxTreasuryRate {
+		return fmt.Errorf("CreatorTreasuryRate should not be larger than %d", maxTreasuryRate)
+	}
+
+	// GasAccountIndex
+	if txInfo.GasAccountIndex < minAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+	}
+	if txInfo.GasAccountIndex > maxAccountIndex {
+		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+	}
+
+	// GasFeeAssetId
+	if txInfo.GasFeeAssetId < minAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+	}
+	if txInfo.GasFeeAssetId > maxAssetId {
+		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+	}
+
+	// GasFeeAssetAmount
+	if txInfo.GasFeeAssetAmount == nil {
+		return fmt.Errorf("GasFeeAssetAmount should not be nil")
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+	}
+	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
+		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+	}
+
+	// ExpiredAt
+	if txInfo.ExpiredAt < time.Now().UnixMilli() {
+		return fmt.Errorf("ExpiredAt(ms) should be after now")
+	}
+
+	// Nonce
+	if txInfo.Nonce < minNonce {
+		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+	}
+
+	return nil
 }
 
 func ComputeMintNftMsgHash(txInfo *MintNftTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
