@@ -18,17 +18,6 @@ type HintConstraints struct {
 	C Variable
 }
 
-func Keccak256(curveID ecc.ID, inputs []*big.Int, outputs []*big.Int) error {
-	var buf bytes.Buffer
-	for i := 0; i < len(inputs); i++ {
-		buf.Write(inputs[i].FillBytes(make([]byte, 32)))
-	}
-	hashVal := crypto.Keccak256Hash(buf.Bytes())
-	result := outputs[0]
-	result.SetBytes(hashVal[:])
-	return nil
-}
-
 func (circuit HintConstraints) Define(api API) error {
 	hashVals, err := api.Compiler().NewHint(Keccak256, 1, circuit.A, circuit.B)
 	if err != nil {
