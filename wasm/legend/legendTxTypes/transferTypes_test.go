@@ -184,20 +184,6 @@ func TestValidateTransferTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(0).Add(maxPackedFeeAmount, big.NewInt(1)),
 			},
 		},
-		// ExpiredAt
-		{
-			fmt.Errorf("ExpiredAt(ms) should be after now"),
-			&TransferTxInfo{
-				FromAccountIndex:  1,
-				ToAccountIndex:    1,
-				AssetId:           1,
-				AssetAmount:       big.NewInt(1),
-				GasAccountIndex:   0,
-				GasFeeAssetId:     3,
-				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         0,
-			},
-		},
 		// Nonce
 		{
 			fmt.Errorf("Nonce should not be less than %d", minNonce),
@@ -296,7 +282,7 @@ func TestValidateTransferTxInfo(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		err := ValidateTransferTxInfo(testCase.testCase)
+		err := testCase.testCase.Validate()
 		require.Equalf(t, testCase.err, err, "err should be the same")
 	}
 }

@@ -156,20 +156,6 @@ func TestValidateWithdrawTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(0).Add(maxPackedFeeAmount, big.NewInt(1)),
 			},
 		},
-		// ExpiredAt
-		{
-			fmt.Errorf("ExpiredAt(ms) should be after now"),
-			&WithdrawTxInfo{
-				FromAccountIndex:  1,
-				AssetId:           1,
-				AssetAmount:       big.NewInt(1),
-				GasAccountIndex:   0,
-				GasFeeAssetId:     3,
-				ToAddress:         "0x299d17c8b4e9967385dc9a3bb78f2a43f5a13bd0",
-				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         0,
-			},
-		},
 		// Nonce
 		{
 			fmt.Errorf("Nonce should not be less than %d", minNonce),
@@ -217,7 +203,7 @@ func TestValidateWithdrawTxInfo(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		err := ValidateWithdrawTxInfo(testCase.testCase)
+		err := testCase.testCase.Validate()
 		require.Equalf(t, testCase.err, err, "err should be the same")
 	}
 }

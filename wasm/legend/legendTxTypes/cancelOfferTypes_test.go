@@ -101,18 +101,6 @@ func TestValidateCancelOfferTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(0).Add(maxPackedFeeAmount, big.NewInt(1)),
 			},
 		},
-		// ExpiredAt
-		{
-			fmt.Errorf("ExpiredAt(ms) should be after now"),
-			&CancelOfferTxInfo{
-				AccountIndex:      1,
-				OfferId:           1,
-				GasAccountIndex:   0,
-				GasFeeAssetId:     3,
-				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         0,
-			},
-		},
 		// Nonce
 		{
 			fmt.Errorf("Nonce should not be less than %d", minNonce),
@@ -142,7 +130,7 @@ func TestValidateCancelOfferTxInfo(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := ValidateCancelOfferTxInfo(testCase.testCase)
+		err := testCase.testCase.Validate()
 		require.Equalf(t, err, testCase.err, "err should be the same")
 	}
 }

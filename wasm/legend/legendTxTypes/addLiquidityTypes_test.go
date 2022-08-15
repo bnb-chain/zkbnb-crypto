@@ -220,23 +220,6 @@ func TestValidateAddLiquidityTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(0).Add(maxPackedFeeAmount, big.NewInt(1)),
 			},
 		},
-		// ExpiredAt
-		{
-			fmt.Errorf("ExpiredAt(ms) should be after now"),
-			&AddLiquidityTxInfo{
-				FromAccountIndex:  1,
-				PairIndex:         1,
-				AssetAId:          1,
-				AssetAAmount:      big.NewInt(1),
-				AssetBId:          1,
-				AssetBAmount:      big.NewInt(1),
-				LpAmount:          big.NewInt(1),
-				GasAccountIndex:   1,
-				GasFeeAssetId:     3,
-				GasFeeAssetAmount: big.NewInt(1),
-				ExpiredAt:         0,
-			},
-		},
 		// Nonce
 		{
 			fmt.Errorf("Nonce should not be less than %d", minNonce),
@@ -274,7 +257,7 @@ func TestValidateAddLiquidityTxInfo(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		err := ValidateAddLiquidityTxInfo(testCase.testCase)
+		err := testCase.testCase.Validate()
 		require.Equalf(t, testCase.err, err, "err should be the same")
 	}
 }

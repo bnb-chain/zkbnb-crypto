@@ -20,11 +20,11 @@ package legendTxTypes
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash"
 	"log"
 	"math/big"
-	"time"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/ethereum/go-ethereum/common"
@@ -112,7 +112,7 @@ type MintNftTxInfo struct {
 	Sig                 []byte
 }
 
-func ValidateMintNftTxInfo(txInfo *MintNftTxInfo) error {
+func (txInfo *MintNftTxInfo) Validate() error {
 	// CreatorAccountIndex
 	if txInfo.CreatorAccountIndex < minAccountIndex {
 		return fmt.Errorf("CreatorAccountIndex should not be less than %d", minAccountIndex)
@@ -182,16 +182,35 @@ func ValidateMintNftTxInfo(txInfo *MintNftTxInfo) error {
 		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
 	}
 
-	// ExpiredAt
-	if txInfo.ExpiredAt < time.Now().UnixMilli() {
-		return fmt.Errorf("ExpiredAt(ms) should be after now")
-	}
-
 	// Nonce
 	if txInfo.Nonce < minNonce {
 		return fmt.Errorf("Nonce should not be less than %d", minNonce)
 	}
 
+	return nil
+}
+
+func (txInfo *MintNftTxInfo) VerifySignature(pubKey string) error {
+	// compute hash
+	hFunc := mimc.NewMiMC()
+	msgHash, err := ComputeMintNftMsgHash(txInfo, hFunc)
+	if err != nil {
+		return err
+	}
+	// verify signature
+	hFunc.Reset()
+	pk, err := ParsePublicKey(pubKey)
+	if err != nil {
+		return err
+	}
+	isValid, err := pk.Verify(txInfo.Sig, msgHash, hFunc)
+	if err != nil {
+		return err
+	}
+
+	if !isValid {
+		return errors.New("invalid signature")
+	}
 	return nil
 }
 

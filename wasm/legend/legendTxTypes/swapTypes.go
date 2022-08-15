@@ -20,11 +20,11 @@ package legendTxTypes
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash"
 	"log"
 	"math/big"
-	"time"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
@@ -122,7 +122,7 @@ type SwapTxInfo struct {
 	Sig               []byte
 }
 
-func ValidateSwapTxInfo(txInfo *SwapTxInfo) error {
+func (txInfo *SwapTxInfo) ValidateInfo() error {
 	if txInfo.FromAccountIndex < minAccountIndex {
 		return fmt.Errorf("FromAccountIndex should not be less than %d", minAccountIndex)
 	}
@@ -195,12 +195,32 @@ func ValidateSwapTxInfo(txInfo *SwapTxInfo) error {
 		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
 	}
 
-	if txInfo.ExpiredAt < time.Now().UnixMilli() {
-		return fmt.Errorf("ExpiredAt(ms) should be after now")
-	}
-
 	if txInfo.Nonce < minNonce {
 		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+	}
+	return nil
+}
+
+func (txInfo *SwapTxInfo) VerifySignature(pubKey string) error {
+	// compute hash
+	hFunc := mimc.NewMiMC()
+	msgHash, err := ComputeSwapMsgHash(txInfo, hFunc)
+	if err != nil {
+		return err
+	}
+	// verify signature
+	hFunc.Reset()
+	pk, err := ParsePublicKey(pubKey)
+	if err != nil {
+		return err
+	}
+	isValid, err := pk.Verify(txInfo.Sig, msgHash, hFunc)
+	if err != nil {
+		return err
+	}
+
+	if !isValid {
+		return errors.New("invalid signature")
 	}
 	return nil
 }
