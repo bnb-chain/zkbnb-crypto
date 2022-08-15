@@ -149,20 +149,6 @@ func TestValidateOfferTxInfo(t *testing.T) {
 				ListedAt:     0,
 			},
 		},
-		// ExpiredAt
-		{
-			fmt.Errorf("ExpiredAt(ms) should be after now"),
-			&OfferTxInfo{
-				Type:         1,
-				OfferId:      1,
-				AccountIndex: 3,
-				NftIndex:     4,
-				AssetId:      10,
-				AssetAmount:  big.NewInt(20),
-				ListedAt:     time.Now().Unix(),
-				ExpiredAt:    0,
-			},
-		},
 		// TreasuryRate
 		{
 			fmt.Errorf("TreasuryRate should  not be less than %d", minTreasuryRate),
@@ -195,7 +181,7 @@ func TestValidateOfferTxInfo(t *testing.T) {
 	}
 
 	for index, testCase := range testCases {
-		err := ValidateOfferTxInfo(testCase.testCase)
+		err := testCase.testCase.Validate()
 		require.Equalf(t, err, testCase.err, fmt.Sprintf("case %d: err should be the same", index))
 	}
 }

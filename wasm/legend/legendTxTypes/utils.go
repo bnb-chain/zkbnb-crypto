@@ -24,6 +24,7 @@ import (
 	"log"
 	"math/big"
 
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/bnb-chain/zkbas-crypto/util"
@@ -127,4 +128,20 @@ func isZeroByteSlice(bytes []byte) bool {
 
 func IsValidL1Address(address string) bool {
 	return common.IsHexAddress(address)
+}
+
+func ParsePublicKey(pkStr string) (pk *eddsa.PublicKey, err error) {
+	pkBytes, err := hex.DecodeString(pkStr)
+	if err != nil {
+		return nil, err
+	}
+	pk = new(eddsa.PublicKey)
+	size, err := pk.SetBytes(pkBytes)
+	if err != nil {
+		return nil, err
+	}
+	if size != 32 {
+		return nil, errors.New("invalid public key")
+	}
+	return pk, nil
 }

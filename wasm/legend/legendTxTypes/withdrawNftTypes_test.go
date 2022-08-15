@@ -177,25 +177,6 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 				GasFeeAssetAmount:      big.NewInt(0).Add(maxPackedFeeAmount, big.NewInt(1)),
 			},
 		},
-		// ExpiredAt
-		{
-			fmt.Errorf("ExpiredAt(ms) should be after now"),
-			&WithdrawNftTxInfo{
-				AccountIndex:           1,
-				CreatorAccountIndex:    1,
-				CreatorAccountNameHash: bytes.Repeat([]byte{1}, 32),
-				NftIndex:               5,
-				NftContentHash:         bytes.Repeat([]byte{1}, 32),
-				NftL1Address:           "0x299d17c8b4e9967385dc9a3bb78f2a43f5a13bd9",
-				NftL1TokenId:           big.NewInt(11),
-				CollectionId:           11,
-				ToAddress:              "0x299d17c8b4e9967385dc9a3bb78f2a43f5a13bd0",
-				GasAccountIndex:        0,
-				GasFeeAssetId:          3,
-				GasFeeAssetAmount:      big.NewInt(100),
-				ExpiredAt:              0,
-			},
-		},
 		// Nonce
 		{
 			fmt.Errorf("Nonce should not be less than %d", minNonce),
@@ -239,7 +220,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := ValidateWithdrawNftTxInfo(testCase.testCase)
+		err := testCase.testCase.Validate()
 		require.Equalf(t, testCase.err, err, "err should be the same")
 	}
 }
