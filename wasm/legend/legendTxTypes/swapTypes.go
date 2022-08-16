@@ -245,7 +245,9 @@ func ComputeSwapMsgHash(txInfo *SwapTxInfo, hFunc hash.Hash) (msgHash []byte, er
 	}
 	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.PairIndex)
+	WriteInt64IntoBuf(&buf, txInfo.AssetAId)
 	WriteInt64IntoBuf(&buf, packedAAmount)
+	WriteInt64IntoBuf(&buf, txInfo.AssetBId)
 	WriteInt64IntoBuf(&buf, packedBAmount)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
 	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
