@@ -331,7 +331,7 @@ func TestValidateSwapTxInfo(t *testing.T) {
 		},
 	}
 	for _, testCase := range testCases {
-		err := testCase.testCase.ValidateInfo()
+		err := testCase.testCase.Validate()
 		require.Equalf(t, testCase.err, err, "err should be the same")
 	}
 }

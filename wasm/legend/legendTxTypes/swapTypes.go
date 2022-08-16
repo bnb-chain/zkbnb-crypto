@@ -122,7 +122,7 @@ type SwapTxInfo struct {
 	Sig               []byte
 }
 
-func (txInfo *SwapTxInfo) ValidateInfo() error {
+func (txInfo *SwapTxInfo) Validate() error {
 	if txInfo.FromAccountIndex < minAccountIndex {
 		return fmt.Errorf("FromAccountIndex should not be less than %d", minAccountIndex)
 	}
