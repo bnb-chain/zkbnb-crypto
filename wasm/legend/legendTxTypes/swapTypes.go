@@ -225,6 +225,14 @@ func (txInfo *SwapTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *SwapTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *SwapTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
+}
+
 func ComputeSwapMsgHash(txInfo *SwapTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer

@@ -183,6 +183,14 @@ func (txInfo *WithdrawNftTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *WithdrawNftTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *WithdrawNftTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
+}
+
 func ComputeWithdrawNftMsgHash(txInfo *WithdrawNftTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer

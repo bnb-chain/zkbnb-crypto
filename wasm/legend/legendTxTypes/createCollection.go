@@ -180,6 +180,14 @@ func (txInfo *CreateCollectionTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *CreateCollectionTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *CreateCollectionTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
+}
+
 func ComputeCreateCollectionMsgHash(txInfo *CreateCollectionTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer

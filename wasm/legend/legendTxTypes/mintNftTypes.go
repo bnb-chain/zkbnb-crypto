@@ -214,6 +214,14 @@ func (txInfo *MintNftTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *MintNftTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *MintNftTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
+}
+
 func ComputeMintNftMsgHash(txInfo *MintNftTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer

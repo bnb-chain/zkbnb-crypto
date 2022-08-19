@@ -189,6 +189,14 @@ func (txInfo *WithdrawTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *WithdrawTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *WithdrawTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
+}
+
 func ComputeWithdrawMsgHash(txInfo *WithdrawTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
