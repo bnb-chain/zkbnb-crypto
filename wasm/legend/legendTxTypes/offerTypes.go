@@ -190,6 +190,14 @@ func (txInfo *OfferTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *OfferTxInfo) GetNonce() int64 {
+	return 0
+}
+
+func (txInfo *OfferTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
+}
+
 func ComputeOfferMsgHash(txInfo *OfferTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer

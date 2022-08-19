@@ -200,7 +200,16 @@ func (txInfo *AtomicMatchTxInfo) VerifySignature(pubKey string) error {
 	if !isValid {
 		return errors.New("invalid signature")
 	}
+
 	return nil
+}
+
+func (txInfo *AtomicMatchTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *AtomicMatchTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
 }
 
 func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {

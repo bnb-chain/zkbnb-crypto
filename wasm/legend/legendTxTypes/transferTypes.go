@@ -223,6 +223,14 @@ func (txInfo *TransferTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *TransferTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *TransferTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
+}
+
 func ComputeTransferMsgHash(txInfo *TransferTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer

@@ -244,6 +244,14 @@ func (txInfo *RemoveLiquidityTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *RemoveLiquidityTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *RemoveLiquidityTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
+}
+
 func ComputeRemoveLiquidityMsgHash(txInfo *RemoveLiquidityTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
