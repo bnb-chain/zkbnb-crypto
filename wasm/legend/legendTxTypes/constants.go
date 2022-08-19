@@ -36,6 +36,12 @@ var (
 )
 
 const (
+	NilNonce          = 0
+	NilExpiredAt      = 0
+	NilTxAccountIndex = int64(-1)
+)
+
+const (
 	TxTypeEmpty = iota
 	TxTypeRegisterZns
 	TxTypeCreatePair

@@ -25,13 +25,13 @@ func (txInfo *CreatePairTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *CreatePairTxInfo) GetFromAccountIndex() int64 {
-	return -1
+	return NilTxAccountIndex
 }
 
 func (txInfo *CreatePairTxInfo) GetNonce() int64 {
-	return 0
+	return NilNonce
 }
 
 func (txInfo *CreatePairTxInfo) GetExpiredAt() int64 {
-	return -1
+	return NilExpiredAt
 }

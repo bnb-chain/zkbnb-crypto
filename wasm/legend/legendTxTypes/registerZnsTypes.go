@@ -23,13 +23,13 @@ func (txInfo *RegisterZnsTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *RegisterZnsTxInfo) GetFromAccountIndex() int64 {
-	return -1
+	return NilTxAccountIndex
 }
 
 func (txInfo *RegisterZnsTxInfo) GetNonce() int64 {
-	return 0
+	return NilNonce
 }
 
 func (txInfo *RegisterZnsTxInfo) GetExpiredAt() int64 {
-	return -1
+	return NilExpiredAt
 }

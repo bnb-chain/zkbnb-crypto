@@ -199,7 +199,7 @@ func (txInfo *OfferTxInfo) GetFromAccountIndex() int64 {
 }
 
 func (txInfo *OfferTxInfo) GetNonce() int64 {
-	return 0
+	return NilNonce
 }
 
 func (txInfo *OfferTxInfo) GetExpiredAt() int64 {

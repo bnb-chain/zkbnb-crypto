@@ -34,13 +34,13 @@ func (txInfo *DepositNftTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *DepositNftTxInfo) GetFromAccountIndex() int64 {
-	return -1
+	return NilTxAccountIndex
 }
 
 func (txInfo *DepositNftTxInfo) GetNonce() int64 {
-	return 0
+	return NilNonce
 }
 
 func (txInfo *DepositNftTxInfo) GetExpiredAt() int64 {
-	return -1
+	return NilExpiredAt
 }

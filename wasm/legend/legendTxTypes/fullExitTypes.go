@@ -27,13 +27,13 @@ func (txInfo *FullExitTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *FullExitTxInfo) GetFromAccountIndex() int64 {
-	return -1
+	return NilTxAccountIndex
 }
 
 func (txInfo *FullExitTxInfo) GetNonce() int64 {
-	return 0
+	return NilNonce
 }
 
 func (txInfo *FullExitTxInfo) GetExpiredAt() int64 {
-	return -1
+	return NilExpiredAt
 }

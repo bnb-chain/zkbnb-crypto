@@ -33,13 +33,13 @@ func (txInfo *FullExitNftTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *FullExitNftTxInfo) GetFromAccountIndex() int64 {
-	return -1
+	return NilTxAccountIndex
 }
 
 func (txInfo *FullExitNftTxInfo) GetNonce() int64 {
-	return 0
+	return NilNonce
 }
 
 func (txInfo *FullExitNftTxInfo) GetExpiredAt() int64 {
-	return -1
+	return NilExpiredAt
 }
