@@ -190,8 +190,16 @@ func (txInfo *OfferTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *OfferTxInfo) GetTxType() int {
+	return TxTypeOffer
+}
+
+func (txInfo *OfferTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *OfferTxInfo) GetNonce() int64 {
-	return 0
+	return NilNonce
 }
 
 func (txInfo *OfferTxInfo) GetExpiredAt() int64 {

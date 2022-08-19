@@ -189,6 +189,14 @@ func (txInfo *WithdrawTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *WithdrawTxInfo) GetTxType() int {
+	return TxTypeWithdraw
+}
+
+func (txInfo *WithdrawTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *WithdrawTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }

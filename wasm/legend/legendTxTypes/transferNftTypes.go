@@ -206,6 +206,14 @@ func (txInfo *TransferNftTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *TransferNftTxInfo) GetTxType() int {
+	return TxTypeTransferNft
+}
+
+func (txInfo *TransferNftTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *TransferNftTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }

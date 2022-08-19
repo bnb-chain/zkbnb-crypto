@@ -180,6 +180,14 @@ func (txInfo *CreateCollectionTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *CreateCollectionTxInfo) GetTxType() int {
+	return TxTypeCreateCollection
+}
+
+func (txInfo *CreateCollectionTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *CreateCollectionTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }
