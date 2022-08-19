@@ -223,6 +223,14 @@ func (txInfo *TransferTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *TransferTxInfo) GetTxType() int {
+	return TxTypeTransfer
+}
+
+func (txInfo *TransferTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *TransferTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }

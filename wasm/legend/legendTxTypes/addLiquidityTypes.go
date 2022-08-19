@@ -209,6 +209,14 @@ func (txInfo *AddLiquidityTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *AddLiquidityTxInfo) GetTxType() int {
+	return TxTypeAddLiquidity
+}
+
+func (txInfo *AddLiquidityTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *AddLiquidityTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }

@@ -204,6 +204,14 @@ func (txInfo *AtomicMatchTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *AtomicMatchTxInfo) GetTxType() int {
+	return TxTypeAtomicMatch
+}
+
+func (txInfo *AtomicMatchTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *AtomicMatchTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }

@@ -214,6 +214,14 @@ func (txInfo *MintNftTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *MintNftTxInfo) GetTxType() int {
+	return TxTypeMintNft
+}
+
+func (txInfo *MintNftTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.CreatorAccountIndex
+}
+
 func (txInfo *MintNftTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }

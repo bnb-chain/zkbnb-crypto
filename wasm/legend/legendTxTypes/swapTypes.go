@@ -225,6 +225,14 @@ func (txInfo *SwapTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *SwapTxInfo) GetTxType() int {
+	return TxTypeSwap
+}
+
+func (txInfo *SwapTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *SwapTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }

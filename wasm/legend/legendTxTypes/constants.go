@@ -32,8 +32,30 @@ type (
 )
 
 var (
-	ZeroBigInt = big.NewInt(0)
-	ChainId    = int64(common.ChainId)
+	ChainId = int64(common.ChainId)
+)
+
+const (
+	TxTypeEmpty = iota
+	TxTypeRegisterZns
+	TxTypeCreatePair
+	TxTypeUpdatePairRate
+	TxTypeDeposit
+	TxTypeDepositNft
+	TxTypeTransfer
+	TxTypeSwap
+	TxTypeAddLiquidity
+	TxTypeRemoveLiquidity
+	TxTypeWithdraw
+	TxTypeCreateCollection
+	TxTypeMintNft
+	TxTypeTransferNft
+	TxTypeAtomicMatch
+	TxTypeCancelOffer
+	TxTypeWithdrawNft
+	TxTypeFullExit
+	TxTypeFullExitNft
+	TxTypeOffer
 )
 
 const (
@@ -61,35 +83,8 @@ const (
 
 	maxCollectionIntroductionLength int = 1000
 
-	minBlockHeight uint64 = 0
-	maxBlockHeight uint64 = (1 << 64) - 1
-
-	minHashLength = 20
-	maxHashLength = 100
-
-	minPublicKeyLength = 20
-	maxPublicKeyLength = 50
-
-	maxAccountNameLength          = 30
-	maxAccountNameLengthOmitSpace = 20
-
 	minPairIndex = 0
 	maxPairIndex = (1 << 16) - 1
-
-	minLimit = 0
-	maxLimit = 50
-
-	minOffset = 0
-	maxOffset = (1 << 64) - 1
-
-	minTxType = 0
-	maxTxType = 15
-
-	minLPAmount uint64 = 0
-	maxLPAmount uint64 = (1 << 64) - 1
-
-	minGasFee = 0
-	maxGasFee = (1 << 64) - 1
 )
 
 var (

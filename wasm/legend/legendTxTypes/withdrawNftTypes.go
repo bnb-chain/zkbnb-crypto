@@ -183,6 +183,14 @@ func (txInfo *WithdrawNftTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *WithdrawNftTxInfo) GetTxType() int {
+	return TxTypeWithdrawNft
+}
+
+func (txInfo *WithdrawNftTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *WithdrawNftTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }

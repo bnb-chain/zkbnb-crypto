@@ -244,6 +244,14 @@ func (txInfo *RemoveLiquidityTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *RemoveLiquidityTxInfo) GetTxType() int {
+	return TxTypeRemoveLiquidity
+}
+
+func (txInfo *RemoveLiquidityTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *RemoveLiquidityTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }

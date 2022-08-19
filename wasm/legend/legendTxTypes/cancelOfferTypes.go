@@ -168,6 +168,14 @@ func (txInfo *CancelOfferTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *CancelOfferTxInfo) GetTxType() int {
+	return TxTypeCancelOffer
+}
+
+func (txInfo *CancelOfferTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *CancelOfferTxInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }
