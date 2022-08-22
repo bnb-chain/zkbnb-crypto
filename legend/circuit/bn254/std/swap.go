@@ -79,7 +79,9 @@ func ComputeHashFromSwapTx(tx SwapTxConstraints, nonce Variable, expiredAt Varia
 	hFunc.Write(
 		tx.FromAccountIndex,
 		tx.PairIndex,
+		tx.AssetAId,
 		tx.AssetAAmount,
+		tx.AssetBId,
 		tx.AssetBMinAmount,
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
@@ -144,14 +146,20 @@ func VerifySwapTx(
 	IsVariableLessOrEqual(api, flag, liquidityBefore.FeeRate, RateBase)
 	assetAAmount := api.Select(isSameAsset, tx.AssetAAmount, tx.AssetBAmountDelta)
 	assetBAmount := api.Select(isSameAsset, tx.AssetBAmountDelta, tx.AssetAAmount)
+	IsVariableLessOrEqual(api, isDifferentAsset, liquidityBefore.AssetA, assetAAmount)
+	IsVariableLessOrEqual(api, isSameAsset, liquidityBefore.AssetB, assetBAmount)
+	assetAAmountAfter := api.Select(isSameAsset, api.Add(liquidityBefore.AssetA, assetAAmount), api.Sub(liquidityBefore.AssetA, assetAAmount))
+	assetAAmountAfter = api.Mul(RateBase, assetAAmountAfter)
+	assetAAmountAfterAdjusted := api.Select(isSameAsset, api.Sub(assetAAmountAfter, api.Mul(liquidityBefore.FeeRate, assetAAmount)), assetAAmountAfter)
+
+	assetBAmountAfter := api.Select(isSameAsset, api.Sub(liquidityBefore.AssetB, assetBAmount), api.Add(liquidityBefore.AssetB, assetBAmount))
+	assetBAmountAfter = api.Mul(RateBase, assetBAmountAfter)
+	assetBAmountAfterAdjusted := api.Select(isSameAsset, assetBAmountAfter, api.Sub(assetBAmountAfter, api.Mul(liquidityBefore.FeeRate, assetBAmount)))
 	// verify AMM
-	r := api.Mul(api.Mul(liquidityBefore.AssetA, liquidityBefore.AssetB), RateBase)
+	r := api.Mul(api.Mul(liquidityBefore.AssetA, liquidityBefore.AssetB), api.Mul(RateBase, RateBase))
 	l := api.Mul(
-		api.Sub(
-			api.Mul(RateBase, api.Add(assetAAmount, liquidityBefore.AssetA)),
-			api.Mul(liquidityBefore.FeeRate, assetAAmount),
-		),
-		api.Add(assetBAmount, liquidityBefore.AssetB),
+		assetAAmountAfterAdjusted,
+		assetBAmountAfterAdjusted,
 	)
 	IsVariableLessOrEqual(api, flag, r, l)
 	return pubData
