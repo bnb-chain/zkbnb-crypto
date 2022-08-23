@@ -82,7 +82,7 @@ const (
 	minNonce int64 = 1
 
 	minTreasuryRate int64 = 0
-	maxTreasuryRate int64 = (1 << 16) - 1
+	maxTreasuryRate int64 = 10000
 
 	minCollectionNameLength int = 1
 	maxCollectionNameLength int = 50
