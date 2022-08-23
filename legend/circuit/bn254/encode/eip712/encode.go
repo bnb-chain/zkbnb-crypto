@@ -1,6 +1,7 @@
-package abi
+package eip712
 
 import (
+	"encoding/hex"
 	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/encode/abi"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/hint"
@@ -9,18 +10,20 @@ import (
 	"math/big"
 )
 
-type KeccakCircuit struct {
+type Eip712Circuit struct {
 	AbiId         frontend.Variable
 	Values        []frontend.Variable // variable name
 	Keccaa256Hash []frontend.Variable `gnark:",public"` // abi object
 	Name          frontend.Variable   `gnark:",public"` // abi object
+	SIG           []frontend.Variable
+	PK            []frontend.Variable // PK
 }
 
 func init() {
 	hint.Register(GenerateKeccakHint)
 }
 
-func (circuit *KeccakCircuit) Define(api frontend.API) error {
+func (circuit *Eip712Circuit) Define(api frontend.API) error {
 	encoder, err := abi.NewAbiEncoder(api, circuit.AbiId)
 	if err != nil {
 		return err
@@ -31,10 +34,28 @@ func (circuit *KeccakCircuit) Define(api frontend.API) error {
 		return err
 	}
 
-	keccakRes, err := api.Compiler().NewHint(GenerateKeccakHint, 32, res...)
+	innerKeccakRes, err := api.Compiler().NewHint(GenerateKeccakHint, 32, res...)
+
+	prefix, err := hex.DecodeString(abi.HexPrefixAndEip712DomainKeccakHash)
+	if err != nil {
+		return err
+	}
+	prefixVariables := make([]frontend.Variable, len(prefix))
+	for i := 0; i < len(prefix); i++ {
+		prefixVariables[i] = prefix[i]
+	}
+
+	outerBytes := append(prefixVariables, innerKeccakRes...)
+	keccakRes, err := api.Compiler().NewHint(GenerateKeccakHint, 32, outerBytes...)
 
 	for i := range keccakRes {
 		api.AssertIsEqual(keccakRes[i], circuit.Keccaa256Hash[i])
+	}
+
+	ecdsaCircuit := Secp256k1Circuit{circuit.SIG, keccakRes, circuit.PK}
+	err = ecdsaCircuit.Verify(api)
+	if err != nil {
+		return err
 	}
 	return nil
 }

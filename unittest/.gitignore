@@ -1,0 +1,12 @@
+demo/node_modules
+
+#Hardhat files
+cache
+artifacts
+coverage
+coverage.json
+
+**mnemonic
+**.idea
+
+.env

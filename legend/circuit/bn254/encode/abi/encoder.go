@@ -14,7 +14,7 @@ type AbiEncoder interface {
 }
 
 type pureHintAbiEncoder struct {
-	abi.ABI
+	ABI map[string]abi.ABI
 }
 
 type pureAbiEncoder struct {
@@ -25,8 +25,59 @@ type pureAbiEncoder struct {
 // register encoder hint functions once
 var encoder *pureHintAbiEncoder = nil
 
+func makeAbiMaps() (map[string]abi.ABI, error) {
+	abiMaps := make(map[string]abi.ABI)
+	var err error
+	abiMaps[""] = abi.ABI{}
+	abiMaps[Transfer], err = abi.JSON(strings.NewReader(TransferABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	abiMaps[Withdraw], err = abi.JSON(strings.NewReader(WithdrawABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	abiMaps[AddLiquidity], err = abi.JSON(strings.NewReader(AddLiquidityABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	abiMaps[RemoveLiquidity], err = abi.JSON(strings.NewReader(RemoveLiquidityABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	abiMaps[Swap], err = abi.JSON(strings.NewReader(SwapABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	abiMaps[CreateCollection], err = abi.JSON(strings.NewReader(CreateCollectionABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	abiMaps[WithdrawNft], err = abi.JSON(strings.NewReader(WithdrawNftABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	abiMaps[TransferNft], err = abi.JSON(strings.NewReader(TransferNftABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	abiMaps[MintNft], err = abi.JSON(strings.NewReader(MintNftABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	abiMaps[CancelOffer], err = abi.JSON(strings.NewReader(CancelOfferABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	abiMaps[AtomicMatch], err = abi.JSON(strings.NewReader(AtomicMatchABIJSON))
+	if err != nil {
+		return nil, err
+	}
+	return abiMaps, nil
+}
+
 func NewPureAbiEncoder(context Context) (AbiEncoder, error) {
-	a, err := abi.JSON(strings.NewReader(GeneralABIJSON))
+	a, err := makeAbiMaps()
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +171,7 @@ func (e *pureAbiEncoder) Pack(api frontend.API, name frontend.Variable, args ...
 }
 
 func (e *pureHintAbiEncoder) HintDefaultAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
-	bytes, err := e.ABI.Pack("")
+	bytes, err := e.ABI[""].Pack("")
 	if err != nil {
 		return err
 	}
@@ -152,7 +203,10 @@ func (e *pureHintAbiEncoder) HintTransferAbi(curveId ecc.ID, inputs []*big.Int, 
 	copy(bs32[:], bs)
 	copy(nh32[:], nh)
 
-	bytes, err := e.ABI.Pack("Transfer", uint32(inputs[0].Uint64()), uint32(inputs[1].Uint64()), nh32, uint16(inputs[34].Uint64()), inputs[35], uint32(inputs[36].Uint64()), uint16(inputs[37].Uint64()), uint16(inputs[38].Uint64()), bs32, uint64(inputs[71].Uint64()), uint32(inputs[72].Uint64()), uint32(inputs[73].Uint64()))
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(Transfer)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[Transfer].Pack("", eip712MessageTypeHash32, uint32(inputs[0].Uint64()), uint32(inputs[1].Uint64()), nh32, uint16(inputs[34].Uint64()), inputs[35], uint32(inputs[36].Uint64()), uint16(inputs[37].Uint64()), uint16(inputs[38].Uint64()), bs32, uint64(inputs[71].Uint64()), uint32(inputs[72].Uint64()), uint32(inputs[73].Uint64()))
 	if err != nil {
 		return err
 	}
@@ -187,7 +241,10 @@ func (e *pureHintAbiEncoder) HintWithdrawAbi(curveId ecc.ID, inputs []*big.Int, 
 	copy(aa16[:], aa)
 	copy(ta20[:], ta)
 
-	bytes, err := e.ABI.Pack("Withdraw", (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), aa16, (uint32)(inputs[18].Uint64()), (uint16)(inputs[19].Uint64()), (uint16)(inputs[20].Uint64()), ta20, (uint64)(inputs[41].Uint64()), (uint32)(inputs[42].Uint64()), (uint32)(inputs[43].Uint64()))
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(Withdraw)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[Withdraw].Pack("", eip712MessageTypeHash32, (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), aa16, (uint32)(inputs[18].Uint64()), (uint16)(inputs[19].Uint64()), (uint16)(inputs[20].Uint64()), ta20, (uint64)(inputs[41].Uint64()), (uint32)(inputs[42].Uint64()), (uint32)(inputs[43].Uint64()))
 
 	if err != nil {
 		return err
@@ -202,7 +259,10 @@ func (e *pureHintAbiEncoder) HintWithdrawAbi(curveId ecc.ID, inputs []*big.Int, 
 }
 
 func (e *pureHintAbiEncoder) HintAddLiquidityAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
-	bytes, err := e.ABI.Pack("AddLiquidity", (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), inputs[2], inputs[3], (uint32)(inputs[4].Uint64()), (uint16)(inputs[5].Uint64()), (uint16)(inputs[6].Uint64()), inputs[7].Uint64(), (uint32)(inputs[8].Uint64()), (uint32)(inputs[9].Uint64()))
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(AddLiquidity)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[AddLiquidity].Pack("", eip712MessageTypeHash32, (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), inputs[2], inputs[3], (uint32)(inputs[4].Uint64()), (uint16)(inputs[5].Uint64()), (uint16)(inputs[6].Uint64()), inputs[7].Uint64(), (uint32)(inputs[8].Uint64()), (uint32)(inputs[9].Uint64()))
 
 	if err != nil {
 		return err
@@ -217,7 +277,10 @@ func (e *pureHintAbiEncoder) HintAddLiquidityAbi(curveId ecc.ID, inputs []*big.I
 }
 
 func (e *pureHintAbiEncoder) HintRemoveLiquidityAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
-	bytes, err := e.ABI.Pack("RemoveLiquidity", (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), inputs[2], inputs[3], inputs[4], (uint32)(inputs[5].Uint64()), (uint16)(inputs[6].Uint64()), (uint16)(inputs[7].Uint64()), inputs[8].Uint64(), (uint32)(inputs[9].Uint64()), (uint32)(inputs[10].Uint64()))
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(RemoveLiquidity)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[RemoveLiquidity].Pack("", eip712MessageTypeHash32, (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), inputs[2], inputs[3], inputs[4], (uint32)(inputs[5].Uint64()), (uint16)(inputs[6].Uint64()), (uint16)(inputs[7].Uint64()), inputs[8].Uint64(), (uint32)(inputs[9].Uint64()), (uint32)(inputs[10].Uint64()))
 
 	if err != nil {
 		return err
@@ -232,7 +295,10 @@ func (e *pureHintAbiEncoder) HintRemoveLiquidityAbi(curveId ecc.ID, inputs []*bi
 }
 
 func (e *pureHintAbiEncoder) HintSwapAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
-	bytes, err := e.ABI.Pack("Swap", (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), inputs[2], inputs[3], (uint32)(inputs[4].Uint64()), (uint16)(inputs[5].Uint64()), (uint16)(inputs[6].Uint64()), inputs[7].Uint64(), (uint32)(inputs[8].Uint64()), (uint32)(inputs[9].Uint64()))
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(Swap)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[Swap].Pack("", eip712MessageTypeHash32, (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), inputs[2], inputs[3], (uint32)(inputs[4].Uint64()), (uint16)(inputs[5].Uint64()), (uint16)(inputs[6].Uint64()), inputs[7].Uint64(), (uint32)(inputs[8].Uint64()), (uint32)(inputs[9].Uint64()))
 	if err != nil {
 		return err
 	}
@@ -246,7 +312,10 @@ func (e *pureHintAbiEncoder) HintSwapAbi(curveId ecc.ID, inputs []*big.Int, resu
 }
 
 func (e *pureHintAbiEncoder) HintCreateCollectionAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
-	bytes, err := e.ABI.Pack("CreateCollection", (uint32)(inputs[0].Uint64()), (uint32)(inputs[1].Uint64()), (uint16)(inputs[2].Uint64()), (uint16)(inputs[3].Uint64()), inputs[4].Uint64(), (uint32)(inputs[5].Uint64()), (uint32)(inputs[6].Uint64()))
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(CreateCollection)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[CreateCollection].Pack("", eip712MessageTypeHash32, (uint32)(inputs[0].Uint64()), (uint32)(inputs[1].Uint64()), (uint16)(inputs[2].Uint64()), (uint16)(inputs[3].Uint64()), inputs[4].Uint64(), (uint32)(inputs[5].Uint64()), (uint32)(inputs[6].Uint64()))
 	if err != nil {
 		return err
 	}
@@ -270,7 +339,11 @@ func (e *pureHintAbiEncoder) HintWithdrawNftAbi(curveId ecc.ID, inputs []*big.In
 		ta = append(ta, uint8(bi.Uint64()))
 	}
 	copy(ta20[:], ta)
-	bytes, err := e.ABI.Pack("WithdrawNft", (uint32)(inputs[0].Uint64()), inputs[1], ta20, (uint32)(inputs[22].Uint64()), (uint16)(inputs[23].Uint64()), (uint16)(inputs[24].Uint64()), inputs[25].Uint64(), (uint32)(inputs[26].Uint64()), (uint32)(inputs[27].Uint64()))
+
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(WithdrawNft)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[WithdrawNft].Pack("", eip712MessageTypeHash32, (uint32)(inputs[0].Uint64()), inputs[1], ta20, (uint32)(inputs[22].Uint64()), (uint16)(inputs[23].Uint64()), (uint16)(inputs[24].Uint64()), inputs[25].Uint64(), (uint32)(inputs[26].Uint64()), (uint32)(inputs[27].Uint64()))
 	if err != nil {
 		return err
 	}
@@ -306,7 +379,10 @@ func (e *pureHintAbiEncoder) HintTransferNftAbi(curveId ecc.ID, inputs []*big.In
 	}
 	copy(ch32[:], ta)
 
-	bytes, err := e.ABI.Pack("TransferNft", (uint32)(inputs[0].Uint64()), (uint32)(inputs[1].Uint64()), ta32, inputs[34], (uint32)(inputs[35].Uint64()), (uint16)(inputs[36].Uint64()), (uint16)(inputs[37].Uint64()), ch32, inputs[70].Uint64(), (uint32)(inputs[71].Uint64()), (uint32)(inputs[72].Uint64()))
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(TransferNft)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[TransferNft].Pack("", eip712MessageTypeHash32, (uint32)(inputs[0].Uint64()), (uint32)(inputs[1].Uint64()), ta32, inputs[34], (uint32)(inputs[35].Uint64()), (uint16)(inputs[36].Uint64()), (uint16)(inputs[37].Uint64()), ch32, inputs[70].Uint64(), (uint32)(inputs[71].Uint64()), (uint32)(inputs[72].Uint64()))
 	if err != nil {
 		return err
 	}
@@ -341,7 +417,11 @@ func (e *pureHintAbiEncoder) HintMintNftAbi(curveId ecc.ID, inputs []*big.Int, r
 		ch = append(ch, uint8(bi.Uint64()))
 	}
 	copy(ch32[:], ta)
-	bytes, err := e.ABI.Pack("MintNft", (uint32)(inputs[0].Uint64()), (uint32)(inputs[1].Uint64()), ta32, ch32, (uint32)(inputs[68].Uint64()), (uint16)(inputs[69].Uint64()), (uint16)(inputs[70].Uint64()), (uint32)(inputs[71].Uint64()), (uint32)(inputs[72].Uint64()), inputs[73].Uint64(), (uint32)(inputs[74].Uint64()), (uint32)(inputs[75].Uint64()))
+
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(MintNft)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[MintNft].Pack("", eip712MessageTypeHash32, (uint32)(inputs[0].Uint64()), (uint32)(inputs[1].Uint64()), ta32, ch32, (uint32)(inputs[68].Uint64()), (uint16)(inputs[69].Uint64()), (uint16)(inputs[70].Uint64()), (uint32)(inputs[71].Uint64()), (uint32)(inputs[72].Uint64()), inputs[73].Uint64(), (uint32)(inputs[74].Uint64()), (uint32)(inputs[75].Uint64()))
 	if err != nil {
 		return err
 	}
@@ -355,7 +435,10 @@ func (e *pureHintAbiEncoder) HintMintNftAbi(curveId ecc.ID, inputs []*big.Int, r
 }
 
 func (e *pureHintAbiEncoder) HintCancelOfferAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
-	bytes, err := e.ABI.Pack("CancelOffer", (uint32)(inputs[0].Uint64()), inputs[1], (uint32)(inputs[2].Uint64()), (uint16)(inputs[3].Uint64()), (uint16)(inputs[4].Uint64()), inputs[5].Uint64(), (uint32)(inputs[6].Uint64()), (uint32)(inputs[7].Uint64()))
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(CancelOffer)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[CancelOffer].Pack("", eip712MessageTypeHash32, (uint32)(inputs[0].Uint64()), inputs[1], (uint32)(inputs[2].Uint64()), (uint16)(inputs[3].Uint64()), (uint16)(inputs[4].Uint64()), inputs[5].Uint64(), (uint32)(inputs[6].Uint64()), (uint32)(inputs[7].Uint64()))
 	if err != nil {
 		return err
 	}
@@ -370,9 +453,55 @@ func (e *pureHintAbiEncoder) HintCancelOfferAbi(curveId ecc.ID, inputs []*big.In
 
 func (e *pureHintAbiEncoder) HintAtomicMatchAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
 
-	buyerOffer := ReadOfferFromArrays(inputs[1:72])
-	sellerOffer := ReadOfferFromArrays(inputs[72:143])
-	bytes, err := e.ABI.Pack("AtomicMatch", (uint32)(inputs[0].Uint64()), buyerOffer, sellerOffer, (uint32)(inputs[143].Uint64()), (uint16)(inputs[144].Uint64()), (uint16)(inputs[145].Uint64()), inputs[146].Uint64(), (uint32)(inputs[147].Uint64()), (uint32)(inputs[148].Uint64()))
+	r1 := make([]byte, 0)
+	r132 := [32]byte{}
+
+	for _, bi := range inputs[9:41] {
+		if len(bi.Bytes()) > 1 {
+			continue
+		}
+		r1 = append(r1, uint8(bi.Uint64()))
+	}
+	copy(r132[:], r1)
+
+	s1 := make([]byte, 0)
+	s132 := [32]byte{}
+
+	for _, bi := range inputs[41:73] {
+		if len(bi.Bytes()) > 1 {
+			continue
+		}
+		s1 = append(s1, uint8(bi.Uint64()))
+	}
+	copy(s132[:], s1)
+
+	r2 := make([]byte, 0)
+	r232 := [32]byte{}
+
+	for _, bi := range inputs[82:114] {
+		if len(bi.Bytes()) > 1 {
+			continue
+		}
+		r2 = append(r2, uint8(bi.Uint64()))
+	}
+	copy(r232[:], r2)
+
+	s2 := make([]byte, 0)
+	s232 := [32]byte{}
+
+	for _, bi := range inputs[114:146] {
+		if len(bi.Bytes()) > 1 {
+			continue
+		}
+		s2 = append(s2, uint8(bi.Uint64()))
+	}
+	copy(s232[:], s2)
+
+	eip712MessageTypeHash32 := GetEIP712MessageTypeHashBytes32(AtomicMatch)
+
+	// the first argument of Pack was set to empty String because eip712 implementation any function as constructor
+	bytes, err := e.ABI[AtomicMatch].Pack("", eip712MessageTypeHash32, inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5], inputs[6], inputs[7], inputs[8],
+		r132, s132, inputs[73], inputs[74], inputs[75], inputs[76], inputs[77], inputs[78], inputs[79], inputs[80], inputs[81], r232, s232, inputs[146], inputs[147])
 	if err != nil {
 		return err
 	}

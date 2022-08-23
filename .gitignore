@@ -26,3 +26,4 @@
 .DS_Store
 */.DS_Store
 **/.DS_Store
+unittest/node_modules
