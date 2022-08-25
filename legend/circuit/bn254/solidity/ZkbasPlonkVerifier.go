@@ -2,7 +2,7 @@ package solidity
 
 const zkbasPlonkVerifierTemplate = `
 // According to https://eprint.iacr.org/archive/2019/953/1585767119.pdf
-pragma solidity >=0.5.0 <0.7.0;
+pragma solidity ^0.7.6;
 pragma experimental ABIEncoderV2;
 
 library PairingsBn254 {
@@ -512,22 +512,6 @@ contract PlonkVerifier {
         Proof memory proof,
         VerificationKey memory vk
     ) internal view returns (PairingsBn254.G1Point memory res) {
-        // we compute what power of v is used as a delinearization factor in batch opening of
-        // commitments. Let's label W(x) = 1 / (x - z) *
-        // [
-        // t_0(x) + z^n * t_1(x) + z^2n * t_2(x) + z^3n * t_3(x) - t(z)
-        // + v (r(x) - r(z))
-        // + v^{2..5} * (witness(x) - witness(z))
-        // + v^(6..8) * (permutation(x) - permutation(z))
-        // ]
-        // W'(x) = 1 / (x - z*omega) *
-        // [
-        // + v^9 (z(x) - z(z*omega)) <- we need this power
-        // + v^10 * (d(x) - d(z*omega))
-        // ]
-        //
-        // we pay a little for a few arithmetic operations to not introduce another constant
-        // constant gates
         res = PairingsBn254.copy_g1(vk.selector_commitments[STATE_WIDTH + 1]);
 
         PairingsBn254.G1Point memory tmp_g1 = PairingsBn254.P1();
@@ -779,8 +763,14 @@ contract PlonkVerifier {
 
 contract ZkbasPlonkVerifier is PlonkVerifier {
     uint256 constant SERIALIZED_PROOF_LENGTH = 26;
-	uint256 constant PUBLIC_INPUTS_LENGTH = 3;
-	using PairingsBn254 for PairingsBn254.Fr;
+    uint256 constant PUBLIC_INPUTS_LENGTH = 3;
+    using PairingsBn254 for PairingsBn254.Fr;
+
+    function initialize(bytes calldata) external {}
+
+    /// @notice Verifier contract upgrade. Can be external because Proxy contract intercepts illegal calls of this function.
+    /// @param upgradeParameters Encoded representation of upgrade parameters
+    function upgrade(bytes calldata upgradeParameters) external {}
 
     function get_verification_key(uint16 block_size) internal pure returns(VerificationKey memory vk) {
         {{range $i, $vi := .Vks }}
