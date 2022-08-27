@@ -184,8 +184,8 @@ func CollectPubDataFromSwap(api API, txInfo SwapTxConstraints) (pubData [PubData
 	ABits = append(gasAccountIndexBits, ABits...)
 	ABits = append(gasFeeAssetIdBits, ABits...)
 	ABits = append(gasFeeAssetAmountBits, ABits...)
-	var paddingSize [56]Variable
-	for i := 0; i < 56; i++ {
+	var paddingSize [24]Variable
+	for i := 0; i < 24; i++ {
 		paddingSize[i] = 0
 	}
 	ABits = append(paddingSize[:], ABits...)
