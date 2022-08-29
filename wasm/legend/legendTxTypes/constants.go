@@ -76,7 +76,7 @@ const (
 	minNftIndex int64 = 0
 	maxNftIndex int64 = (1 << 40) - 1
 
-	minCollectionId int64 = 1
+	minCollectionId int64 = 0
 	maxCollectionId int64 = (1 << 16) - 1
 
 	minNonce int64 = 0
