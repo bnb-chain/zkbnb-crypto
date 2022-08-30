@@ -1,4 +1,0 @@
-package mockAccount
-
-var(
-)

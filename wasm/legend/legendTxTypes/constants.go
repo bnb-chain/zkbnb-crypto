@@ -32,8 +32,36 @@ type (
 )
 
 var (
-	ZeroBigInt = big.NewInt(0)
-	ChainId    = int64(common.ChainId)
+	ChainId = int64(common.ChainId)
+)
+
+const (
+	NilNonce          = 0
+	NilExpiredAt      = 0
+	NilTxAccountIndex = int64(-1)
+)
+
+const (
+	TxTypeEmpty = iota
+	TxTypeRegisterZns
+	TxTypeCreatePair
+	TxTypeUpdatePairRate
+	TxTypeDeposit
+	TxTypeDepositNft
+	TxTypeTransfer
+	TxTypeSwap
+	TxTypeAddLiquidity
+	TxTypeRemoveLiquidity
+	TxTypeWithdraw
+	TxTypeCreateCollection
+	TxTypeMintNft
+	TxTypeTransferNft
+	TxTypeAtomicMatch
+	TxTypeCancelOffer
+	TxTypeWithdrawNft
+	TxTypeFullExit
+	TxTypeFullExitNft
+	TxTypeOffer
 )
 
 const (
@@ -48,48 +76,21 @@ const (
 	minNftIndex int64 = 0
 	maxNftIndex int64 = (1 << 40) - 1
 
-	minCollectionId int64 = 1
+	minCollectionId int64 = 0
 	maxCollectionId int64 = (1 << 16) - 1
 
-	minNonce int64 = 1
+	minNonce int64 = 0
 
 	minTreasuryRate int64 = 0
-	maxTreasuryRate int64 = (1 << 16) - 1
+	maxTreasuryRate int64 = 10000
 
 	minCollectionNameLength int = 1
 	maxCollectionNameLength int = 50
 
 	maxCollectionIntroductionLength int = 1000
 
-	minBlockHeight uint64 = 0
-	maxBlockHeight uint64 = (1 << 64) - 1
-
-	minHashLength = 20
-	maxHashLength = 100
-
-	minPublicKeyLength = 20
-	maxPublicKeyLength = 50
-
-	maxAccountNameLength          = 30
-	maxAccountNameLengthOmitSpace = 20
-
 	minPairIndex = 0
 	maxPairIndex = (1 << 16) - 1
-
-	minLimit = 0
-	maxLimit = 50
-
-	minOffset = 0
-	maxOffset = (1 << 64) - 1
-
-	minTxType = 0
-	maxTxType = 15
-
-	minLPAmount uint64 = 0
-	maxLPAmount uint64 = (1 << 64) - 1
-
-	minGasFee = 0
-	maxGasFee = (1 << 64) - 1
 )
 
 var (

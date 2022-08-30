@@ -20,11 +20,11 @@ package legendTxTypes
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash"
 	"log"
 	"math/big"
-	"time"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
@@ -99,7 +99,7 @@ type CreateCollectionTxInfo struct {
 	Sig               []byte
 }
 
-func ValidateCreateCollectionTxInfo(txInfo *CreateCollectionTxInfo) error {
+func (txInfo *CreateCollectionTxInfo) Validate() error {
 	// AccountIndex
 	if txInfo.AccountIndex < minAccountIndex {
 		return fmt.Errorf("AccountIndex should not be less than %d", minAccountIndex)
@@ -148,17 +148,52 @@ func ValidateCreateCollectionTxInfo(txInfo *CreateCollectionTxInfo) error {
 		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
 	}
 
-	// ExpiredAt
-	if txInfo.ExpiredAt < time.Now().UnixMilli() {
-		return fmt.Errorf("ExpiredAt(ms) should be after now")
-	}
-
 	// Nonce
 	if txInfo.Nonce < minNonce {
 		return fmt.Errorf("Nonce should not be less than %d", minNonce)
 	}
 
 	return nil
+}
+
+func (txInfo *CreateCollectionTxInfo) VerifySignature(pubKey string) error {
+	// compute hash
+	hFunc := mimc.NewMiMC()
+	msgHash, err := ComputeCreateCollectionMsgHash(txInfo, hFunc)
+	if err != nil {
+		return err
+	}
+	// verify signature
+	hFunc.Reset()
+	pk, err := ParsePublicKey(pubKey)
+	if err != nil {
+		return err
+	}
+	isValid, err := pk.Verify(txInfo.Sig, msgHash, hFunc)
+	if err != nil {
+		return err
+	}
+
+	if !isValid {
+		return errors.New("invalid signature")
+	}
+	return nil
+}
+
+func (txInfo *CreateCollectionTxInfo) GetTxType() int {
+	return TxTypeCreateCollection
+}
+
+func (txInfo *CreateCollectionTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
+func (txInfo *CreateCollectionTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *CreateCollectionTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
 }
 
 func ComputeCreateCollectionMsgHash(txInfo *CreateCollectionTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {

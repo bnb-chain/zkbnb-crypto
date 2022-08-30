@@ -168,20 +168,24 @@ func CollectPubDataFromSwap(api API, txInfo SwapTxConstraints) (pubData [PubData
 	txTypeBits := api.ToBinary(TxTypeSwap, TxTypeBitsSize)
 	fromAccountIndexBits := api.ToBinary(txInfo.FromAccountIndex, AccountIndexBitsSize)
 	pairIndexBits := api.ToBinary(txInfo.PairIndex, PairIndexBitsSize)
+	assetAIdBits := api.ToBinary(txInfo.AssetAId, AssetIdBitsSize)
 	assetAAmountBits := api.ToBinary(txInfo.AssetAAmount, PackedAmountBitsSize)
+	assetBIdBits := api.ToBinary(txInfo.AssetBId, AssetIdBitsSize)
 	assetBAmountBits := api.ToBinary(txInfo.AssetBAmountDelta, PackedAmountBitsSize)
 	gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
 	gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
 	gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
 	ABits := append(fromAccountIndexBits, txTypeBits...)
 	ABits = append(pairIndexBits, ABits...)
+	ABits = append(assetAIdBits, ABits...)
 	ABits = append(assetAAmountBits, ABits...)
+	ABits = append(assetBIdBits, ABits...)
 	ABits = append(assetBAmountBits, ABits...)
 	ABits = append(gasAccountIndexBits, ABits...)
 	ABits = append(gasFeeAssetIdBits, ABits...)
 	ABits = append(gasFeeAssetAmountBits, ABits...)
-	var paddingSize [56]Variable
-	for i := 0; i < 56; i++ {
+	var paddingSize [24]Variable
+	for i := 0; i < 24; i++ {
 		paddingSize[i] = 0
 	}
 	ABits = append(paddingSize[:], ABits...)

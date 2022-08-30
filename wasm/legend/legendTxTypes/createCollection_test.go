@@ -135,20 +135,6 @@ func TestValidateCreateCollectionTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(0).Add(maxPackedFeeAmount, big.NewInt(1)),
 			},
 		},
-		// ExpiredAt
-		{
-			fmt.Errorf("ExpiredAt(ms) should be after now"),
-			&CreateCollectionTxInfo{
-				AccountIndex:      1,
-				CollectionId:      5,
-				Name:              "test name",
-				Introduction:      "test introduction",
-				GasAccountIndex:   0,
-				GasFeeAssetId:     3,
-				GasFeeAssetAmount: big.NewInt(100),
-				ExpiredAt:         0,
-			},
-		},
 		// Nonce
 		{
 			fmt.Errorf("Nonce should not be less than %d", minNonce),
@@ -182,7 +168,7 @@ func TestValidateCreateCollectionTxInfo(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := ValidateCreateCollectionTxInfo(testCase.testCase)
+		err := testCase.testCase.Validate()
 		require.Equalf(t, err, testCase.err, "err should be the same")
 	}
 }

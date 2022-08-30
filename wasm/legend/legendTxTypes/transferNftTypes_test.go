@@ -201,21 +201,6 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 				CallDataHash:      bytes.Repeat([]byte{1}, 31),
 			},
 		},
-		// ExpiredAt
-		{
-			fmt.Errorf("ExpiredAt(ms) should be after now"),
-			&TransferNftTxInfo{
-				FromAccountIndex:  1,
-				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftIndex:          3,
-				GasAccountIndex:   0,
-				GasFeeAssetId:     3,
-				GasFeeAssetAmount: big.NewInt(100),
-				CallDataHash:      bytes.Repeat([]byte{1}, 32),
-				ExpiredAt:         0,
-			},
-		},
 		// Nonce
 		{
 			fmt.Errorf("Nonce should not be less than %d", minNonce),
@@ -235,7 +220,7 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := ValidateTransferNftTxInfo(testCase.testCase)
+		err := testCase.testCase.Validate()
 		require.Equalf(t, err, testCase.err, "err should be the same")
 	}
 }

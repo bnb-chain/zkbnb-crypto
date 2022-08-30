@@ -20,11 +20,11 @@ package legendTxTypes
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash"
 	"log"
 	"math/big"
-	"time"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -119,7 +119,7 @@ type AtomicMatchTxInfo struct {
 	Sig               []byte
 }
 
-func ValidateAtomicMatchTxInfo(txInfo *AtomicMatchTxInfo) error {
+func (txInfo *AtomicMatchTxInfo) Validate() error {
 	// AccountIndex
 	if txInfo.AccountIndex < minAccountIndex {
 		return fmt.Errorf("AccountIndex should not be less than %d", minAccountIndex)
@@ -132,7 +132,7 @@ func ValidateAtomicMatchTxInfo(txInfo *AtomicMatchTxInfo) error {
 	if txInfo.BuyOffer == nil {
 		return fmt.Errorf("BuyOffer should not be nil")
 	}
-	if err := ValidateOfferTxInfo(txInfo.BuyOffer); err != nil {
+	if err := txInfo.BuyOffer.Validate(); err != nil {
 		return fmt.Errorf("BuyOffer is invalid, %s", err.Error())
 	}
 
@@ -140,7 +140,7 @@ func ValidateAtomicMatchTxInfo(txInfo *AtomicMatchTxInfo) error {
 	if txInfo.SellOffer == nil {
 		return fmt.Errorf("SellOffer should not be nil")
 	}
-	if err := ValidateOfferTxInfo(txInfo.SellOffer); err != nil {
+	if err := txInfo.SellOffer.Validate(); err != nil {
 		return fmt.Errorf("SellOffer is invalid, %s", err.Error())
 	}
 
@@ -171,17 +171,53 @@ func ValidateAtomicMatchTxInfo(txInfo *AtomicMatchTxInfo) error {
 		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
 	}
 
-	// ExpiredAt
-	if txInfo.ExpiredAt < time.Now().UnixMilli() {
-		return fmt.Errorf("ExpiredAt(ms) should be after now")
-	}
-
 	// Nonce
 	if txInfo.Nonce < minNonce {
 		return fmt.Errorf("Nonce should not be less than %d", minNonce)
 	}
 
 	return nil
+}
+
+func (txInfo *AtomicMatchTxInfo) VerifySignature(pubKey string) error {
+	// compute hash
+	hFunc := mimc.NewMiMC()
+	msgHash, err := ComputeAtomicMatchMsgHash(txInfo, hFunc)
+	if err != nil {
+		return err
+	}
+	// verify signature
+	hFunc.Reset()
+	pk, err := ParsePublicKey(pubKey)
+	if err != nil {
+		return err
+	}
+	isValid, err := pk.Verify(txInfo.Sig, msgHash, hFunc)
+	if err != nil {
+		return err
+	}
+
+	if !isValid {
+		return errors.New("invalid signature")
+	}
+
+	return nil
+}
+
+func (txInfo *AtomicMatchTxInfo) GetTxType() int {
+	return TxTypeAtomicMatch
+}
+
+func (txInfo *AtomicMatchTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
+func (txInfo *AtomicMatchTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *AtomicMatchTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
 }
 
 func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {

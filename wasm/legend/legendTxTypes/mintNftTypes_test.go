@@ -218,22 +218,6 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 				GasFeeAssetAmount:   big.NewInt(0).Add(maxPackedFeeAmount, big.NewInt(1)),
 			},
 		},
-		// ExpiredAt
-		{
-			fmt.Errorf("ExpiredAt(ms) should be after now"),
-			&MintNftTxInfo{
-				CreatorAccountIndex: 1,
-				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftCollectionId:     4,
-				CreatorTreasuryRate: 10,
-				GasAccountIndex:     0,
-				GasFeeAssetId:       3,
-				GasFeeAssetAmount:   big.NewInt(100),
-				ExpiredAt:           0,
-			},
-		},
 		// Nonce
 		{
 			fmt.Errorf("Nonce should not be less than %d", minNonce),
@@ -271,7 +255,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		err := ValidateMintNftTxInfo(testCase.testCase)
+		err := testCase.testCase.Validate()
 		require.Equalf(t, err, testCase.err, "err should be the same")
 	}
 }

@@ -21,16 +21,17 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash"
 	"log"
 	"math/big"
-	"time"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/ethereum/go-ethereum/common"
 
 	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/bnb-chain/zkbas-crypto/ffmath"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 type TransferSegmentFormat struct {
@@ -125,7 +126,7 @@ type TransferTxInfo struct {
 	Sig               []byte
 }
 
-func ValidateTransferTxInfo(txInfo *TransferTxInfo) error {
+func (txInfo *TransferTxInfo) Validate() error {
 	if txInfo.FromAccountIndex < minAccountIndex {
 		return fmt.Errorf("FromAccountIndex should not be less than %d", minAccountIndex)
 	}
@@ -181,11 +182,6 @@ func ValidateTransferTxInfo(txInfo *TransferTxInfo) error {
 		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
 	}
 
-	// ExpiredAt
-	if txInfo.ExpiredAt < time.Now().UnixMilli() {
-		return fmt.Errorf("ExpiredAt(ms) should be after now")
-	}
-
 	if txInfo.Nonce < minNonce {
 		return fmt.Errorf("Nonce should not be less than %d", minNonce)
 	}
@@ -201,6 +197,46 @@ func ValidateTransferTxInfo(txInfo *TransferTxInfo) error {
 	}
 
 	return nil
+}
+
+func (txInfo *TransferTxInfo) VerifySignature(pubKey string) error {
+	// compute hash
+	hFunc := mimc.NewMiMC()
+	msgHash, err := ComputeTransferMsgHash(txInfo, hFunc)
+	if err != nil {
+		return err
+	}
+	// verify signature
+	hFunc.Reset()
+	pk, err := ParsePublicKey(pubKey)
+	if err != nil {
+		return err
+	}
+	isValid, err := pk.Verify(txInfo.Sig, msgHash, hFunc)
+	if err != nil {
+		return err
+	}
+
+	if !isValid {
+		return errors.New("invalid signature")
+	}
+	return nil
+}
+
+func (txInfo *TransferTxInfo) GetTxType() int {
+	return TxTypeTransfer
+}
+
+func (txInfo *TransferTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
+func (txInfo *TransferTxInfo) GetNonce() int64 {
+	return txInfo.Nonce
+}
+
+func (txInfo *TransferTxInfo) GetExpiredAt() int64 {
+	return txInfo.ExpiredAt
 }
 
 func ComputeTransferMsgHash(txInfo *TransferTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
