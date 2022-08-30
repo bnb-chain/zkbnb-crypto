@@ -88,8 +88,6 @@ func VerifyFullExitNftTx(
 	IsVariableEqual(api, flag, tx.NftIndex, nftBefore.NftIndex)
 	isCheck := api.IsZero(api.IsZero(tx.CreatorAccountNameHash))
 	isCheck = api.And(flag, isCheck)
-	IsVariableEqual(api, isCheck, tx.CreatorAccountIndex, accountsBefore[1].AccountIndex)
-	IsVariableEqual(api, isCheck, tx.CreatorAccountNameHash, accountsBefore[1].AccountNameHash)
 	IsVariableEqual(api, flag, tx.CreatorAccountIndex, nftBefore.CreatorAccountIndex)
 	IsVariableEqual(api, flag, tx.CreatorTreasuryRate, nftBefore.CreatorTreasuryRate)
 	isOwner := api.And(api.IsZero(api.Sub(tx.AccountIndex, nftBefore.OwnerAccountIndex)), flag)
