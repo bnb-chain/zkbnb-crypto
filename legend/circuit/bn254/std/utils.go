@@ -38,3 +38,13 @@ func EmptyPublicKeyWitness() (witness PublicKeyConstraints) {
 	}
 	return witness
 }
+
+func Max(api API, a, b Variable) Variable {
+	maxAB := api.Select(api.IsZero(api.Sub(1, api.Cmp(a, b))), a, b)
+	return maxAB
+}
+
+func Min(api API, a, b Variable) Variable {
+	minAB := api.Select(api.IsZero(api.Add(1, api.Cmp(a, b))), a, b)
+	return minAB
+}
