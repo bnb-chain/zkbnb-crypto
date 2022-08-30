@@ -17,10 +17,6 @@
 
 package std
 
-import (
-	"github.com/bnb-chain/zkbas-crypto/zero/circuit/bn254/std"
-)
-
 type AddLiquidityTx struct {
 	FromAccountIndex  int64
 	PairIndex         int64
@@ -147,9 +143,9 @@ func VerifyAddLiquidityTx(
 	// TODO verify ratio
 	l := api.Mul(liquidityBefore.AssetA, tx.AssetBAmount)
 	r := api.Mul(liquidityBefore.AssetB, tx.AssetAAmount)
-	maxDelta := std.Max(api, liquidityBefore.AssetA, liquidityBefore.AssetB)
-	l = std.Max(api, l, r)
-	r = std.Min(api, l, r)
+	maxDelta := Max(api, liquidityBefore.AssetA, liquidityBefore.AssetB)
+	l = Max(api, l, r)
+	r = Min(api, l, r)
 	lrDelta := api.Sub(l, r)
 	IsVariableLessOrEqual(api, flag, lrDelta, maxDelta)
 	// TODO verify lp amount
