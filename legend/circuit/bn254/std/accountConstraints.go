@@ -19,8 +19,9 @@ package std
 
 import (
 	"errors"
-	"github.com/consensys/gnark/std/signature/eddsa"
 	"log"
+
+	"github.com/consensys/gnark/std/signature/eddsa"
 )
 
 type AccountConstraints struct {

@@ -1,6 +1,8 @@
 package legendTxTypes
 
-import "math/big"
+import (
+	"math/big"
+)
 
 type DepositNftTxInfo struct {
 	TxType uint8

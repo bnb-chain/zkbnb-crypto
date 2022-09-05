@@ -3,11 +3,13 @@ package std
 import (
 	"bytes"
 	"errors"
-	"github.com/bnb-chain/zkbnb-crypto/ffmath"
-	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/ethereum/go-ethereum/crypto"
 	"log"
 	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 )
 
 func Keccak256(curveID ecc.ID, inputs []*big.Int, outputs []*big.Int) error {

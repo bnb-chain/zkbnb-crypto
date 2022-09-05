@@ -17,7 +17,9 @@
 
 package std
 
-import "math/big"
+import (
+	"math/big"
+)
 
 type Nft struct {
 	NftIndex            int64

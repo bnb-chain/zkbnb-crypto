@@ -18,9 +18,11 @@
 package block
 
 import (
-	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/std"
-	"github.com/consensys/gnark/std/hash/mimc"
 	"log"
+
+	"github.com/consensys/gnark/std/hash/mimc"
+
+	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/std"
 )
 
 type BlockConstraints struct {

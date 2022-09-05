@@ -2,11 +2,13 @@ package test
 
 import (
 	"encoding/hex"
-	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
+	"github.com/stretchr/testify/assert"
+
+	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
 )
 
 func TestEddsaPublicKey(t *testing.T) {

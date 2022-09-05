@@ -19,10 +19,12 @@ package src
 
 import (
 	"encoding/json"
+	"log"
+
+	"syscall/js"
+
 	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/legendTxTypes"
-	"log"
-	"syscall/js"
 )
 
 func SwapTx() js.Func {

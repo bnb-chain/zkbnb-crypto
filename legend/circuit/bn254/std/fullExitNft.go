@@ -17,7 +17,9 @@
 
 package std
 
-import "math/big"
+import (
+	"math/big"
+)
 
 type FullExitNftTx struct {
 	AccountIndex           int64

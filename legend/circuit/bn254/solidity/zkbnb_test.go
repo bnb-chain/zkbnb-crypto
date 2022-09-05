@@ -19,13 +19,15 @@ package solidity
 
 import (
 	"fmt"
-	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/block"
+	"os"
+	"testing"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
-	"os"
-	"testing"
+
+	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/block"
 )
 
 func TestExportSol(t *testing.T) {

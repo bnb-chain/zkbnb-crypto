@@ -17,7 +17,9 @@
 
 package tebn254
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
 	ErrMapToGroup       = errors.New("Failed to Hash-to-point.")

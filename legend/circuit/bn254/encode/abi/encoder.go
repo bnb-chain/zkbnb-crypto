@@ -1,12 +1,13 @@
 package abi
 
 import (
+	"math/big"
+	"strings"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/hint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"math/big"
-	"strings"
 )
 
 type AbiEncoder interface {

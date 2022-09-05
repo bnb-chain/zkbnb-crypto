@@ -2,17 +2,17 @@ package abi
 
 import (
 	"fmt"
-	"github.com/consensys/gnark/backend/plonk"
-	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/frontend/cs/scs"
-	abi2 "github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/stretchr/testify/assert"
 	"math/big"
 	"strings"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend/plonk"
+	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/scs"
 	"github.com/consensys/gnark/test"
+	abi2 "github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAbiEncodeTransfer(t *testing.T) {

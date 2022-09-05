@@ -2,10 +2,12 @@ package test
 
 import (
 	"encoding/json"
-	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/legendTxTypes"
-	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/legendTxTypes"
 )
 
 func TestCreateCollectionSegmentFormat(t *testing.T) {

@@ -17,7 +17,9 @@
 
 package merkleTree
 
-import "errors"
+import (
+	"errors"
+)
 
 var (
 	ErrInvalidLeavesSize = errors.New("err: invalid leaves size, should be power of 2")

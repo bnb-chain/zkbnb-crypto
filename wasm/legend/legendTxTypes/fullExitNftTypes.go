@@ -1,6 +1,8 @@
 package legendTxTypes
 
-import "math/big"
+import (
+	"math/big"
+)
 
 type FullExitNftTxInfo struct {
 	TxType uint8

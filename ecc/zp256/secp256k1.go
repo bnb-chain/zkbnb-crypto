@@ -19,9 +19,11 @@ package zp256
 
 import (
 	"encoding/json"
-	"github.com/bnb-chain/zkbnb-crypto/ffmath"
-	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 )
 
 type MyBitCurve struct {

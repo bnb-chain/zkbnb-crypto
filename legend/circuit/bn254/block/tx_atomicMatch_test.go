@@ -19,12 +19,14 @@ package block
 
 import (
 	"encoding/json"
-	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/std"
+	"testing"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
-	"testing"
+
+	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/std"
 )
 
 func TestVerifyAtomicMatchTransaction(t *testing.T) {

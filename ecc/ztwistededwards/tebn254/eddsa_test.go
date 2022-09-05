@@ -18,10 +18,11 @@
 package tebn254
 
 import (
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"log"
 	"math/big"
 	"testing"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
 func TestGenerateEddsaPrivateKey(t *testing.T) {

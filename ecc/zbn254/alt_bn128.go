@@ -18,10 +18,12 @@
 package zbn254
 
 import (
+	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254"
+
 	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 	"github.com/bnb-chain/zkbnb-crypto/util"
-	"github.com/consensys/gnark-crypto/ecc/bn254"
-	"math/big"
 )
 
 var (

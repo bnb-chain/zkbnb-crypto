@@ -1,8 +1,9 @@
 package abi
 
 import (
-	"github.com/consensys/gnark/frontend"
 	"math/big"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type Offer struct {

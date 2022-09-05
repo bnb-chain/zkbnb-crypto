@@ -19,8 +19,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/src"
+
 	"syscall/js"
+
+	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/src"
 )
 
 /*

@@ -18,12 +18,14 @@
 package std
 
 import (
-	"github.com/bnb-chain/zkbnb-crypto/common"
+	"math/big"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/hash/mimc"
 	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
-	"math/big"
+
+	"github.com/bnb-chain/zkbnb-crypto/common"
 )
 
 type (
