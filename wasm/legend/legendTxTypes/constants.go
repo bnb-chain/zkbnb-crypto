@@ -22,8 +22,8 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 
-	"github.com/bnb-chain/zkbas-crypto/common"
-	"github.com/bnb-chain/zkbas-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/common"
+	"github.com/bnb-chain/zkbnb-crypto/util"
 )
 
 type (

@@ -18,8 +18,8 @@
 package block
 
 import (
+	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/std"
 	"github.com/consensys/gnark/std/hash/mimc"
-	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/std"
 	"log"
 )
 

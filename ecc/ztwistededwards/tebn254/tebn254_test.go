@@ -19,9 +19,9 @@ package tebn254
 
 import (
 	"fmt"
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 	"math/big"
 	"testing"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
 )
 
 func TestNeg(t *testing.T) {

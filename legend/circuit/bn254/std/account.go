@@ -18,9 +18,9 @@
 package std
 
 import (
+	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
 	"math/big"
 )
 

@@ -2,13 +2,13 @@ package test
 
 import (
 	"encoding/json"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/legendTxTypes"
 	"github.com/stretchr/testify/assert"
-	"github.com/bnb-chain/zkbas-crypto/wasm/legend/legendTxTypes"
 	"log"
 	"testing"
 )
 
-func TestTransferSegmentFormat(t *testing.T){
+func TestTransferSegmentFormat(t *testing.T) {
 
 	var segmentFormat *legendTxTypes.TransferSegmentFormat
 	segmentFormat = &legendTxTypes.TransferSegmentFormat{

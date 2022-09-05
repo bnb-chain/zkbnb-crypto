@@ -19,7 +19,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/bnb-chain/zkbas-crypto/wasm/legend/src"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/src"
 	"syscall/js"
 )
 
@@ -28,7 +28,7 @@ import (
 */
 
 func main() {
-	fmt.Println("Zkbas Crypto Assembly")
+	fmt.Println("ZkBNB Crypto Assembly")
 	// util
 	js.Global().Set("cleanPackedAmount", src.CleanPackedAmountUtil())
 	js.Global().Set("cleanPackedFee", src.CleanPackedFeeUtil())

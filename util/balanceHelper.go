@@ -2,7 +2,7 @@ package util
 
 import (
 	"errors"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 	"log"
 	"math/big"
 	"strconv"

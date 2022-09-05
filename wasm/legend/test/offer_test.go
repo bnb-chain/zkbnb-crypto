@@ -2,13 +2,13 @@ package test
 
 import (
 	"encoding/json"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/legendTxTypes"
 	"github.com/stretchr/testify/assert"
-	"github.com/bnb-chain/zkbas-crypto/wasm/legend/legendTxTypes"
 	"log"
 	"testing"
 )
 
-func TestOfferSegmentFormat(t *testing.T){
+func TestOfferSegmentFormat(t *testing.T) {
 
 	var segmentFormat *legendTxTypes.OfferSegmentFormat
 	// buy offer
@@ -21,7 +21,7 @@ func TestOfferSegmentFormat(t *testing.T){
 		AssetAmount:  "10000",
 		ListedAt:     1654656761000,
 		ExpiredAt:    1654656781000, // milli seconds
-		TreasuryRate: 200, // 2%
+		TreasuryRate: 200,           // 2%
 	}
 
 	res, err := json.Marshal(segmentFormat)
@@ -38,7 +38,7 @@ func TestOfferSegmentFormat(t *testing.T){
 		AssetAmount:  "10000",
 		ListedAt:     1654656751000,
 		ExpiredAt:    1654656791000, // milli seconds
-		TreasuryRate: 200, // 2%
+		TreasuryRate: 200,           // 2%
 	}
 
 	res, err = json.Marshal(segmentFormat)

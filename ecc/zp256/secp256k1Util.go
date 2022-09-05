@@ -21,11 +21,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
+	"github.com/bnb-chain/zkbnb-crypto/hash/bn254/zmimc"
+	"github.com/bnb-chain/zkbnb-crypto/util"
 	"math/big"
 	"strconv"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
-	"github.com/bnb-chain/zkbas-crypto/hash/bn254/zmimc"
-	"github.com/bnb-chain/zkbas-crypto/util"
 )
 
 const (

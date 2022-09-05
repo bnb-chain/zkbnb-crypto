@@ -18,8 +18,8 @@
 package block
 
 import (
+	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/std"
 	"github.com/consensys/gnark/std/signature/eddsa"
-	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/std"
 )
 
 func SelectAssetDeltas(

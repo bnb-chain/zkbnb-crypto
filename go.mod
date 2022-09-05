@@ -1,4 +1,4 @@
-module github.com/bnb-chain/zkbas-crypto
+module github.com/bnb-chain/zkbnb-crypto
 
 go 1.17
 

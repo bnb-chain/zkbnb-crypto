@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	abi "github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/encode/abi"
+	abi "github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/encode/abi"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/test"
 )

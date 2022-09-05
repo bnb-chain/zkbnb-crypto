@@ -17,7 +17,7 @@
 
 package merkleTree
 
-import "github.com/bnb-chain/zkbas-crypto/hash/bn254/zmimc"
+import "github.com/bnb-chain/zkbnb-crypto/hash/bn254/zmimc"
 
 /*
 IsPowerOfTwo returns true for arguments that are a power of 2, false otherwise.

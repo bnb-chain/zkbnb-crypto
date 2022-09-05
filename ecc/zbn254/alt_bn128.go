@@ -18,10 +18,10 @@
 package zbn254
 
 import (
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
+	"github.com/bnb-chain/zkbnb-crypto/util"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"math/big"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
-	"github.com/bnb-chain/zkbas-crypto/util"
 )
 
 var (
@@ -63,7 +63,7 @@ func G1ScalarBaseMul(s *big.Int) *G1Affine {
 	return new(G1Affine).ScalarMultiplication(base, s)
 }
 
-func G1BaseAffine() (*G1Affine) {
+func G1BaseAffine() *G1Affine {
 	_, _, G1Affine, _ := bn254.Generators()
 	return &G1Affine
 }

@@ -19,7 +19,7 @@ package block
 
 import (
 	"encoding/json"
-	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/std"
+	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/std"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"

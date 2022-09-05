@@ -1,7 +1,7 @@
 package src
 
 import (
-	"github.com/bnb-chain/zkbas-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/util"
 	"math/big"
 	"syscall/js"
 )

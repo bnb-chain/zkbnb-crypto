@@ -18,9 +18,9 @@
 package zbls381
 
 import (
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 	"github.com/consensys/gnark-crypto/ecc/bls12-381"
 	"math/big"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
 )
 
 var (
