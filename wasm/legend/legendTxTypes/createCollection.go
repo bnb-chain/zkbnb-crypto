@@ -70,7 +70,7 @@ func ConstructCreateCollectionTxInfo(sk *PrivateKey, segmentStr string) (txInfo 
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash, err := ComputeCreateCollectionMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.ComputeMsgHash(hFunc)
 	if err != nil {
 		log.Println("[ConstructCreateCollectionTxInfo] unable to compute hash:", err)
 		return nil, err
@@ -159,7 +159,7 @@ func (txInfo *CreateCollectionTxInfo) Validate() error {
 func (txInfo *CreateCollectionTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeCreateCollectionMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.ComputeMsgHash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func (txInfo *CreateCollectionTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func ComputeCreateCollectionMsgHash(txInfo *CreateCollectionTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *CreateCollectionTxInfo) ComputeMsgHash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)

@@ -1,6 +1,10 @@
 package legendTxTypes
 
-import "math/big"
+import (
+	"errors"
+	"hash"
+	"math/big"
+)
 
 type DepositTxInfo struct {
 	TxType uint8
@@ -36,4 +40,8 @@ func (txInfo *DepositTxInfo) GetNonce() int64 {
 
 func (txInfo *DepositTxInfo) GetExpiredAt() int64 {
 	return NilExpiredAt
+}
+
+func (txInfo *DepositTxInfo)  ComputeMsgHash(hFunc hash.Hash) (msgHash []byte, err error) {
+	return msgHash, errors.New("not support")
 }

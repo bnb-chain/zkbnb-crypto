@@ -1,5 +1,10 @@
 package legendTxTypes
 
+import (
+	"errors"
+	"hash"
+)
+
 type RegisterZnsTxInfo struct {
 	TxType uint8
 
@@ -32,4 +37,8 @@ func (txInfo *RegisterZnsTxInfo) GetNonce() int64 {
 
 func (txInfo *RegisterZnsTxInfo) GetExpiredAt() int64 {
 	return NilExpiredAt
+}
+
+func (txInfo *RegisterZnsTxInfo) ComputeMsgHash(hFunc hash.Hash) (msgHash []byte, err error) {
+	return msgHash, errors.New("not support")
 }
