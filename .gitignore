@@ -20,8 +20,9 @@
 
 */.idea/
 
-*.pk
-*.vk
+*.pk*
+*.vk*
+*.sol
 
 .DS_Store
 */.DS_Store

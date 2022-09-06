@@ -86,6 +86,6 @@ func VerifyCancelOfferTx(
 	IsVariableEqual(api, flag, assetId, accountsBefore[0].AssetsInfo[1].AssetId)
 	// should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[1].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	return pubData
 }

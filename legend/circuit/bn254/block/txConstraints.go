@@ -181,7 +181,7 @@ func VerifyTransaction(
 	hashVal = api.Select(isWithdrawNftTx, hashValCheck, hashVal)
 	hFunc.Reset()
 
-	std.IsVariableEqual(api, isLayer2Tx, api.Add(tx.AccountsInfoBefore[0].Nonce, 1), tx.Nonce)
+	std.IsVariableEqual(api, isLayer2Tx, tx.AccountsInfoBefore[0].Nonce, tx.Nonce)
 	// verify signature
 	err = std.VerifyEddsaSig(
 		isLayer2Tx,

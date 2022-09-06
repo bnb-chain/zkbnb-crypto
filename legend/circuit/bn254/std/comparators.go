@@ -33,3 +33,11 @@ func IsVariableLessOrEqual(api API, isEnabled, i1, i2 Variable) {
 	i2 = api.Select(isEnabled, i2, zero)
 	api.AssertIsLessOrEqual(i1, i2)
 }
+
+func IsVariableLess(api API, isEnabled, i1, i2 Variable) {
+	zero := 0
+	one := 1
+	i1 = api.Select(isEnabled, i1, zero)
+	i2 = api.Select(isEnabled, i2, one)
+	api.AssertIsEqual(api.Cmp(i1, i2), -1)
+}
