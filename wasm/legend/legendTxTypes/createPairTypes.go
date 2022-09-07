@@ -1,5 +1,10 @@
 package legendTxTypes
 
+import (
+	"errors"
+	"hash"
+)
+
 type CreatePairTxInfo struct {
 	TxType uint8
 
@@ -34,4 +39,8 @@ func (txInfo *CreatePairTxInfo) GetNonce() int64 {
 
 func (txInfo *CreatePairTxInfo) GetExpiredAt() int64 {
 	return NilExpiredAt
+}
+
+func (txInfo *CreatePairTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
+	return msgHash, errors.New("not support")
 }

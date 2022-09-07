@@ -1,6 +1,10 @@
 package legendTxTypes
 
-import "math/big"
+import (
+	"errors"
+	"hash"
+	"math/big"
+)
 
 type FullExitNftTxInfo struct {
 	TxType uint8
@@ -42,4 +46,8 @@ func (txInfo *FullExitNftTxInfo) GetNonce() int64 {
 
 func (txInfo *FullExitNftTxInfo) GetExpiredAt() int64 {
 	return NilExpiredAt
+}
+
+func (txInfo *FullExitNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
+	return msgHash, errors.New("not support")
 }
