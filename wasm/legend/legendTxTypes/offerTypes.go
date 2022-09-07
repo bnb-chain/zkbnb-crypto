@@ -144,8 +144,8 @@ func (txInfo *OfferTxInfo) Validate() error {
 	if txInfo.AssetAmount == nil {
 		return fmt.Errorf("AssetAmount should not be nil")
 	}
-	if txInfo.AssetAmount.Cmp(minAssetAmount) < 0 {
-		return fmt.Errorf("AssetAmount should not be less than %s", minAssetAmount.String())
+	if txInfo.AssetAmount.Cmp(minAssetAmount) <= 0 {
+		return fmt.Errorf("AssetAmount should be larger than %s", minAssetAmount.String())
 	}
 	if txInfo.AssetAmount.Cmp(maxAssetAmount) > 0 {
 		return fmt.Errorf("AssetAmount should not be larger than %s", maxAssetAmount.String())
