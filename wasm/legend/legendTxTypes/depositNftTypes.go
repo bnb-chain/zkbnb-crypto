@@ -49,6 +49,6 @@ func (txInfo *DepositNftTxInfo) GetExpiredAt() int64 {
 	return NilExpiredAt
 }
 
-func (txInfo *DepositNftTxInfo) ComputeMsgHash(hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *DepositNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	return msgHash, errors.New("not support")
 }

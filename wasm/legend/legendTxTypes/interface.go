@@ -15,5 +15,5 @@ type TxInfo interface {
 
 	GetExpiredAt() int64
 
-	ComputeMsgHash(hFunc hash.Hash) (msgHash []byte, err error)
+	Hash(hFunc hash.Hash) (msgHash []byte, err error)
 }

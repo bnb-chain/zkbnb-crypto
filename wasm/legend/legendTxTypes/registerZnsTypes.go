@@ -39,6 +39,6 @@ func (txInfo *RegisterZnsTxInfo) GetExpiredAt() int64 {
 	return NilExpiredAt
 }
 
-func (txInfo *RegisterZnsTxInfo) ComputeMsgHash(hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *RegisterZnsTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	return msgHash, errors.New("not support")
 }

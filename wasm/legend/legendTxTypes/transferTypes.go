@@ -93,7 +93,7 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 	txInfo.CallDataHash = callDataHash
 	hFunc.Reset()
 	// compute msg hash
-	msgHash, err := txInfo.ComputeMsgHash(hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		log.Println("[ConstructTransferTxInfo] unable to compute hash:", err.Error())
 		return nil, err
@@ -202,7 +202,7 @@ func (txInfo *TransferTxInfo) Validate() error {
 func (txInfo *TransferTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := txInfo.ComputeMsgHash(hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func (txInfo *TransferTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func (txInfo *TransferTxInfo) ComputeMsgHash(hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *TransferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedAmount, err := ToPackedAmount(txInfo.AssetAmount)

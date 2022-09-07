@@ -42,6 +42,6 @@ func (txInfo *FullExitTxInfo) GetExpiredAt() int64 {
 	return NilExpiredAt
 }
 
-func (txInfo *FullExitTxInfo) ComputeMsgHash(hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *FullExitTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	return msgHash, errors.New("not support")
 }

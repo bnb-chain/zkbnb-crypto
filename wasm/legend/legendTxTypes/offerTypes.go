@@ -77,7 +77,7 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash, err := txInfo.ComputeMsgHash(hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (txInfo *OfferTxInfo) Validate() error {
 func (txInfo *OfferTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := txInfo.ComputeMsgHash(hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (txInfo *OfferTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func (txInfo *OfferTxInfo) ComputeMsgHash(hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *OfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedAmount, err := ToPackedAmount(txInfo.AssetAmount)

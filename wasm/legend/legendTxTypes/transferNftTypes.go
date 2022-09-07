@@ -81,7 +81,7 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 	callDataHash := hFunc.Sum(nil)
 	txInfo.CallDataHash = callDataHash
 	hFunc.Reset()
-	msgHash, err := txInfo.ComputeMsgHash(hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		log.Println("[ConstructTransferNftTxInfo] unable to compute hash:", err)
 		return nil, err
@@ -185,7 +185,7 @@ func (txInfo *TransferNftTxInfo) Validate() error {
 func (txInfo *TransferNftTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := txInfo.ComputeMsgHash(hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func (txInfo *TransferNftTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func (txInfo *TransferNftTxInfo) ComputeMsgHash(hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *TransferNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
