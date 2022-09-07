@@ -20,6 +20,7 @@ package std
 import "math/big"
 
 type DepositNftTx struct {
+	IsNewNft            uint8
 	AccountIndex        int64
 	NftIndex            int64
 	NftL1Address        string
@@ -32,6 +33,7 @@ type DepositNftTx struct {
 }
 
 type DepositNftTxConstraints struct {
+	IsNewNft            Variable
 	AccountIndex        Variable
 	AccountNameHash     Variable
 	NftIndex            Variable
@@ -45,6 +47,7 @@ type DepositNftTxConstraints struct {
 
 func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
 	return DepositNftTxConstraints{
+		IsNewNft:            ZeroInt,
 		AccountIndex:        ZeroInt,
 		AccountNameHash:     ZeroInt,
 		NftIndex:            ZeroInt,
@@ -59,6 +62,7 @@ func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
 
 func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) {
 	witness = DepositNftTxConstraints{
+		IsNewNft:            tx.IsNewNft,
 		AccountIndex:        tx.AccountIndex,
 		AccountNameHash:     tx.AccountNameHash,
 		NftIndex:            tx.NftIndex,
@@ -80,6 +84,7 @@ func VerifyDepositNftTx(
 	nftBefore NftConstraints,
 ) (pubData [PubDataSizePerTx]Variable) {
 	pubData = CollectPubDataFromDepositNft(api, tx)
+
 	// verify params
 	// check empty nft
 	CheckEmptyNftNode(api, flag, nftBefore)
