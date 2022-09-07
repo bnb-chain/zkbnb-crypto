@@ -20,10 +20,12 @@ package src
 import (
 	"bytes"
 	"encoding/hex"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
 	"syscall/js"
+
+	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
 )
 
 func GetEddsaPublicKey() js.Func {

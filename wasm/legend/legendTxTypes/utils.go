@@ -27,7 +27,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/bnb-chain/zkbas-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/util"
 )
 
 func WriteUint64IntoBuf(buf *bytes.Buffer, a uint64) {

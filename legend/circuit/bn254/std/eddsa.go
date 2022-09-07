@@ -19,6 +19,7 @@ package std
 
 import (
 	"errors"
+
 	tedwards "github.com/consensys/gnark-crypto/ecc/twistededwards"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/logger"

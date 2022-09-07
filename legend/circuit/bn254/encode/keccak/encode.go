@@ -1,12 +1,14 @@
 package abi
 
 import (
-	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/encode/abi"
+	"math/big"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/hint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/ethereum/go-ethereum/crypto"
-	"math/big"
+
+	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/encode/abi"
 )
 
 type KeccakCircuit struct {

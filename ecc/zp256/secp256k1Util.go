@@ -23,9 +23,10 @@ import (
 	"errors"
 	"math/big"
 	"strconv"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
-	"github.com/bnb-chain/zkbas-crypto/hash/bn254/zmimc"
-	"github.com/bnb-chain/zkbas-crypto/util"
+
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
+	"github.com/bnb-chain/zkbnb-crypto/hash/bn254/zmimc"
+	"github.com/bnb-chain/zkbnb-crypto/util"
 )
 
 const (

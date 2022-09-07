@@ -1,6 +1,8 @@
 package abi
 
-import "github.com/consensys/gnark/frontend"
+import (
+	"github.com/consensys/gnark/frontend"
+)
 
 type Context struct {
 	flags Flags

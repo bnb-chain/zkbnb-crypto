@@ -2,10 +2,11 @@ package util
 
 import (
 	"errors"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
 	"log"
 	"math/big"
 	"strconv"
+
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 )
 
 var (

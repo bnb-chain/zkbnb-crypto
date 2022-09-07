@@ -19,9 +19,10 @@ package util
 
 import (
 	"bytes"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"hash"
 	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
 /*

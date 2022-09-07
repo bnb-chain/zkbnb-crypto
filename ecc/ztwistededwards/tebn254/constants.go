@@ -17,7 +17,9 @@
 
 package tebn254
 
-import "github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+import (
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+)
 
 type (
 	PublicKey  = eddsa.PublicKey

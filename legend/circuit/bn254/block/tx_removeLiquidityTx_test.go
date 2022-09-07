@@ -19,12 +19,14 @@ package block
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
-	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/std"
-	"testing"
+
+	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/std"
 )
 
 func TestVerifyRemoveLiquidityTransaction(t *testing.T) {

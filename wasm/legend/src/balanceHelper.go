@@ -1,9 +1,11 @@
 package src
 
 import (
-	"github.com/bnb-chain/zkbas-crypto/util"
 	"math/big"
+
 	"syscall/js"
+
+	"github.com/bnb-chain/zkbnb-crypto/util"
 )
 
 func CleanPackedAmountUtil() js.Func {

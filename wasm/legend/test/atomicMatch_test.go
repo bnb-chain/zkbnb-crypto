@@ -2,14 +2,16 @@ package test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/bnb-chain/zkbas-crypto/wasm/legend/legendTxTypes"
 	"log"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/legendTxTypes"
 )
 
-func TestAtomicMatchSegmentFormat(t *testing.T){
+func TestAtomicMatchSegmentFormat(t *testing.T) {
 
 	var segmentFormat *legendTxTypes.AtomicMatchSegmentFormat
 	segmentFormat = &legendTxTypes.AtomicMatchSegmentFormat{
@@ -42,4 +44,3 @@ func TestAtomicMatchSegmentFormat(t *testing.T){
 	_, err = legendTxTypes.ConstructAtomicMatchTxInfo(sk, atomicSig)
 	assert.Nil(t, err)
 }
-
