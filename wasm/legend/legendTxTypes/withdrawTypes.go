@@ -75,7 +75,7 @@ func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Withdra
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash, err := ComputeWithdrawMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		log.Println("[ConstructWithdrawTxInfo] unable to compute hash:", err)
 		return nil, err
@@ -122,8 +122,8 @@ func (txInfo *WithdrawTxInfo) Validate() error {
 	if txInfo.AssetAmount == nil {
 		return fmt.Errorf("AssetAmount should not be nil")
 	}
-	if txInfo.AssetAmount.Cmp(minAssetAmount) < 0 {
-		return fmt.Errorf("AssetAmount should not be less than %s", minAssetAmount.String())
+	if txInfo.AssetAmount.Cmp(minAssetAmount) <= 0 {
+		return fmt.Errorf("AssetAmount should be larger than %s", minAssetAmount.String())
 	}
 	if txInfo.AssetAmount.Cmp(maxAssetAmount) > 0 {
 		return fmt.Errorf("AssetAmount should not be larger than %s", maxAssetAmount.String())
@@ -168,7 +168,7 @@ func (txInfo *WithdrawTxInfo) Validate() error {
 func (txInfo *WithdrawTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeWithdrawMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (txInfo *WithdrawTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func ComputeWithdrawMsgHash(txInfo *WithdrawTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *WithdrawTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)

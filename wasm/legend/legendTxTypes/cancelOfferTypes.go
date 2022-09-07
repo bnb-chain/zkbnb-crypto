@@ -68,7 +68,7 @@ func ConstructCancelOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Canc
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash, err := ComputeCancelOfferMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		log.Println("[ConstructMintNftTxInfo] unable to compute hash:", err)
 		return nil, err
@@ -147,7 +147,7 @@ func (txInfo *CancelOfferTxInfo) Validate() error {
 func (txInfo *CancelOfferTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeCancelOfferMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func (txInfo *CancelOfferTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func ComputeCancelOfferMsgHash(txInfo *CancelOfferTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *CancelOfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)

@@ -1,6 +1,8 @@
 package legendTxTypes
 
 import (
+	"errors"
+	"hash"
 	"math/big"
 )
 
@@ -38,4 +40,8 @@ func (txInfo *DepositTxInfo) GetNonce() int64 {
 
 func (txInfo *DepositTxInfo) GetExpiredAt() int64 {
 	return NilExpiredAt
+}
+
+func (txInfo *DepositTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
+	return msgHash, errors.New("not support")
 }

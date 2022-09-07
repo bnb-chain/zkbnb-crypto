@@ -80,7 +80,7 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash, err := ComputeMintNftMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		log.Println("[ConstructMintNftTxInfo] unable to compute hash:", err)
 		return nil, err
@@ -193,7 +193,7 @@ func (txInfo *MintNftTxInfo) Validate() error {
 func (txInfo *MintNftTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeMintNftMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -230,7 +230,7 @@ func (txInfo *MintNftTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func ComputeMintNftMsgHash(txInfo *MintNftTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *MintNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)

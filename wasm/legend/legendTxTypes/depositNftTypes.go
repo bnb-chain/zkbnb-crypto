@@ -1,6 +1,8 @@
 package legendTxTypes
 
 import (
+	"errors"
+	"hash"
 	"math/big"
 )
 
@@ -8,6 +10,7 @@ type DepositNftTxInfo struct {
 	TxType uint8
 
 	// Get from layer1 events.
+	IsNewNft            uint8
 	AccountNameHash     []byte
 	CreatorAccountIndex int64
 	CreatorTreasuryRate int64
@@ -45,4 +48,8 @@ func (txInfo *DepositNftTxInfo) GetNonce() int64 {
 
 func (txInfo *DepositNftTxInfo) GetExpiredAt() int64 {
 	return NilExpiredAt
+}
+
+func (txInfo *DepositNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
+	return msgHash, errors.New("not support")
 }

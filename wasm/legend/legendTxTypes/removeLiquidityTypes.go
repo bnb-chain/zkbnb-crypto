@@ -109,7 +109,7 @@ func ConstructRemoveLiquidityTxInfo(sk *PrivateKey, segmentStr string) (txInfo *
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash, err := ComputeRemoveLiquidityMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		log.Println("[ConstructRemoveLiquidityTxInfo] unable to compute hash:", err)
 		return nil, err
@@ -223,7 +223,7 @@ func (txInfo *RemoveLiquidityTxInfo) Validate() error {
 func (txInfo *RemoveLiquidityTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeRemoveLiquidityMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -260,7 +260,7 @@ func (txInfo *RemoveLiquidityTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func ComputeRemoveLiquidityMsgHash(txInfo *RemoveLiquidityTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *RemoveLiquidityTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedAAmount, err := ToPackedAmount(txInfo.AssetAMinAmount)

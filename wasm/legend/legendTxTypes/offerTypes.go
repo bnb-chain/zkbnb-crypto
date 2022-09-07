@@ -77,7 +77,7 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash, err := ComputeOfferMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +144,8 @@ func (txInfo *OfferTxInfo) Validate() error {
 	if txInfo.AssetAmount == nil {
 		return fmt.Errorf("AssetAmount should not be nil")
 	}
-	if txInfo.AssetAmount.Cmp(minAssetAmount) < 0 {
-		return fmt.Errorf("AssetAmount should not be less than %s", minAssetAmount.String())
+	if txInfo.AssetAmount.Cmp(minAssetAmount) <= 0 {
+		return fmt.Errorf("AssetAmount should be larger than %s", minAssetAmount.String())
 	}
 	if txInfo.AssetAmount.Cmp(maxAssetAmount) > 0 {
 		return fmt.Errorf("AssetAmount should not be larger than %s", maxAssetAmount.String())
@@ -169,7 +169,7 @@ func (txInfo *OfferTxInfo) Validate() error {
 func (txInfo *OfferTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeOfferMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (txInfo *OfferTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func ComputeOfferMsgHash(txInfo *OfferTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *OfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedAmount, err := ToPackedAmount(txInfo.AssetAmount)

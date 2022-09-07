@@ -91,7 +91,7 @@ func ConstructSwapTxInfo(sk *PrivateKey, segmentStr string) (txInfo *SwapTxInfo,
 		Sig:               nil,
 	}
 	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeSwapMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		log.Println("[ConstructSwapTxInfo] unable to compute hash:", err)
 		return nil, err
@@ -204,7 +204,7 @@ func (txInfo *SwapTxInfo) Validate() error {
 func (txInfo *SwapTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeSwapMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -241,7 +241,7 @@ func (txInfo *SwapTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func ComputeSwapMsgHash(txInfo *SwapTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *SwapTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedAAmount, err := ToPackedAmount(txInfo.AssetAAmount)
