@@ -89,7 +89,7 @@ func ConstructAtomicMatchTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Atom
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
-	msgHash, err := ComputeAtomicMatchMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		log.Println("[ConstructMintNftTxInfo] unable to compute hash: ", err.Error())
 		return nil, err
@@ -182,7 +182,7 @@ func (txInfo *AtomicMatchTxInfo) Validate() error {
 func (txInfo *AtomicMatchTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeAtomicMatchMsgHash(txInfo, hFunc)
+	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func (txInfo *AtomicMatchTxInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func ComputeAtomicMatchMsgHash(txInfo *AtomicMatchTxInfo, hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *AtomicMatchTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	hFunc.Reset()
 	var buf bytes.Buffer
 	packedBuyAmount, err := ToPackedAmount(txInfo.BuyOffer.AssetAmount)
