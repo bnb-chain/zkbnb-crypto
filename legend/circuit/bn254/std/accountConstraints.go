@@ -19,14 +19,13 @@ package std
 
 import (
 	"errors"
-	"github.com/consensys/gnark/std/signature/eddsa"
 	"log"
 )
 
 type AccountConstraints struct {
 	AccountIndex    Variable
 	AccountNameHash Variable
-	AccountPk       eddsa.PublicKey
+	AccountPk       EcdsaPkConstraints
 	Nonce           Variable
 	CollectionNonce Variable
 	AssetRoot       Variable
@@ -36,8 +35,7 @@ type AccountConstraints struct {
 
 func CheckEmptyAccountNode(api API, flag Variable, account AccountConstraints) {
 	IsVariableEqual(api, flag, account.AccountNameHash, ZeroInt)
-	IsVariableEqual(api, flag, account.AccountPk.A.X, ZeroInt)
-	IsVariableEqual(api, flag, account.AccountPk.A.Y, ZeroInt)
+	account.AccountPk.checkEmptyWitness(api, flag)
 	IsVariableEqual(api, flag, account.Nonce, ZeroInt)
 	IsVariableEqual(api, flag, account.CollectionNonce, ZeroInt)
 	// empty asset
@@ -77,7 +75,7 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 	witness = AccountConstraints{
 		AccountIndex:    account.AccountIndex,
 		AccountNameHash: account.AccountNameHash,
-		AccountPk:       SetPubKeyWitness(account.AccountPk),
+		AccountPk:       SetPkBytesWitness(account.AccountPk),
 		Nonce:           account.Nonce,
 		CollectionNonce: account.CollectionNonce,
 		AssetRoot:       account.AssetRoot,

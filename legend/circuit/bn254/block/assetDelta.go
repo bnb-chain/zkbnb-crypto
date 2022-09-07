@@ -18,13 +18,12 @@
 package block
 
 import (
-	"github.com/consensys/gnark/std/signature/eddsa"
 	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/std"
 )
 
 type AccountDeltaConstraints struct {
 	AccountNameHash Variable
-	PubKey          eddsa.PublicKey
+	PubKey          std.EcdsaPkConstraints
 }
 
 type AccountAssetDeltaConstraints struct {

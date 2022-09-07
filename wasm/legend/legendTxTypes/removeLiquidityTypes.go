@@ -19,12 +19,18 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/encode/abi"
+	abiEth "github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"hash"
 	"log"
 	"math/big"
+	"strings"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
@@ -222,23 +228,29 @@ func (txInfo *RemoveLiquidityTxInfo) Validate() error {
 
 func (txInfo *RemoveLiquidityTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
-	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeRemoveLiquidityMsgHash(txInfo, hFunc)
+
+	abiEncoder, err := abiEth.JSON(strings.NewReader(abi.RemoveLiquidityABIJSON))
 	if err != nil {
 		return err
 	}
-	// verify signature
-	hFunc.Reset()
-	pk, err := ParsePublicKey(pubKey)
-	if err != nil {
-		return err
-	}
-	isValid, err := pk.Verify(txInfo.Sig, msgHash, hFunc)
+	messageTypeBytes32 := abi.GetEIP712MessageTypeHashBytes32(abi.RemoveLiquidity)
+
+	inner, err := abiEncoder.Pack("", messageTypeBytes32, txInfo.FromAccountIndex, txInfo.PairIndex, txInfo.AssetAMinAmount, txInfo.AssetBMinAmount, txInfo.LpAmount, txInfo.GasAccountIndex, txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount, txInfo.ExpiredAt, txInfo.Nonce, ChainId)
 	if err != nil {
 		return err
 	}
 
-	if !isValid {
+	innerKeccak := crypto.Keccak256(inner)
+	prefixBytes, err := hex.DecodeString(abi.HexPrefixAndEip712DomainKeccakHash)
+	if err != nil {
+		return err
+	}
+
+	outerBytes := append(prefixBytes, innerKeccak...)
+	outerBytesKeccak := crypto.Keccak256(outerBytes)
+
+	pk, err := crypto.Ecrecover(outerBytesKeccak, txInfo.Sig)
+	if common.Bytes2Hex(pk) != pubKey {
 		return errors.New("invalid signature")
 	}
 	return nil

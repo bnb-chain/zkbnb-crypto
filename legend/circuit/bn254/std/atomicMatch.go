@@ -94,10 +94,14 @@ func ComputeHashFromAtomicMatchTx(tx AtomicMatchTxConstraints, nonce Variable, e
 		tx.BuyOffer.AssetId,
 		tx.BuyOffer.AssetAmount,
 		tx.BuyOffer.ListedAt,
-		tx.BuyOffer.ExpiredAt,
-		tx.BuyOffer.Sig.R.X,
-		tx.BuyOffer.Sig.R.Y,
-		tx.BuyOffer.Sig.S,
+		tx.BuyOffer.ExpiredAt)
+	for i := 0; i < 32; i++ {
+		hFunc.Write(tx.BuyOffer.Sig.R[i])
+	}
+	for i := 0; i < 32; i++ {
+		hFunc.Write(tx.BuyOffer.Sig.S[i])
+	}
+	hFunc.Write(
 		tx.SellOffer.Type,
 		tx.SellOffer.OfferId,
 		tx.SellOffer.AccountIndex,
@@ -105,10 +109,15 @@ func ComputeHashFromAtomicMatchTx(tx AtomicMatchTxConstraints, nonce Variable, e
 		tx.SellOffer.AssetId,
 		tx.SellOffer.AssetAmount,
 		tx.SellOffer.ListedAt,
-		tx.SellOffer.ExpiredAt,
-		tx.SellOffer.Sig.R.X,
-		tx.SellOffer.Sig.R.Y,
-		tx.SellOffer.Sig.S,
+		tx.SellOffer.ExpiredAt)
+
+	for i := 0; i < 32; i++ {
+		hFunc.Write(tx.SellOffer.Sig.R[i])
+	}
+	for i := 0; i < 32; i++ {
+		hFunc.Write(tx.SellOffer.Sig.S[i])
+	}
+	hFunc.Write(
 		tx.GasAccountIndex,
 		tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount,
@@ -151,7 +160,7 @@ func VerifyAtomicMatchTx(
 	hFunc.Reset()
 	notBuyer := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.BuyOffer.AccountIndex)))
 	notBuyer = api.And(flag, notBuyer)
-	err = VerifyEddsaSig(notBuyer, api, hFunc, buyOfferHash, accountsBefore[1].AccountPk, tx.BuyOffer.Sig)
+	err = VerifyEcdsaSig(notBuyer, api, hFunc, buyOfferHash, accountsBefore[1].AccountPk, tx.BuyOffer.Sig)
 	if err != nil {
 		return pubData, err
 	}
@@ -160,7 +169,7 @@ func VerifyAtomicMatchTx(
 	hFunc.Reset()
 	notSeller := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.SellOffer.AccountIndex)))
 	notSeller = api.And(flag, notSeller)
-	err = VerifyEddsaSig(notSeller, api, hFunc, sellOfferHash, accountsBefore[2].AccountPk, tx.SellOffer.Sig)
+	err = VerifyEcdsaSig(notSeller, api, hFunc, sellOfferHash, accountsBefore[2].AccountPk, tx.SellOffer.Sig)
 	if err != nil {
 		return pubData, err
 	}

@@ -52,8 +52,6 @@ func (circuit *Eip712Circuit) Define(api frontend.API) error {
 		api.AssertIsEqual(keccakRes[i], circuit.Keccaa256Hash[i])
 	}
 
-	ecdsaCircuit := Secp256k1Circuit{circuit.SIG, keccakRes, circuit.PK}
-	err = ecdsaCircuit.Verify(api)
 	if err != nil {
 		return err
 	}

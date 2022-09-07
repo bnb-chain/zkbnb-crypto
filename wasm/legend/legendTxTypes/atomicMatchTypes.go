@@ -19,12 +19,18 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/encode/abi"
+	abiEth "github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"hash"
 	"log"
 	"math/big"
+	"strings"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -181,26 +187,33 @@ func (txInfo *AtomicMatchTxInfo) Validate() error {
 
 func (txInfo *AtomicMatchTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
-	hFunc := mimc.NewMiMC()
-	msgHash, err := ComputeAtomicMatchMsgHash(txInfo, hFunc)
+	abiEncoder, err := abiEth.JSON(strings.NewReader(abi.AtomicMatchABIJSON))
 	if err != nil {
 		return err
 	}
-	// verify signature
-	hFunc.Reset()
-	pk, err := ParsePublicKey(pubKey)
-	if err != nil {
-		return err
-	}
-	isValid, err := pk.Verify(txInfo.Sig, msgHash, hFunc)
+	messageTypeBytes32 := abi.GetEIP712MessageTypeHashBytes32(abi.AtomicMatch)
+
+	inner, err := abiEncoder.Pack("", messageTypeBytes32, txInfo.SellOffer.AccountIndex, txInfo.SellOffer.NftIndex, txInfo.SellOffer.OfferId, txInfo.SellOffer.Type, txInfo.SellOffer.AssetId,
+		txInfo.SellOffer.AssetAmount, txInfo.SellOffer.ListedAt, txInfo.SellOffer.ExpiredAt, txInfo.SellOffer.TreasuryRate, ConvertBytesToBytes32(txInfo.SellOffer.Sig[:32]), ConvertBytesToBytes32(txInfo.SellOffer.Sig[32:64]),
+		txInfo.BuyOffer.AccountIndex, txInfo.BuyOffer.NftIndex, txInfo.BuyOffer.OfferId, txInfo.BuyOffer.Type, txInfo.BuyOffer.AssetId,
+		txInfo.BuyOffer.AssetAmount, txInfo.BuyOffer.ListedAt, txInfo.BuyOffer.ExpiredAt, txInfo.BuyOffer.TreasuryRate, ConvertBytesToBytes32(txInfo.BuyOffer.Sig[:32]), ConvertBytesToBytes32(txInfo.BuyOffer.Sig[32:64]), txInfo.Nonce, ChainId)
 	if err != nil {
 		return err
 	}
 
-	if !isValid {
+	innerKeccak := crypto.Keccak256(inner)
+	prefixBytes, err := hex.DecodeString(abi.HexPrefixAndEip712DomainKeccakHash)
+	if err != nil {
+		return err
+	}
+
+	outerBytes := append(prefixBytes, innerKeccak...)
+	outerBytesKeccak := crypto.Keccak256(outerBytes)
+
+	pk, err := crypto.Ecrecover(outerBytesKeccak, txInfo.Sig)
+	if common.Bytes2Hex(pk) != pubKey {
 		return errors.New("invalid signature")
 	}
-
 	return nil
 }
 

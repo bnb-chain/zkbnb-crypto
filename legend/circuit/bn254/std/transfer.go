@@ -17,6 +17,10 @@
 
 package std
 
+import (
+	"github.com/consensys/gnark/frontend"
+)
+
 type TransferTx struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
@@ -68,6 +72,31 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints) {
 		CallDataHash:      tx.CallDataHash,
 	}
 	return witness
+}
+
+func SetTransferTxValuesWitness(tx *TransferTx, ExpireAt int64, Nonce int64) (witnesses ValuesConstraints) {
+	witnesses = ValuesConstraints{[TxValueConstraintLimit]frontend.Variable{}}
+	for i := 0; i < len(witnesses.Values); i++ {
+		witnesses.Values[i] = 0
+	}
+	witnesses.Values[0] = tx.FromAccountIndex
+	witnesses.Values[1] = tx.ToAccountIndex
+	for i := range tx.ToAccountNameHash {
+		witnesses.Values[2+i] = tx.ToAccountNameHash[i]
+	}
+	witnesses.Values[34] = tx.AssetId
+	witnesses.Values[35] = tx.AssetAmount
+	witnesses.Values[36] = tx.GasAccountIndex
+	witnesses.Values[37] = tx.GasFeeAssetId
+	witnesses.Values[38] = tx.GasFeeAssetAmount
+
+	for i := range tx.CallDataHash {
+		witnesses.Values[39+i] = tx.CallDataHash[i]
+	}
+	witnesses.Values[71] = ExpireAt
+	witnesses.Values[72] = Nonce
+	witnesses.Values[73] = ChainId
+	return witnesses
 }
 
 func ComputeHashFromTransferTx(tx TransferTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {

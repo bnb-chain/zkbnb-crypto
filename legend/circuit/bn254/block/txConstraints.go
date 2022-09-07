@@ -18,9 +18,13 @@
 package block
 
 import (
+	"encoding/hex"
 	"errors"
-	"github.com/consensys/gnark/std/hash/mimc"
+	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/encode/abi"
+	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/encode/eip712"
 	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/std"
+	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/hash/mimc"
 	"log"
 )
 
@@ -46,12 +50,15 @@ type TxConstraints struct {
 	WithdrawNftTxInfo      WithdrawNftTxConstraints
 	FullExitTxInfo         FullExitTxConstraints
 	FullExitNftTxInfo      FullExitNftTxConstraints
+
+	ValueConstraints ValuesConstraints // variable name
+	// signature
+	Signature std.EcdsaSignatureConstraints
+
 	// nonce
 	Nonce Variable
 	// expired at
 	ExpiredAt Variable
-	// signature
-	Signature SignatureConstraints
 	// account root before
 	AccountRootBefore Variable
 	// account before info, size is 5
@@ -183,14 +190,40 @@ func VerifyTransaction(
 
 	std.IsVariableEqual(api, isLayer2Tx, tx.AccountsInfoBefore[0].Nonce, tx.Nonce)
 	// verify signature
-	err = std.VerifyEddsaSig(
-		isLayer2Tx,
-		api,
-		hFunc,
-		hashVal,
-		tx.AccountsInfoBefore[0].AccountPk,
-		tx.Signature,
-	)
+
+	encoder, err := abi.NewAbiEncoder(api, tx.TxType)
+	if err != nil {
+		return nil, pubData, err
+	}
+
+	res, err := encoder.Pack(api, tx.TxType, tx.ValueConstraints.Values[:]...)
+	if err != nil {
+		return nil, pubData, err
+	}
+
+	innerKeccakRes, err := api.Compiler().NewHint(eip712.GenerateKeccakHint, 32, res...)
+
+	prefix, err := hex.DecodeString(abi.HexPrefixAndEip712DomainKeccakHash)
+	if err != nil {
+		return nil, pubData, err
+	}
+	prefixVariables := make([]frontend.Variable, len(prefix))
+	for i := 0; i < len(prefix); i++ {
+		prefixVariables[i] = prefix[i]
+	}
+
+	outerBytes := append(prefixVariables, innerKeccakRes...)
+	keccakRes, err := api.Compiler().NewHint(eip712.GenerateKeccakHint, 32, outerBytes...)
+
+	SIG := make([]frontend.Variable, 0)
+	SIG = append(SIG, tx.Signature.R[:]...)
+	SIG = append(SIG, tx.Signature.S[:]...)
+	SIG = append(SIG, tx.Signature.V)
+
+	ecdsaCircuit := eip712.Secp256k1Circuit{SIG: SIG, MSG: keccakRes, PK: tx.AccountsInfoBefore[0].AccountPk.PkBytes[:]}
+	valid, err := ecdsaCircuit.Verify(api)
+
+	std.IsVariableEqual(api, isLayer2Tx, valid, std.OneInt)
 	if err != nil {
 		log.Println("[VerifyTx] invalid signature:", err)
 		return nil, pubData, err
@@ -351,8 +384,7 @@ func VerifyTransaction(
 	// update accounts
 	AccountsInfoAfter := UpdateAccounts(api, tx.AccountsInfoBefore, assetDeltas)
 	AccountsInfoAfter[0].AccountNameHash = api.Select(isRegisterZnsTx, accountDelta.AccountNameHash, AccountsInfoAfter[0].AccountNameHash)
-	AccountsInfoAfter[0].AccountPk.A.X = api.Select(isRegisterZnsTx, accountDelta.PubKey.A.X, AccountsInfoAfter[0].AccountPk.A.X)
-	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isRegisterZnsTx, accountDelta.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
+	AccountsInfoAfter[0].AccountPk.PkBytes = std.SelectPkBytes(api, isRegisterZnsTx, accountDelta.PubKey.PkBytes, AccountsInfoAfter[0].AccountPk.PkBytes)
 	// update nonce
 	AccountsInfoAfter[0].Nonce = api.Add(AccountsInfoAfter[0].Nonce, isLayer2Tx)
 	AccountsInfoAfter[0].CollectionNonce = api.Add(AccountsInfoAfter[0].CollectionNonce, isCreateCollectionTx)
@@ -417,8 +449,11 @@ func VerifyTransaction(
 		hFunc.Reset()
 		hFunc.Write(
 			tx.AccountsInfoBefore[i].AccountNameHash,
-			tx.AccountsInfoBefore[i].AccountPk.A.X,
-			tx.AccountsInfoBefore[i].AccountPk.A.Y,
+		)
+		for pki := range tx.AccountsInfoBefore[i].AccountPk.PkBytes {
+			hFunc.Write(tx.AccountsInfoBefore[i].AccountPk.PkBytes[pki])
+		}
+		hFunc.Write(
 			tx.AccountsInfoBefore[i].Nonce,
 			tx.AccountsInfoBefore[i].CollectionNonce,
 			tx.AccountsInfoBefore[i].AssetRoot,
@@ -437,11 +472,14 @@ func VerifyTransaction(
 		)
 		hFunc.Reset()
 		hFunc.Write(
-			AccountsInfoAfter[i].AccountNameHash,
-			AccountsInfoAfter[i].AccountPk.A.X,
-			AccountsInfoAfter[i].AccountPk.A.Y,
-			AccountsInfoAfter[i].Nonce,
-			AccountsInfoAfter[i].CollectionNonce,
+			tx.AccountsInfoBefore[i].AccountNameHash,
+		)
+		for pki := range tx.AccountsInfoBefore[i].AccountPk.PkBytes {
+			hFunc.Write(tx.AccountsInfoBefore[i].AccountPk.PkBytes[pki])
+		}
+		hFunc.Write(
+			tx.AccountsInfoBefore[i].Nonce,
+			tx.AccountsInfoBefore[i].CollectionNonce,
 			NewAccountAssetsRoot,
 		)
 		accountNodeHash = hFunc.Sum()
@@ -550,7 +588,7 @@ func EmptyTx() (oTx *Tx) {
 		TxType:            std.TxTypeEmptyTx,
 		Nonce:             0,
 		ExpiredAt:         0,
-		Signature:         std.EmptySignature(),
+		Signature:         make([]byte, 65),
 		AccountRootBefore: make([]byte, 32),
 		AccountsInfoBefore: [5]*std.Account{
 			std.EmptyAccount(0, make([]byte, 32)),
@@ -609,7 +647,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	witness.WithdrawNftTxInfo = std.EmptyWithdrawNftTxWitness()
 	witness.FullExitTxInfo = std.EmptyFullExitTxWitness()
 	witness.FullExitNftTxInfo = std.EmptyFullExitNftTxWitness()
-	witness.Signature = EmptySignatureWitness()
+	witness.Signature = std.EmptyEcdsaSignatureConstraints()
 	witness.Nonce = oTx.Nonce
 	witness.ExpiredAt = oTx.ExpiredAt
 	switch oTx.TxType {
@@ -632,69 +670,58 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		break
 	case std.TxTypeTransfer:
 		witness.TransferTxInfo = std.SetTransferTxWitness(oTx.TransferTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+		witness.ValueConstraints = std.SetTransferTxValuesWitness(oTx.TransferTxInfo, oTx.ExpiredAt, oTx.Nonce)
 		break
 	case std.TxTypeSwap:
 		witness.SwapTxInfo = std.SetSwapTxWitness(oTx.SwapTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+		witness.ValueConstraints = std.SetSwapTxValuesWitness(oTx.SwapTxInfo, oTx.ExpiredAt, oTx.Nonce)
 		break
 	case std.TxTypeAddLiquidity:
 		witness.AddLiquidityTxInfo = std.SetAddLiquidityTxWitness(oTx.AddLiquidityTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+
 		break
 	case std.TxTypeRemoveLiquidity:
 		witness.RemoveLiquidityTxInfo = std.SetRemoveLiquidityTxWitness(oTx.RemoveLiquidityTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+
 		break
 	case std.TxTypeWithdraw:
 		witness.WithdrawTxInfo = std.SetWithdrawTxWitness(oTx.WithdrawTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+
 		break
 	case std.TxTypeCreateCollection:
 		witness.CreateCollectionTxInfo = std.SetCreateCollectionTxWitness(oTx.CreateCollectionTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+
 		break
 	case std.TxTypeMintNft:
 		witness.MintNftTxInfo = std.SetMintNftTxWitness(oTx.MintNftTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+
 		break
 	case std.TxTypeTransferNft:
 		witness.TransferNftTxInfo = std.SetTransferNftTxWitness(oTx.TransferNftTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+
 		break
 	case std.TxTypeAtomicMatch:
 		witness.AtomicMatchTxInfo = std.SetAtomicMatchTxWitness(oTx.AtomicMatchTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+
 		break
 	case std.TxTypeCancelOffer:
 		witness.CancelOfferTxInfo = std.SetCancelOfferTxWitness(oTx.CancelOfferTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+
 		break
 	case std.TxTypeWithdrawNft:
 		witness.WithdrawNftTxInfo = std.SetWithdrawNftTxWitness(oTx.WithdrawNftTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
+		witness.Signature = std.SetSignatureWitness(oTx.Signature[:32], oTx.Signature[32:64], oTx.Signature[64])
+
 		break
 	case std.TxTypeFullExit:
 		witness.FullExitTxInfo = std.SetFullExitTxWitness(oTx.FullExitTxInfo)

@@ -17,6 +17,10 @@
 
 package std
 
+import (
+	"github.com/consensys/gnark/frontend"
+)
+
 type SwapTx struct {
 	FromAccountIndex  int64
 	PairIndex         int64
@@ -72,6 +76,24 @@ func SetSwapTxWitness(tx *SwapTx) (witness SwapTxConstraints) {
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
 	}
 	return witness
+}
+
+func SetSwapTxValuesWitness(tx *SwapTx, ExpireAt int64, Nonce int64) (witnesses ValuesConstraints) {
+	witnesses = ValuesConstraints{[TxValueConstraintLimit]frontend.Variable{}}
+	for i := 0; i < len(witnesses.Values); i++ {
+		witnesses.Values[i] = 0
+	}
+	witnesses.Values[0] = tx.FromAccountIndex
+	witnesses.Values[1] = tx.PairIndex
+	witnesses.Values[2] = tx.AssetAAmount
+	witnesses.Values[3] = tx.AssetBMinAmount
+	witnesses.Values[4] = tx.GasAccountIndex
+	witnesses.Values[5] = tx.GasFeeAssetId
+	witnesses.Values[6] = tx.GasFeeAssetAmount
+	witnesses.Values[7] = ExpireAt
+	witnesses.Values[8] = Nonce
+	witnesses.Values[9] = ChainId
+	return witnesses
 }
 
 func ComputeHashFromSwapTx(tx SwapTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {

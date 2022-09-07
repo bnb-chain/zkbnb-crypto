@@ -22,6 +22,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"hash"
 	"log"
 	"math/big"
@@ -168,18 +170,14 @@ func (txInfo *OfferTxInfo) Validate() error {
 
 func (txInfo *OfferTxInfo) VerifySignature(pubKey string) error {
 	// compute hash
-	hFunc := mimc.NewMiMC()
+	hFunc := crypto.NewKeccakState()
 	msgHash, err := ComputeOfferMsgHash(txInfo, hFunc)
 	if err != nil {
 		return err
 	}
 	// verify signature
 	hFunc.Reset()
-	pk, err := ParsePublicKey(pubKey)
-	if err != nil {
-		return err
-	}
-	isValid, err := pk.Verify(txInfo.Sig, msgHash, hFunc)
+	isValid := crypto.VerifySignature(common.Hex2Bytes(pubKey), msgHash, txInfo.Sig)
 	if err != nil {
 		return err
 	}

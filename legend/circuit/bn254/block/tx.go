@@ -46,7 +46,7 @@ type Tx struct {
 	// expired at
 	ExpiredAt int64
 	// signature
-	Signature *Signature
+	Signature []byte
 	// account root before
 	AccountRootBefore []byte
 	// account before info, size is 5

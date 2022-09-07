@@ -17,6 +17,8 @@
 
 package std
 
+import "github.com/consensys/gnark/frontend"
+
 /*
 	IsVariableEqual: check if two variables are equal, will force equal if isEnabled = false
 */
@@ -40,4 +42,12 @@ func IsVariableLess(api API, isEnabled, i1, i2 Variable) {
 	i1 = api.Select(isEnabled, i1, zero)
 	i2 = api.Select(isEnabled, i2, one)
 	api.AssertIsEqual(api.Cmp(i1, i2), -1)
+}
+
+func SelectPkBytes(api API, flag Variable, i1, i2 [32]Variable) [32]Variable {
+	variables := [32]frontend.Variable{}
+	for i := range i1 {
+		variables[i] = api.Select(flag, i1[i], i2[i])
+	}
+	return variables
 }

@@ -17,12 +17,6 @@
 
 package std
 
-import (
-	oEddsa "github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	"github.com/consensys/gnark/std/algebra/twistededwards"
-	"github.com/consensys/gnark/std/signature/eddsa"
-)
-
 type OfferTx struct {
 	Type         int64
 	OfferId      int64
@@ -33,7 +27,8 @@ type OfferTx struct {
 	ListedAt     int64
 	ExpiredAt    int64
 	TreasuryRate int64
-	Sig          *oEddsa.Signature
+	SigR         []byte
+	SigS         []byte
 }
 
 type OfferTxConstraints struct {
@@ -46,7 +41,7 @@ type OfferTxConstraints struct {
 	ListedAt     Variable
 	ExpiredAt    Variable
 	TreasuryRate Variable
-	Sig          eddsa.Signature
+	Sig          EcdsaSignatureConstraints
 }
 
 func EmptyOfferTxWitness() (witness OfferTxConstraints) {
@@ -60,23 +55,21 @@ func EmptyOfferTxWitness() (witness OfferTxConstraints) {
 		ListedAt:     ZeroInt,
 		ExpiredAt:    ZeroInt,
 		TreasuryRate: ZeroInt,
-		Sig: eddsa.Signature{
-			R: twistededwards.Point{
-				X: ZeroInt,
-				Y: ZeroInt,
-			},
-			S: ZeroInt,
-		},
+		Sig:          EmptyEcdsaSignatureConstraints(),
 	}
 }
 
-func SetSignatureWitness(sig *oEddsa.Signature) (witness eddsa.Signature) {
-	return eddsa.Signature{
-		R: twistededwards.Point{
-			X: sig.R.X,
-			Y: sig.R.Y,
-		},
-		S: sig.S[:],
+func SetSignatureWitness(sigR []byte, sigS []byte, sigV byte) (witness EcdsaSignatureConstraints) {
+	R := [32]Variable{}
+	S := [32]Variable{}
+	for i := range sigR {
+		R[i] = sigR[i]
+		S[i] = sigS[i]
+	}
+	return EcdsaSignatureConstraints{
+		R: R,
+		S: S,
+		V: sigV,
 	}
 }
 
@@ -91,7 +84,7 @@ func SetOfferTxWitness(tx *OfferTx) (witness OfferTxConstraints) {
 		ListedAt:     tx.ListedAt,
 		ExpiredAt:    tx.ExpiredAt,
 		TreasuryRate: tx.TreasuryRate,
-		Sig:          SetSignatureWitness(tx.Sig),
+		Sig:          SetSignatureWitness(tx.SigR, tx.SigS, 0x01),
 	}
 	return witness
 }

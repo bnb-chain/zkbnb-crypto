@@ -18,9 +18,9 @@
 package std
 
 import (
+	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
 	"math/big"
 )
 
@@ -30,7 +30,7 @@ import (
 type Account struct {
 	AccountIndex    int64
 	AccountNameHash []byte
-	AccountPk       *eddsa.PublicKey
+	AccountPk       []byte
 	Nonce           int64
 	CollectionNonce int64
 	AssetRoot       []byte
@@ -41,12 +41,7 @@ func EmptyAccount(accountIndex int64, assetRoot []byte) *Account {
 	return &Account{
 		AccountIndex:    accountIndex,
 		AccountNameHash: []byte{},
-		AccountPk: &eddsa.PublicKey{
-			A: curve.Point{
-				X: fr.NewElement(0),
-				Y: fr.NewElement(0),
-			},
-		},
+		AccountPk:       []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		Nonce:           0,
 		CollectionNonce: 0,
 		AssetRoot:       assetRoot,
@@ -85,6 +80,14 @@ func EmptySignature() (sig *eddsa.Signature) {
 			Y: fr.NewElement(0),
 		},
 		S: [32]byte{},
+	}
+	return sig
+}
+
+func EmptyEcdsaSignature() []byte {
+	sig := make([]byte, 65)
+	for i := 0; i < 65; i++ {
+		sig[i] = 0
 	}
 	return sig
 }

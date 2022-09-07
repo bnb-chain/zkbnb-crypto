@@ -18,21 +18,22 @@
 package std
 
 import (
-	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	"crypto/ecdsa"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 type RegisterZnsTx struct {
 	AccountIndex    int64
 	AccountName     []byte
 	AccountNameHash []byte
-	PubKey          *eddsa.PublicKey
+	PubKey          *ecdsa.PublicKey
 }
 
 type RegisterZnsTxConstraints struct {
 	AccountIndex    Variable
 	AccountName     Variable
 	AccountNameHash Variable
-	PubKey          PublicKeyConstraints
+	PubKey          EcdsaPkConstraints
 }
 
 func EmptyRegisterZnsTxWitness() (witness RegisterZnsTxConstraints) {
@@ -40,7 +41,7 @@ func EmptyRegisterZnsTxWitness() (witness RegisterZnsTxConstraints) {
 		AccountIndex:    ZeroInt,
 		AccountName:     ZeroInt,
 		AccountNameHash: ZeroInt,
-		PubKey:          EmptyPublicKeyWitness(),
+		PubKey:          EmptyEcdsaPkConstraints(),
 	}
 }
 
@@ -49,7 +50,7 @@ func SetRegisterZnsTxWitness(tx *RegisterZnsTx) (witness RegisterZnsTxConstraint
 		AccountIndex:    tx.AccountIndex,
 		AccountName:     tx.AccountName,
 		AccountNameHash: tx.AccountNameHash,
-		PubKey:          SetPubKeyWitness(tx.PubKey),
+		PubKey:          SetPkBytesWitness(crypto.CompressPubkey(tx.PubKey)),
 	}
 	return witness
 }

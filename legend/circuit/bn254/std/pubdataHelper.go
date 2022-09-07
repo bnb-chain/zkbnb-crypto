@@ -29,11 +29,9 @@ func CollectPubDataFromRegisterZNS(api API, txInfo RegisterZnsTxConstraints) (pu
 	pubData[0] = api.FromBinary(ABits...)
 	pubData[1] = txInfo.AccountName
 	pubData[2] = txInfo.AccountNameHash
-	pubData[3] = txInfo.PubKey.A.X
-	pubData[4] = txInfo.PubKey.A.Y
-	for i := 5; i < PubDataSizePerTx; i++ {
-		pubData[i] = 0
-	}
+	pubData[3] = txInfo.PubKey.PkBytes[0]
+	pubData[4] = txInfo.PubKey.PkBytes[15]
+	pubData[5] = txInfo.PubKey.PkBytes[31]
 	return pubData
 }
 

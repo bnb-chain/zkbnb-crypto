@@ -145,3 +145,29 @@ func ParsePublicKey(pkStr string) (pk *eddsa.PublicKey, err error) {
 	}
 	return pk, nil
 }
+
+func ConvertStringHexToBytes32(hexStr string) [32]byte {
+	var hexBytes32 [32]byte
+	hexBytes := common.FromHex(hexStr)
+	copy(hexBytes32[:], hexBytes)
+	return hexBytes32
+}
+
+func ConvertBytesToBytes32(bytes []byte) [32]byte {
+	var hexBytes32 [32]byte
+	copy(hexBytes32[:], bytes)
+	return hexBytes32
+}
+
+func ConvertStringHexToBytes20(hexStr string) [20]byte {
+	var hexBytes20 [20]byte
+	hexBytes := common.FromHex(hexStr)
+	copy(hexBytes20[:], hexBytes)
+	return hexBytes20
+}
+
+func ConvertStringHexToBytes16(bi *big.Int) [16]byte {
+	var hexBytes16 [16]byte
+	copy(hexBytes16[:], bi.FillBytes(make([]byte, 32)))
+	return hexBytes16
+}

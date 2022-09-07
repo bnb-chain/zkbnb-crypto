@@ -36,10 +36,12 @@ type (
 
 const (
 	ZeroInt    = uint64(0)
+	OneInt     = uint64(1)
 	DefaultInt = int64(-1)
 
 	NbAccountAssetsPerAccount = 4
 	NbAccountsPerTx           = 5
+	NbAccountEcdsaPkBytes     = 32
 
 	PubDataSizePerTx = 6
 

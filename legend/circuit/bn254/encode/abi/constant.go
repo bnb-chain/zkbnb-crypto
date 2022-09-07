@@ -85,18 +85,18 @@ const AtomicMatchABIJSON = "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\"
 const ABI_ENCODE_EMPTY_BYTE = 0xffff
 
 const (
-	DefaultAbi AbiId = iota
-	TransferAbi
-	WithdrawAbi
-	AddLiquidityAbi
-	RemoveLiquidityAbi
-	SwapAbi
-	CreateCollectionAbi
-	WithdrawNftAbi
-	TransferNftAbi
-	MintNftAbi
-	AtomicMatchAbi
-	CancelOfferAbi
+	DefaultAbi          AbiId = 0
+	TransferAbi               = 6
+	WithdrawAbi               = 10
+	AddLiquidityAbi           = 8
+	RemoveLiquidityAbi        = 9
+	SwapAbi                   = 7
+	CreateCollectionAbi       = 11
+	WithdrawNftAbi            = 16
+	TransferNftAbi            = 13
+	MintNftAbi                = 12
+	AtomicMatchAbi            = 14
+	CancelOfferAbi            = 15
 )
 
 const StaticArgsOutput = 1024

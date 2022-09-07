@@ -10,7 +10,7 @@ import (
 )
 
 type Secp256k1Circuit struct {
-	SIG []frontend.Variable // SIG: R, S, V
+	SIG []frontend.Variable
 	MSG []frontend.Variable // MSG: Hashes
 	PK  []frontend.Variable // PK: public key
 }
@@ -44,7 +44,7 @@ func init() {
 	hint.Register(VerifyEcdsaSignatureSecp256k1)
 }
 
-func (circuit *Secp256k1Circuit) Verify(api frontend.API) error {
+func (circuit *Secp256k1Circuit) Verify(api frontend.API) (frontend.Variable, error) {
 
 	inputs := make([]frontend.Variable, 0)
 	inputs = append(inputs, circuit.SIG...)
@@ -53,8 +53,7 @@ func (circuit *Secp256k1Circuit) Verify(api frontend.API) error {
 
 	res, err := api.Compiler().NewHint(VerifyEcdsaSignatureSecp256k1, 1, inputs...)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	api.AssertIsEqual(res[0], 1)
-	return nil
+	return res[0], nil
 }
