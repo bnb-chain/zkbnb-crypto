@@ -21,14 +21,16 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
-	"github.com/bnb-chain/zkbas-crypto/hash/bn254/zmimc"
-	"github.com/bnb-chain/zkbas-crypto/util"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 	"log"
 	"math/big"
 	"strconv"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
+
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
+	"github.com/bnb-chain/zkbnb-crypto/hash/bn254/zmimc"
+	"github.com/bnb-chain/zkbnb-crypto/util"
 )
 
 var (

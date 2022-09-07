@@ -17,7 +17,9 @@
 
 package ffmath
 
-import "math/big"
+import (
+	"math/big"
+)
 
 func FloatAdd(a, b *big.Float) *big.Float {
 	return new(big.Float).Add(a, b)

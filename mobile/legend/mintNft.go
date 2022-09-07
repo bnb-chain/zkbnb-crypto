@@ -2,9 +2,10 @@ package legend
 
 import (
 	"encoding/json"
-	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/bnb-chain/zkbas-crypto/wasm/legend/legendTxTypes"
 	"log"
+
+	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/legendTxTypes"
 )
 
 func SignMintNft(seed string, segmentInfo string) (txInfo string, err error) {

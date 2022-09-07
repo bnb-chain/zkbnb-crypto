@@ -19,13 +19,15 @@ package solidity
 
 import (
 	"fmt"
-	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/block"
+	"os"
+	"testing"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
-	"os"
-	"testing"
+
+	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/block"
 )
 
 func TestExportSol(t *testing.T) {
@@ -47,7 +49,7 @@ func TestExportSol(t *testing.T) {
 			panic(err)
 		}
 		{
-			f, err := os.Create("zkbas" + fmt.Sprint(differentBlockSizes[i]) + ".vk")
+			f, err := os.Create("zkbnb" + fmt.Sprint(differentBlockSizes[i]) + ".vk")
 			if err != nil {
 				panic(err)
 			}
@@ -57,7 +59,7 @@ func TestExportSol(t *testing.T) {
 			}
 		}
 		{
-			f, err := os.Create("zkbas" + fmt.Sprint(differentBlockSizes[i]) + ".pk")
+			f, err := os.Create("zkbnb" + fmt.Sprint(differentBlockSizes[i]) + ".pk")
 			if err != nil {
 				panic(err)
 			}
@@ -68,7 +70,7 @@ func TestExportSol(t *testing.T) {
 		}
 
 		{
-			f, err := os.Create("ZkbasVerifier" + fmt.Sprint(differentBlockSizes[i]) + ".sol")
+			f, err := os.Create("ZkBNBVerifier" + fmt.Sprint(differentBlockSizes[i]) + ".sol")
 			if err != nil {
 				panic(err)
 			}

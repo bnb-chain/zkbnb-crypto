@@ -20,19 +20,21 @@ package block
 import (
 	"bytes"
 	"encoding/json"
+	"log"
+	"math/big"
+	"testing"
+	"time"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/bnb-chain/zkbas-crypto/ffmath"
-	"github.com/bnb-chain/zkbas-crypto/legend/circuit/bn254/std"
-	"log"
-	"math/big"
-	"testing"
-	"time"
+
+	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
+	"github.com/bnb-chain/zkbnb-crypto/legend/circuit/bn254/std"
 )
 
 func CleanAndPaddingByteByModulus(buf []byte) []byte {

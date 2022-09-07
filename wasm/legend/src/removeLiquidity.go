@@ -19,10 +19,12 @@ package src
 
 import (
 	"encoding/json"
-	curve "github.com/bnb-chain/zkbas-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/bnb-chain/zkbas-crypto/wasm/legend/legendTxTypes"
 	"log"
+
 	"syscall/js"
+
+	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/legendTxTypes"
 )
 
 func RemoveLiquidityTx() js.Func {
@@ -50,4 +52,3 @@ func RemoveLiquidityTx() js.Func {
 	})
 	return helperFunc
 }
-

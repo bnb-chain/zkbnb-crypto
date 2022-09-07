@@ -20,11 +20,12 @@ package tebn254
 import (
 	"bytes"
 	"crypto/subtle"
+	"io"
+	"math/big"
+
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 	"golang.org/x/crypto/blake2b"
-	"io"
-	"math/big"
 )
 
 /*

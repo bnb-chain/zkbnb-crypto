@@ -2,14 +2,15 @@ package std
 
 import (
 	"bytes"
+	"log"
+	"math/big"
+	"testing"
+
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
 	"github.com/ethereum/go-ethereum/crypto"
-	"log"
-	"math/big"
-	"testing"
 )
 
 type HintConstraints struct {

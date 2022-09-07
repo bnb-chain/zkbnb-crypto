@@ -2,13 +2,15 @@ package test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"github.com/bnb-chain/zkbas-crypto/wasm/legend/legendTxTypes"
 	"log"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/legendTxTypes"
 )
 
-func TestAddLiquiditySegmentFormat(t *testing.T){
+func TestAddLiquiditySegmentFormat(t *testing.T) {
 
 	var segmentFormat *legendTxTypes.AddLiquiditySegmentFormat
 	segmentFormat = &legendTxTypes.AddLiquiditySegmentFormat{
