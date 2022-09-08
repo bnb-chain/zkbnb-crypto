@@ -642,10 +642,10 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	buyerDelta := api.Neg(txInfo.BuyOffer.AssetAmount)
 	sellerDelta := sellerAmount
 	// buyer
-	buyOfferIdBits := api.ToBinary(txInfo.BuyOffer.OfferId, 24)
+	buyOfferIdBits := api.ToBinary(txInfo.BuyOffer.OfferId, 23)
 	buyAssetId := api.FromBinary(buyOfferIdBits[7:]...)
 	buyOfferIndex := api.Sub(txInfo.BuyOffer.OfferId, api.Mul(buyAssetId, OfferSizePerAsset))
-	buyOfferBits := api.ToBinary(accountsBefore[1].AssetsInfo[0].OfferCanceledOrFinalized)
+	buyOfferBits := api.ToBinary(accountsBefore[1].AssetsInfo[1].OfferCanceledOrFinalized)
 	// TODO need to optimize here
 	for i := 0; i < OfferSizePerAsset; i++ {
 		isZero := api.IsZero(api.Sub(buyOfferIndex, i))
@@ -668,10 +668,10 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		EmptyAccountAssetDeltaConstraints(),
 	}
 	// sell
-	sellOfferIdBits := api.ToBinary(txInfo.SellOffer.OfferId, 24)
+	sellOfferIdBits := api.ToBinary(txInfo.SellOffer.OfferId, 23)
 	sellAssetId := api.FromBinary(sellOfferIdBits[7:]...)
 	sellOfferIndex := api.Sub(txInfo.SellOffer.OfferId, api.Mul(sellAssetId, OfferSizePerAsset))
-	sellOfferBits := api.ToBinary(accountsBefore[2].AssetsInfo[0].OfferCanceledOrFinalized)
+	sellOfferBits := api.ToBinary(accountsBefore[2].AssetsInfo[1].OfferCanceledOrFinalized)
 	// TODO need to optimize here
 	for i := 0; i < OfferSizePerAsset; i++ {
 		isZero := api.IsZero(api.Sub(sellOfferIndex, i))
