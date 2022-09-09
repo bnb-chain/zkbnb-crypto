@@ -3,6 +3,7 @@ package legendTxTypes
 import (
 	"errors"
 	"hash"
+	"math/big"
 )
 
 type RegisterZnsTxInfo struct {
@@ -41,4 +42,8 @@ func (txInfo *RegisterZnsTxInfo) GetExpiredAt() int64 {
 
 func (txInfo *RegisterZnsTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	return msgHash, errors.New("not support")
+}
+
+func (txInfo *RegisterZnsTxInfo) GetGas() (int64, int64, *big.Int) {
+	return NilTxAccountIndex, NilTxAssetId, nil
 }

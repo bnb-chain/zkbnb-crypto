@@ -220,3 +220,7 @@ func (txInfo *WithdrawNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 	msgHash = hFunc.Sum(nil)
 	return msgHash, nil
 }
+
+func (txInfo *WithdrawNftTxInfo) GetGas() (int64, int64, *big.Int) {
+	return txInfo.GasAccountIndex, txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount
+}

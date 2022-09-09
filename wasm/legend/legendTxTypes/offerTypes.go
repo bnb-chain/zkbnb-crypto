@@ -227,3 +227,7 @@ func (txInfo *OfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	msgHash = hFunc.Sum(nil)
 	return msgHash, nil
 }
+
+func (txInfo *OfferTxInfo) GetGas() (int64, int64, *big.Int) {
+	return NilTxAccountIndex, NilTxAssetId, nil
+}

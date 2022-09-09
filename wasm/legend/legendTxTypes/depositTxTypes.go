@@ -45,3 +45,7 @@ func (txInfo *DepositTxInfo) GetExpiredAt() int64 {
 func (txInfo *DepositTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	return msgHash, errors.New("not support")
 }
+
+func (txInfo *DepositTxInfo) GetGas() (int64, int64, *big.Int) {
+	return NilTxAccountIndex, NilTxAssetId, nil
+}
