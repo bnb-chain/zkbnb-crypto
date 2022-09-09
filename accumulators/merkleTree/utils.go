@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ func IsPowerOfTwo(x int64) bool {
 }
 
 /*
-	CopyMerkleProofs: deep copy for merkle proofs
+CopyMerkleProofs: deep copy for merkle proofs
 */
 func CopyMerkleProofs(a [][]byte) [][]byte {
 	res := make([][]byte, len(a))

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ func TestNeg(t *testing.T) {
 }
 
 func TestMapToGroup(t *testing.T) {
-	HTest, err := MapToGroup("zecreyHSeed")
+	HTest, err := MapToGroup("zkbnbHSeed")
 	if err != nil {
 		t.Error(err)
 	}

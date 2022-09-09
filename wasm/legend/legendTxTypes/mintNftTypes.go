@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ type MintNftSegmentFormat struct {
 }
 
 /*
-	ConstructMintNftTxInfo: construct mint nft tx, sign txInfo
+ConstructMintNftTxInfo: construct mint nft tx, sign txInfo
 */
 func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftTxInfo, err error) {
 	var segmentFormat *MintNftSegmentFormat

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ type OfferSegmentFormat struct {
 }
 
 /*
-	ConstructOfferTxInfo: construct offer tx, sign txInfo
+ConstructOfferTxInfo: construct offer tx, sign txInfo
 */
 func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInfo, err error) {
 	var segmentFormat *OfferSegmentFormat

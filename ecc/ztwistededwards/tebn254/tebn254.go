@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ var (
 )
 
 const (
-	SeedH     = "ZecreyTwistedEdwardsBn254HSeed"
-	SeedU     = "ZecreyTwistedEdwardsBn254USeed"
+	SeedH     = "ZkBNBTwistedEdwardsBn254HSeed"
+	SeedU     = "ZkBNBTwistedEdwardsBn254USeed"
 	PointSize = 32
 )
 

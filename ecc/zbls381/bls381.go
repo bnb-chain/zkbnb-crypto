@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import (
 
 var (
 	Order, _ = new(big.Int).SetString("8444461749428370424248824938781546531375899335154063827935233455917409239041", 10)
-	SEEDH    = "ZecreyBLS377SetupH"
+	SEEDH    = "ZkBNBBLS377SetupH"
 )
 
 type G1Affine = bls12381.G1Affine

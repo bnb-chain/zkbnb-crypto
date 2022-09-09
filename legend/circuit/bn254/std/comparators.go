@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 package std
 
 /*
-	IsVariableEqual: check if two variables are equal, will force equal if isEnabled = false
+IsVariableEqual: check if two variables are equal, will force equal if isEnabled = false
 */
 func IsVariableEqual(api API, isEnabled, i1, i2 Variable) {
 	zero := 0

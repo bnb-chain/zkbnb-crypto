@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ type TransferSegmentFormat struct {
 }
 
 /*
-	ConstructTransferTxInfo: construct generic transfer tx, sign txInfo
+ConstructTransferTxInfo: construct generic transfer tx, sign txInfo
 */
 func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *TransferTxInfo, err error) {
 	var segmentFormat *TransferSegmentFormat
