@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import (
 )
 
 /*
-	Account: account info
+Account: account info
 */
 type Account struct {
 	AccountIndex    int64
@@ -62,7 +62,7 @@ func EmptyAccount(accountIndex int64, assetRoot []byte) *Account {
 }
 
 /*
-	AccountAsset: asset info
+AccountAsset: asset info
 */
 type AccountAsset struct {
 	AssetId                  int64

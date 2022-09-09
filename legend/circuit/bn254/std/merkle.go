@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,11 @@
 package std
 
 /*
-	VerifyMerkleProof: takes a Merkle root, a proofSet, and a proofIndex and returns
-	 true if the first element of the proof set is a leaf of data in the Merkle
-	 root. False is returned if the proof set or Merkle root is nil, and if
-	 'numLeaves' equals 0.
+VerifyMerkleProof: takes a Merkle root, a proofSet, and a proofIndex and returns
+
+	true if the first element of the proof set is a leaf of data in the Merkle
+	root. False is returned if the proof set or Merkle root is nil, and if
+	'numLeaves' equals 0.
 */
 func VerifyMerkleProof(api API, isEnabled Variable, h MiMC, merkleRoot Variable, node Variable, proofSet, helper []Variable) {
 	for i := 0; i < len(proofSet); i++ {

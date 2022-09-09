@@ -19,7 +19,7 @@ func TestEddsaPublicKey(t *testing.T) {
 	log.Println(hex.EncodeToString(sk.PublicKey.Bytes()))
 	log.Println(hex.EncodeToString(sk.Bytes()))
 
-	msg := "hello zecrey legend"
+	msg := "hello zkbnb"
 
 	hFunc := mimc.NewMiMC()
 	signature, err := sk.Sign([]byte(msg), hFunc)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import (
 )
 
 const (
-	SeedH = "ZecreyP256HSeed"
-	SeedU = "ZecreyP256USeed"
+	SeedH = "ZkBNBP256HSeed"
+	SeedU = "ZkBNBP256USeed"
 )
 
 func Neg(a *P256) *P256 {

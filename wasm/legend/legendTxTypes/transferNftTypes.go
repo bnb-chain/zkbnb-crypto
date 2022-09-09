@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ type TransferNftSegmentFormat struct {
 }
 
 /*
-	ConstructTransferNftTxInfo: construct transfer nft tx, sign txInfo
+ConstructTransferNftTxInfo: construct transfer nft tx, sign txInfo
 */
 func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *TransferNftTxInfo, err error) {
 	var segmentFormat *TransferNftSegmentFormat
