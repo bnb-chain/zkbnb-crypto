@@ -53,3 +53,7 @@ func (txInfo *DepositNftTxInfo) GetExpiredAt() int64 {
 func (txInfo *DepositNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	return msgHash, errors.New("not support")
 }
+
+func (txInfo *DepositNftTxInfo) GetGas() (int64, int64, *big.Int) {
+	return NilTxAccountIndex, NilTxAssetId, nil
+}
