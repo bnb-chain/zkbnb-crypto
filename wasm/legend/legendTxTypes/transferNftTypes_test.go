@@ -214,7 +214,7 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(100),
 				CallDataHash:      bytes.Repeat([]byte{1}, 32),
 				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
-				Nonce:             0,
+				Nonce:             -1,
 			},
 		},
 	}

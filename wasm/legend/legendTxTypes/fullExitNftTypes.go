@@ -37,7 +37,7 @@ func (txInfo *FullExitNftTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *FullExitNftTxInfo) GetFromAccountIndex() int64 {
-	return NilTxAccountIndex
+	return NilAccountIndex
 }
 
 func (txInfo *FullExitNftTxInfo) GetNonce() int64 {
@@ -53,5 +53,5 @@ func (txInfo *FullExitNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 }
 
 func (txInfo *FullExitNftTxInfo) GetGas() (int64, int64, *big.Int) {
-	return NilTxAccountIndex, NilTxAssetId, nil
+	return NilAccountIndex, NilAssetId, nil
 }

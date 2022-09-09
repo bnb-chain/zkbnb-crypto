@@ -29,7 +29,7 @@ func (txInfo *RegisterZnsTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *RegisterZnsTxInfo) GetFromAccountIndex() int64 {
-	return NilTxAccountIndex
+	return NilAccountIndex
 }
 
 func (txInfo *RegisterZnsTxInfo) GetNonce() int64 {
@@ -45,5 +45,5 @@ func (txInfo *RegisterZnsTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 }
 
 func (txInfo *RegisterZnsTxInfo) GetGas() (int64, int64, *big.Int) {
-	return NilTxAccountIndex, NilTxAssetId, nil
+	return NilAccountIndex, NilAssetId, nil
 }

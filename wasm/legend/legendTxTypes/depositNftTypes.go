@@ -39,7 +39,7 @@ func (txInfo *DepositNftTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *DepositNftTxInfo) GetFromAccountIndex() int64 {
-	return NilTxAccountIndex
+	return NilAccountIndex
 }
 
 func (txInfo *DepositNftTxInfo) GetNonce() int64 {
@@ -55,5 +55,5 @@ func (txInfo *DepositNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error
 }
 
 func (txInfo *DepositNftTxInfo) GetGas() (int64, int64, *big.Int) {
-	return NilTxAccountIndex, NilTxAssetId, nil
+	return NilAccountIndex, NilAssetId, nil
 }

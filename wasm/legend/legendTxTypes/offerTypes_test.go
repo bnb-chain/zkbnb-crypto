@@ -115,7 +115,7 @@ func TestValidateOfferTxInfo(t *testing.T) {
 			},
 		},
 		{
-			fmt.Errorf("AssetAmount should not be less than %s", minAssetAmount.String()),
+			fmt.Errorf("AssetAmount should be larger than %s", minAssetAmount.String()),
 			&OfferTxInfo{
 				Type:         1,
 				OfferId:      1,

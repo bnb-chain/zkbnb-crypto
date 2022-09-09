@@ -31,7 +31,7 @@ func (txInfo *CreatePairTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *CreatePairTxInfo) GetFromAccountIndex() int64 {
-	return NilTxAccountIndex
+	return NilAccountIndex
 }
 
 func (txInfo *CreatePairTxInfo) GetNonce() int64 {
@@ -47,5 +47,5 @@ func (txInfo *CreatePairTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error
 }
 
 func (txInfo *CreatePairTxInfo) GetGas() (int64, int64, *big.Int) {
-	return NilTxAccountIndex, NilTxAssetId, nil
+	return NilAccountIndex, NilAssetId, nil
 }
