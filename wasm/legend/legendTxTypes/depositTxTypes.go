@@ -31,7 +31,7 @@ func (txInfo *DepositTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *DepositTxInfo) GetFromAccountIndex() int64 {
-	return NilTxAccountIndex
+	return NilAccountIndex
 }
 
 func (txInfo *DepositTxInfo) GetNonce() int64 {
@@ -44,4 +44,8 @@ func (txInfo *DepositTxInfo) GetExpiredAt() int64 {
 
 func (txInfo *DepositTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	return msgHash, errors.New("not support")
+}
+
+func (txInfo *DepositTxInfo) GetGas() (int64, int64, *big.Int) {
+	return NilAccountIndex, NilAssetId, nil
 }

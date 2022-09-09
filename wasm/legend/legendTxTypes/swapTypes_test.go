@@ -157,42 +157,6 @@ func TestValidateSwapTxInfo(t *testing.T) {
 				AssetBMinAmount:  big.NewInt(0).Add(maxAssetAmount, big.NewInt(1)),
 			},
 		},
-		// AssetBAmountDelta
-		{
-			fmt.Errorf("AssetBAmountDelta should not be nil"),
-			&SwapTxInfo{
-				FromAccountIndex: 1,
-				PairIndex:        1,
-				AssetAId:         1,
-				AssetAAmount:     big.NewInt(1),
-				AssetBId:         1,
-				AssetBMinAmount:  big.NewInt(1),
-			},
-		},
-		{
-			fmt.Errorf("AssetBAmountDelta should not be less than %s", minAssetAmount.String()),
-			&SwapTxInfo{
-				FromAccountIndex:  1,
-				PairIndex:         1,
-				AssetAId:          1,
-				AssetAAmount:      big.NewInt(1),
-				AssetBId:          1,
-				AssetBMinAmount:   big.NewInt(1),
-				AssetBAmountDelta: big.NewInt(-1),
-			},
-		},
-		{
-			fmt.Errorf("AssetBAmountDelta should not be larger than %s", maxAssetAmount.String()),
-			&SwapTxInfo{
-				FromAccountIndex:  1,
-				PairIndex:         1,
-				AssetAId:          1,
-				AssetAAmount:      big.NewInt(1),
-				AssetBId:          1,
-				AssetBMinAmount:   big.NewInt(1),
-				AssetBAmountDelta: big.NewInt(0).Add(maxAssetAmount, big.NewInt(1)),
-			},
-		},
 		// GasAccountIndex
 		{
 			fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex),
@@ -309,6 +273,7 @@ func TestValidateSwapTxInfo(t *testing.T) {
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(1),
 				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
+				Nonce:             -1,
 			},
 		},
 		// true

@@ -68,7 +68,7 @@ func TestValidateWithdrawTxInfo(t *testing.T) {
 			},
 		},
 		{
-			fmt.Errorf("AssetAmount should not be less than %s", minAssetAmount.String()),
+			fmt.Errorf("AssetAmount should be larger than %s", minAssetAmount.String()),
 			&WithdrawTxInfo{
 				FromAccountIndex: 1,
 				AssetId:          1,
@@ -168,7 +168,7 @@ func TestValidateWithdrawTxInfo(t *testing.T) {
 				ToAddress:         "0x299d17c8b4e9967385dc9a3bb78f2a43f5a13bd0",
 				GasFeeAssetAmount: big.NewInt(100),
 				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
-				Nonce:             0,
+				Nonce:             -1,
 			},
 		},
 		//  ToAddress

@@ -287,6 +287,7 @@ func TestValidateRemoveLiquidityTxInfo(t *testing.T) {
 				GasFeeAssetId:     3,
 				GasFeeAssetAmount: big.NewInt(1),
 				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
+				Nonce:             -1,
 			},
 		},
 		// true

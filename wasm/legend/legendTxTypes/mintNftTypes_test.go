@@ -232,7 +232,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 				GasFeeAssetId:       3,
 				GasFeeAssetAmount:   big.NewInt(100),
 				ExpiredAt:           time.Now().Add(time.Hour).UnixMilli(),
-				Nonce:               0,
+				Nonce:               -1,
 			},
 		},
 		// true

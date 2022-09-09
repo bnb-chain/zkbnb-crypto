@@ -18,6 +18,7 @@
 package legendTxTypes
 
 import (
+	"math"
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -36,9 +37,10 @@ var (
 )
 
 const (
-	NilNonce          = 0
-	NilExpiredAt      = 0
-	NilTxAccountIndex = int64(-1)
+	NilNonce        = -1
+	NilExpiredAt    = math.MaxInt64
+	NilAccountIndex = int64(-1)
+	NilAssetId      = int64(-1)
 )
 
 const (

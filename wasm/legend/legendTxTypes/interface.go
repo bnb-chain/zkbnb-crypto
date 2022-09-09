@@ -1,6 +1,9 @@
 package legendTxTypes
 
-import "hash"
+import (
+	"hash"
+	"math/big"
+)
 
 type TxInfo interface {
 	GetTxType() int
@@ -16,4 +19,6 @@ type TxInfo interface {
 	GetExpiredAt() int64
 
 	Hash(hFunc hash.Hash) (msgHash []byte, err error)
+
+	GetGas() (int64, int64, *big.Int)
 }

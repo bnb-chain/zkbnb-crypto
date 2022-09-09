@@ -3,6 +3,7 @@ package legendTxTypes
 import (
 	"errors"
 	"hash"
+	"math/big"
 )
 
 type UpdatePairRateTxInfo struct {
@@ -28,7 +29,7 @@ func (txInfo *UpdatePairRateTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *UpdatePairRateTxInfo) GetFromAccountIndex() int64 {
-	return NilTxAccountIndex
+	return NilAccountIndex
 }
 
 func (txInfo *UpdatePairRateTxInfo) GetNonce() int64 {
@@ -41,4 +42,8 @@ func (txInfo *UpdatePairRateTxInfo) GetExpiredAt() int64 {
 
 func (txInfo *UpdatePairRateTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	return msgHash, errors.New("not support")
+}
+
+func (txInfo *UpdatePairRateTxInfo) GetGas() (int64, int64, *big.Int) {
+	return NilAccountIndex, NilAssetId, nil
 }
