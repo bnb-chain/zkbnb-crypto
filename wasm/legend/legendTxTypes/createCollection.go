@@ -19,6 +19,7 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,7 +42,7 @@ type CreateCollectionSegmentFormat struct {
 }
 
 /*
-	ConstructCreateCollectionTxInfo: construct mint nft tx, sign txInfo
+ConstructCreateCollectionTxInfo: construct mint nft tx, sign txInfo
 */
 func ConstructCreateCollectionTxInfo(sk *PrivateKey, segmentStr string) (txInfo *CreateCollectionTxInfo, err error) {
 	var segmentFormat *CreateCollectionSegmentFormat
@@ -97,6 +98,18 @@ type CreateCollectionTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+}
+
+func (txInfo *CreateCollectionTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.AccountIndex,
+			Assets: []int64{txInfo.GasFeeAssetId},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.GasAccountIndex,
+			Assets: []int64{txInfo.GasFeeAssetId},
+		})
 }
 
 func (txInfo *CreateCollectionTxInfo) Validate() error {

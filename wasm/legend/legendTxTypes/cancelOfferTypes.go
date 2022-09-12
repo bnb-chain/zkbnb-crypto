@@ -19,6 +19,7 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -93,6 +94,18 @@ type CancelOfferTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+}
+
+func (txInfo *CancelOfferTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.AccountIndex,
+			Assets: []int64{txInfo.GasFeeAssetId, txInfo.OfferId / OfferPerAsset},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.GasAccountIndex,
+			Assets: []int64{txInfo.GasFeeAssetId},
+		})
 }
 
 func (txInfo *CancelOfferTxInfo) Validate() error {

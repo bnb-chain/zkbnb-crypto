@@ -37,6 +37,16 @@ var (
 )
 
 const (
+	LastPairIndex = 65535
+	LastNftIndex  = 1099511627775
+
+	TreasuryAccountIndexKey = "TreasuryAccountIndexKey"
+	CreatorAccountIndexKey  = "CreatorAccountIndexKey"
+
+	OfferPerAsset = 128
+)
+
+const (
 	NilNonce        = -1
 	NilExpiredAt    = math.MaxInt64
 	NilAccountIndex = int64(-1)

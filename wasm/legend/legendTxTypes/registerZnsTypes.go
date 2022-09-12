@@ -1,6 +1,7 @@
 package legendTxTypes
 
 import (
+	"context"
 	"errors"
 	"hash"
 	"math/big"
@@ -22,6 +23,13 @@ func (txInfo *RegisterZnsTxInfo) GetTxType() int {
 
 func (txInfo *RegisterZnsTxInfo) Validate() error {
 	return nil
+}
+
+func (txInfo *RegisterZnsTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			Index: txInfo.AccountIndex,
+		})
 }
 
 func (txInfo *RegisterZnsTxInfo) VerifySignature(pubKey string) error {

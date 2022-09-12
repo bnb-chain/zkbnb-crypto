@@ -124,7 +124,11 @@ func VerifyRemoveLiquidityTx(
 	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[0].AssetsInfo[1].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
+	IsVariableEqual(api, flag, tx.PairIndex, accountsBefore[0].AssetsInfo[3].AssetId)
+
+	IsVariableEqual(api, flag, tx.PairIndex, accountsBefore[1].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+
 	IsVariableEqual(api, flag, tx.AssetAId, liquidityBefore.AssetAId)
 	IsVariableEqual(api, flag, tx.AssetBId, liquidityBefore.AssetBId)
 	// should have enough lp

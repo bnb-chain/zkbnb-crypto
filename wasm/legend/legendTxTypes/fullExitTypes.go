@@ -1,6 +1,7 @@
 package legendTxTypes
 
 import (
+	"context"
 	"errors"
 	"hash"
 	"math/big"
@@ -20,6 +21,14 @@ type FullExitTxInfo struct {
 
 func (txInfo *FullExitTxInfo) GetTxType() int {
 	return TxTypeFullExit
+}
+
+func (txInfo *FullExitTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.AccountIndex,
+			Assets: []int64{txInfo.AssetId},
+		})
 }
 
 func (txInfo *FullExitTxInfo) Validate() error {

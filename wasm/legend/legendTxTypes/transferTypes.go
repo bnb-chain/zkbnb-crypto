@@ -19,6 +19,7 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -124,6 +125,22 @@ type TransferTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+}
+
+func (txInfo *TransferTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.FromAccountIndex,
+			Assets: []int64{txInfo.AssetId, txInfo.GasFeeAssetId},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.ToAccountIndex,
+			Assets: []int64{txInfo.AssetId},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.GasAccountIndex,
+			Assets: []int64{txInfo.GasFeeAssetId},
+		})
 }
 
 func (txInfo *TransferTxInfo) Validate() error {

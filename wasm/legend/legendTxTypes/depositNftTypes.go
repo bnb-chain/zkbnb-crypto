@@ -1,6 +1,7 @@
 package legendTxTypes
 
 import (
+	"context"
 	"errors"
 	"hash"
 	"math/big"
@@ -28,6 +29,15 @@ type DepositNftTxInfo struct {
 
 func (txInfo *DepositNftTxInfo) GetTxType() int {
 	return TxTypeDepositNft
+}
+
+func (txInfo *DepositNftTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			// TODO should prepare asset 0?
+			Index: txInfo.AccountIndex,
+		}).
+		setNftKey(txInfo.NftIndex)
 }
 
 func (txInfo *DepositNftTxInfo) Validate() error {

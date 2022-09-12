@@ -1,6 +1,7 @@
 package legendTxTypes
 
 import (
+	"context"
 	"errors"
 	"hash"
 	"math/big"
@@ -26,6 +27,14 @@ type FullExitNftTxInfo struct {
 
 func (txInfo *FullExitNftTxInfo) GetTxType() int {
 	return TxTypeFullExitNft
+}
+
+func (txInfo *FullExitNftTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			Index: txInfo.AccountIndex,
+		}). // TODO need add CreatorAccountIndex?
+		setNftKey(txInfo.NftIndex)
 }
 
 func (txInfo *FullExitNftTxInfo) Validate() error {

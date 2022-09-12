@@ -19,6 +19,7 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -118,6 +119,24 @@ type AddLiquidityTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+}
+
+func (txInfo *AddLiquidityTxInfo) WitnessKeys(ctx context.Context) *TxWitnessKeys {
+	treasuryAccountIndex := ctx.Value(TreasuryAccountIndexKey).(int64)
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.FromAccountIndex,
+			Assets: []int64{txInfo.AssetAId, txInfo.AssetBId, txInfo.GasFeeAssetId, txInfo.PairIndex},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  treasuryAccountIndex,
+			Assets: []int64{txInfo.PairIndex},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.GasAccountIndex,
+			Assets: []int64{txInfo.GasFeeAssetId},
+		}).
+		setPairKey(txInfo.PairIndex)
 }
 
 func (txInfo *AddLiquidityTxInfo) Validate() error {

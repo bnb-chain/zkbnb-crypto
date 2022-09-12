@@ -19,6 +19,7 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,7 +48,7 @@ type AtomicMatchSegmentFormat struct {
 }
 
 /*
-	ConstructMintNftTxInfo: construct mint nft tx, sign txInfo
+ConstructMintNftTxInfo: construct mint nft tx, sign txInfo
 */
 func ConstructAtomicMatchTxInfo(sk *PrivateKey, segmentStr string) (txInfo *AtomicMatchTxInfo, err error) {
 	var segmentFormat *AtomicMatchSegmentFormat
@@ -117,6 +118,32 @@ type AtomicMatchTxInfo struct {
 	Nonce             int64
 	ExpiredAt         int64
 	Sig               []byte
+}
+
+func (txInfo *AtomicMatchTxInfo) WitnessKeys(ctx context.Context) *TxWitnessKeys {
+	creatorAccountIndex := ctx.Value(CreatorAccountIndexKey).(int64)
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.AccountIndex,
+			Assets: []int64{txInfo.GasFeeAssetId},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.BuyOffer.AccountIndex,
+			Assets: []int64{txInfo.BuyOffer.AssetId, txInfo.BuyOffer.OfferId / OfferPerAsset},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.SellOffer.AccountIndex,
+			Assets: []int64{txInfo.SellOffer.AssetId, txInfo.SellOffer.OfferId / OfferPerAsset},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  creatorAccountIndex,
+			Assets: []int64{txInfo.BuyOffer.AssetId},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.GasAccountIndex,
+			Assets: []int64{txInfo.BuyOffer.AssetId, txInfo.GasFeeAssetId},
+		}).
+		setNftKey(txInfo.SellOffer.NftIndex)
 }
 
 func (txInfo *AtomicMatchTxInfo) Validate() error {

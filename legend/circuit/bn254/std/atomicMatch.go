@@ -129,22 +129,41 @@ func VerifyAtomicMatchTx(
 	hFunc MiMC,
 ) (pubData [PubDataSizePerTx]Variable, err error) {
 	pubData = CollectPubDataFromAtomicMatch(api, *tx)
+
+	// verify account index
+	// submitter
+	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
+	// buyer
+	IsVariableEqual(api, flag, tx.BuyOffer.AccountIndex, accountsBefore[1].AccountIndex)
+	// seller
+	IsVariableEqual(api, flag, tx.SellOffer.AccountIndex, accountsBefore[2].AccountIndex)
+	// creator
+	IsVariableEqual(api, flag, nftBefore.CreatorAccountIndex, accountsBefore[3].AccountIndex)
+	// gas
+	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[4].AccountIndex)
+
+	// asset id
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+	// TODO accountsBefore[1].AssetsInfo[1] need to be verified
+	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+	// TODO accountsBefore[2].AssetsInfo[1] need to be verified
+
+	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[3].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[4].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[4].AssetsInfo[1].AssetId)
+
 	// verify params
 	IsVariableEqual(api, flag, tx.BuyOffer.Type, 0)
 	IsVariableEqual(api, flag, tx.SellOffer.Type, 1)
 	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, tx.SellOffer.AssetId)
 	IsVariableEqual(api, flag, tx.BuyOffer.AssetAmount, tx.SellOffer.AssetAmount)
 	IsVariableEqual(api, flag, tx.BuyOffer.NftIndex, tx.SellOffer.NftIndex)
-	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[1].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[2].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[3].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[4].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[4].AssetsInfo[1].AssetId)
 	IsVariableLessOrEqual(api, flag, blockCreatedAt, tx.BuyOffer.ExpiredAt)
 	IsVariableLessOrEqual(api, flag, blockCreatedAt, tx.SellOffer.ExpiredAt)
 	IsVariableEqual(api, flag, nftBefore.NftIndex, tx.SellOffer.NftIndex)
 	IsVariableEqual(api, flag, tx.BuyOffer.TreasuryRate, tx.SellOffer.TreasuryRate)
+
 	// verify signature
 	hFunc.Reset()
 	buyOfferHash := ComputeHashFromOfferTx(tx.BuyOffer, hFunc)
@@ -164,17 +183,6 @@ func VerifyAtomicMatchTx(
 	if err != nil {
 		return pubData, err
 	}
-	// verify account index
-	// submitter
-	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
-	// buyer
-	IsVariableEqual(api, flag, tx.BuyOffer.AccountIndex, accountsBefore[1].AccountIndex)
-	// seller
-	IsVariableEqual(api, flag, tx.SellOffer.AccountIndex, accountsBefore[2].AccountIndex)
-	// creator
-	IsVariableEqual(api, flag, nftBefore.CreatorAccountIndex, accountsBefore[3].AccountIndex)
-	// gas
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[4].AccountIndex)
 	// verify buy offer id
 	buyOfferIdBits := api.ToBinary(tx.BuyOffer.OfferId, 24)
 	buyAssetId := api.FromBinary(buyOfferIdBits[7:]...)

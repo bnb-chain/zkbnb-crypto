@@ -19,6 +19,7 @@ package legendTxTypes
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -100,6 +101,22 @@ type WithdrawNftTxInfo struct {
 	ExpiredAt              int64
 	Nonce                  int64
 	Sig                    []byte
+}
+
+func (txInfo *WithdrawNftTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.AccountIndex,
+			Assets: []int64{txInfo.GasFeeAssetId},
+		}).
+		appendAccountKey(&AccountKeys{
+			Index: txInfo.CreatorAccountIndex,
+		}).
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.GasAccountIndex,
+			Assets: []int64{txInfo.GasFeeAssetId},
+		}).
+		setNftKey(txInfo.NftIndex)
 }
 
 func (txInfo *WithdrawNftTxInfo) Validate() error {

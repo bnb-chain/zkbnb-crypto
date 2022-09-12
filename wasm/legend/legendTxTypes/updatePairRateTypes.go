@@ -1,6 +1,7 @@
 package legendTxTypes
 
 import (
+	"context"
 	"errors"
 	"hash"
 	"math/big"
@@ -22,6 +23,10 @@ func (txInfo *UpdatePairRateTxInfo) GetTxType() int {
 
 func (txInfo *UpdatePairRateTxInfo) Validate() error {
 	return nil
+}
+
+func (txInfo *UpdatePairRateTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().setPairKey(txInfo.PairIndex)
 }
 
 func (txInfo *UpdatePairRateTxInfo) VerifySignature(pubKey string) error {

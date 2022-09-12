@@ -1,6 +1,7 @@
 package legendTxTypes
 
 import (
+	"context"
 	"errors"
 	"hash"
 	"math/big"
@@ -20,6 +21,14 @@ type DepositTxInfo struct {
 
 func (txInfo *DepositTxInfo) GetTxType() int {
 	return TxTypeDeposit
+}
+
+func (txInfo *DepositTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().
+		appendAccountKey(&AccountKeys{
+			Index:  txInfo.AccountIndex,
+			Assets: []int64{txInfo.AssetId},
+		})
 }
 
 func (txInfo *DepositTxInfo) Validate() error {

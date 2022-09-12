@@ -1,6 +1,7 @@
 package legendTxTypes
 
 import (
+	"context"
 	"errors"
 	"hash"
 	"math/big"
@@ -20,6 +21,11 @@ type CreatePairTxInfo struct {
 
 func (txInfo *CreatePairTxInfo) GetTxType() int {
 	return TxTypeCreatePair
+}
+
+func (txInfo *CreatePairTxInfo) WitnessKeys(_ context.Context) *TxWitnessKeys {
+	return defaultTxWitnessKeys().
+		setPairKey(txInfo.PairIndex)
 }
 
 func (txInfo *CreatePairTxInfo) Validate() error {

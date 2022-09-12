@@ -104,11 +104,14 @@ func VerifySwapTx(
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
-	// pair index
-	IsVariableEqual(api, flag, tx.PairIndex, liquidityBefore.PairIndex)
 	// asset id
 	IsVariableEqual(api, flag, tx.AssetAId, accountsBefore[0].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetBId, accountsBefore[0].AssetsInfo[1].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+
+	// pair index
+	IsVariableEqual(api, flag, tx.PairIndex, liquidityBefore.PairIndex)
 	isSameAsset := api.IsZero(
 		api.And(
 			api.IsZero(api.Sub(tx.AssetAId, liquidityBefore.AssetAId)),
@@ -129,8 +132,6 @@ func VerifySwapTx(
 		),
 		1,
 	)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[2].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
 	// should have enough assets
 	tx.AssetAAmount = UnpackAmount(api, tx.AssetAAmount)
 	tx.AssetBMinAmount = UnpackAmount(api, tx.AssetBMinAmount)
