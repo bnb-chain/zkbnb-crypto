@@ -20,7 +20,6 @@ func TestAddLiquiditySegmentFormat(t *testing.T) {
 		AssetAAmount:      "10000",
 		AssetBId:          2,
 		AssetBAmount:      "100",
-		LpAmount:          "1000",
 		GasAccountIndex:   1,
 		GasFeeAssetId:     3,
 		GasFeeAssetAmount: "3",
