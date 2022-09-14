@@ -19,14 +19,13 @@ package main
 
 import (
 	"fmt"
-
 	"syscall/js"
 
 	"github.com/bnb-chain/zkbnb-crypto/wasm/legend/src"
 )
 
 /*
-	zkbnb-zero wasm libraries
+	zkbnb wasm libraries
 */
 
 func main() {
