@@ -17,6 +17,10 @@
 
 package block
 
+import (
+	"github.com/bnb-chain/zkbnb-crypto/circuit/bn254/types"
+)
+
 type LiquidityDeltaConstraints struct {
 	AssetAId             Variable
 	AssetBId             Variable

@@ -22,6 +22,8 @@ import (
 	"log"
 
 	"github.com/consensys/gnark/std/hash/mimc"
+
+	"github.com/bnb-chain/zkbnb-crypto/circuit/bn254/types"
 )
 
 type TxConstraints struct {

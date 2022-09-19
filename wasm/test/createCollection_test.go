@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/bnb-chain/zkbnb-crypto/wasm/txtypes"
 )
 
 func TestCreateCollectionSegmentFormat(t *testing.T) {
@@ -13,7 +15,6 @@ func TestCreateCollectionSegmentFormat(t *testing.T) {
 	var segmentFormat *txtypes.CreateCollectionSegmentFormat
 	segmentFormat = &txtypes.CreateCollectionSegmentFormat{
 		AccountIndex:      0,
-		CollectionId:      1,
 		Name:              "crypto punk",
 		Introduction:      "crypto punk is the king of jpeg nft",
 		GasAccountIndex:   1,

@@ -25,6 +25,8 @@ import (
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/test"
+
+	"github.com/bnb-chain/zkbnb-crypto/circuit/bn254/types"
 )
 
 func TestVerifySwapTransaction(t *testing.T) {
