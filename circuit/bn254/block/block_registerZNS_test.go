@@ -32,6 +32,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/bnb-chain/zkbnb-crypto/circuit/bn254/types"
 	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 )

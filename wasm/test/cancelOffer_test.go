@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/bnb-chain/zkbnb-crypto/wasm/txtypes"
 )
 
 func TestCancelOfferSegmentFormat(t *testing.T) {

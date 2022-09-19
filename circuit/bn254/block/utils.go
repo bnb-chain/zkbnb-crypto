@@ -19,6 +19,8 @@ package block
 
 import (
 	"github.com/consensys/gnark/std/signature/eddsa"
+
+	"github.com/bnb-chain/zkbnb-crypto/circuit/bn254/types"
 )
 
 func SelectAssetDeltas(
