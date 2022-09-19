@@ -24,6 +24,7 @@ import (
 	"syscall/js"
 
 	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/txtypes"
 )
 
 func TransferTx() js.Func {
