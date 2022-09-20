@@ -8,7 +8,7 @@
 
 
 ```
-cd circuit/bn254/solidity;
+cd circuit/solidity;
 
 go test -run TestExportSolGroth16  -count=1 -timeout 99999s
 ```
@@ -18,7 +18,7 @@ After this command is finished, there will be 3 generated files: `zkbnb.pk_groth
 ### Exporting plonk proving/verifying key, verifier contract
 
 ```
-cd circuit/bn254/solidity;
+cd circuit/solidity;
 
 go test -run TestExportSolPlonk -count=1 -timeout 99999s
 ```
