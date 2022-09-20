@@ -15,35 +15,41 @@
  *
  */
 
-package txtypes
+package types
 
 import (
-	"math"
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-
-	"github.com/bnb-chain/zkbnb-crypto/util"
+	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/hash/mimc"
+	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
 )
 
 type (
-	Signature  = eddsa.Signature
-	PrivateKey = eddsa.PrivateKey
+	Variable             = frontend.Variable
+	API                  = frontend.API
+	MiMC                 = mimc.MiMC
+	PublicKeyConstraints = eddsaConstraints.PublicKey
+	PublicKey            = eddsa.PublicKey
 )
 
 const (
+	ZeroInt    = uint64(0)
+	DefaultInt = int64(-1)
+
+	NbAccountAssetsPerAccount = 4
+	NbAccountsPerTx           = 5
+
+	PubDataSizePerTx = 6
+
+	OfferSizePerAsset = 128
+
 	ChainId = 1
 )
 
 const (
-	NilNonce        = -1
-	NilExpiredAt    = math.MaxInt64
-	NilAccountIndex = int64(-1)
-	NilAssetId      = int64(-1)
-)
-
-const (
-	TxTypeEmpty = iota
+	TxTypeEmptyTx = iota
 	TxTypeRegisterZns
 	TxTypeCreatePair
 	TxTypeUpdatePairRate
@@ -62,42 +68,12 @@ const (
 	TxTypeWithdrawNft
 	TxTypeFullExit
 	TxTypeFullExitNft
-	TxTypeOffer
 )
 
 const (
-	HashLength int = 32
-
-	minAccountIndex int64 = 0
-	maxAccountIndex int64 = (1 << 32) - 1
-
-	minAssetId int64 = 0
-	maxAssetId int64 = (1 << 16) - 1
-
-	minNftIndex int64 = 0
-	maxNftIndex int64 = (1 << 40) - 1
-
-	minCollectionId int64 = 0
-	maxCollectionId int64 = (1 << 16) - 1
-
-	minNonce int64 = 0
-
-	minTreasuryRate int64 = 0
-	maxTreasuryRate int64 = 10000
-
-	minCollectionNameLength int = 1
-	maxCollectionNameLength int = 50
-
-	maxCollectionIntroductionLength int = 1000
-
-	minPairIndex = 0
-	maxPairIndex = (1 << 16) - 1
+	RateBase = 10000
 )
 
 var (
-	minPackedFeeAmount = big.NewInt(0)
-	maxPackedFeeAmount = util.PackedFeeMaxAmount
-
-	minAssetAmount = big.NewInt(0)
-	maxAssetAmount = util.PackedAmountMaxAmount
+	EmptyAssetRoot, _ = new(big.Int).SetString("20078765925047610631302921414746503738259000135611824775363050619361913896775", 10)
 )

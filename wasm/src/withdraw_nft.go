@@ -27,10 +27,10 @@ import (
 	"github.com/bnb-chain/zkbnb-crypto/wasm/txtypes"
 )
 
-func WithdrawTx() js.Func {
+func WithdrawNftTx() js.Func {
 	helperFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if len(args) != 2 {
-			return "invalid withdraw params"
+			return "invalid withdraw nft params"
 		}
 		seed := args[0].String()
 		segmentStr := args[1].String()
@@ -38,14 +38,14 @@ func WithdrawTx() js.Func {
 		if err != nil {
 			return err.Error()
 		}
-		txInfo, err := txtypes.ConstructWithdrawTxInfo(sk, segmentStr)
+		txInfo, err := txtypes.ConstructWithdrawNftTxInfo(sk, segmentStr)
 		if err != nil {
-			log.Println("[WithdrawTx] unable to construct generic transfer:", err)
+			log.Println("[WithdrawNftTx] unable to construct generic transfer:", err)
 			return err.Error()
 		}
 		txInfoBytes, err := json.Marshal(txInfo)
 		if err != nil {
-			log.Println("[WithdrawTx] unable to marshal:", err)
+			log.Println("[WithdrawNftTx] unable to marshal:", err)
 			return err.Error()
 		}
 		return string(txInfoBytes)

@@ -26,10 +26,10 @@ import (
 	"strconv"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 
 	"github.com/bnb-chain/zkbnb-crypto/ffmath"
-	"github.com/bnb-chain/zkbnb-crypto/hash/bn254/zmimc"
 	"github.com/bnb-chain/zkbnb-crypto/util"
 )
 
@@ -109,11 +109,12 @@ func MapToGroup(seed string) (H *Point, err error) {
 		buffer bytes.Buffer
 	)
 	i = 0
+	hmimc := mimc.NewMiMC()
 	for i < 256 {
 		buffer.Reset()
 		buffer.WriteString(seed)
 		buffer.WriteString(strconv.Itoa(i))
-		y, err := util.HashToInt(buffer, zmimc.Hmimc)
+		y, err := util.HashToInt(buffer, hmimc)
 		if err != nil {
 			return nil, err
 		}
