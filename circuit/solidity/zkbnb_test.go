@@ -33,13 +33,13 @@ import (
 func TestExportSol(t *testing.T) {
 	differentBlockSizes := []int{1, 10}
 	for i := 0; i < len(differentBlockSizes); i++ {
-		var circuit circuit.BlockConstraints
-		circuit.TxsCount = differentBlockSizes[i]
-		circuit.Txs = make([]circuit.TxConstraints, circuit.TxsCount)
-		for i := 0; i < circuit.TxsCount; i++ {
-			circuit.Txs[i] = circuit.GetZeroTxConstraint()
+		var blockConstrains circuit.BlockConstraints
+		blockConstrains.TxsCount = differentBlockSizes[i]
+		blockConstrains.Txs = make([]circuit.TxConstraints, blockConstrains.TxsCount)
+		for i := 0; i < blockConstrains.TxsCount; i++ {
+			blockConstrains.Txs[i] = circuit.GetZeroTxConstraint()
 		}
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstrains, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {
 			panic(err)
 		}
