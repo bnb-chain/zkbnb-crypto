@@ -1,5 +1,5 @@
 /*
- * Copyright © 2021 Zecrey Protocol
+ * Copyright © 2022 ZkBNB Protocol
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ import (
 	"strconv"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards"
 
 	"github.com/bnb-chain/zkbnb-crypto/ffmath"
-	"github.com/bnb-chain/zkbnb-crypto/hash/bn254/zmimc"
 	"github.com/bnb-chain/zkbnb-crypto/util"
 )
 
@@ -44,8 +44,8 @@ var (
 )
 
 const (
-	SeedH     = "ZecreyTwistedEdwardsBn254HSeed"
-	SeedU     = "ZecreyTwistedEdwardsBn254USeed"
+	SeedH     = "ZkBNBTwistedEdwardsBn254HSeed"
+	SeedU     = "ZkBNBTwistedEdwardsBn254USeed"
 	PointSize = 32
 )
 
@@ -109,11 +109,12 @@ func MapToGroup(seed string) (H *Point, err error) {
 		buffer bytes.Buffer
 	)
 	i = 0
+	hmimc := mimc.NewMiMC()
 	for i < 256 {
 		buffer.Reset()
 		buffer.WriteString(seed)
 		buffer.WriteString(strconv.Itoa(i))
-		y, err := util.HashToInt(buffer, zmimc.Hmimc)
+		y, err := util.HashToInt(buffer, hmimc)
 		if err != nil {
 			return nil, err
 		}
