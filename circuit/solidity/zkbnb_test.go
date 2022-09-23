@@ -30,6 +30,26 @@ import (
 	"github.com/bnb-chain/zkbnb-crypto/circuit"
 )
 
+func TestCompileCircuit(t *testing.T) {
+	differentBlockSizes := []int{1, 10}
+	gasAssetIds := []int{0, 1}
+	for i := 0; i < len(differentBlockSizes); i++ {
+		var blockConstrains circuit.BlockConstraints
+		blockConstrains.TxsCount = differentBlockSizes[i]
+		blockConstrains.Txs = make([]circuit.TxConstraints, blockConstrains.TxsCount)
+		for i := 0; i < blockConstrains.TxsCount; i++ {
+			blockConstrains.Txs[i] = circuit.GetZeroTxConstraint()
+		}
+		blockConstrains.GasAssetIds = gasAssetIds
+		blockConstrains.Gas = circuit.GetZeroGasConstraints(len(gasAssetIds))
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstrains, frontend.IgnoreUnconstrainedInputs())
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Number of constraints: %d\n", oR1cs.GetNbConstraints())
+	}
+}
+
 func TestExportSol(t *testing.T) {
 	differentBlockSizes := []int{1, 10}
 	for i := 0; i < len(differentBlockSizes); i++ {

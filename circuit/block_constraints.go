@@ -34,6 +34,7 @@ type BlockConstraints struct {
 	Txs             []TxConstraints
 	TxsCount        int
 	Gas             GasConstraints
+	GasAssetIds     []int
 }
 
 func (circuit BlockConstraints) Define(api API) error {
@@ -60,6 +61,8 @@ func VerifyBlock(
 		isOnChainOp     Variable
 		roots           [types.NbRoots]Variable
 		count           = 4
+		gasAssets       [NbGasAssetsPerTx]Variable
+		gasDeltas       [NbGasAssetsPerTx]Variable
 	)
 	pendingCommitmentData := make([]Variable, types.PubDataSizePerTx*block.TxsCount+5)
 	// write basic info into hFunc
@@ -69,8 +72,14 @@ func VerifyBlock(
 	pendingCommitmentData[3] = block.NewStateRoot
 	api.AssertIsEqual(block.OldStateRoot, block.Txs[0].StateRootBefore)
 
+	gasAssetCount := len(block.GasAssetIds)
+	blockGasDeltas := make([]Variable, gasAssetCount)
+	for i := 0; i < gasAssetCount; i++ {
+		blockGasDeltas[i] = 0
+	}
+
 	onChainOpsCount = 0
-	isOnChainOp, pendingPubData, roots, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt)
+	isOnChainOp, pendingPubData, roots, gasAssets, gasDeltas, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt)
 	if err != nil {
 		log.Println("[VerifyBlock] unable to verify block:", err)
 		return err
@@ -80,12 +89,21 @@ func VerifyBlock(
 		count++
 	}
 	onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
+
+	for i := 0; i < gasAssetCount; i++ {
+		for j := 0; j < NbGasAssetsPerTx; j++ {
+			found := api.IsZero(api.Sub(block.GasAssetIds[i], gasAssets[j]))
+			delta := api.Select(found, gasDeltas[j], types.ZeroInt)
+			blockGasDeltas[i] = api.Add(blockGasDeltas[i], delta)
+		}
+	}
+
 	for i := 1; i < block.TxsCount; i++ {
 		isEmptyTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeEmptyTx))
 		notEmptyTx := api.IsZero(isEmptyTx)
 		types.IsVariableEqual(api, notEmptyTx, block.Txs[i-1].StateRootAfter, block.Txs[i].StateRootBefore)
 		hFunc.Reset()
-		isOnChainOp, pendingPubData, roots, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt)
+		isOnChainOp, pendingPubData, roots, gasAssets, gasDeltas, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt)
 		if err != nil {
 			log.Println("[VerifyBlock] unable to verify block:", err)
 			return err
@@ -95,10 +113,17 @@ func VerifyBlock(
 			count++
 		}
 		onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
+		for i := 0; i < gasAssetCount; i++ {
+			for j := 0; j < NbGasAssetsPerTx; j++ {
+				found := api.IsZero(api.Sub(block.GasAssetIds[i], gasAssets[j]))
+				delta := api.Select(found, gasDeltas[j], types.ZeroInt)
+				blockGasDeltas[i] = api.Add(blockGasDeltas[i], delta)
+			}
+		}
 	}
 
 	hFunc.Reset()
-	stateRoot, err := VerifyGas(api, block.Gas, hFunc, roots)
+	stateRoot, err := VerifyGas(api, block.Gas, blockGasDeltas, hFunc, roots)
 	isEmptyTx := api.IsZero(api.Sub(block.Txs[block.TxsCount-1].TxType, types.TxTypeEmptyTx))
 	notEmptyTx := api.IsZero(isEmptyTx)
 	types.IsVariableEqual(api, notEmptyTx, block.NewStateRoot, stateRoot)

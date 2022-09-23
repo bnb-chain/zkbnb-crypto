@@ -104,7 +104,6 @@ func VerifyTransferTx(
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[fromAccount].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, GasAccountIndex)
 	// account name hash
 	IsVariableEqual(api, flag, tx.ToAccountNameHash, accountsBefore[toAccount].AccountNameHash)
 	// asset id

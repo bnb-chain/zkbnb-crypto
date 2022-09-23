@@ -103,26 +103,27 @@ func VerifyMintNftTx(
 	tx *MintNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints,
 ) (pubData [PubDataSizePerTx]Variable) {
+	fromAccount := 0
+	toAccount := 1
+
 	pubData = CollectPubDataFromMintNft(api, *tx)
 	// verify params
 	// check empty nft
 	CheckEmptyNftNode(api, flag, nftBefore)
 	// account index
-	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[1].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[2].AccountIndex)
+	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[fromAccount].AccountIndex)
+	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
 	// account name hash
-	IsVariableEqual(api, flag, tx.ToAccountNameHash, accountsBefore[1].AccountNameHash)
+	IsVariableEqual(api, flag, tx.ToAccountNameHash, accountsBefore[toAccount].AccountNameHash)
 	// content hash
 	isZero := api.IsZero(tx.NftContentHash)
 	IsVariableEqual(api, flag, isZero, 0)
 	// gas asset id
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[2].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	// should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	// collection id should be less than creator's collection nonce
-	IsVariableLess(api, flag, tx.CollectionId, accountsBefore[0].CollectionNonce)
+	IsVariableLess(api, flag, tx.CollectionId, accountsBefore[fromAccount].CollectionNonce)
 	return pubData
 }

@@ -128,6 +128,11 @@ func VerifyAtomicMatchTx(
 	blockCreatedAt Variable,
 	hFunc MiMC,
 ) (pubData [PubDataSizePerTx]Variable, err error) {
+	fromAccount := 0
+	buyAccount := 1
+	sellAccount := 2
+	creatorAccount := 3
+
 	pubData = CollectPubDataFromAtomicMatch(api, *tx)
 	// verify params
 	IsVariableEqual(api, flag, tx.BuyOffer.Type, 0)
@@ -135,12 +140,10 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, tx.SellOffer.AssetId)
 	IsVariableEqual(api, flag, tx.BuyOffer.AssetAmount, tx.SellOffer.AssetAmount)
 	IsVariableEqual(api, flag, tx.BuyOffer.NftIndex, tx.SellOffer.NftIndex)
-	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[1].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[2].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[3].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[4].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[4].AssetsInfo[1].AssetId)
+	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[buyAccount].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[sellAccount].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[creatorAccount].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	IsVariableLessOrEqual(api, flag, blockCreatedAt, tx.BuyOffer.ExpiredAt)
 	IsVariableLessOrEqual(api, flag, blockCreatedAt, tx.SellOffer.ExpiredAt)
 	IsVariableEqual(api, flag, nftBefore.NftIndex, tx.SellOffer.NftIndex)
@@ -166,20 +169,18 @@ func VerifyAtomicMatchTx(
 	}
 	// verify account index
 	// submitter
-	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
+	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[fromAccount].AccountIndex)
 	// buyer
-	IsVariableEqual(api, flag, tx.BuyOffer.AccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, tx.BuyOffer.AccountIndex, accountsBefore[buyAccount].AccountIndex)
 	// seller
-	IsVariableEqual(api, flag, tx.SellOffer.AccountIndex, accountsBefore[2].AccountIndex)
+	IsVariableEqual(api, flag, tx.SellOffer.AccountIndex, accountsBefore[sellAccount].AccountIndex)
 	// creator
-	IsVariableEqual(api, flag, nftBefore.CreatorAccountIndex, accountsBefore[3].AccountIndex)
-	// gas
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[4].AccountIndex)
+	IsVariableEqual(api, flag, nftBefore.CreatorAccountIndex, accountsBefore[creatorAccount].AccountIndex)
 	// verify buy offer id
 	buyOfferIdBits := api.ToBinary(tx.BuyOffer.OfferId, 24)
 	buyAssetId := api.FromBinary(buyOfferIdBits[7:]...)
 	buyOfferIndex := api.Sub(tx.BuyOffer.OfferId, api.Mul(buyAssetId, OfferSizePerAsset))
-	buyOfferIndexBits := api.ToBinary(accountsBefore[1].AssetsInfo[1].OfferCanceledOrFinalized, OfferSizePerAsset)
+	buyOfferIndexBits := api.ToBinary(accountsBefore[buyAccount].AssetsInfo[1].OfferCanceledOrFinalized, OfferSizePerAsset)
 	for i := 0; i < OfferSizePerAsset; i++ {
 		isZero := api.IsZero(api.Sub(buyOfferIndex, i))
 		IsVariableEqual(api, isZero, buyOfferIndexBits[i], 0)
@@ -188,16 +189,16 @@ func VerifyAtomicMatchTx(
 	sellOfferIdBits := api.ToBinary(tx.SellOffer.OfferId, 24)
 	sellAssetId := api.FromBinary(sellOfferIdBits[7:]...)
 	sellOfferIndex := api.Sub(tx.SellOffer.OfferId, api.Mul(sellAssetId, OfferSizePerAsset))
-	sellOfferIndexBits := api.ToBinary(accountsBefore[2].AssetsInfo[1].OfferCanceledOrFinalized, OfferSizePerAsset)
+	sellOfferIndexBits := api.ToBinary(accountsBefore[sellAccount].AssetsInfo[1].OfferCanceledOrFinalized, OfferSizePerAsset)
 	for i := 0; i < OfferSizePerAsset; i++ {
 		isZero := api.IsZero(api.Sub(sellOfferIndex, i))
 		IsVariableEqual(api, isZero, sellOfferIndexBits[i], 0)
 	}
 	// buyer should have enough balance
 	tx.BuyOffer.AssetAmount = UnpackAmount(api, tx.BuyOffer.AssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.BuyOffer.AssetAmount, accountsBefore[1].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.BuyOffer.AssetAmount, accountsBefore[buyAccount].AssetsInfo[0].Balance)
 	// submitter should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	return pubData, nil
 }
