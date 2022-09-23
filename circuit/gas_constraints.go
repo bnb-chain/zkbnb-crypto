@@ -19,8 +19,8 @@ type GasConstraints struct {
 	AccountInfoBefore               GasAccountConstraints
 	MerkleProofsAccountBefore       [AccountMerkleLevels]Variable
 	MerkleProofsAccountAssetsBefore [types.NbGasAssets][AssetMerkleLevels]Variable
-	AssetIds                        [types.NbGasAssets][]Variable
-	AssetAmounts                    [types.NbGasAssets][]Variable
+	AssetIds                        [types.NbGasAssets]Variable
+	AssetAmounts                    [types.NbGasAssets]Variable
 }
 
 func VerifyGas(
