@@ -33,6 +33,7 @@ type BlockConstraints struct {
 	BlockCommitment Variable `gnark:",public"`
 	Txs             []TxConstraints
 	TxsCount        int
+	Gas             GasConstraints
 }
 
 func (circuit BlockConstraints) Define(api API) error {
@@ -42,12 +43,7 @@ func (circuit BlockConstraints) Define(api API) error {
 		return err
 	}
 
-	pubdataHashFunc, err := mimc.NewMiMC(api)
-	if err != nil {
-		return err
-	}
-
-	err = VerifyBlock(api, circuit, hFunc, pubdataHashFunc)
+	err = VerifyBlock(api, circuit, hFunc)
 	if err != nil {
 		return err
 	}
@@ -58,13 +54,12 @@ func VerifyBlock(
 	api API,
 	block BlockConstraints,
 	hFunc MiMC,
-	pubdataHashFunc MiMC,
 ) (err error) {
 	var (
 		onChainOpsCount Variable
 		isOnChainOp     Variable
-		// pendingCommitmentData [std.PubDataSizePerTx*block.TxsCount + 5]Variable
-		count = 4
+		roots           [3]Variable
+		count           = 4
 	)
 	pendingCommitmentData := make([]Variable, types.PubDataSizePerTx*block.TxsCount+5)
 	// write basic info into hFunc
@@ -73,11 +68,9 @@ func VerifyBlock(
 	pendingCommitmentData[2] = block.OldStateRoot
 	pendingCommitmentData[3] = block.NewStateRoot
 	api.AssertIsEqual(block.OldStateRoot, block.Txs[0].StateRootBefore)
-	isEmptyTx := api.IsZero(api.Sub(block.Txs[block.TxsCount-1].TxType, types.TxTypeEmptyTx))
-	notEmptyTx := api.IsZero(isEmptyTx)
-	types.IsVariableEqual(api, notEmptyTx, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
+
 	onChainOpsCount = 0
-	isOnChainOp, pendingPubData, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt)
+	isOnChainOp, pendingPubData, _, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt)
 	if err != nil {
 		log.Println("[VerifyBlock] unable to verify block:", err)
 		return err
@@ -86,16 +79,20 @@ func VerifyBlock(
 		pendingCommitmentData[count] = pendingPubData[i]
 		count++
 	}
+	var lastRoots [3]Variable
 	onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 	for i := 1; i < block.TxsCount; i++ {
 		isEmptyTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeEmptyTx))
 		notEmptyTx := api.IsZero(isEmptyTx)
 		types.IsVariableEqual(api, notEmptyTx, block.Txs[i-1].StateRootAfter, block.Txs[i].StateRootBefore)
 		hFunc.Reset()
-		isOnChainOp, pendingPubData, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt)
+		isOnChainOp, pendingPubData, roots, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt)
 		if err != nil {
 			log.Println("[VerifyBlock] unable to verify block:", err)
 			return err
+		}
+		if i == block.TxsCount-1 {
+			lastRoots = roots
 		}
 		for j := 0; j < types.PubDataSizePerTx; j++ {
 			pendingCommitmentData[count] = pendingPubData[j]
@@ -103,8 +100,14 @@ func VerifyBlock(
 		}
 		onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 	}
+
+	hFunc.Reset()
+	stateRoot, err := VerifyGas(api, block.Gas, hFunc, lastRoots)
+	isEmptyTx := api.IsZero(api.Sub(block.Txs[block.TxsCount-1].TxType, types.TxTypeEmptyTx))
+	notEmptyTx := api.IsZero(isEmptyTx)
+	types.IsVariableEqual(api, notEmptyTx, block.NewStateRoot, stateRoot)
+
 	pendingCommitmentData[count] = onChainOpsCount
-	//commitment := pubdataHashFunc.Sum()
 	commitments, _ := api.Compiler().NewHint(types.Keccak256, 1, pendingCommitmentData[:]...)
 	api.AssertIsEqual(commitments[0], block.BlockCommitment)
 	return nil

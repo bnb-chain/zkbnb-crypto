@@ -48,6 +48,9 @@ type TxConstraints struct {
 	WithdrawNftTxInfo      WithdrawNftTxConstraints
 	FullExitTxInfo         FullExitTxConstraints
 	FullExitNftTxInfo      FullExitNftTxConstraints
+	// gas
+	GasAssetId [types.NbGasAssets]Variable
+	GasAmount  [types.NbGasAssets]Variable
 	// nonce
 	Nonce Variable
 	// expired at
@@ -87,7 +90,7 @@ func (circuit TxConstraints) Define(api API) error {
 		return err
 	}
 
-	_, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228)
+	_, _, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228)
 	if err != nil {
 		return err
 	}
@@ -99,7 +102,7 @@ func VerifyTransaction(
 	tx TxConstraints,
 	hFunc MiMC,
 	blockCreatedAt Variable,
-) (isOnChainOp Variable, pubData [types.PubDataSizePerTx]Variable, err error) {
+) (isOnChainOp Variable, pubData [types.PubDataSizePerTx]Variable, roots [types.NbRoots]Variable, err error) {
 	// compute tx type
 	isEmptyTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeEmptyTx))
 	isRegisterZnsTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeRegisterZns))
@@ -195,7 +198,7 @@ func VerifyTransaction(
 	)
 	if err != nil {
 		log.Println("[VerifyTx] invalid signature:", err)
-		return nil, pubData, err
+		return nil, pubData, roots, err
 	}
 
 	// verify transactions
@@ -218,12 +221,12 @@ func VerifyTransaction(
 	pubData = SelectPubData(api, isSwapTx, pubDataCheck, pubData)
 	pubDataCheck, err = types.VerifyAddLiquidityTx(api, isAddLiquidityTx, &tx.AddLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
 	if err != nil {
-		return nil, pubData, err
+		return nil, pubData, roots, err
 	}
 	pubData = SelectPubData(api, isAddLiquidityTx, pubDataCheck, pubData)
 	pubDataCheck, err = types.VerifyRemoveLiquidityTx(api, isRemoveLiquidityTx, &tx.RemoveLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
 	if err != nil {
-		return nil, pubData, err
+		return nil, pubData, roots, err
 	}
 	pubData = SelectPubData(api, isRemoveLiquidityTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyCreateCollectionTx(api, isCreateCollectionTx, &tx.CreateCollectionTxInfo, tx.AccountsInfoBefore)
@@ -240,7 +243,7 @@ func VerifyTransaction(
 		hFunc,
 	)
 	if err != nil {
-		return nil, pubData, err
+		return nil, pubData, roots, err
 	}
 	pubData = SelectPubData(api, isAtomicMatchTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyCancelOfferTx(api, isCancelOfferTx, &tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
@@ -546,7 +549,11 @@ func VerifyTransaction(
 	)
 	newStateRoot := hFunc.Sum()
 	types.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
-	return isOnChainOp, pubData, nil
+
+	roots[0] = NewNftRoot
+	roots[1] = NewLiquidityRoot
+	roots[2] = NewNftRoot
+	return isOnChainOp, pubData, roots, nil
 }
 
 func EmptyTx() (oTx *Tx) {
@@ -556,8 +563,7 @@ func EmptyTx() (oTx *Tx) {
 		ExpiredAt:         0,
 		Signature:         types.EmptySignature(),
 		AccountRootBefore: make([]byte, 32),
-		AccountsInfoBefore: [5]*types.Account{
-			types.EmptyAccount(0, make([]byte, 32)),
+		AccountsInfoBefore: [NbAccountsPerTx]*types.Account{
 			types.EmptyAccount(0, make([]byte, 32)),
 			types.EmptyAccount(0, make([]byte, 32)),
 			types.EmptyAccount(0, make([]byte, 32)),

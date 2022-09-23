@@ -39,7 +39,12 @@ const (
 	DefaultInt = int64(-1)
 
 	NbAccountAssetsPerAccount = 4
-	NbAccountsPerTx           = 5
+	NbAccountsPerTx           = 4
+
+	GasAccountIndex = 1 // gas account index
+	NbGasAssets     = 2 // kind of gas asset
+
+	NbRoots = 3 // account root, liquidity root, nft root
 
 	PubDataSizePerTx = 6
 
