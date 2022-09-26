@@ -73,9 +73,8 @@ func VerifyBlock(
 	pendingCommitmentData[2] = block.OldStateRoot
 	pendingCommitmentData[3] = block.NewStateRoot
 	api.AssertIsEqual(block.OldStateRoot, block.Txs[0].StateRootBefore)
-	isEmptyTx := api.IsZero(api.Sub(block.Txs[block.TxsCount-1].TxType, types.TxTypeEmptyTx))
-	notEmptyTx := api.IsZero(isEmptyTx)
-	types.IsVariableEqual(api, notEmptyTx, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
+	api.AssertIsEqual(block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
+
 	onChainOpsCount = 0
 	isOnChainOp, pendingPubData, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt)
 	if err != nil {
@@ -88,9 +87,7 @@ func VerifyBlock(
 	}
 	onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 	for i := 1; i < block.TxsCount; i++ {
-		isEmptyTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeEmptyTx))
-		notEmptyTx := api.IsZero(isEmptyTx)
-		types.IsVariableEqual(api, notEmptyTx, block.Txs[i-1].StateRootAfter, block.Txs[i].StateRootBefore)
+		api.AssertIsEqual(block.Txs[i-1].StateRootAfter, block.Txs[i].StateRootBefore)
 		hFunc.Reset()
 		isOnChainOp, pendingPubData, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt)
 		if err != nil {

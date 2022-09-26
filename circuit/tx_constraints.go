@@ -546,10 +546,11 @@ func VerifyTransaction(
 	)
 	newStateRoot := hFunc.Sum()
 	types.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
+	types.IsVariableEqual(api, isEmptyTx, tx.StateRootBefore, tx.StateRootAfter);
 	return isOnChainOp, pubData, nil
 }
 
-func EmptyTx() (oTx *Tx) {
+func EmptyTx(stateRoot []byte) (oTx *Tx) {
 	oTx = &Tx{
 		TxType:            types.TxTypeEmptyTx,
 		Nonce:             0,
@@ -567,12 +568,12 @@ func EmptyTx() (oTx *Tx) {
 		LiquidityBefore:                 types.EmptyLiquidity(0),
 		NftRootBefore:                   make([]byte, 32),
 		NftBefore:                       types.EmptyNft(0),
-		StateRootBefore:                 make([]byte, 32),
+		StateRootBefore:                 stateRoot,
 		MerkleProofsAccountAssetsBefore: [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte{},
 		MerkleProofsAccountBefore:       [NbAccountsPerTx][AccountMerkleLevels][]byte{},
 		MerkleProofsLiquidityBefore:     [LiquidityMerkleLevels][]byte{},
 		MerkleProofsNftBefore:           [NftMerkleLevels][]byte{},
-		StateRootAfter:                  make([]byte, 32),
+		StateRootAfter:                  stateRoot,
 	}
 	for i := 0; i < NbAccountsPerTx; i++ {
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
