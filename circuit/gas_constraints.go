@@ -49,7 +49,8 @@ func VerifyGas(
 	gasAssetDeltas []Variable,
 	hFunc MiMC,
 	lastRoots [types.NbRoots]Variable) (newStateRoot Variable, err error) {
-	notEmptyTx := 1
+	isEmpty := api.IsZero(api.Sub(gas.AccountInfoBefore.AccountIndex, LastAccountIndex))
+	notEmpty := api.IsZero(isEmpty)
 	NewAccountRoot := lastRoots[0]
 	var (
 		NewAccountAssetsRoot = gas.AccountInfoBefore.AssetRoot
@@ -81,7 +82,7 @@ func VerifyGas(
 		hFunc.Reset()
 		types.VerifyMerkleProof(
 			api,
-			notEmptyTx,
+			notEmpty,
 			hFunc,
 			NewAccountAssetsRoot,
 			assetNodeHash,
@@ -116,7 +117,7 @@ func VerifyGas(
 	hFunc.Reset()
 	types.VerifyMerkleProof(
 		api,
-		notEmptyTx,
+		notEmpty,
 		hFunc,
 		NewAccountRoot,
 		accountNodeHash,
