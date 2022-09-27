@@ -18,14 +18,9 @@
 package types
 
 import (
-	"errors"
-	"github.com/bnb-chain/zkbnb-crypto/ffmath"
-	"github.com/bnb-chain/zkbnb-crypto/util"
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
-	"math/big"
 )
 
 func SetPubKeyWitness(pk *eddsa.PublicKey) (witness eddsaConstraints.PublicKey) {
@@ -53,32 +48,3 @@ func Min(api API, a, b Variable) Variable {
 	minAB := api.Select(api.IsZero(api.Add(1, api.Cmp(a, b))), a, b)
 	return minAB
 }
-
-
-func ComputeSLp(curveID ecc.ID, inputs []*big.Int, outputs []*big.Int) error {
-	if len(inputs) != 5 {
-		return errors.New("[ComputeSLp] invalid params")
-	}
-	poolA := inputs[0]
-	poolB := inputs[1]
-	kLast := inputs[2]
-	feeRate := inputs[3]
-	treasuryRate := inputs[4]
-	if poolA.Cmp(util.ZeroBigInt) == 0 || poolB.Cmp(util.ZeroBigInt) == 0 {
-		outputs[0] = util.ZeroBigInt
-		return nil
-	}
-	kCurrent := ffmath.Multiply(poolA, poolB)
-	kLast.Sqrt(kLast)
-	kCurrent.Sqrt(kCurrent)
-	l := ffmath.Multiply(ffmath.Sub(kCurrent, kLast), big.NewInt(RateBase))
-	r := ffmath.Multiply(ffmath.Sub(ffmath.Multiply(big.NewInt(RateBase), ffmath.Div(feeRate, treasuryRate)), big.NewInt(RateBase)), kCurrent)
-	r = ffmath.Add(r, ffmath.Multiply(big.NewInt(RateBase), kLast))
-	var err error
-	outputs[0], err = util.CleanPackedAmount(ffmath.Div(l, r))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-

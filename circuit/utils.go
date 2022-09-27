@@ -32,30 +32,11 @@ func SelectAssetDeltas(
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
 			deltasRes[i][j].BalanceDelta =
 				api.Select(flag, deltas[i][j].BalanceDelta, deltasCheck[i][j].BalanceDelta)
-			deltasRes[i][j].LpDelta =
-				api.Select(flag, deltas[i][j].LpDelta, deltasCheck[i][j].LpDelta)
 			deltasRes[i][j].OfferCanceledOrFinalized =
 				api.Select(flag, deltas[i][j].OfferCanceledOrFinalized, deltasCheck[i][j].OfferCanceledOrFinalized)
 		}
 	}
 	return deltasRes
-}
-
-func SelectLiquidityDelta(
-	api API,
-	flag Variable,
-	delta, deltaCheck LiquidityDeltaConstraints,
-) (deltaRes LiquidityDeltaConstraints) {
-	deltaRes.AssetAId = api.Select(flag, delta.AssetAId, deltaCheck.AssetAId)
-	deltaRes.AssetADelta = api.Select(flag, delta.AssetADelta, deltaCheck.AssetADelta)
-	deltaRes.AssetBId = api.Select(flag, delta.AssetBId, deltaCheck.AssetBId)
-	deltaRes.AssetBDelta = api.Select(flag, delta.AssetBDelta, deltaCheck.AssetBDelta)
-	deltaRes.LpDelta = api.Select(flag, delta.LpDelta, deltaCheck.LpDelta)
-	deltaRes.KLast = api.Select(flag, delta.KLast, deltaCheck.KLast)
-	deltaRes.FeeRate = api.Select(flag, delta.FeeRate, deltaCheck.FeeRate)
-	deltaRes.TreasuryAccountIndex = api.Select(flag, delta.TreasuryAccountIndex, deltaCheck.TreasuryAccountIndex)
-	deltaRes.TreasuryRate = api.Select(flag, delta.TreasuryRate, deltaCheck.TreasuryRate)
-	return deltaRes
 }
 
 func SelectNftDeltas(

@@ -133,14 +133,9 @@ func GetZeroTxConstraint() TxConstraints {
 	var zeroTxConstraint TxConstraints
 	zeroTxConstraint.TxType = 0
 	zeroTxConstraint.RegisterZnsTxInfo = types.EmptyRegisterZnsTxWitness()
-	zeroTxConstraint.CreatePairTxInfo = types.EmptyCreatePairTxWitness()
-	zeroTxConstraint.UpdatePairRateTxInfo = types.EmptyUpdatePairRateTxWitness()
 	zeroTxConstraint.DepositTxInfo = types.EmptyDepositTxWitness()
 	zeroTxConstraint.DepositNftTxInfo = types.EmptyDepositNftTxWitness()
 	zeroTxConstraint.TransferTxInfo = types.EmptyTransferTxWitness()
-	zeroTxConstraint.SwapTxInfo = types.EmptySwapTxWitness()
-	zeroTxConstraint.AddLiquidityTxInfo = types.EmptyAddLiquidityTxWitness()
-	zeroTxConstraint.RemoveLiquidityTxInfo = types.EmptyRemoveLiquidityTxWitness()
 	zeroTxConstraint.CreateCollectionTxInfo = types.EmptyCreateCollectionTxWitness()
 	zeroTxConstraint.MintNftTxInfo = types.EmptyMintNftTxWitness()
 	zeroTxConstraint.TransferNftTxInfo = types.EmptyTransferNftTxWitness()
@@ -157,25 +152,11 @@ func GetZeroTxConstraint() TxConstraints {
 	// set common account & merkle parts
 	// account root before
 	zeroTxConstraint.AccountRootBefore = 0
-	zeroTxConstraint.LiquidityRootBefore = 0
 	zeroTxConstraint.NftRootBefore = 0
 	zeroTxConstraint.StateRootBefore = 0
 	zeroTxConstraint.StateRootAfter = 0
 
 	// before
-	zeroTxConstraint.LiquidityBefore = LiquidityConstraints{
-		PairIndex:            0,
-		AssetAId:             0,
-		AssetA:               0,
-		AssetBId:             0,
-		AssetB:               0,
-		LpAmount:             0,
-		KLast:                0,
-		FeeRate:              0,
-		TreasuryAccountIndex: 0,
-		TreasuryRate:         0,
-	}
-
 	zeroTxConstraint.NftBefore = NftConstraints{
 		NftIndex:            0,
 		NftContentHash:      0,
@@ -202,7 +183,6 @@ func GetZeroTxConstraint() TxConstraints {
 			zeroAccountConstraint.AssetsInfo[i] = types.AccountAssetConstraints{
 				AssetId:                  0,
 				Balance:                  0,
-				LpAmount:                 0,
 				OfferCanceledOrFinalized: 0,
 			}
 		}
@@ -218,10 +198,6 @@ func GetZeroTxConstraint() TxConstraints {
 			// account before
 			zeroTxConstraint.MerkleProofsAccountBefore[i][j] = 0
 		}
-	}
-	for i := 0; i < LiquidityMerkleLevels; i++ {
-		// liquidity assets before
-		zeroTxConstraint.MerkleProofsLiquidityBefore[i] = 0
 	}
 	for i := 0; i < NftMerkleLevels; i++ {
 		// nft assets before

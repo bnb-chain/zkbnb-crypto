@@ -103,6 +103,6 @@ func TestVerifyBlock_RegisterZNS(t *testing.T) {
 	assert.SolvingSucceeded(
 		&circuit, &witness, test.WithBackends(backend.GROTH16),
 		test.WithCurves(ecc.BN254),
-		test.WithProverOpts(backend.WithHints(types.Keccak256, types.ComputeSLp)),
+		test.WithProverOpts(backend.WithHints(types.Keccak256)),
 		test.WithCompileOpts(frontend.IgnoreUnconstrainedInputs()))
 }

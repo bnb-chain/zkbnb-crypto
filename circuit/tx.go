@@ -26,14 +26,9 @@ type Tx struct {
 	TxType uint8
 	// different transactions
 	RegisterZnsTxInfo      *RegisterZnsTx
-	CreatePairTxInfo       *CreatePairTx
-	UpdatePairRateTxInfo   *UpdatePairRateTx
 	DepositTxInfo          *DepositTx
 	DepositNftTxInfo       *DepositNftTx
 	TransferTxInfo         *TransferTx
-	SwapTxInfo             *SwapTx
-	AddLiquidityTxInfo     *AddLiquidityTx
-	RemoveLiquidityTxInfo  *RemoveLiquidityTx
 	CreateCollectionTxInfo *CreateCollectionTx
 	MintNftTxInfo          *MintNftTx
 	TransferNftTxInfo      *TransferNftTx
@@ -53,10 +48,6 @@ type Tx struct {
 	AccountRootBefore []byte
 	// account before info, size is 5
 	AccountsInfoBefore [NbAccountsPerTx]*types.Account
-	// liquidity root before
-	LiquidityRootBefore []byte
-	// liquidity before
-	LiquidityBefore *types.Liquidity
 	// nft root before
 	NftRootBefore []byte
 	// nft before
@@ -67,8 +58,6 @@ type Tx struct {
 	MerkleProofsAccountAssetsBefore [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte
 	// before account merkle proof
 	MerkleProofsAccountBefore [NbAccountsPerTx][AccountMerkleLevels][]byte
-	// before liquidity merkle proof
-	MerkleProofsLiquidityBefore [LiquidityMerkleLevels][]byte
 	// before nft tree merkle proof
 	MerkleProofsNftBefore [NftMerkleLevels][]byte
 	// state root after
