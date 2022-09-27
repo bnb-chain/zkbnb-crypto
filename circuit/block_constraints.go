@@ -34,7 +34,7 @@ type BlockConstraints struct {
 	Txs             []TxConstraints
 	TxsCount        int
 	Gas             GasConstraints
-	GasAssetIds     []int
+	GasAssetIds     []int64
 }
 
 func (circuit BlockConstraints) Define(api API) error {
@@ -146,9 +146,15 @@ func SetBlockWitness(oBlock *Block) (witness BlockConstraints, err error) {
 		tx, err := SetTxWitness(oBlock.Txs[i])
 		witness.Txs = append(witness.Txs, tx)
 		if err != nil {
-			log.Println("[SetBlockWitness] unable to set tx witness: ", err.Error())
+			log.Println("fail to set tx witness: ", err.Error())
 			return witness, err
 		}
+	}
+
+	witness.Gas, err = SetGasWitness(oBlock.Gas)
+	if err != nil {
+		log.Println("fail to set gas witness: ", err.Error())
+		return witness, err
 	}
 	return witness, nil
 }

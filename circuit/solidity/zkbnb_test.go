@@ -32,17 +32,17 @@ import (
 
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := []int{1, 10}
-	gasAssetIds := []int{0, 1}
+	gasAssetIds := []int64{0, 1}
 	for i := 0; i < len(differentBlockSizes); i++ {
-		var blockConstrains circuit.BlockConstraints
-		blockConstrains.TxsCount = differentBlockSizes[i]
-		blockConstrains.Txs = make([]circuit.TxConstraints, blockConstrains.TxsCount)
-		for i := 0; i < blockConstrains.TxsCount; i++ {
-			blockConstrains.Txs[i] = circuit.GetZeroTxConstraint()
+		var blockConstraints circuit.BlockConstraints
+		blockConstraints.TxsCount = differentBlockSizes[i]
+		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
+		for i := 0; i < blockConstraints.TxsCount; i++ {
+			blockConstraints.Txs[i] = circuit.GetZeroTxConstraint()
 		}
-		blockConstrains.GasAssetIds = gasAssetIds
-		blockConstrains.Gas = circuit.GetZeroGasConstraints(len(gasAssetIds))
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstrains, frontend.IgnoreUnconstrainedInputs())
+		blockConstraints.GasAssetIds = gasAssetIds
+		blockConstraints.Gas = circuit.GetZeroGasConstraints(len(gasAssetIds))
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {
 			panic(err)
 		}
@@ -52,14 +52,23 @@ func TestCompileCircuit(t *testing.T) {
 
 func TestExportSol(t *testing.T) {
 	differentBlockSizes := []int{1, 10}
+	exportSol(differentBlockSizes)
+}
+
+func TestExportSolSmall(t *testing.T) {
+	differentBlockSizes := []int{1}
+	exportSol(differentBlockSizes)
+}
+
+func exportSol(differentBlockSizes []int) {
 	for i := 0; i < len(differentBlockSizes); i++ {
-		var blockConstrains circuit.BlockConstraints
-		blockConstrains.TxsCount = differentBlockSizes[i]
-		blockConstrains.Txs = make([]circuit.TxConstraints, blockConstrains.TxsCount)
-		for i := 0; i < blockConstrains.TxsCount; i++ {
-			blockConstrains.Txs[i] = circuit.GetZeroTxConstraint()
+		var blockConstraints circuit.BlockConstraints
+		blockConstraints.TxsCount = differentBlockSizes[i]
+		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
+		for i := 0; i < blockConstraints.TxsCount; i++ {
+			blockConstraints.Txs[i] = circuit.GetZeroTxConstraint()
 		}
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstrains, frontend.IgnoreUnconstrainedInputs())
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {
 			panic(err)
 		}
