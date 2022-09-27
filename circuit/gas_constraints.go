@@ -46,11 +46,10 @@ type GasConstraints struct {
 func VerifyGas(
 	api API,
 	gas GasConstraints,
+	needGas Variable,
 	gasAssetDeltas []Variable,
 	hFunc MiMC,
 	lastRoots [types.NbRoots]Variable) (newStateRoot Variable, err error) {
-	isEmpty := api.IsZero(api.Sub(gas.AccountInfoBefore.AccountIndex, LastAccountIndex))
-	notEmpty := api.IsZero(isEmpty)
 	NewAccountRoot := lastRoots[0]
 	var (
 		NewAccountAssetsRoot = gas.AccountInfoBefore.AssetRoot
@@ -58,6 +57,8 @@ func VerifyGas(
 
 	gasAssetCount := len(gasAssetDeltas)
 	deltas := make([]AccountAssetDeltaConstraints, gasAssetCount)
+
+	types.IsVariableEqual(api, needGas, gas.AccountInfoBefore.AccountIndex, types.GasAccountIndex)
 
 	for i := 0; i < gasAssetCount; i++ {
 		deltas[i] = AccountAssetDeltaConstraints{
@@ -82,7 +83,7 @@ func VerifyGas(
 		hFunc.Reset()
 		types.VerifyMerkleProof(
 			api,
-			notEmpty,
+			needGas,
 			hFunc,
 			NewAccountAssetsRoot,
 			assetNodeHash,
@@ -117,7 +118,7 @@ func VerifyGas(
 	hFunc.Reset()
 	types.VerifyMerkleProof(
 		api,
-		notEmpty,
+		needGas,
 		hFunc,
 		NewAccountRoot,
 		accountNodeHash,

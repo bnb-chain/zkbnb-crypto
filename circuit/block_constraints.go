@@ -63,6 +63,7 @@ func VerifyBlock(
 		count           = 4
 		gasAssets       [NbGasAssetsPerTx]Variable
 		gasDeltas       [NbGasAssetsPerTx]Variable
+		needGas         Variable
 	)
 	pendingCommitmentData := make([]Variable, types.PubDataSizePerTx*block.TxsCount+5)
 	// write basic info into hFunc
@@ -122,11 +123,20 @@ func VerifyBlock(
 		}
 	}
 
+	for i := 0; i < block.TxsCount; i++ {
+		transferTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeTransfer))
+		withdrawTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeWithdraw))
+		createCollectionTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeCreateCollection))
+		mintNftTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeMintNft))
+		cancelOfferTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeCancelOffer))
+		atomicMatchTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeAtomicMatch))
+		withdrawNftTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeWithdrawNft))
+		needGas = api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(transferTx, withdrawTx), createCollectionTx), mintNftTx), cancelOfferTx), atomicMatchTx), withdrawNftTx)
+	}
+
 	hFunc.Reset()
-	stateRoot, err := VerifyGas(api, block.Gas, blockGasDeltas, hFunc, roots)
-	isEmptyTx := api.IsZero(api.Sub(block.Txs[block.TxsCount-1].TxType, types.TxTypeEmptyTx))
-	notEmptyTx := api.IsZero(isEmptyTx)
-	types.IsVariableEqual(api, notEmptyTx, block.NewStateRoot, stateRoot)
+	stateRoot, err := VerifyGas(api, block.Gas, needGas, blockGasDeltas, hFunc, roots)
+	types.IsVariableEqual(api, needGas, block.NewStateRoot, stateRoot)
 
 	pendingCommitmentData[count] = onChainOpsCount
 	commitments, _ := api.Compiler().NewHint(types.Keccak256, 1, pendingCommitmentData[:]...)

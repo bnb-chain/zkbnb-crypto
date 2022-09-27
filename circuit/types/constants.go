@@ -49,6 +49,8 @@ const (
 	OfferSizePerAsset = 128
 
 	ChainId = 1
+
+	GasAccountIndex = 1
 )
 
 const (
