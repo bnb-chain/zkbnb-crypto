@@ -123,6 +123,7 @@ func VerifyBlock(
 		}
 	}
 
+	needGas = 0
 	for i := 0; i < block.TxsCount; i++ {
 		transferTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeTransfer))
 		withdrawTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeWithdraw))

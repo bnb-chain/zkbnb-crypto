@@ -61,6 +61,7 @@ func TestExportSolSmall(t *testing.T) {
 }
 
 func exportSol(differentBlockSizes []int) {
+	gasAssetIds := []int64{0, 1}
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
 		blockConstraints.TxsCount = differentBlockSizes[i]
@@ -68,6 +69,8 @@ func exportSol(differentBlockSizes []int) {
 		for i := 0; i < blockConstraints.TxsCount; i++ {
 			blockConstraints.Txs[i] = circuit.GetZeroTxConstraint()
 		}
+		blockConstraints.GasAssetIds = gasAssetIds
+		blockConstraints.Gas = circuit.GetZeroGasConstraints(len(gasAssetIds))
 		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {
 			panic(err)
