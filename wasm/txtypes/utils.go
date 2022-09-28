@@ -30,12 +30,20 @@ import (
 	"github.com/bnb-chain/zkbnb-crypto/util"
 )
 
-func WriteUint64IntoBuf(buf *bytes.Buffer, a uint64) {
-	buf.Write(new(big.Int).SetUint64(a).FillBytes(make([]byte, 32)))
-}
+func WriteInt64IntoBuf(buf *bytes.Buffer, inputs ...int64) {
+	if len(inputs) == 0 {
+		log.Fatalln("[WriteInt64IntoBuf] no input")
+	}
+	if len(inputs) > 4 {
+		log.Fatalln("[WriteInt64IntoBuf] too many inputs")
+	}
 
-func WriteInt64IntoBuf(buf *bytes.Buffer, a int64) {
-	buf.Write(new(big.Int).SetInt64(a).FillBytes(make([]byte, 32)))
+	packedValue := new(big.Int).SetInt64(inputs[0])
+	for _, input := range inputs[1:] {
+		packedValue = new(big.Int).Mul(packedValue, new(big.Int).Exp(big.NewInt(2), big.NewInt(64), nil))
+		packedValue = new(big.Int).Add(packedValue, big.NewInt(input))
+	}
+	buf.Write(packedValue.FillBytes(make([]byte, 32)))
 }
 
 func WriteBigIntIntoBuf(buf *bytes.Buffer, a *big.Int) {
