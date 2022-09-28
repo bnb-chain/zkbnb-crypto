@@ -35,10 +35,9 @@ type (
 )
 
 const (
-	ZeroInt    = uint64(0)
-	DefaultInt = int64(-1)
+	ZeroInt = uint64(0)
 
-	NbAccountAssetsPerAccount = 4
+	NbAccountAssetsPerAccount = 2
 	NbAccountsPerTx           = 5
 
 	PubDataSizePerTx = 6
@@ -51,14 +50,9 @@ const (
 const (
 	TxTypeEmptyTx = iota
 	TxTypeRegisterZns
-	TxTypeCreatePair
-	TxTypeUpdatePairRate
 	TxTypeDeposit
 	TxTypeDepositNft
 	TxTypeTransfer
-	TxTypeSwap
-	TxTypeAddLiquidity
-	TxTypeRemoveLiquidity
 	TxTypeWithdraw
 	TxTypeCreateCollection
 	TxTypeMintNft
@@ -75,5 +69,5 @@ const (
 )
 
 var (
-	EmptyAssetRoot, _ = new(big.Int).SetString("20078765925047610631302921414746503738259000135611824775363050619361913896775", 10)
+	EmptyAssetRoot, _ = new(big.Int).SetString("1852795521510493758870271888468603317521451107904460550484580901924342463446", 10)
 )

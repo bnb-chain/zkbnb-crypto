@@ -31,8 +31,3 @@ func NftIndexToMerkleHelper(api API, nftIndex Variable) (merkleHelpers []Variabl
 	merkleHelpers = api.ToBinary(nftIndex, NftMerkleLevels)
 	return merkleHelpers
 }
-
-func PairIndexToMerkleHelper(api API, pairIndex Variable) (merkleHelpers []Variable) {
-	merkleHelpers = api.ToBinary(pairIndex, LiquidityMerkleLevels)
-	return merkleHelpers
-}
