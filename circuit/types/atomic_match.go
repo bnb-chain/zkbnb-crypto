@@ -83,38 +83,21 @@ func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraint
 	return witness
 }
 
-func ComputeHashFromAtomicMatchTx(tx AtomicMatchTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromAtomicMatchTx(api API, tx AtomicMatchTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		tx.AccountIndex,
-		tx.BuyOffer.Type,
-		tx.BuyOffer.OfferId,
-		tx.BuyOffer.AccountIndex,
-		tx.BuyOffer.NftIndex,
-		tx.BuyOffer.AssetId,
-		tx.BuyOffer.AssetAmount,
-		tx.BuyOffer.ListedAt,
-		tx.BuyOffer.ExpiredAt,
+		PackInt64Variables(api, tx.AccountIndex, nonce, expiredAt, ChainId),
+		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
+		PackInt64Variables(api, tx.BuyOffer.Type, tx.BuyOffer.OfferId, tx.BuyOffer.AccountIndex, tx.BuyOffer.NftIndex),
+		PackInt64Variables(api, tx.BuyOffer.AssetId, tx.BuyOffer.AssetAmount, tx.BuyOffer.ListedAt, tx.BuyOffer.ExpiredAt),
 		tx.BuyOffer.Sig.R.X,
 		tx.BuyOffer.Sig.R.Y,
 		tx.BuyOffer.Sig.S,
-		tx.SellOffer.Type,
-		tx.SellOffer.OfferId,
-		tx.SellOffer.AccountIndex,
-		tx.SellOffer.NftIndex,
-		tx.SellOffer.AssetId,
-		tx.SellOffer.AssetAmount,
-		tx.SellOffer.ListedAt,
-		tx.SellOffer.ExpiredAt,
+		PackInt64Variables(api, tx.SellOffer.Type, tx.SellOffer.OfferId, tx.SellOffer.AccountIndex, tx.SellOffer.NftIndex),
+		PackInt64Variables(api, tx.SellOffer.AssetId, tx.SellOffer.AssetAmount, tx.SellOffer.ListedAt, tx.SellOffer.ExpiredAt),
 		tx.SellOffer.Sig.R.X,
 		tx.SellOffer.Sig.R.Y,
 		tx.SellOffer.Sig.S,
-		tx.GasAccountIndex,
-		tx.GasFeeAssetId,
-		tx.GasFeeAssetAmount,
-		expiredAt,
-		nonce,
-		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal

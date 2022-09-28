@@ -90,18 +90,13 @@ func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraint
 	return witness
 }
 
-func ComputeHashFromWithdrawNftTx(tx WithdrawNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromWithdrawNftTx(api API, tx WithdrawNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		tx.AccountIndex,
+		PackInt64Variables(api, tx.AccountIndex, nonce, expiredAt, ChainId),
+		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
 		tx.NftIndex,
 		tx.ToAddress,
-		tx.GasAccountIndex,
-		tx.GasFeeAssetId,
-		tx.GasFeeAssetAmount,
-		expiredAt,
-		nonce,
-		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal

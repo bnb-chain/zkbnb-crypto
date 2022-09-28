@@ -70,21 +70,14 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints) {
 	return witness
 }
 
-func ComputeHashFromTransferTx(tx TransferTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromTransferTx(api API, tx TransferTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		tx.FromAccountIndex,
-		tx.ToAccountIndex,
+		PackInt64Variables(api, tx.FromAccountIndex, nonce, expiredAt, ChainId),
+		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
+		PackInt64Variables(api, tx.ToAccountIndex, tx.AssetId, tx.AssetAmount),
 		tx.ToAccountNameHash,
-		tx.AssetId,
-		tx.AssetAmount,
-		tx.GasAccountIndex,
-		tx.GasFeeAssetId,
-		tx.GasFeeAssetAmount,
 		tx.CallDataHash,
-		expiredAt,
-		nonce,
-		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal

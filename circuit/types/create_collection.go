@@ -62,16 +62,11 @@ func SetCreateCollectionTxWitness(tx *CreateCollectionTx) (witness CreateCollect
 	return witness
 }
 
-func ComputeHashFromCreateCollectionTx(tx CreateCollectionTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromCreateCollectionTx(api API, tx CreateCollectionTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		tx.AccountIndex,
-		tx.GasAccountIndex,
-		tx.GasFeeAssetId,
-		tx.GasFeeAssetAmount,
-		expiredAt,
-		nonce,
-		ChainId,
+		PackInt64Variables(api, tx.AccountIndex, nonce, expiredAt, ChainId),
+		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
 	)
 	hashVal = hFunc.Sum()
 	return hashVal
