@@ -50,16 +50,13 @@ func VerifyGas(
 	gasAssetDeltas []Variable,
 	hFunc MiMC,
 	lastRoots [types.NbRoots]Variable) (newStateRoot Variable, err error) {
-	NewAccountRoot := lastRoots[0]
-	var (
-		NewAccountAssetsRoot = gas.AccountInfoBefore.AssetRoot
-	)
-
-	gasAssetCount := len(gasAssetDeltas)
-	deltas := make([]AccountAssetDeltaConstraints, gasAssetCount)
+	newAccountRoot := lastRoots[0]
+	newAccountAssetsRoot := gas.AccountInfoBefore.AssetRoot
 
 	types.IsVariableEqual(api, needGas, gas.AccountInfoBefore.AccountIndex, types.GasAccountIndex)
 
+	gasAssetCount := len(gasAssetDeltas)
+	deltas := make([]AccountAssetDeltaConstraints, gasAssetCount)
 	for i := 0; i < gasAssetCount; i++ {
 		deltas[i] = AccountAssetDeltaConstraints{
 			BalanceDelta:             gasAssetDeltas[i],
@@ -67,7 +64,7 @@ func VerifyGas(
 			OfferCanceledOrFinalized: types.ZeroInt,
 		}
 	}
-	AccountsInfoAfter := UpdateGasAccount(api, gas.AccountInfoBefore, gasAssetCount, deltas)
+	accountInfoAfter := UpdateGasAccount(api, gas.AccountInfoBefore, gasAssetCount, deltas)
 
 	// verify account asset node hash
 	for i := 0; i < gasAssetCount; i++ {
@@ -85,21 +82,21 @@ func VerifyGas(
 			api,
 			needGas,
 			hFunc,
-			NewAccountAssetsRoot,
+			newAccountAssetsRoot,
 			assetNodeHash,
 			gas.MerkleProofsAccountAssetsBefore[i][:],
 			assetMerkleHelper,
 		)
 		hFunc.Reset()
 		hFunc.Write(
-			AccountsInfoAfter.AssetsInfo[i].Balance,
+			accountInfoAfter.AssetsInfo[i].Balance,
 			types.ZeroInt,
 			types.ZeroInt,
 		)
 		assetNodeHash = hFunc.Sum()
 		hFunc.Reset()
 		// update merkle proof
-		NewAccountAssetsRoot = types.UpdateMerkleProof(
+		newAccountAssetsRoot = types.UpdateMerkleProof(
 			api, hFunc, assetNodeHash, gas.MerkleProofsAccountAssetsBefore[i][:], assetMerkleHelper)
 	}
 	// verify account node hash
@@ -120,28 +117,28 @@ func VerifyGas(
 		api,
 		needGas,
 		hFunc,
-		NewAccountRoot,
+		newAccountRoot,
 		accountNodeHash,
 		gas.MerkleProofsAccountBefore[:],
 		accountIndexMerkleHelper,
 	)
 	hFunc.Reset()
 	hFunc.Write(
-		AccountsInfoAfter.AccountNameHash,
-		AccountsInfoAfter.AccountPk.A.X,
-		AccountsInfoAfter.AccountPk.A.Y,
-		AccountsInfoAfter.Nonce,
-		AccountsInfoAfter.CollectionNonce,
-		NewAccountAssetsRoot,
+		accountInfoAfter.AccountNameHash,
+		accountInfoAfter.AccountPk.A.X,
+		accountInfoAfter.AccountPk.A.Y,
+		accountInfoAfter.Nonce,
+		accountInfoAfter.CollectionNonce,
+		newAccountAssetsRoot,
 	)
 	accountNodeHash = hFunc.Sum()
 	hFunc.Reset()
 	// update merkle proof
-	NewAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, gas.MerkleProofsAccountBefore[:], accountIndexMerkleHelper)
+	newAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, gas.MerkleProofsAccountBefore[:], accountIndexMerkleHelper)
 
 	hFunc.Reset()
 	hFunc.Write(
-		NewAccountRoot,
+		newAccountRoot,
 		lastRoots[1],
 		lastRoots[2],
 	)
@@ -160,6 +157,8 @@ func UpdateGasAccount(
 		accountInfoAfter.AssetsInfo[i].Balance = api.Add(
 			accountInfo.AssetsInfo[i].Balance,
 			gasAssetsDeltas[i].BalanceDelta)
+		accountInfoAfter.AssetsInfo[i].LpAmount = types.ZeroInt
+		accountInfoAfter.AssetsInfo[i].OfferCanceledOrFinalized = types.ZeroInt
 	}
 	return accountInfoAfter
 }
