@@ -129,27 +129,27 @@ func VerifyTransaction(
 
 	// get hash value from tx based on tx type
 	// transfer tx
-	hashVal := types.ComputeHashFromTransferTx(tx.TransferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashVal := types.ComputeHashFromTransferTx(api, tx.TransferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	// withdraw tx
-	hashValCheck := types.ComputeHashFromWithdrawTx(tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck := types.ComputeHashFromWithdrawTx(api, tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isWithdrawTx, hashValCheck, hashVal)
 	// createCollection tx
-	hashValCheck = types.ComputeHashFromCreateCollectionTx(tx.CreateCollectionTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = types.ComputeHashFromCreateCollectionTx(api, tx.CreateCollectionTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isCreateCollectionTx, hashValCheck, hashVal)
 	// mint nft tx
 	hashValCheck = types.ComputeHashFromMintNftTx(api, tx.MintNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isMintNftTx, hashValCheck, hashVal)
 	// transfer nft tx
-	hashValCheck = types.ComputeHashFromTransferNftTx(tx.TransferNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = types.ComputeHashFromTransferNftTx(api, tx.TransferNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isTransferNftTx, hashValCheck, hashVal)
 	// set nft price tx
-	hashValCheck = types.ComputeHashFromAtomicMatchTx(tx.AtomicMatchTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = types.ComputeHashFromAtomicMatchTx(api, tx.AtomicMatchTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isAtomicMatchTx, hashValCheck, hashVal)
 	// buy nft tx
-	hashValCheck = types.ComputeHashFromCancelOfferTx(tx.CancelOfferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = types.ComputeHashFromCancelOfferTx(api, tx.CancelOfferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isCancelOfferTx, hashValCheck, hashVal)
 	// withdraw nft tx
-	hashValCheck = types.ComputeHashFromWithdrawNftTx(tx.WithdrawNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = types.ComputeHashFromWithdrawNftTx(api, tx.WithdrawNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isWithdrawNftTx, hashValCheck, hashVal)
 	hFunc.Reset()
 
@@ -418,7 +418,7 @@ func VerifyTransaction(
 	)
 	newStateRoot := hFunc.Sum()
 	types.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
-	types.IsVariableEqual(api, isEmptyTx, tx.StateRootBefore, tx.StateRootAfter);
+	types.IsVariableEqual(api, isEmptyTx, tx.StateRootBefore, tx.StateRootAfter)
 	return isOnChainOp, pubData, nil
 }
 

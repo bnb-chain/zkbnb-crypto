@@ -204,13 +204,8 @@ func (txInfo *CreateCollectionTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err
 		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
-	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteInt64IntoBuf(&buf, packedFee)
-	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
-	WriteInt64IntoBuf(&buf, txInfo.Nonce)
-	WriteInt64IntoBuf(&buf, ChainId)
+	WriteInt64IntoBuf(&buf, ChainId, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt)
+	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex, txInfo.GasFeeAssetId, packedFee)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash, nil

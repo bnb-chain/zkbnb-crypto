@@ -81,18 +81,11 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		tx.CreatorAccountIndex,
-		tx.ToAccountIndex,
+		PackInt64Variables(api, ChainId, tx.CreatorAccountIndex, nonce, expiredAt),
+		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
+		PackInt64Variables(api, tx.ToAccountIndex, tx.CreatorTreasuryRate, tx.CollectionId),
 		tx.ToAccountNameHash,
 		tx.NftContentHash,
-		tx.GasAccountIndex,
-		tx.GasFeeAssetId,
-		tx.GasFeeAssetAmount,
-		tx.CreatorTreasuryRate,
-		tx.CollectionId,
-		expiredAt,
-		nonce,
-		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal
