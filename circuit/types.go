@@ -35,14 +35,9 @@ type (
 	MiMC                 = mimc.MiMC
 
 	RegisterZnsTx      = types.RegisterZnsTx
-	CreatePairTx       = types.CreatePairTx
-	UpdatePairRateTx   = types.UpdatePairRateTx
 	DepositTx          = types.DepositTx
 	DepositNftTx       = types.DepositNftTx
 	TransferTx         = types.TransferTx
-	SwapTx             = types.SwapTx
-	AddLiquidityTx     = types.AddLiquidityTx
-	RemoveLiquidityTx  = types.RemoveLiquidityTx
 	CreateCollectionTx = types.CreateCollectionTx
 	MintNftTx          = types.MintNftTx
 	TransferNftTx      = types.TransferNftTx
@@ -54,14 +49,9 @@ type (
 	FullExitNftTx      = types.FullExitNftTx
 
 	RegisterZnsTxConstraints      = types.RegisterZnsTxConstraints
-	CreatePairTxConstraints       = types.CreatePairTxConstraints
-	UpdatePairRateTxConstraints   = types.UpdatePairRateTxConstraints
 	DepositTxConstraints          = types.DepositTxConstraints
 	DepositNftTxConstraints       = types.DepositNftTxConstraints
 	TransferTxConstraints         = types.TransferTxConstraints
-	SwapTxConstraints             = types.SwapTxConstraints
-	AddLiquidityTxConstraints     = types.AddLiquidityTxConstraints
-	RemoveLiquidityTxConstraints  = types.RemoveLiquidityTxConstraints
 	CreateCollectionTxConstraints = types.CreateCollectionTxConstraints
 	MintNftTxConstraints          = types.MintNftTxConstraints
 	TransferNftTxConstraints      = types.TransferNftTxConstraints
@@ -72,8 +62,7 @@ type (
 	FullExitTxConstraints         = types.FullExitTxConstraints
 	FullExitNftTxConstraints      = types.FullExitNftTxConstraints
 
-	LiquidityConstraints = types.LiquidityConstraints
-	NftConstraints       = types.NftConstraints
+	NftConstraints = types.NftConstraints
 )
 
 const (
@@ -81,7 +70,6 @@ const (
 	NbAccountsPerTx           = types.NbAccountsPerTx
 	NbGasAssetsPerTx          = types.NbGasAssetsPerTx
 	AssetMerkleLevels         = 16
-	LiquidityMerkleLevels     = 16
 	NftMerkleLevels           = 40
 	AccountMerkleLevels       = 32
 	RateBase                  = types.RateBase
@@ -90,6 +78,5 @@ const (
 	LastAccountIndex   = 4294967295
 	LastAccountAssetId = 65535
 
-	LastPairIndex = 65535
-	LastNftIndex  = 1099511627775
+	LastNftIndex = 1099511627775
 )

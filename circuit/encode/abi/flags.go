@@ -13,9 +13,6 @@ type Flags struct {
 	defaultApiFlag          frontend.Variable
 	transferApiFlag         frontend.Variable
 	withdrawApiFlag         frontend.Variable
-	addLiquidityAbiFlag     frontend.Variable
-	removeLiquidityApiFlag  frontend.Variable
-	swapApiFlag             frontend.Variable
 	createCollectionApiFlag frontend.Variable
 	withdrawNftApiFlag      frontend.Variable
 	transferNftApiFlag      frontend.Variable
@@ -27,9 +24,6 @@ type Flags struct {
 func NewContext(api frontend.API, defaultApiFlag,
 	transferApiFlag frontend.Variable,
 	withdrawApiFlag frontend.Variable,
-	addLiquidityAbiFlag frontend.Variable,
-	removeLiquidityApiFlag frontend.Variable,
-	swapApiFlag frontend.Variable,
 	createCollectionApiFlag frontend.Variable,
 	withdrawNftApiFlag frontend.Variable,
 	transferNftApiFlag frontend.Variable,
@@ -41,9 +35,6 @@ func NewContext(api frontend.API, defaultApiFlag,
 		defaultApiFlag:          defaultApiFlag,
 		transferApiFlag:         transferApiFlag,
 		withdrawApiFlag:         withdrawApiFlag,
-		addLiquidityAbiFlag:     addLiquidityAbiFlag,
-		removeLiquidityApiFlag:  removeLiquidityApiFlag,
-		swapApiFlag:             swapApiFlag,
 		createCollectionApiFlag: createCollectionApiFlag,
 		withdrawNftApiFlag:      withdrawNftApiFlag,
 		transferNftApiFlag:      transferNftApiFlag,

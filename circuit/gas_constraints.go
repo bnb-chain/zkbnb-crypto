@@ -60,7 +60,6 @@ func VerifyGas(
 	for i := 0; i < gasAssetCount; i++ {
 		deltas[i] = AccountAssetDeltaConstraints{
 			BalanceDelta:             gasAssetDeltas[i],
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		}
 	}
@@ -129,7 +128,6 @@ func UpdateGasAccount(
 		accountInfoAfter.AssetsInfo[i].Balance = api.Add(
 			accountInfo.AssetsInfo[i].Balance,
 			gasAssetsDeltas[i].BalanceDelta)
-		accountInfoAfter.AssetsInfo[i].LpAmount = types.ZeroInt
 		accountInfoAfter.AssetsInfo[i].OfferCanceledOrFinalized = types.ZeroInt
 	}
 	return accountInfoAfter

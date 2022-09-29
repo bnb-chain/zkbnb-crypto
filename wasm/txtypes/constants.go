@@ -45,14 +45,9 @@ const (
 const (
 	TxTypeEmpty = iota
 	TxTypeRegisterZns
-	TxTypeCreatePair
-	TxTypeUpdatePairRate
 	TxTypeDeposit
 	TxTypeDepositNft
 	TxTypeTransfer
-	TxTypeSwap
-	TxTypeAddLiquidity
-	TxTypeRemoveLiquidity
 	TxTypeWithdraw
 	TxTypeCreateCollection
 	TxTypeMintNft
@@ -89,9 +84,6 @@ const (
 	maxCollectionNameLength int = 50
 
 	maxCollectionIntroductionLength int = 1000
-
-	minPairIndex = 0
-	maxPairIndex = (1 << 16) - 1
 )
 
 var (
