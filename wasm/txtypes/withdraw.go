@@ -213,7 +213,7 @@ func (txInfo *WithdrawTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) 
 		log.Println("[ComputeTransferMsgHash] unable to packed amount: ", err.Error())
 		return nil, err
 	}
-	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt, ChainId)
+	WriteInt64IntoBuf(&buf, ChainId, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex, txInfo.GasFeeAssetId, packedFee)
 	WriteInt64IntoBuf(&buf, txInfo.AssetId)
 	WriteBigIntIntoBuf(&buf, txInfo.AssetAmount)

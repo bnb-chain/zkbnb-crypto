@@ -189,7 +189,7 @@ func (txInfo *CancelOfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
 		return nil, err
 	}
-	WriteInt64IntoBuf(&buf, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt, ChainId)
+	WriteInt64IntoBuf(&buf, ChainId, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex, txInfo.GasFeeAssetId, packedFee)
 	WriteInt64IntoBuf(&buf, txInfo.OfferId)
 	hFunc.Write(buf.Bytes())

@@ -52,17 +52,11 @@ func EmptyAtomicMatchTxWitness() (witness AtomicMatchTxConstraints) {
 	}
 }
 
-func ComputeHashFromOfferTx(tx OfferTxConstraints, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromOfferTx(api API, tx OfferTxConstraints, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		tx.Type,
-		tx.OfferId,
-		tx.AccountIndex,
-		tx.NftIndex,
-		tx.AssetId,
-		tx.AssetAmount,
-		tx.ListedAt,
-		tx.ExpiredAt,
+		PackInt64Variables(api, tx.Type, tx.OfferId, tx.AccountIndex, tx.NftIndex),
+		PackInt64Variables(api, tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt),
 		tx.TreasuryRate,
 	)
 	hashVal = hFunc.Sum()
@@ -86,7 +80,7 @@ func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraint
 func ComputeHashFromAtomicMatchTx(api API, tx AtomicMatchTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		PackInt64Variables(api, tx.AccountIndex, nonce, expiredAt, ChainId),
+		PackInt64Variables(api, ChainId, tx.AccountIndex, nonce, expiredAt),
 		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
 		PackInt64Variables(api, tx.BuyOffer.Type, tx.BuyOffer.OfferId, tx.BuyOffer.AccountIndex, tx.BuyOffer.NftIndex),
 		PackInt64Variables(api, tx.BuyOffer.AssetId, tx.BuyOffer.AssetAmount, tx.BuyOffer.ListedAt, tx.BuyOffer.ExpiredAt),
@@ -130,7 +124,7 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.BuyOffer.TreasuryRate, tx.SellOffer.TreasuryRate)
 	// verify signature
 	hFunc.Reset()
-	buyOfferHash := ComputeHashFromOfferTx(tx.BuyOffer, hFunc)
+	buyOfferHash := ComputeHashFromOfferTx(api, tx.BuyOffer, hFunc)
 	hFunc.Reset()
 	notBuyer := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.BuyOffer.AccountIndex)))
 	notBuyer = api.And(flag, notBuyer)
@@ -139,7 +133,7 @@ func VerifyAtomicMatchTx(
 		return pubData, err
 	}
 	hFunc.Reset()
-	sellOfferHash := ComputeHashFromOfferTx(tx.SellOffer, hFunc)
+	sellOfferHash := ComputeHashFromOfferTx(api, tx.SellOffer, hFunc)
 	hFunc.Reset()
 	notSeller := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.SellOffer.AccountIndex)))
 	notSeller = api.And(flag, notSeller)

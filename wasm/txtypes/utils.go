@@ -37,6 +37,10 @@ func WriteInt64IntoBuf(buf *bytes.Buffer, inputs ...int64) {
 	if len(inputs) > 4 {
 		log.Fatalln("[WriteInt64IntoBuf] too many inputs")
 	}
+	// The variable of bn254 curve is less than 2^254, avoid overflow here.
+	if len(inputs) == 4 && inputs[0] >= 2^62 {
+		log.Fatalln("[WriteInt64IntoBuf] inputs overflow")
+	}
 
 	packedValue := new(big.Int).SetInt64(inputs[0])
 	for _, input := range inputs[1:] {

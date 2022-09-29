@@ -235,7 +235,7 @@ func (txInfo *MintNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
-	WriteInt64IntoBuf(&buf, txInfo.CreatorAccountIndex, txInfo.Nonce, txInfo.ExpiredAt, ChainId)
+	WriteInt64IntoBuf(&buf, ChainId, txInfo.CreatorAccountIndex, txInfo.Nonce, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex, txInfo.GasFeeAssetId, packedFee)
 	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex, txInfo.CreatorTreasuryRate, txInfo.NftCollectionId)
 	WriteBigIntIntoBuf(&buf, ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus))

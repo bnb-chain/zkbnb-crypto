@@ -69,7 +69,7 @@ func SetWithdrawTxWitness(tx *WithdrawTx) (witness WithdrawTxConstraints) {
 func ComputeHashFromWithdrawTx(api API, tx WithdrawTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		PackInt64Variables(api, tx.FromAccountIndex, nonce, expiredAt, ChainId),
+		PackInt64Variables(api, ChainId, tx.FromAccountIndex, nonce, expiredAt),
 		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
 		tx.AssetId,
 		tx.AssetAmount,

@@ -69,7 +69,7 @@ func SetTransferNftTxWitness(tx *TransferNftTx) (witness TransferNftTxConstraint
 func ComputeHashFromTransferNftTx(api API, tx TransferNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		PackInt64Variables(api, tx.FromAccountIndex, nonce, expiredAt, ChainId),
+		PackInt64Variables(api, ChainId, tx.FromAccountIndex, nonce, expiredAt),
 		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
 		PackInt64Variables(api, tx.ToAccountIndex, tx.NftIndex),
 		tx.ToAccountNameHash,
