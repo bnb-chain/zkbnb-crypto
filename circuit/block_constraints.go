@@ -132,7 +132,6 @@ func VerifyBlock(
 		needGas = api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(transferTx, withdrawTx), createCollectionTx), mintNftTx), cancelOfferTx), atomicMatchTx), withdrawNftTx)
 	}
 
-	hFunc.Reset()
 	newAccountRoot, err := VerifyGas(api, block.Gas, needGas, blockGasDeltas, hFunc, roots[0])
 	hFunc.Reset()
 	hFunc.Write(

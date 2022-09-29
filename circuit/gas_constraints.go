@@ -71,7 +71,6 @@ func VerifyGas(
 		hFunc.Write(
 			accountInfoAfter.AssetsInfo[i].Balance,
 			types.ZeroInt,
-			types.ZeroInt,
 		)
 		assetNodeHash := hFunc.Sum()
 		hFunc.Reset()
