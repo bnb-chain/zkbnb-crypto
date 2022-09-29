@@ -135,8 +135,15 @@ func VerifyBlock(
 	}
 
 	hFunc.Reset()
-	stateRoot, err := VerifyGas(api, block.Gas, needGas, blockGasDeltas, hFunc, roots)
-	types.IsVariableEqual(api, needGas, block.NewStateRoot, stateRoot)
+	newAccountRoot, err := VerifyGas(api, block.Gas, needGas, blockGasDeltas, hFunc, roots[0])
+	hFunc.Reset()
+	hFunc.Write(
+		newAccountRoot,
+		roots[1],
+		roots[2],
+	)
+	newStateRoot := hFunc.Sum()
+	types.IsVariableEqual(api, needGas, block.NewStateRoot, newStateRoot)
 
 	pendingCommitmentData[count] = onChainOpsCount
 	commitments, _ := api.Compiler().NewHint(types.Keccak256, 1, pendingCommitmentData[:]...)

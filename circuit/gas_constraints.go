@@ -49,8 +49,8 @@ func VerifyGas(
 	needGas Variable,
 	gasAssetDeltas []Variable,
 	hFunc MiMC,
-	lastRoots [types.NbRoots]Variable) (newStateRoot Variable, err error) {
-	newAccountRoot := lastRoots[0]
+	accountRoot Variable) (newAccountRoot Variable, err error) {
+	newAccountRoot = accountRoot
 	newAccountAssetsRoot := gas.AccountInfoBefore.AssetRoot
 
 	types.IsVariableEqual(api, needGas, gas.AccountInfoBefore.AccountIndex, types.GasAccountIndex)
@@ -66,7 +66,6 @@ func VerifyGas(
 	}
 	accountInfoAfter := UpdateGasAccount(api, gas.AccountInfoBefore, deltas)
 
-	// verify account asset node hash
 	for i := 0; i < gasAssetCount; i++ {
 		assetMerkleHelper := AssetIdToMerkleHelper(api, gas.AccountInfoBefore.AssetsInfo[i].AssetId)
 		hFunc.Reset()
@@ -117,15 +116,7 @@ func VerifyGas(
 	hFunc.Reset()
 	// update merkle proof
 	newAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, gas.MerkleProofsAccountBefore[:], accountIndexMerkleHelper)
-
-	hFunc.Reset()
-	hFunc.Write(
-		newAccountRoot,
-		lastRoots[1],
-		lastRoots[2],
-	)
-	newStateRoot = hFunc.Sum()
-	return newStateRoot, err
+	return newAccountRoot, err
 }
 
 func UpdateGasAccount(
