@@ -61,8 +61,7 @@ func VerifyBlock(
 		isOnChainOp     Variable
 		roots           [types.NbRoots]Variable
 		count           = 4
-		gasAssets       [NbGasAssetsPerTx]Variable
-		gasDeltas       [NbGasAssetsPerTx]Variable
+		gasDeltas       [NbGasAssetsPerTx]GasDeltaConstraints
 		needGas         Variable
 	)
 	pendingCommitmentData := make([]Variable, types.PubDataSizePerTx*block.TxsCount+5)
@@ -80,7 +79,7 @@ func VerifyBlock(
 	}
 
 	onChainOpsCount = 0
-	isOnChainOp, pendingPubData, roots, gasAssets, gasDeltas, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt)
+	isOnChainOp, pendingPubData, roots, gasDeltas, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt)
 	if err != nil {
 		log.Println("[VerifyBlock] unable to verify block:", err)
 		return err
@@ -93,8 +92,8 @@ func VerifyBlock(
 
 	for i := 0; i < gasAssetCount; i++ {
 		for j := 0; j < NbGasAssetsPerTx; j++ {
-			found := api.IsZero(api.Sub(block.GasAssetIds[i], gasAssets[j]))
-			delta := api.Select(found, gasDeltas[j], types.ZeroInt)
+			found := api.IsZero(api.Sub(block.GasAssetIds[i], gasDeltas[j].AssetId))
+			delta := api.Select(found, gasDeltas[j].BalanceDelta, types.ZeroInt)
 			blockGasDeltas[i] = api.Add(blockGasDeltas[i], delta)
 		}
 	}
@@ -104,7 +103,7 @@ func VerifyBlock(
 		notEmptyTx := api.IsZero(isEmptyTx)
 		types.IsVariableEqual(api, notEmptyTx, block.Txs[i-1].StateRootAfter, block.Txs[i].StateRootBefore)
 		hFunc.Reset()
-		isOnChainOp, pendingPubData, roots, gasAssets, gasDeltas, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt)
+		isOnChainOp, pendingPubData, roots, gasDeltas, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt)
 		if err != nil {
 			log.Println("[VerifyBlock] unable to verify block:", err)
 			return err
@@ -116,8 +115,8 @@ func VerifyBlock(
 		onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 		for i := 0; i < gasAssetCount; i++ {
 			for j := 0; j < NbGasAssetsPerTx; j++ {
-				found := api.IsZero(api.Sub(block.GasAssetIds[i], gasAssets[j]))
-				delta := api.Select(found, gasDeltas[j], types.ZeroInt)
+				found := api.IsZero(api.Sub(block.GasAssetIds[i], gasDeltas[j].AssetId))
+				delta := api.Select(found, gasDeltas[j].AssetId, types.ZeroInt)
 				blockGasDeltas[i] = api.Add(blockGasDeltas[i], delta)
 			}
 		}

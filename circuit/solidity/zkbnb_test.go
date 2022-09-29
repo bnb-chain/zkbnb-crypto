@@ -41,7 +41,7 @@ func TestCompileCircuit(t *testing.T) {
 			blockConstraints.Txs[i] = circuit.GetZeroTxConstraint()
 		}
 		blockConstraints.GasAssetIds = gasAssetIds
-		blockConstraints.Gas = circuit.GetZeroGasConstraints(len(gasAssetIds))
+		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
 		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {
 			panic(err)
@@ -70,7 +70,7 @@ func exportSol(differentBlockSizes []int) {
 			blockConstraints.Txs[i] = circuit.GetZeroTxConstraint()
 		}
 		blockConstraints.GasAssetIds = gasAssetIds
-		blockConstraints.Gas = circuit.GetZeroGasConstraints(len(gasAssetIds))
+		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
 		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {
 			panic(err)

@@ -64,36 +64,18 @@ func VerifyGas(
 			OfferCanceledOrFinalized: types.ZeroInt,
 		}
 	}
-	accountInfoAfter := UpdateGasAccount(api, gas.AccountInfoBefore, gasAssetCount, deltas)
+	accountInfoAfter := UpdateGasAccount(api, gas.AccountInfoBefore, deltas)
 
 	// verify account asset node hash
 	for i := 0; i < gasAssetCount; i++ {
 		assetMerkleHelper := AssetIdToMerkleHelper(api, gas.AccountInfoBefore.AssetsInfo[i].AssetId)
 		hFunc.Reset()
 		hFunc.Write(
-			gas.AccountInfoBefore.AssetsInfo[i].Balance,
-			types.ZeroInt,
-			types.ZeroInt,
-		)
-		assetNodeHash := hFunc.Sum()
-		// verify account asset merkle proof
-		hFunc.Reset()
-		types.VerifyMerkleProof(
-			api,
-			needGas,
-			hFunc,
-			newAccountAssetsRoot,
-			assetNodeHash,
-			gas.MerkleProofsAccountAssetsBefore[i][:],
-			assetMerkleHelper,
-		)
-		hFunc.Reset()
-		hFunc.Write(
 			accountInfoAfter.AssetsInfo[i].Balance,
 			types.ZeroInt,
 			types.ZeroInt,
 		)
-		assetNodeHash = hFunc.Sum()
+		assetNodeHash := hFunc.Sum()
 		hFunc.Reset()
 		// update merkle proof
 		newAccountAssetsRoot = types.UpdateMerkleProof(
@@ -149,11 +131,10 @@ func VerifyGas(
 func UpdateGasAccount(
 	api API,
 	accountInfo GasAccountConstraints,
-	gasAssetCount int,
 	gasAssetsDeltas []AccountAssetDeltaConstraints,
 ) (accountInfoAfter GasAccountConstraints) {
 	accountInfoAfter = accountInfo
-	for i := 0; i < gasAssetCount; i++ {
+	for i := 0; i < len(gasAssetsDeltas); i++ {
 		accountInfoAfter.AssetsInfo[i].Balance = api.Add(
 			accountInfo.AssetsInfo[i].Balance,
 			gasAssetsDeltas[i].BalanceDelta)
@@ -163,7 +144,8 @@ func UpdateGasAccount(
 	return accountInfoAfter
 }
 
-func GetZeroGasConstraints(gasAssetCount int) GasConstraints {
+func GetZeroGasConstraints(gasAssets []int64) GasConstraints {
+	gasAssetCount := len(gasAssets)
 	var zeroGasConstraint GasConstraints
 	zeroGasConstraint.GasAssetCount = gasAssetCount
 
@@ -179,8 +161,8 @@ func GetZeroGasConstraints(gasAssetCount int) GasConstraints {
 	}
 	zeroAccountConstraint.AssetsInfo = make([]types.AccountAssetConstraints, gasAssetCount)
 	// set assets witness
-	for i := 0; i < gasAssetCount; i++ {
-		zeroAccountConstraint.AssetsInfo[i] = types.AccountAssetConstraints{
+	for _, assetId := range gasAssets {
+		zeroAccountConstraint.AssetsInfo[assetId] = types.AccountAssetConstraints{
 			AssetId: 0,
 			Balance: 0,
 		}
