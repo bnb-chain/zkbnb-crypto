@@ -60,19 +60,17 @@ func CollectPubDataFromDeposit(api API, txInfo DepositTxConstraints) (pubData [P
 
 func CollectPubDataFromDepositNft(api API, txInfo DepositNftTxConstraints) (pubData [PubDataSizePerTx]Variable) {
 	txTypeBits := api.ToBinary(TxTypeDepositNft, TxTypeBitsSize)
-	isNewNftBits := api.ToBinary(txInfo.IsNewNft, IsNewNftBitsSize)
 	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
 	nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
 	nftL1AddressBits := api.ToBinary(txInfo.NftL1Address, AddressBitsSize)
 	creatorAccountIndexBits := api.ToBinary(txInfo.CreatorAccountIndex, AccountIndexBitsSize)
 	creatorTreasuryRateBits := api.ToBinary(txInfo.CreatorTreasuryRate, CreatorTreasuryRateBitsSize)
 	collectionIdBits := api.ToBinary(txInfo.CollectionId, CollectionIdBitsSize)
-	ABits := append(isNewNftBits, txTypeBits...)
-	ABits = append(accountIndexBits, ABits...)
+	ABits := append(accountIndexBits, txTypeBits...)
 	ABits = append(nftIndexBits, ABits...)
 	ABits = append(nftL1AddressBits, ABits...)
-	var paddingSize [8]Variable
-	for i := 0; i < 8; i++ {
+	var paddingSize [16]Variable
+	for i := 0; i < 16; i++ {
 		paddingSize[i] = 0
 	}
 	ABits = append(paddingSize[:], ABits...)
