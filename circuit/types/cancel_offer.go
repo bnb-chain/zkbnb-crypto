@@ -54,17 +54,12 @@ func SetCancelOfferTxWitness(tx *CancelOfferTx) (witness CancelOfferTxConstraint
 	return witness
 }
 
-func ComputeHashFromCancelOfferTx(tx CancelOfferTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromCancelOfferTx(api API, tx CancelOfferTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		tx.AccountIndex,
+		PackInt64Variables(api, ChainId, tx.AccountIndex, nonce, expiredAt),
+		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
 		tx.OfferId,
-		tx.GasAccountIndex,
-		tx.GasFeeAssetId,
-		tx.GasFeeAssetAmount,
-		expiredAt,
-		nonce,
-		ChainId,
 	)
 	hashVal = hFunc.Sum()
 	return hashVal
