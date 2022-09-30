@@ -46,7 +46,7 @@ type Tx struct {
 	Signature *Signature
 	// account root before
 	AccountRootBefore []byte
-	// account before info, size is 5
+	// account before info
 	AccountsInfoBefore [NbAccountsPerTx]*types.Account
 	// nft root before
 	NftRootBefore []byte

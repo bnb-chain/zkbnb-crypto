@@ -305,7 +305,7 @@ func VerifyTransaction(
 	notEmptyTx := api.IsZero(isEmptyTx)
 	types.IsVariableEqual(api, notEmptyTx, oldStateRoot, tx.StateRootBefore)
 
-	NewAccountRoot := tx.AccountRootBefore
+	newAccountRoot := tx.AccountRootBefore
 	for i := 0; i < NbAccountsPerTx; i++ {
 		var (
 			NewAccountAssetsRoot = tx.AccountsInfoBefore[i].AssetRoot
@@ -361,7 +361,7 @@ func VerifyTransaction(
 			api,
 			notEmptyTx,
 			hFunc,
-			NewAccountRoot,
+			newAccountRoot,
 			accountNodeHash,
 			tx.MerkleProofsAccountBefore[i][:],
 			accountIndexMerkleHelper,
@@ -378,11 +378,11 @@ func VerifyTransaction(
 		accountNodeHash = hFunc.Sum()
 		hFunc.Reset()
 		// update merkle proof
-		NewAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, tx.MerkleProofsAccountBefore[i][:], accountIndexMerkleHelper)
+		newAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, tx.MerkleProofsAccountBefore[i][:], accountIndexMerkleHelper)
 	}
 
 	//// nft tree
-	NewNftRoot := tx.NftRootBefore
+	newNftRoot := tx.NftRootBefore
 	api.AssertIsLessOrEqual(tx.NftBefore.NftIndex, LastNftIndex)
 	nftIndexMerkleHelper := NftIndexToMerkleHelper(api, tx.NftBefore.NftIndex)
 	hFunc.Reset()
@@ -402,7 +402,7 @@ func VerifyTransaction(
 		api,
 		notEmptyTx,
 		hFunc,
-		NewNftRoot,
+		newNftRoot,
 		nftNodeHash,
 		tx.MerkleProofsNftBefore[:],
 		nftIndexMerkleHelper,
@@ -420,19 +420,19 @@ func VerifyTransaction(
 	nftNodeHash = hFunc.Sum()
 	hFunc.Reset()
 	// update merkle proof
-	NewNftRoot = types.UpdateMerkleProof(api, hFunc, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)
+	newNftRoot = types.UpdateMerkleProof(api, hFunc, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)
 
 	// check state root
 	hFunc.Reset()
 	hFunc.Write(
-		NewAccountRoot,
-		NewNftRoot,
+		newAccountRoot,
+		newNftRoot,
 	)
 	newStateRoot := hFunc.Sum()
 	types.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
 
-	roots[0] = NewAccountRoot
-	roots[1] = NewNftRoot
+	roots[0] = newAccountRoot
+	roots[1] = newNftRoot
 	return isOnChainOp, pubData, roots, gasDeltas, nil
 }
 
