@@ -19,7 +19,6 @@ package types
 
 const (
 	TxTypeBitsSize              = 8
-	IsNewNftBitsSize            = 8
 	CollectionIdBitsSize        = 16
 	OfferIdBitsSize             = 24
 	FeeRateBitsSize             = 16
