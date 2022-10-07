@@ -124,79 +124,79 @@ type SwapTxInfo struct {
 
 func (txInfo *SwapTxInfo) Validate() error {
 	if txInfo.FromAccountIndex < minAccountIndex {
-		return fmt.Errorf("FromAccountIndex should not be less than %d", minAccountIndex)
+		return ErrFromAccountIndexTooLow
 	}
 	if txInfo.FromAccountIndex > maxAccountIndex {
-		return fmt.Errorf("FromAccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrFromAccountIndexTooHigh
 	}
 
 	if txInfo.PairIndex < minPairIndex {
-		return fmt.Errorf("PairIndex should not be less than %d", minPairIndex)
+		return ErrPairIndexTooLow
 	}
 	if txInfo.PairIndex > maxPairIndex {
-		return fmt.Errorf("PairIndex should not be larger than %d", maxPairIndex)
+		return ErrPairIndexTooHigh
 	}
 
 	if txInfo.AssetAId < minAssetId {
-		return fmt.Errorf("AssetAId should not be less than %d", minAssetId)
+		return ErrAssetAIdTooLow
 	}
 	if txInfo.AssetAId > maxAssetId {
-		return fmt.Errorf("AssetAId should not be larger than %d", maxAssetId)
+		return ErrAssetAIdTooHigh
 	}
 
 	if txInfo.AssetAAmount == nil {
 		return fmt.Errorf("AssetAAmount should not be nil")
 	}
 	if txInfo.AssetAAmount.Cmp(minAssetAmount) < 0 {
-		return fmt.Errorf("AssetAAmount should not be less than %s", minAssetAmount.String())
+		return ErrAssetAAmountTooLow
 	}
 	if txInfo.AssetAAmount.Cmp(maxAssetAmount) > 0 {
-		return fmt.Errorf("AssetAAmount should not be larger than %s", maxAssetAmount.String())
+		return ErrAssetAAmountTooHigh
 	}
 
 	if txInfo.AssetBId < minAssetId {
-		return fmt.Errorf("AssetBId should not be less than %d", minAssetId)
+		return ErrAssetBAmountTooLow
 	}
 	if txInfo.AssetBId > maxAssetId {
-		return fmt.Errorf("AssetBId should not be larger than %d", maxAssetId)
+		return ErrAssetBAmountTooHigh
 	}
 
 	if txInfo.AssetBMinAmount == nil {
 		return fmt.Errorf("AssetBMinAmount should not be nil")
 	}
 	if txInfo.AssetBMinAmount.Cmp(minAssetAmount) < 0 {
-		return fmt.Errorf("AssetBMinAmount should not be less than %s", minAssetAmount.String())
+		return ErrAssetBMinAmountTooLow
 	}
 	if txInfo.AssetBMinAmount.Cmp(maxAssetAmount) > 0 {
-		return fmt.Errorf("AssetBMinAmount should not be larger than %s", maxAssetAmount.String())
+		return ErrAssetBMinAmountTooHigh
 	}
 
 	if txInfo.GasAccountIndex < minAccountIndex {
-		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+		return ErrGasAccountIndexTooLow
 	}
 	if txInfo.GasAccountIndex > maxAccountIndex {
-		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrGasAccountIndexTooHigh
 	}
 
 	if txInfo.GasFeeAssetId < minAssetId {
-		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+		return ErrGasFeeAssetIdTooLow
 	}
 	if txInfo.GasFeeAssetId > maxAssetId {
-		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+		return ErrGasFeeAssetIdTooHigh
 	}
 
 	if txInfo.GasFeeAssetAmount == nil {
 		return fmt.Errorf("GasFeeAssetAmount should not be nil")
 	}
 	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
-		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+		return ErrGasFeeAssetAmountTooLow
 	}
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
-		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+		return ErrGasFeeAssetAmountTooHigh
 	}
 
 	if txInfo.Nonce < minNonce {
-		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+		return ErrNonceTooLow
 	}
 	return nil
 }

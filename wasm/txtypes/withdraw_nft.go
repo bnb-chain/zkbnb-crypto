@@ -105,39 +105,39 @@ type WithdrawNftTxInfo struct {
 func (txInfo *WithdrawNftTxInfo) Validate() error {
 	// AccountIndex
 	if txInfo.AccountIndex < minAccountIndex {
-		return fmt.Errorf("AccountIndex should not be less than %d", minAccountIndex)
+		return ErrAccountIndexTooLow
 	}
 	if txInfo.AccountIndex > maxAccountIndex {
-		return fmt.Errorf("AccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrAccountIndexTooHigh
 	}
 
 	// NftIndex
 	if txInfo.NftIndex < minNftIndex {
-		return fmt.Errorf("NftIndex should not be less than %d", minNftIndex)
+		return ErrNftIndexTooLow
 	}
 	if txInfo.NftIndex > maxNftIndex {
-		return fmt.Errorf("NftIndex should not be larger than %d", maxNftIndex)
+		return ErrNftIndexTooHigh
 	}
 
 	// ToAddress
 	if !IsValidL1Address(txInfo.ToAddress) {
-		return fmt.Errorf("ToAddress(%s) is invalid", txInfo.ToAddress)
+		return ErrToAddressInvalid
 	}
 
 	// GasAccountIndex
 	if txInfo.GasAccountIndex < minAccountIndex {
-		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+		return ErrGasAccountIndexTooLow
 	}
 	if txInfo.GasAccountIndex > maxAccountIndex {
-		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrGasAccountIndexTooHigh
 	}
 
 	// GasFeeAssetId
 	if txInfo.GasFeeAssetId < minAssetId {
-		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+		return ErrGasFeeAssetIdTooLow
 	}
 	if txInfo.GasFeeAssetId > maxAssetId {
-		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+		return ErrGasFeeAssetIdTooHigh
 	}
 
 	// GasFeeAssetAmount
@@ -145,15 +145,15 @@ func (txInfo *WithdrawNftTxInfo) Validate() error {
 		return fmt.Errorf("GasFeeAssetAmount should not be nil")
 	}
 	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
-		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+		return ErrGasFeeAssetAmountTooLow
 	}
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
-		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+		return ErrGasFeeAssetAmountTooHigh
 	}
 
 	// Nonce
 	if txInfo.Nonce < minNonce {
-		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+		return ErrNonceTooLow
 	}
 
 	return nil

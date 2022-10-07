@@ -19,7 +19,6 @@ package txtypes
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -112,47 +111,47 @@ type TransferNftTxInfo struct {
 func (txInfo *TransferNftTxInfo) Validate() error {
 	// FromAccountIndex
 	if txInfo.FromAccountIndex < minAccountIndex {
-		return fmt.Errorf("FromAccountIndex should not be less than %d", minAccountIndex)
+		return ErrFromAccountIndexTooLow
 	}
 	if txInfo.FromAccountIndex > maxAccountIndex {
-		return fmt.Errorf("FromAccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrFromAccountIndexTooHigh
 	}
 
 	// ToAccountIndex
 	if txInfo.ToAccountIndex < minAccountIndex {
-		return fmt.Errorf("ToAccountIndex should not be less than %d", minAccountIndex)
+		return ErrToAccountIndexTooLow
 	}
 	if txInfo.ToAccountIndex > maxAccountIndex {
-		return fmt.Errorf("ToAccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrToAccountIndexTooHigh
 	}
 
 	// ToAccountNameHash
 	if !IsValidHash(txInfo.ToAccountNameHash) {
-		return fmt.Errorf("ToAccountNameHash(%s) is invalid", txInfo.ToAccountNameHash)
+		return ErrToAccountNameHashInvalid
 	}
 
 	// NftIndex
 	if txInfo.NftIndex < minNftIndex {
-		return fmt.Errorf("NftIndex should not be less than %d", minNftIndex)
+		return ErrNftIndexTooLow
 	}
 	if txInfo.NftIndex > maxNftIndex {
-		return fmt.Errorf("NftIndex should not be larger than %d", maxNftIndex)
+		return ErrNftIndexTooHigh
 	}
 
 	// GasAccountIndex
 	if txInfo.GasAccountIndex < minAccountIndex {
-		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+		return ErrGasAccountIndexTooLow
 	}
 	if txInfo.GasAccountIndex > maxAccountIndex {
-		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrGasAccountIndexTooHigh
 	}
 
 	// GasFeeAssetId
 	if txInfo.GasFeeAssetId < minAssetId {
-		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+		return ErrGasFeeAssetIdTooLow
 	}
 	if txInfo.GasFeeAssetId > maxAssetId {
-		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+		return ErrGasFeeAssetIdTooHigh
 	}
 
 	// GasFeeAssetAmount
@@ -160,20 +159,20 @@ func (txInfo *TransferNftTxInfo) Validate() error {
 		return fmt.Errorf("GasFeeAssetAmount should not be nil")
 	}
 	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
-		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+		return ErrGasFeeAssetAmountTooLow
 	}
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
-		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+		return ErrGasFeeAssetAmountTooHigh
 	}
 
 	// CallDataHash
 	if !IsValidHashBytes(txInfo.CallDataHash) {
-		return fmt.Errorf("CallDataHash(%s) is invalid", hex.EncodeToString(txInfo.CallDataHash))
+		return ErrCallDataHashInvalid
 	}
 
 	// Nonce
 	if txInfo.Nonce < minNonce {
-		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+		return ErrNonceTooLow
 	}
 
 	return nil
