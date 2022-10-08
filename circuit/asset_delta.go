@@ -45,9 +45,9 @@ func EmptyAccountAssetDeltaConstraints() AccountAssetDeltaConstraints {
 	}
 }
 
-func EmptyGasDeltaConstraints() GasDeltaConstraints {
+func EmptyGasDeltaConstraints(assetId Variable) GasDeltaConstraints {
 	return GasDeltaConstraints{
-		AssetId:      types.DefaultInt,
+		AssetId:      assetId,
 		BalanceDelta: types.ZeroInt,
 	}
 }
@@ -81,7 +81,7 @@ func GetGasDeltas(gasFeeAssetId, gasFeeAssetAmount Variable) (
 	gasDeltas[0].BalanceDelta = gasFeeAssetAmount
 
 	for i := 1; i < NbGasAssetsPerTx; i++ {
-		gasDeltas[i] = EmptyGasDeltaConstraints()
+		gasDeltas[i] = EmptyGasDeltaConstraints(gasFeeAssetId)
 	}
 	return gasDeltas
 }
@@ -388,7 +388,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	gasDeltas[1].BalanceDelta = txInfo.GasFeeAssetAmount
 
 	for i := 2; i < NbGasAssetsPerTx; i++ {
-		gasDeltas[i] = EmptyGasDeltaConstraints()
+		gasDeltas[i] = EmptyGasDeltaConstraints(txInfo.GasFeeAssetId)
 	}
 
 	return deltas, nftDelta, gasDeltas

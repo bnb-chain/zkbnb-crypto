@@ -53,7 +53,8 @@ func VerifyGas(
 	newAccountRoot = accountRoot
 	newAccountAssetsRoot := gas.AccountInfoBefore.AssetRoot
 
-	types.IsVariableEqual(api, needGas, gas.AccountInfoBefore.AccountIndex, types.GasAccountIndex)
+	// check the existence of gas account
+	types.IsVariableDifferent(api, needGas, gas.AccountInfoBefore.AccountNameHash, types.ZeroInt)
 
 	gasAssetCount := len(gasAssetDeltas)
 	deltas := make([]AccountAssetDeltaConstraints, gasAssetCount)
@@ -69,12 +70,27 @@ func VerifyGas(
 		assetMerkleHelper := AssetIdToMerkleHelper(api, gas.AccountInfoBefore.AssetsInfo[i].AssetId)
 		hFunc.Reset()
 		hFunc.Write(
-			accountInfoAfter.AssetsInfo[i].Balance,
-			types.ZeroInt,
+			gas.AccountInfoBefore.AssetsInfo[i].Balance,
+			gas.AccountInfoBefore.AssetsInfo[i].OfferCanceledOrFinalized,
 		)
 		assetNodeHash := hFunc.Sum()
 		hFunc.Reset()
-		// update merkle proof
+		types.VerifyMerkleProof(
+			api,
+			needGas,
+			hFunc,
+			newAccountAssetsRoot,
+			assetNodeHash,
+			gas.MerkleProofsAccountAssetsBefore[i][:],
+			assetMerkleHelper,
+		)
+		hFunc.Reset()
+		hFunc.Write(
+			accountInfoAfter.AssetsInfo[i].Balance,
+			accountInfoAfter.AssetsInfo[i].OfferCanceledOrFinalized,
+		)
+		assetNodeHash = hFunc.Sum()
+		hFunc.Reset()
 		newAccountAssetsRoot = types.UpdateMerkleProof(
 			api, hFunc, assetNodeHash, gas.MerkleProofsAccountAssetsBefore[i][:], assetMerkleHelper)
 	}
@@ -127,7 +143,6 @@ func UpdateGasAccount(
 		accountInfoAfter.AssetsInfo[i].Balance = api.Add(
 			accountInfo.AssetsInfo[i].Balance,
 			gasAssetsDeltas[i].BalanceDelta)
-		accountInfoAfter.AssetsInfo[i].OfferCanceledOrFinalized = types.ZeroInt
 	}
 	return accountInfoAfter
 }

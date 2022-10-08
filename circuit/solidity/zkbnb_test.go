@@ -33,6 +33,7 @@ import (
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := []int{1, 10}
 	gasAssetIds := []int64{0, 1}
+	gasAccountIndex := int64(1)
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
 		blockConstraints.TxsCount = differentBlockSizes[i]
@@ -41,6 +42,7 @@ func TestCompileCircuit(t *testing.T) {
 			blockConstraints.Txs[i] = circuit.GetZeroTxConstraint()
 		}
 		blockConstraints.GasAssetIds = gasAssetIds
+		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
 		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {
@@ -62,6 +64,7 @@ func TestExportSolSmall(t *testing.T) {
 
 func exportSol(differentBlockSizes []int) {
 	gasAssetIds := []int64{0, 1}
+	gasAccountIndex := int64(1)
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
 		blockConstraints.TxsCount = differentBlockSizes[i]
@@ -70,6 +73,7 @@ func exportSol(differentBlockSizes []int) {
 			blockConstraints.Txs[i] = circuit.GetZeroTxConstraint()
 		}
 		blockConstraints.GasAssetIds = gasAssetIds
+		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
 		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {

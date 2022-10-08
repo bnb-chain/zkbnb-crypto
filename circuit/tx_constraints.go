@@ -76,7 +76,7 @@ func (circuit TxConstraints) Define(api API) error {
 		return err
 	}
 
-	_, _, _, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228)
+	_, _, _, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228, []int64{0})
 	if err != nil {
 		return err
 	}
@@ -88,6 +88,7 @@ func VerifyTransaction(
 	tx TxConstraints,
 	hFunc MiMC,
 	blockCreatedAt Variable,
+	gasAssetIds []int64,
 ) (isOnChainOp Variable, pubData [types.PubDataSizePerTx]Variable, roots [types.NbRoots]Variable,
 	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints, err error) {
 	// compute tx type
@@ -231,7 +232,7 @@ func VerifyTransaction(
 		CollectionId:        tx.NftBefore.CollectionId,
 	}
 	for i := 0; i < NbGasAssetsPerTx; i++ {
-		gasDeltas[i] = EmptyGasDeltaConstraints()
+		gasDeltas[i] = EmptyGasDeltaConstraints(gasAssetIds[0])
 	}
 
 	// register

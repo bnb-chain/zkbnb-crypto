@@ -35,6 +35,7 @@ type BlockConstraints struct {
 	TxsCount        int
 	Gas             GasConstraints
 	GasAssetIds     []int64
+	GasAccountIndex int64
 }
 
 func (circuit BlockConstraints) Define(api API) error {
@@ -79,9 +80,9 @@ func VerifyBlock(
 	}
 
 	onChainOpsCount = 0
-	isOnChainOp, pendingPubData, roots, gasDeltas, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt)
+	isOnChainOp, pendingPubData, roots, gasDeltas, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt, block.GasAssetIds)
 	if err != nil {
-		log.Println("[VerifyBlock] unable to verify block:", err)
+		log.Println("unable to verify transaction, err:", err)
 		return err
 	}
 	for i := 0; i < types.PubDataSizePerTx; i++ {
@@ -90,18 +91,21 @@ func VerifyBlock(
 	}
 	onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 
+	var matched Variable
 	for i := 0; i < gasAssetCount; i++ {
 		for j := 0; j < NbGasAssetsPerTx; j++ {
 			found := api.IsZero(api.Sub(block.GasAssetIds[i], gasDeltas[j].AssetId))
 			delta := api.Select(found, gasDeltas[j].BalanceDelta, types.ZeroInt)
 			blockGasDeltas[i] = api.Add(blockGasDeltas[i], delta)
+			matched = api.Or(matched, found)
 		}
 	}
+	api.AssertIsEqual(matched, 1)
 
 	for i := 1; i < block.TxsCount; i++ {
 		api.AssertIsEqual(block.Txs[i-1].StateRootAfter, block.Txs[i].StateRootBefore)
 		hFunc.Reset()
-		isOnChainOp, pendingPubData, roots, gasDeltas, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt)
+		isOnChainOp, pendingPubData, roots, gasDeltas, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt, block.GasAssetIds)
 		if err != nil {
 			log.Println("[VerifyBlock] unable to verify block:", err)
 			return err
@@ -111,13 +115,17 @@ func VerifyBlock(
 			count++
 		}
 		onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
+
+		var matched Variable
 		for i := 0; i < gasAssetCount; i++ {
 			for j := 0; j < NbGasAssetsPerTx; j++ {
 				found := api.IsZero(api.Sub(block.GasAssetIds[i], gasDeltas[j].AssetId))
-				delta := api.Select(found, gasDeltas[j].AssetId, types.ZeroInt)
+				delta := api.Select(found, gasDeltas[j].BalanceDelta, types.ZeroInt)
 				blockGasDeltas[i] = api.Add(blockGasDeltas[i], delta)
+				matched = api.Or(matched, found)
 			}
 		}
+		api.AssertIsEqual(matched, 1)
 	}
 
 	needGas = 0
@@ -132,14 +140,23 @@ func VerifyBlock(
 		needGas = api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(transferTx, withdrawTx), createCollectionTx), mintNftTx), cancelOfferTx), atomicMatchTx), withdrawNftTx)
 	}
 
-	newAccountRoot, err := VerifyGas(api, block.Gas, needGas, blockGasDeltas, hFunc, roots[0])
+	types.IsVariableEqual(api, needGas, block.Gas.AccountInfoBefore.AccountIndex, block.GasAccountIndex)
+	roots[0], err = VerifyGas(api, block.Gas, needGas, blockGasDeltas, hFunc, roots[0])
+	if err != nil {
+		log.Println("unable to verify gas, err:", err)
+		return err
+	}
 	hFunc.Reset()
-	hFunc.Write(
-		newAccountRoot,
-		roots[1],
-	)
+	for i := 1; i < types.NbRoots; i++ {
+		hFunc.Write(
+			roots[i],
+		)
+	}
 	newStateRoot := hFunc.Sum()
 	types.IsVariableEqual(api, needGas, block.NewStateRoot, newStateRoot)
+
+	notNeedGas := api.Sub(1, needGas)
+	types.IsVariableEqual(api, notNeedGas, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
 
 	pendingCommitmentData[count] = onChainOpsCount
 	commitments, _ := api.Compiler().NewHint(types.Keccak256, 1, pendingCommitmentData[:]...)
