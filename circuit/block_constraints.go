@@ -91,7 +91,7 @@ func VerifyBlock(
 	}
 	onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 
-	var matched Variable
+	matched := Variable(0)
 	for i := 0; i < gasAssetCount; i++ {
 		for j := 0; j < NbGasAssetsPerTx; j++ {
 			found := api.IsZero(api.Sub(block.GasAssetIds[i], gasDeltas[j].AssetId))
@@ -116,7 +116,7 @@ func VerifyBlock(
 		}
 		onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
 
-		var matched Variable
+		matched = Variable(0)
 		for i := 0; i < gasAssetCount; i++ {
 			for j := 0; j < NbGasAssetsPerTx; j++ {
 				found := api.IsZero(api.Sub(block.GasAssetIds[i], gasDeltas[j].AssetId))
