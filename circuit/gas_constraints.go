@@ -60,11 +60,9 @@ func VerifyGas(
 	deltas := make([]AccountAssetDeltaConstraints, gasAssetCount)
 	for i := 0; i < gasAssetCount; i++ {
 		deltas[i] = AccountAssetDeltaConstraints{
-			BalanceDelta:             gasAssetDeltas[i],
-			OfferCanceledOrFinalized: types.ZeroInt,
+			BalanceDelta: gasAssetDeltas[i],
 		}
 	}
-	accountInfoAfter := UpdateGasAccount(api, gas.AccountInfoBefore, deltas)
 
 	for i := 0; i < gasAssetCount; i++ {
 		assetMerkleHelper := AssetIdToMerkleHelper(api, gas.AccountInfoBefore.AssetsInfo[i].AssetId)
@@ -86,8 +84,8 @@ func VerifyGas(
 		)
 		hFunc.Reset()
 		hFunc.Write(
-			accountInfoAfter.AssetsInfo[i].Balance,
-			accountInfoAfter.AssetsInfo[i].OfferCanceledOrFinalized,
+			api.Add(gas.AccountInfoBefore.AssetsInfo[i].Balance, deltas[i].BalanceDelta),
+			gas.AccountInfoBefore.AssetsInfo[i].OfferCanceledOrFinalized,
 		)
 		assetNodeHash = hFunc.Sum()
 		hFunc.Reset()
@@ -119,11 +117,11 @@ func VerifyGas(
 	)
 	hFunc.Reset()
 	hFunc.Write(
-		accountInfoAfter.AccountNameHash,
-		accountInfoAfter.AccountPk.A.X,
-		accountInfoAfter.AccountPk.A.Y,
-		accountInfoAfter.Nonce,
-		accountInfoAfter.CollectionNonce,
+		gas.AccountInfoBefore.AccountNameHash,
+		gas.AccountInfoBefore.AccountPk.A.X,
+		gas.AccountInfoBefore.AccountPk.A.Y,
+		gas.AccountInfoBefore.Nonce,
+		gas.AccountInfoBefore.CollectionNonce,
 		newAccountAssetsRoot,
 	)
 	accountNodeHash = hFunc.Sum()
@@ -131,20 +129,6 @@ func VerifyGas(
 	// update merkle proof
 	newAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, gas.MerkleProofsAccountBefore[:], accountIndexMerkleHelper)
 	return newAccountRoot, err
-}
-
-func UpdateGasAccount(
-	api API,
-	accountInfo GasAccountConstraints,
-	gasAssetsDeltas []AccountAssetDeltaConstraints,
-) (accountInfoAfter GasAccountConstraints) {
-	accountInfoAfter = accountInfo
-	for i := 0; i < len(gasAssetsDeltas); i++ {
-		accountInfoAfter.AssetsInfo[i].Balance = api.Add(
-			accountInfo.AssetsInfo[i].Balance,
-			gasAssetsDeltas[i].BalanceDelta)
-	}
-	return accountInfoAfter
 }
 
 func GetZeroGasConstraints(gasAssets []int64) GasConstraints {

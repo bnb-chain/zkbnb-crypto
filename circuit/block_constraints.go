@@ -107,7 +107,7 @@ func VerifyBlock(
 		hFunc.Reset()
 		isOnChainOp, pendingPubData, roots, gasDeltas, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt, block.GasAssetIds)
 		if err != nil {
-			log.Println("[VerifyBlock] unable to verify block:", err)
+			log.Println("unable to verify transaction, err:", err)
 			return err
 		}
 		for j := 0; j < types.PubDataSizePerTx; j++ {
@@ -128,7 +128,7 @@ func VerifyBlock(
 		api.AssertIsEqual(matched, 1)
 	}
 
-	needGas = 0
+	needGas = Variable(0)
 	for i := 0; i < block.TxsCount; i++ {
 		transferTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeTransfer))
 		withdrawTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeWithdraw))
@@ -137,7 +137,8 @@ func VerifyBlock(
 		cancelOfferTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeCancelOffer))
 		atomicMatchTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeAtomicMatch))
 		withdrawNftTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeWithdrawNft))
-		needGas = api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(transferTx, withdrawTx), createCollectionTx), mintNftTx), cancelOfferTx), atomicMatchTx), withdrawNftTx)
+		transferNft := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeTransferNft))
+		needGas = api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(transferTx, withdrawTx), createCollectionTx), mintNftTx), cancelOfferTx), atomicMatchTx), withdrawNftTx), transferNft)
 	}
 
 	types.IsVariableEqual(api, needGas, block.Gas.AccountInfoBefore.AccountIndex, block.GasAccountIndex)
@@ -147,7 +148,7 @@ func VerifyBlock(
 		return err
 	}
 	hFunc.Reset()
-	for i := 1; i < types.NbRoots; i++ {
+	for i := 0; i < types.NbRoots; i++ {
 		hFunc.Write(
 			roots[i],
 		)
@@ -155,7 +156,7 @@ func VerifyBlock(
 	newStateRoot := hFunc.Sum()
 	types.IsVariableEqual(api, needGas, block.NewStateRoot, newStateRoot)
 
-	notNeedGas := api.Sub(1, needGas)
+	notNeedGas := api.Xor(1, needGas)
 	types.IsVariableEqual(api, notNeedGas, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
 
 	pendingCommitmentData[count] = onChainOpsCount
