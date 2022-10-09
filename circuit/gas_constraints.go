@@ -57,13 +57,6 @@ func VerifyGas(
 	types.IsVariableDifferent(api, needGas, gas.AccountInfoBefore.AccountNameHash, types.ZeroInt)
 
 	gasAssetCount := len(gasAssetDeltas)
-	deltas := make([]AccountAssetDeltaConstraints, gasAssetCount)
-	for i := 0; i < gasAssetCount; i++ {
-		deltas[i] = AccountAssetDeltaConstraints{
-			BalanceDelta: gasAssetDeltas[i],
-		}
-	}
-
 	for i := 0; i < gasAssetCount; i++ {
 		assetMerkleHelper := AssetIdToMerkleHelper(api, gas.AccountInfoBefore.AssetsInfo[i].AssetId)
 		hFunc.Reset()
@@ -84,7 +77,7 @@ func VerifyGas(
 		)
 		hFunc.Reset()
 		hFunc.Write(
-			api.Add(gas.AccountInfoBefore.AssetsInfo[i].Balance, deltas[i].BalanceDelta),
+			api.Add(gas.AccountInfoBefore.AssetsInfo[i].Balance, gasAssetDeltas[i]),
 			gas.AccountInfoBefore.AssetsInfo[i].OfferCanceledOrFinalized,
 		)
 		assetNodeHash = hFunc.Sum()

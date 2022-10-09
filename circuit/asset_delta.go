@@ -382,7 +382,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	}
 
 	gasDeltas[0].AssetId = txInfo.BuyOffer.AssetId
-	gasDeltas[0].BalanceDelta = txInfo.TreasuryAmount
+	gasDeltas[0].BalanceDelta = types.UnpackAmount(api, txInfo.TreasuryAmount)
 
 	gasDeltas[1].AssetId = txInfo.GasFeeAssetId
 	gasDeltas[1].BalanceDelta = txInfo.GasFeeAssetAmount

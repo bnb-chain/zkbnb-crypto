@@ -76,7 +76,7 @@ func VerifyBlock(
 	gasAssetCount := len(block.GasAssetIds)
 	blockGasDeltas := make([]Variable, gasAssetCount)
 	for i := 0; i < gasAssetCount; i++ {
-		blockGasDeltas[i] = 0
+		blockGasDeltas[i] = Variable(0)
 	}
 
 	onChainOpsCount = 0
