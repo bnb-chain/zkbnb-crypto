@@ -28,8 +28,8 @@ import (
 type BlockConstraints struct {
 	BlockNumber     Variable
 	CreatedAt       Variable
-	OldStateRoot    Variable `gnark:",public"`
-	NewStateRoot    Variable `gnark:",public"`
+	OldStateRoot    Variable
+	NewStateRoot    Variable
 	BlockCommitment Variable `gnark:",public"`
 	Txs             []TxConstraints
 	TxsCount        int
