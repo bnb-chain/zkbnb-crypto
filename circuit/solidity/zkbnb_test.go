@@ -30,16 +30,52 @@ import (
 	"github.com/bnb-chain/zkbnb-crypto/circuit"
 )
 
+func TestCompileCircuit(t *testing.T) {
+	differentBlockSizes := []int{1, 10}
+	gasAssetIds := []int64{0, 1}
+	gasAccountIndex := int64(1)
+	for i := 0; i < len(differentBlockSizes); i++ {
+		var blockConstraints circuit.BlockConstraints
+		blockConstraints.TxsCount = differentBlockSizes[i]
+		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
+		for i := 0; i < blockConstraints.TxsCount; i++ {
+			blockConstraints.Txs[i] = circuit.GetZeroTxConstraint()
+		}
+		blockConstraints.GasAssetIds = gasAssetIds
+		blockConstraints.GasAccountIndex = gasAccountIndex
+		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Number of constraints: %d\n", oR1cs.GetNbConstraints())
+	}
+}
+
 func TestExportSol(t *testing.T) {
 	differentBlockSizes := []int{1, 10}
+	exportSol(differentBlockSizes)
+}
+
+func TestExportSolSmall(t *testing.T) {
+	differentBlockSizes := []int{1}
+	exportSol(differentBlockSizes)
+}
+
+func exportSol(differentBlockSizes []int) {
+	gasAssetIds := []int64{0, 1}
+	gasAccountIndex := int64(1)
 	for i := 0; i < len(differentBlockSizes); i++ {
-		var blockConstrains circuit.BlockConstraints
-		blockConstrains.TxsCount = differentBlockSizes[i]
-		blockConstrains.Txs = make([]circuit.TxConstraints, blockConstrains.TxsCount)
-		for i := 0; i < blockConstrains.TxsCount; i++ {
-			blockConstrains.Txs[i] = circuit.GetZeroTxConstraint()
+		var blockConstraints circuit.BlockConstraints
+		blockConstraints.TxsCount = differentBlockSizes[i]
+		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
+		for i := 0; i < blockConstraints.TxsCount; i++ {
+			blockConstraints.Txs[i] = circuit.GetZeroTxConstraint()
 		}
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstrains, frontend.IgnoreUnconstrainedInputs())
+		blockConstraints.GasAssetIds = gasAssetIds
+		blockConstraints.GasAccountIndex = gasAccountIndex
+		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {
 			panic(err)
 		}

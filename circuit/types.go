@@ -68,6 +68,7 @@ type (
 const (
 	NbAccountAssetsPerAccount = types.NbAccountAssetsPerAccount
 	NbAccountsPerTx           = types.NbAccountsPerTx
+	NbGasAssetsPerTx          = types.NbGasAssetsPerTx
 	AssetMerkleLevels         = 16
 	NftMerkleLevels           = 40
 	AccountMerkleLevels       = 32

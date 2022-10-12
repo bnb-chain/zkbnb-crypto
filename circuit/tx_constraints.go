@@ -76,7 +76,7 @@ func (circuit TxConstraints) Define(api API) error {
 		return err
 	}
 
-	_, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228)
+	_, _, _, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228, []int64{0})
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,9 @@ func VerifyTransaction(
 	tx TxConstraints,
 	hFunc MiMC,
 	blockCreatedAt Variable,
-) (isOnChainOp Variable, pubData [types.PubDataSizePerTx]Variable, err error) {
+	gasAssetIds []int64,
+) (isOnChainOp Variable, pubData [types.PubDataSizePerTx]Variable, roots [types.NbRoots]Variable,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints, err error) {
 	// compute tx type
 	isEmptyTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeEmptyTx))
 	isRegisterZnsTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeRegisterZns))
@@ -165,7 +167,7 @@ func VerifyTransaction(
 	)
 	if err != nil {
 		log.Println("[VerifyTx] invalid signature:", err)
-		return nil, pubData, err
+		return nil, pubData, roots, gasDeltas, err
 	}
 
 	// verify transactions
@@ -194,7 +196,7 @@ func VerifyTransaction(
 		hFunc,
 	)
 	if err != nil {
-		return nil, pubData, err
+		return nil, pubData, roots, gasDeltas, err
 	}
 	pubData = SelectPubData(api, isAtomicMatchTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyCancelOfferTx(api, isCancelOfferTx, &tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
@@ -229,6 +231,9 @@ func VerifyTransaction(
 		CreatorTreasuryRate: tx.NftBefore.CreatorTreasuryRate,
 		CollectionId:        tx.NftBefore.CollectionId,
 	}
+	for i := 0; i < NbGasAssetsPerTx; i++ {
+		gasDeltas[i] = EmptyGasDeltaConstraints(gasAssetIds[0])
+	}
 
 	// register
 	accountDelta := GetAccountDeltaFromRegisterZNS(tx.RegisterZnsTxInfo)
@@ -236,36 +241,44 @@ func VerifyTransaction(
 	assetDeltasCheck := GetAssetDeltasFromDeposit(tx.DepositTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isDepositTx, assetDeltasCheck, assetDeltas)
 	// generic transfer
-	assetDeltasCheck = GetAssetDeltasFromTransfer(api, tx.TransferTxInfo)
+	assetDeltasCheck, gasDeltasCheck := GetAssetDeltasFromTransfer(api, tx.TransferTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isTransferTx, assetDeltasCheck, assetDeltas)
+	gasDeltas = SelectGasDeltas(api, isTransferTx, gasDeltasCheck, gasDeltas)
 	// withdraw
-	assetDeltasCheck = GetAssetDeltasFromWithdraw(api, tx.WithdrawTxInfo)
+	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromWithdraw(api, tx.WithdrawTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isWithdrawTx, assetDeltasCheck, assetDeltas)
+	gasDeltas = SelectGasDeltas(api, isWithdrawTx, gasDeltasCheck, gasDeltas)
 	// deposit nft
 	nftDeltaCheck := GetNftDeltaFromDepositNft(tx.DepositNftTxInfo)
 	nftDelta = SelectNftDeltas(api, isDepositNftTx, nftDeltaCheck, nftDelta)
 	// create collection
-	assetDeltasCheck = GetAssetDeltasFromCreateCollection(api, tx.CreateCollectionTxInfo)
+	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromCreateCollection(api, tx.CreateCollectionTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isCreateCollectionTx, assetDeltasCheck, assetDeltas)
+	gasDeltas = SelectGasDeltas(api, isCreateCollectionTx, gasDeltasCheck, gasDeltas)
 	// mint nft
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromMintNft(api, tx.MintNftTxInfo)
+	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromMintNft(api, tx.MintNftTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isMintNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isMintNftTx, nftDeltaCheck, nftDelta)
+	gasDeltas = SelectGasDeltas(api, isMintNftTx, gasDeltasCheck, gasDeltas)
 	// transfer nft
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromTransferNft(api, tx.TransferNftTxInfo, tx.NftBefore)
+	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromTransferNft(api, tx.TransferNftTxInfo, tx.NftBefore)
 	assetDeltas = SelectAssetDeltas(api, isTransferNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isTransferNftTx, nftDeltaCheck, nftDelta)
+	gasDeltas = SelectGasDeltas(api, isTransferNftTx, gasDeltasCheck, gasDeltas)
 	// set nft price
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromAtomicMatch(api, isAtomicMatchTx, tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
+	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromAtomicMatch(api, isAtomicMatchTx, tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	assetDeltas = SelectAssetDeltas(api, isAtomicMatchTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isAtomicMatchTx, nftDeltaCheck, nftDelta)
+	gasDeltas = SelectGasDeltas(api, isAtomicMatchTx, gasDeltasCheck, gasDeltas)
 	// buy nft
-	assetDeltasCheck = GetAssetDeltasFromCancelOffer(api, isCancelOfferTx, tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
+	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromCancelOffer(api, isCancelOfferTx, tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
 	assetDeltas = SelectAssetDeltas(api, isCancelOfferTx, assetDeltasCheck, assetDeltas)
+	gasDeltas = SelectGasDeltas(api, isCancelOfferTx, gasDeltasCheck, gasDeltas)
 	// withdraw nft
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromWithdrawNft(api, tx.WithdrawNftTxInfo)
+	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromWithdrawNft(api, tx.WithdrawNftTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isWithdrawNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isWithdrawNftTx, nftDeltaCheck, nftDelta)
+	gasDeltas = SelectGasDeltas(api, isWithdrawNftTx, gasDeltasCheck, gasDeltas)
 	// full exit
 	assetDeltasCheck = GetAssetDeltasFromFullExit(api, tx.FullExitTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isFullExitTx, assetDeltasCheck, assetDeltas)
@@ -293,7 +306,7 @@ func VerifyTransaction(
 	notEmptyTx := api.IsZero(isEmptyTx)
 	types.IsVariableEqual(api, notEmptyTx, oldStateRoot, tx.StateRootBefore)
 
-	NewAccountRoot := tx.AccountRootBefore
+	newAccountRoot := tx.AccountRootBefore
 	for i := 0; i < NbAccountsPerTx; i++ {
 		var (
 			NewAccountAssetsRoot = tx.AccountsInfoBefore[i].AssetRoot
@@ -349,7 +362,7 @@ func VerifyTransaction(
 			api,
 			notEmptyTx,
 			hFunc,
-			NewAccountRoot,
+			newAccountRoot,
 			accountNodeHash,
 			tx.MerkleProofsAccountBefore[i][:],
 			accountIndexMerkleHelper,
@@ -366,11 +379,11 @@ func VerifyTransaction(
 		accountNodeHash = hFunc.Sum()
 		hFunc.Reset()
 		// update merkle proof
-		NewAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, tx.MerkleProofsAccountBefore[i][:], accountIndexMerkleHelper)
+		newAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, tx.MerkleProofsAccountBefore[i][:], accountIndexMerkleHelper)
 	}
 
 	//// nft tree
-	NewNftRoot := tx.NftRootBefore
+	newNftRoot := tx.NftRootBefore
 	api.AssertIsLessOrEqual(tx.NftBefore.NftIndex, LastNftIndex)
 	nftIndexMerkleHelper := NftIndexToMerkleHelper(api, tx.NftBefore.NftIndex)
 	hFunc.Reset()
@@ -390,7 +403,7 @@ func VerifyTransaction(
 		api,
 		notEmptyTx,
 		hFunc,
-		NewNftRoot,
+		newNftRoot,
 		nftNodeHash,
 		tx.MerkleProofsNftBefore[:],
 		nftIndexMerkleHelper,
@@ -408,18 +421,20 @@ func VerifyTransaction(
 	nftNodeHash = hFunc.Sum()
 	hFunc.Reset()
 	// update merkle proof
-	NewNftRoot = types.UpdateMerkleProof(api, hFunc, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)
+	newNftRoot = types.UpdateMerkleProof(api, hFunc, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)
 
 	// check state root
 	hFunc.Reset()
 	hFunc.Write(
-		NewAccountRoot,
-		NewNftRoot,
+		newAccountRoot,
+		newNftRoot,
 	)
 	newStateRoot := hFunc.Sum()
 	types.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
-	types.IsVariableEqual(api, isEmptyTx, tx.StateRootBefore, tx.StateRootAfter)
-	return isOnChainOp, pubData, nil
+
+	roots[0] = newAccountRoot
+	roots[1] = newNftRoot
+	return isOnChainOp, pubData, roots, gasDeltas, nil
 }
 
 func EmptyTx(stateRoot []byte) (oTx *Tx) {
@@ -429,8 +444,7 @@ func EmptyTx(stateRoot []byte) (oTx *Tx) {
 		ExpiredAt:         0,
 		Signature:         types.EmptySignature(),
 		AccountRootBefore: make([]byte, 32),
-		AccountsInfoBefore: [5]*types.Account{
-			types.EmptyAccount(0, make([]byte, 32)),
+		AccountsInfoBefore: [NbAccountsPerTx]*types.Account{
 			types.EmptyAccount(0, make([]byte, 32)),
 			types.EmptyAccount(0, make([]byte, 32)),
 			types.EmptyAccount(0, make([]byte, 32)),

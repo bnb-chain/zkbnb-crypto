@@ -35,10 +35,14 @@ type (
 )
 
 const (
-	ZeroInt = uint64(0)
+	ZeroInt    = uint64(0)
+	DefaultInt = int64(-1)
 
 	NbAccountAssetsPerAccount = 2
-	NbAccountsPerTx           = 5
+	NbAccountsPerTx           = 4
+	NbGasAssetsPerTx          = 2 // at most two assets transferred to gas account
+
+	NbRoots = 2 // account root, nft root
 
 	PubDataSizePerTx = 6
 

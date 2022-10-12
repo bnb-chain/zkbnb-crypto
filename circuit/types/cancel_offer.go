@@ -70,17 +70,16 @@ func VerifyCancelOfferTx(
 	tx *CancelOfferTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 ) (pubData [PubDataSizePerTx]Variable) {
+	fromAccount := 0
 	pubData = CollectPubDataFromCancelOffer(api, *tx)
 	// verify params
-	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[fromAccount].AccountIndex)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	offerIdBits := api.ToBinary(tx.OfferId, 24)
 	assetId := api.FromBinary(offerIdBits[7:]...)
-	IsVariableEqual(api, flag, assetId, accountsBefore[0].AssetsInfo[1].AssetId)
+	IsVariableEqual(api, flag, assetId, accountsBefore[fromAccount].AssetsInfo[1].AssetId)
 	// should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	return pubData
 }

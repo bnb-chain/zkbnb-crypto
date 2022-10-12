@@ -17,12 +17,13 @@
 
 package circuit
 
-type Block struct {
-	BlockNumber     int64
-	CreatedAt       int64
-	OldStateRoot    []byte
-	NewStateRoot    []byte
-	BlockCommitment []byte
-	Txs             []*Tx
-	Gas             *Gas
+import (
+	"github.com/bnb-chain/zkbnb-crypto/circuit/types"
+)
+
+type Gas struct {
+	GasAssetCount                   int
+	AccountInfoBefore               *types.GasAccount
+	MerkleProofsAccountBefore       [AccountMerkleLevels][]byte
+	MerkleProofsAccountAssetsBefore [][AssetMerkleLevels][]byte
 }
