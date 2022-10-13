@@ -28,11 +28,14 @@ import (
 type BlockConstraints struct {
 	BlockNumber     Variable
 	CreatedAt       Variable
-	OldStateRoot    Variable `gnark:",public"`
-	NewStateRoot    Variable `gnark:",public"`
+	OldStateRoot    Variable
+	NewStateRoot    Variable
 	BlockCommitment Variable `gnark:",public"`
 	Txs             []TxConstraints
 	TxsCount        int
+	Gas             GasConstraints
+	GasAssetIds     []int64
+	GasAccountIndex int64
 }
 
 func (circuit BlockConstraints) Define(api API) error {
@@ -42,12 +45,7 @@ func (circuit BlockConstraints) Define(api API) error {
 		return err
 	}
 
-	pubdataHashFunc, err := mimc.NewMiMC(api)
-	if err != nil {
-		return err
-	}
-
-	err = VerifyBlock(api, circuit, hFunc, pubdataHashFunc)
+	err = VerifyBlock(api, circuit, hFunc)
 	if err != nil {
 		return err
 	}
@@ -58,13 +56,14 @@ func VerifyBlock(
 	api API,
 	block BlockConstraints,
 	hFunc MiMC,
-	pubdataHashFunc MiMC,
 ) (err error) {
 	var (
 		onChainOpsCount Variable
 		isOnChainOp     Variable
-		// pendingCommitmentData [std.PubDataSizePerTx*block.TxsCount + 5]Variable
-		count = 4
+		roots           [types.NbRoots]Variable
+		count           = 4
+		gasDeltas       [NbGasAssetsPerTx]GasDeltaConstraints
+		needGas         Variable
 	)
 	pendingCommitmentData := make([]Variable, types.PubDataSizePerTx*block.TxsCount+5)
 	// write basic info into hFunc
@@ -73,13 +72,17 @@ func VerifyBlock(
 	pendingCommitmentData[2] = block.OldStateRoot
 	pendingCommitmentData[3] = block.NewStateRoot
 	api.AssertIsEqual(block.OldStateRoot, block.Txs[0].StateRootBefore)
-	isEmptyTx := api.IsZero(api.Sub(block.Txs[block.TxsCount-1].TxType, types.TxTypeEmptyTx))
-	notEmptyTx := api.IsZero(isEmptyTx)
-	types.IsVariableEqual(api, notEmptyTx, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
+
+	gasAssetCount := len(block.GasAssetIds)
+	blockGasDeltas := make([]Variable, gasAssetCount)
+	for i := 0; i < gasAssetCount; i++ {
+		blockGasDeltas[i] = Variable(0)
+	}
+
 	onChainOpsCount = 0
-	isOnChainOp, pendingPubData, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt)
+	isOnChainOp, pendingPubData, roots, gasDeltas, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt, block.GasAssetIds)
 	if err != nil {
-		log.Println("[VerifyBlock] unable to verify block:", err)
+		log.Println("unable to verify transaction, err:", err)
 		return err
 	}
 	for i := 0; i < types.PubDataSizePerTx; i++ {
@@ -87,14 +90,24 @@ func VerifyBlock(
 		count++
 	}
 	onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
+
+	matched := Variable(0)
+	for i := 0; i < gasAssetCount; i++ {
+		for j := 0; j < NbGasAssetsPerTx; j++ {
+			found := api.IsZero(api.Sub(block.GasAssetIds[i], gasDeltas[j].AssetId))
+			delta := api.Select(found, gasDeltas[j].BalanceDelta, types.ZeroInt)
+			blockGasDeltas[i] = api.Add(blockGasDeltas[i], delta)
+			matched = api.Or(matched, found)
+		}
+	}
+	api.AssertIsEqual(matched, 1)
+
 	for i := 1; i < block.TxsCount; i++ {
-		isEmptyTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeEmptyTx))
-		notEmptyTx := api.IsZero(isEmptyTx)
-		types.IsVariableEqual(api, notEmptyTx, block.Txs[i-1].StateRootAfter, block.Txs[i].StateRootBefore)
+		api.AssertIsEqual(block.Txs[i-1].StateRootAfter, block.Txs[i].StateRootBefore)
 		hFunc.Reset()
-		isOnChainOp, pendingPubData, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt)
+		isOnChainOp, pendingPubData, roots, gasDeltas, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt, block.GasAssetIds)
 		if err != nil {
-			log.Println("[VerifyBlock] unable to verify block:", err)
+			log.Println("unable to verify transaction, err:", err)
 			return err
 		}
 		for j := 0; j < types.PubDataSizePerTx; j++ {
@@ -102,9 +115,51 @@ func VerifyBlock(
 			count++
 		}
 		onChainOpsCount = api.Add(onChainOpsCount, isOnChainOp)
+
+		matched = Variable(0)
+		for i := 0; i < gasAssetCount; i++ {
+			for j := 0; j < NbGasAssetsPerTx; j++ {
+				found := api.IsZero(api.Sub(block.GasAssetIds[i], gasDeltas[j].AssetId))
+				delta := api.Select(found, gasDeltas[j].BalanceDelta, types.ZeroInt)
+				blockGasDeltas[i] = api.Add(blockGasDeltas[i], delta)
+				matched = api.Or(matched, found)
+			}
+		}
+		api.AssertIsEqual(matched, 1)
 	}
+
+	needGas = Variable(0)
+	for i := 0; i < block.TxsCount; i++ {
+		transferTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeTransfer))
+		withdrawTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeWithdraw))
+		createCollectionTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeCreateCollection))
+		mintNftTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeMintNft))
+		cancelOfferTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeCancelOffer))
+		atomicMatchTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeAtomicMatch))
+		withdrawNftTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeWithdrawNft))
+		transferNft := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeTransferNft))
+		needGas = api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(transferTx, withdrawTx), createCollectionTx), mintNftTx), cancelOfferTx), atomicMatchTx), withdrawNftTx), transferNft)
+	}
+
+	types.IsVariableEqual(api, needGas, block.Gas.AccountInfoBefore.AccountIndex, block.GasAccountIndex)
+	roots[0], err = VerifyGas(api, block.Gas, needGas, blockGasDeltas, hFunc, roots[0])
+	if err != nil {
+		log.Println("unable to verify gas, err:", err)
+		return err
+	}
+	hFunc.Reset()
+	for i := 0; i < types.NbRoots; i++ {
+		hFunc.Write(
+			roots[i],
+		)
+	}
+	newStateRoot := hFunc.Sum()
+	types.IsVariableEqual(api, needGas, block.NewStateRoot, newStateRoot)
+
+	notNeedGas := api.Xor(1, needGas)
+	types.IsVariableEqual(api, notNeedGas, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
+
 	pendingCommitmentData[count] = onChainOpsCount
-	//commitment := pubdataHashFunc.Sum()
 	commitments, _ := api.Compiler().NewHint(types.Keccak256, 1, pendingCommitmentData[:]...)
 	api.AssertIsEqual(commitments[0], block.BlockCommitment)
 	return nil
@@ -122,9 +177,15 @@ func SetBlockWitness(oBlock *Block) (witness BlockConstraints, err error) {
 		tx, err := SetTxWitness(oBlock.Txs[i])
 		witness.Txs = append(witness.Txs, tx)
 		if err != nil {
-			log.Println("[SetBlockWitness] unable to set tx witness: ", err.Error())
+			log.Println("fail to set tx witness: ", err.Error())
 			return witness, err
 		}
+	}
+
+	witness.Gas, err = SetGasWitness(oBlock.Gas)
+	if err != nil {
+		log.Println("fail to set gas witness: ", err.Error())
+		return witness, err
 	}
 	return witness, nil
 }
@@ -133,14 +194,9 @@ func GetZeroTxConstraint() TxConstraints {
 	var zeroTxConstraint TxConstraints
 	zeroTxConstraint.TxType = 0
 	zeroTxConstraint.RegisterZnsTxInfo = types.EmptyRegisterZnsTxWitness()
-	zeroTxConstraint.CreatePairTxInfo = types.EmptyCreatePairTxWitness()
-	zeroTxConstraint.UpdatePairRateTxInfo = types.EmptyUpdatePairRateTxWitness()
 	zeroTxConstraint.DepositTxInfo = types.EmptyDepositTxWitness()
 	zeroTxConstraint.DepositNftTxInfo = types.EmptyDepositNftTxWitness()
 	zeroTxConstraint.TransferTxInfo = types.EmptyTransferTxWitness()
-	zeroTxConstraint.SwapTxInfo = types.EmptySwapTxWitness()
-	zeroTxConstraint.AddLiquidityTxInfo = types.EmptyAddLiquidityTxWitness()
-	zeroTxConstraint.RemoveLiquidityTxInfo = types.EmptyRemoveLiquidityTxWitness()
 	zeroTxConstraint.CreateCollectionTxInfo = types.EmptyCreateCollectionTxWitness()
 	zeroTxConstraint.MintNftTxInfo = types.EmptyMintNftTxWitness()
 	zeroTxConstraint.TransferNftTxInfo = types.EmptyTransferNftTxWitness()
@@ -157,25 +213,11 @@ func GetZeroTxConstraint() TxConstraints {
 	// set common account & merkle parts
 	// account root before
 	zeroTxConstraint.AccountRootBefore = 0
-	zeroTxConstraint.LiquidityRootBefore = 0
 	zeroTxConstraint.NftRootBefore = 0
 	zeroTxConstraint.StateRootBefore = 0
 	zeroTxConstraint.StateRootAfter = 0
 
 	// before
-	zeroTxConstraint.LiquidityBefore = LiquidityConstraints{
-		PairIndex:            0,
-		AssetAId:             0,
-		AssetA:               0,
-		AssetBId:             0,
-		AssetB:               0,
-		LpAmount:             0,
-		KLast:                0,
-		FeeRate:              0,
-		TreasuryAccountIndex: 0,
-		TreasuryRate:         0,
-	}
-
 	zeroTxConstraint.NftBefore = NftConstraints{
 		NftIndex:            0,
 		NftContentHash:      0,
@@ -202,7 +244,6 @@ func GetZeroTxConstraint() TxConstraints {
 			zeroAccountConstraint.AssetsInfo[i] = types.AccountAssetConstraints{
 				AssetId:                  0,
 				Balance:                  0,
-				LpAmount:                 0,
 				OfferCanceledOrFinalized: 0,
 			}
 		}
@@ -218,10 +259,6 @@ func GetZeroTxConstraint() TxConstraints {
 			// account before
 			zeroTxConstraint.MerkleProofsAccountBefore[i][j] = 0
 		}
-	}
-	for i := 0; i < LiquidityMerkleLevels; i++ {
-		// liquidity assets before
-		zeroTxConstraint.MerkleProofsLiquidityBefore[i] = 0
 	}
 	for i := 0; i < NftMerkleLevels; i++ {
 		// nft assets before

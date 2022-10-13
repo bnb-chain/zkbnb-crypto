@@ -5,9 +5,10 @@ import (
 	"math/big"
 	"strings"
 
+	"syscall/js"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"syscall/js"
 )
 
 func KeccakHash(value []byte) []byte {
@@ -44,7 +45,7 @@ func ComputeAccountNameHash(accountName string) (res string, err error) {
 func AccountNameHash() js.Func {
 	helperFunc := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		if len(args) != 1 {
-			return "invalid swap params"
+			return "invalid account params"
 		}
 
 		name := args[0].String()

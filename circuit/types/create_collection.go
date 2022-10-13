@@ -62,16 +62,11 @@ func SetCreateCollectionTxWitness(tx *CreateCollectionTx) (witness CreateCollect
 	return witness
 }
 
-func ComputeHashFromCreateCollectionTx(tx CreateCollectionTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
+func ComputeHashFromCreateCollectionTx(api API, tx CreateCollectionTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
 	hFunc.Reset()
 	hFunc.Write(
-		tx.AccountIndex,
-		tx.GasAccountIndex,
-		tx.GasFeeAssetId,
-		tx.GasFeeAssetAmount,
-		expiredAt,
-		nonce,
-		ChainId,
+		PackInt64Variables(api, ChainId, tx.AccountIndex, nonce, expiredAt),
+		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
 	)
 	hashVal = hFunc.Sum()
 	return hashVal
@@ -82,19 +77,18 @@ func VerifyCreateCollectionTx(
 	tx *CreateCollectionTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 ) (pubData [PubDataSizePerTx]Variable) {
+	fromAccount := 0
 	pubData = CollectPubDataFromCreateCollection(api, *tx)
 	// verify params
 	IsVariableLessOrEqual(api, flag, tx.CollectionId, 65535)
 	// account index
-	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
-	IsVariableEqual(api, flag, tx.GasAccountIndex, accountsBefore[1].AccountIndex)
+	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[fromAccount].AccountIndex)
 	// asset id
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[1].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	// collection id
-	IsVariableEqual(api, flag, tx.CollectionId, accountsBefore[0].CollectionNonce)
+	IsVariableEqual(api, flag, tx.CollectionId, accountsBefore[fromAccount].CollectionNonce)
 	// should have enough assets
 	tx.GasFeeAssetAmount = UnpackAmount(api, tx.GasFeeAssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	return pubData
 }

@@ -24,6 +24,14 @@ func IsVariableEqual(api API, isEnabled, i1, i2 Variable) {
 	api.AssertIsEqual(i1, i2)
 }
 
+func IsVariableDifferent(api API, isEnabled, i1, i2 Variable) {
+	zero := 0
+	one := 1
+	i1 = api.Select(isEnabled, i1, zero)
+	i2 = api.Select(isEnabled, i2, one)
+	api.AssertIsDifferent(i1, i2)
+}
+
 func IsVariableLessOrEqual(api API, isEnabled, i1, i2 Variable) {
 	zero := 0
 	i1 = api.Select(isEnabled, i1, zero)

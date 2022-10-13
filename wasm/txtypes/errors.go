@@ -29,10 +29,6 @@ var (
 	ErrNftContentHashInvalid    = fmt.Errorf("NftContentHash is invalid")
 	ErrNftCollectionIdTooLow    = fmt.Errorf("NftCollectionId should not be less than %d", minCollectionId)
 	ErrNftCollectionIdTooHigh   = fmt.Errorf("NftCollectionId should not be larger than %d", maxCollectionId)
-	ErrPairIndexTooLow          = fmt.Errorf("PairIndex should not be less than %d", minPairIndex)
-	ErrPairIndexTooHigh         = fmt.Errorf("PairIndex should not be larger than %d", maxPairIndex)
-	ErrLpAmountTooLow           = fmt.Errorf("LpAmount should not be less than %s", minAssetAmount.String())
-	ErrLpAmountTooHigh          = fmt.Errorf("LpAmount should not be larger than %s", maxAssetAmount.String())
 	ErrCallDataHashInvalid      = fmt.Errorf("CallDataHash is invalid")
 
 	ErrCreatorAccountIndexTooLow  = fmt.Errorf("CreatorAccountIndex should not be less than %d", minAccountIndex)

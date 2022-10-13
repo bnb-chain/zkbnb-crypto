@@ -30,15 +30,25 @@ type AccountDeltaConstraints struct {
 
 type AccountAssetDeltaConstraints struct {
 	BalanceDelta             Variable
-	LpDelta                  Variable
 	OfferCanceledOrFinalized Variable
+}
+
+type GasDeltaConstraints struct {
+	AssetId      Variable
+	BalanceDelta Variable
 }
 
 func EmptyAccountAssetDeltaConstraints() AccountAssetDeltaConstraints {
 	return AccountAssetDeltaConstraints{
 		BalanceDelta:             types.ZeroInt,
-		LpDelta:                  types.ZeroInt,
 		OfferCanceledOrFinalized: types.ZeroInt,
+	}
+}
+
+func EmptyGasDeltaConstraints(assetId Variable) GasDeltaConstraints {
+	return GasDeltaConstraints{
+		AssetId:      assetId,
+		BalanceDelta: types.ZeroInt,
 	}
 }
 
@@ -54,9 +64,6 @@ func UpdateAccounts(
 				accountInfos[i].AssetsInfo[j].Balance,
 				accountDeltas[i][j].BalanceDelta)
 
-			AccountsInfoAfter[i].AssetsInfo[j].LpAmount = api.Add(
-				accountInfos[i].AssetsInfo[j].LpAmount,
-				accountDeltas[i][j].LpDelta)
 			isZero := api.IsZero(accountDeltas[i][j].OfferCanceledOrFinalized)
 			AccountsInfoAfter[i].AssetsInfo[j].OfferCanceledOrFinalized = api.Select(
 				isZero,
@@ -66,6 +73,17 @@ func UpdateAccounts(
 		}
 	}
 	return AccountsInfoAfter
+}
+
+func GetGasDeltas(gasFeeAssetId, gasFeeAssetAmount Variable) (
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
+	gasDeltas[0].AssetId = gasFeeAssetId
+	gasDeltas[0].BalanceDelta = gasFeeAssetAmount
+
+	for i := 1; i < NbGasAssetsPerTx; i++ {
+		gasDeltas[i] = EmptyGasDeltaConstraints(gasFeeAssetId)
+	}
+	return gasDeltas
 }
 
 func GetAccountDeltaFromRegisterZNS(
@@ -78,58 +96,18 @@ func GetAccountDeltaFromRegisterZNS(
 	return accountDelta
 }
 
-func GetLiquidityDeltaFromCreatePair(
-	txInfo CreatePairTxConstraints,
-) (liquidityDelta LiquidityDeltaConstraints) {
-	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:             txInfo.AssetAId,
-		AssetBId:             txInfo.AssetBId,
-		AssetADelta:          types.ZeroInt,
-		AssetBDelta:          types.ZeroInt,
-		LpDelta:              types.ZeroInt,
-		KLast:                types.ZeroInt,
-		FeeRate:              txInfo.FeeRate,
-		TreasuryAccountIndex: txInfo.TreasuryAccountIndex,
-		TreasuryRate:         txInfo.TreasuryRate,
-	}
-	return liquidityDelta
-}
-
-func GetLiquidityDeltaFromUpdatePairRate(
-	txInfo UpdatePairRateTxConstraints,
-	liquidityBefore LiquidityConstraints,
-) (liquidityDelta LiquidityDeltaConstraints) {
-	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:             liquidityBefore.AssetAId,
-		AssetBId:             liquidityBefore.AssetBId,
-		AssetADelta:          types.ZeroInt,
-		AssetBDelta:          types.ZeroInt,
-		LpDelta:              types.ZeroInt,
-		KLast:                liquidityBefore.KLast,
-		FeeRate:              txInfo.FeeRate,
-		TreasuryAccountIndex: txInfo.TreasuryAccountIndex,
-		TreasuryRate:         txInfo.TreasuryRate,
-	}
-	return liquidityDelta
-}
-
 func GetAssetDeltasFromDeposit(
 	txInfo DepositTxConstraints,
 ) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             txInfo.AssetAmount,
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
 	for i := 1; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 		}
@@ -140,38 +118,24 @@ func GetAssetDeltasFromDeposit(
 func GetAssetDeltasFromCreateCollection(
 	api API,
 	txInfo CreateCollectionTxConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
 	// from account
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
 		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 	}
-	// gas account
-	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	for i := 2; i < NbAccountsPerTx; i++ {
+	for i := 1; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 		}
 	}
-	return deltas
+	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
+	return deltas, gasDeltas
 }
 
 func GetNftDeltaFromDepositNft(
@@ -192,357 +156,88 @@ func GetNftDeltaFromDepositNft(
 func GetAssetDeltasFromTransfer(
 	api API,
 	txInfo TransferTxConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
 	// from account
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		// asset A
 		{
 			BalanceDelta:             api.Neg(txInfo.AssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
 		// asset Gas
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 	}
 	// to account
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             txInfo.AssetAmount,
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	// gas account
-	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	// gas account
-	for i := 3; i < NbAccountsPerTx; i++ {
-		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-		}
-	}
-	return deltas
-}
-
-func GetAssetDeltasAndLiquidityDeltaFromSwap(
-	api API,
-	txInfo SwapTxConstraints,
-	liquidityBefore LiquidityConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints, liquidityDelta LiquidityDeltaConstraints) {
-	// from account
-	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		// asset A
-		{
-			BalanceDelta:             api.Neg(txInfo.AssetAAmount),
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		// asset B
-		{
-			BalanceDelta:             txInfo.AssetBAmountDelta,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		// asset gas
-		{
-			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	// gas account
-	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		// asset gas
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
 	for i := 2; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
 		}
 	}
-	isSameAssetA := api.IsZero(api.Sub(txInfo.AssetAId, liquidityBefore.AssetAId))
-	negAssetBAmount := api.Neg(txInfo.AssetBAmountDelta)
-	assetADelta := api.Select(isSameAssetA, txInfo.AssetAAmount, negAssetBAmount)
-	assetBDelta := api.Select(isSameAssetA, negAssetBAmount, txInfo.AssetAAmount)
-	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:             liquidityBefore.AssetAId,
-		AssetBId:             liquidityBefore.AssetBId,
-		AssetADelta:          assetADelta,
-		AssetBDelta:          assetBDelta,
-		LpDelta:              types.ZeroInt,
-		KLast:                liquidityBefore.KLast,
-		FeeRate:              liquidityBefore.FeeRate,
-		TreasuryAccountIndex: liquidityBefore.TreasuryAccountIndex,
-		TreasuryRate:         liquidityBefore.TreasuryRate,
-	}
-	return deltas, liquidityDelta
-}
 
-func GetAssetDeltasAndLiquidityDeltaFromAddLiquidity(
-	api API,
-	txInfo AddLiquidityTxConstraints,
-	liquidityBefore LiquidityConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints, liquidityDelta LiquidityDeltaConstraints) {
-	// from account
-	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		// asset A
-		{
-			BalanceDelta:             api.Neg(txInfo.AssetAAmount),
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		// asset B
-		{
-			BalanceDelta:             api.Neg(txInfo.AssetBAmount),
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		// asset gas
-		{
-			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		// asset lp
-		{
-			BalanceDelta:             types.ZeroInt,
-			LpDelta:                  txInfo.LpAmount,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-	}
-	// treasury account
-	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             types.ZeroInt,
-			LpDelta:                  txInfo.TreasuryAmount,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	// gas account
-	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	for i := 3; i < NbAccountsPerTx; i++ {
-		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-		}
-	}
-	poolA := api.Add(liquidityBefore.AssetA, txInfo.AssetAAmount)
-	poolB := api.Add(liquidityBefore.AssetB, txInfo.AssetBAmount)
-	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:             liquidityBefore.AssetAId,
-		AssetBId:             liquidityBefore.AssetBId,
-		AssetADelta:          txInfo.AssetAAmount,
-		AssetBDelta:          txInfo.AssetBAmount,
-		LpDelta:              txInfo.LpAmount,
-		KLast:                api.Mul(poolA, poolB),
-		FeeRate:              liquidityBefore.FeeRate,
-		TreasuryAccountIndex: liquidityBefore.TreasuryAccountIndex,
-		TreasuryRate:         liquidityBefore.TreasuryRate,
-	}
-	return deltas, liquidityDelta
-}
-
-func GetAssetDeltasAndLiquidityDeltaFromRemoveLiquidity(
-	api API,
-	txInfo RemoveLiquidityTxConstraints,
-	liquidityBefore LiquidityConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints, liquidityDelta LiquidityDeltaConstraints) {
-	// from account
-	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		// asset A
-		{
-			BalanceDelta:             txInfo.AssetAAmountDelta,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		// asset B
-		{
-			BalanceDelta:             txInfo.AssetBAmountDelta,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		// asset gas
-		{
-			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		// asset lp
-		{
-			BalanceDelta:             types.ZeroInt,
-			LpDelta:                  api.Neg(txInfo.LpAmount),
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-	}
-	// treasury account
-	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             types.ZeroInt,
-			LpDelta:                  txInfo.TreasuryAmount,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	// gas account
-	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	for i := 3; i < NbAccountsPerTx; i++ {
-		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-		}
-	}
-	poolA := api.Sub(liquidityBefore.AssetA, txInfo.AssetAAmountDelta)
-	poolB := api.Sub(liquidityBefore.AssetB, txInfo.AssetBAmountDelta)
-	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:             liquidityBefore.AssetAId,
-		AssetBId:             liquidityBefore.AssetBId,
-		AssetADelta:          api.Neg(txInfo.AssetAAmountDelta),
-		AssetBDelta:          api.Neg(txInfo.AssetBAmountDelta),
-		LpDelta:              api.Neg(txInfo.LpAmount),
-		KLast:                api.Mul(poolA, poolB),
-		FeeRate:              liquidityBefore.FeeRate,
-		TreasuryAccountIndex: liquidityBefore.TreasuryAccountIndex,
-		TreasuryRate:         liquidityBefore.TreasuryRate,
-	}
-	return deltas, liquidityDelta
+	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
+	return deltas, gasDeltas
 }
 
 func GetAssetDeltasFromWithdraw(
 	api API,
 	txInfo WithdrawTxConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
 	// from account
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		// asset A
 		{
 			BalanceDelta:             api.Neg(txInfo.AssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
 		// asset gas
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 	}
-	// gas account
-	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	for i := 2; i < NbAccountsPerTx; i++ {
+	for i := 1; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 		}
 	}
-	return deltas
+	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
+	return deltas, gasDeltas
 }
 
 func GetAssetDeltasAndNftDeltaFromMintNft(
 	api API,
 	txInfo MintNftTxConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints, nftDelta NftDeltaConstraints) {
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+	nftDelta NftDeltaConstraints,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
 	// from account
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 	}
-	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	for i := 3; i < NbAccountsPerTx; i++ {
+	for i := 2; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 		}
@@ -556,46 +251,31 @@ func GetAssetDeltasAndNftDeltaFromMintNft(
 		CreatorTreasuryRate: txInfo.CreatorTreasuryRate,
 		CollectionId:        txInfo.CollectionId,
 	}
-	return deltas, nftDelta
+	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
+	return deltas, nftDelta, gasDeltas
 }
 
 func GetAssetDeltasAndNftDeltaFromTransferNft(
 	api API,
 	txInfo TransferNftTxConstraints,
 	nftBefore NftConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints, nftDelta NftDeltaConstraints) {
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+	nftDelta NftDeltaConstraints,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
 	// from account
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 	}
-	// gas account
-	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	for i := 3; i < NbAccountsPerTx; i++ {
+	for i := 2; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 		}
@@ -609,7 +289,8 @@ func GetAssetDeltasAndNftDeltaFromTransferNft(
 		CreatorTreasuryRate: nftBefore.CreatorTreasuryRate,
 		CollectionId:        nftBefore.CollectionId,
 	}
-	return deltas, nftDelta
+	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
+	return deltas, nftDelta, gasDeltas
 }
 
 func GetAssetDeltasAndNftDeltaFromAtomicMatch(
@@ -618,16 +299,15 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	txInfo AtomicMatchTxConstraints,
 	accountsBefore [NbAccountsPerTx]types.AccountConstraints,
 	nftBefore NftConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints, nftDelta NftDeltaConstraints) {
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+	nftDelta NftDeltaConstraints,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
 	// submitter
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
 	// TODO
@@ -653,16 +333,12 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             buyerDelta,
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
 		{
 			BalanceDelta:             types.ZeroInt,
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: buyOfferCanceledOrFinalized,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 	}
 	// sell
 	sellOfferIdBits := api.ToBinary(txInfo.SellOffer.OfferId, 23)
@@ -679,44 +355,20 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             sellerDelta,
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
 		{
 			BalanceDelta:             types.ZeroInt,
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: sellOfferCanceledOrFinalized,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 	}
 	// creator account
 	deltas[3] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		// asset A
 		{
 			BalanceDelta:             creatorAmountVar,
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	// gas account
-	deltas[4] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		// asset A
-		{
-			BalanceDelta:             treasuryAmountVar,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		// asset Gas
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
 	nftDelta = NftDeltaConstraints{
@@ -728,7 +380,18 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		CreatorTreasuryRate: nftBefore.CreatorTreasuryRate,
 		CollectionId:        nftBefore.CollectionId,
 	}
-	return deltas, nftDelta
+
+	gasDeltas[0].AssetId = txInfo.BuyOffer.AssetId
+	gasDeltas[0].BalanceDelta = types.UnpackAmount(api, txInfo.TreasuryAmount)
+
+	gasDeltas[1].AssetId = txInfo.GasFeeAssetId
+	gasDeltas[1].BalanceDelta = txInfo.GasFeeAssetAmount
+
+	for i := 2; i < NbGasAssetsPerTx; i++ {
+		gasDeltas[i] = EmptyGasDeltaConstraints(txInfo.GasFeeAssetId)
+	}
+
+	return deltas, nftDelta, gasDeltas
 }
 
 func GetAssetDeltasFromCancelOffer(
@@ -736,7 +399,8 @@ func GetAssetDeltasFromCancelOffer(
 	flag Variable,
 	txInfo CancelOfferTxConstraints,
 	accountsBefore [NbAccountsPerTx]types.AccountConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
 	// from account
 	offerIdBits := api.ToBinary(txInfo.OfferId, 24)
 	assetId := api.FromBinary(offerIdBits[7:]...)
@@ -753,76 +417,44 @@ func GetAssetDeltasFromCancelOffer(
 		// asset Gas
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
 		{
 			BalanceDelta:             types.ZeroInt,
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: fromOfferCanceledOrFinalized,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 	}
-	// gas account
-	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	for i := 2; i < NbAccountsPerTx; i++ {
+	for i := 1; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 		}
 	}
-	return deltas
+	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
+	return deltas, gasDeltas
 }
 
 func GetAssetDeltasAndNftDeltaFromWithdrawNft(
 	api API,
 	txInfo WithdrawNftTxConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints, nftDelta NftDeltaConstraints) {
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+	nftDelta NftDeltaConstraints,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
 	// from account
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
 	// creator account
 	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 	}
-	// gas account
-	deltas[2] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		{
-			BalanceDelta:             txInfo.GasFeeAssetAmount,
-			LpDelta:                  types.ZeroInt,
-			OfferCanceledOrFinalized: types.ZeroInt,
-		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	for i := 3; i < NbAccountsPerTx; i++ {
+	for i := 2; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 		}
@@ -836,7 +468,8 @@ func GetAssetDeltasAndNftDeltaFromWithdrawNft(
 		CreatorTreasuryRate: types.ZeroInt,
 		CollectionId:        types.ZeroInt,
 	}
-	return deltas, nftDelta
+	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
+	return deltas, nftDelta, gasDeltas
 }
 
 func GetAssetDeltasFromFullExit(
@@ -847,17 +480,12 @@ func GetAssetDeltasFromFullExit(
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             api.Neg(txInfo.AssetAmount),
-			LpDelta:                  types.ZeroInt,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
 		EmptyAccountAssetDeltaConstraints(),
 	}
 	for i := 1; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 		}

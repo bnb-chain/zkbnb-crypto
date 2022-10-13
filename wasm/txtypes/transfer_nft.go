@@ -226,17 +226,11 @@ func (txInfo *TransferNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
-	WriteInt64IntoBuf(&buf, txInfo.FromAccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex)
+	WriteInt64IntoBuf(&buf, ChainId, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt)
+	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex, txInfo.GasFeeAssetId, packedFee)
+	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex, txInfo.NftIndex)
 	buf.Write(ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus).FillBytes(make([]byte, 32)))
-	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
-	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.GasFeeAssetId)
-	WriteInt64IntoBuf(&buf, packedFee)
 	buf.Write(ffmath.Mod(new(big.Int).SetBytes(txInfo.CallDataHash), curve.Modulus).FillBytes(make([]byte, 32)))
-	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
-	WriteInt64IntoBuf(&buf, txInfo.Nonce)
-	WriteInt64IntoBuf(&buf, ChainId)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)
 	return msgHash, nil

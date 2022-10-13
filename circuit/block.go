@@ -24,4 +24,5 @@ type Block struct {
 	NewStateRoot    []byte
 	BlockCommitment []byte
 	Txs             []*Tx
+	Gas             *Gas
 }

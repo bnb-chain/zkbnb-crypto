@@ -211,14 +211,8 @@ func (txInfo *OfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
 		return nil, err
 	}
-	WriteInt64IntoBuf(&buf, txInfo.Type)
-	WriteInt64IntoBuf(&buf, txInfo.OfferId)
-	WriteInt64IntoBuf(&buf, txInfo.AccountIndex)
-	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
-	WriteInt64IntoBuf(&buf, txInfo.AssetId)
-	WriteInt64IntoBuf(&buf, packedAmount)
-	WriteInt64IntoBuf(&buf, txInfo.ListedAt)
-	WriteInt64IntoBuf(&buf, txInfo.ExpiredAt)
+	WriteInt64IntoBuf(&buf, txInfo.Type, txInfo.OfferId, txInfo.AccountIndex, txInfo.NftIndex)
+	WriteInt64IntoBuf(&buf, txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt)
 	WriteInt64IntoBuf(&buf, txInfo.TreasuryRate)
 	hFunc.Write(buf.Bytes())
 	msgHash = hFunc.Sum(nil)

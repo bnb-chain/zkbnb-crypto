@@ -45,9 +45,6 @@ func main() {
 
 	// transaction
 	// asset
-	js.Global().Set("signAddLiquidity", src2.AddLiquidityTx())
-	js.Global().Set("signRemoveLiquidity", src2.RemoveLiquidityTx())
-	js.Global().Set("signSwap", src2.SwapTx())
 	js.Global().Set("signTransfer", src2.TransferTx())
 	js.Global().Set("signWithdraw", src2.WithdrawTx())
 
