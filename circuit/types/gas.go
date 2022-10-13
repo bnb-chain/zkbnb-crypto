@@ -18,33 +18,35 @@
 package types
 
 import (
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
-	"github.com/consensys/gnark/std/algebra/twistededwards"
-	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
+
+	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
 )
 
-func SetPubKeyWitness(pk *eddsa.PublicKey) (witness eddsaConstraints.PublicKey) {
-	witness.A.X = pk.A.X
-	witness.A.Y = pk.A.Y
-	return witness
+type GasAccount struct {
+	AccountIndex    int64
+	AccountNameHash []byte
+	AccountPk       *eddsa.PublicKey
+	Nonce           int64
+	CollectionNonce int64
+	AssetRoot       []byte
+	AssetsInfo      []*AccountAsset
 }
 
-func EmptyPublicKeyWitness() (witness PublicKeyConstraints) {
-	witness = PublicKeyConstraints{
-		A: twistededwards.Point{
-			X: ZeroInt,
-			Y: ZeroInt,
+func EmptyGasAccount(accountIndex int64, assetRoot []byte) *GasAccount {
+	return &GasAccount{
+		AccountIndex:    accountIndex,
+		AccountNameHash: []byte{},
+		AccountPk: &eddsa.PublicKey{
+			A: curve.Point{
+				X: fr.NewElement(0),
+				Y: fr.NewElement(0),
+			},
 		},
+		Nonce:           0,
+		CollectionNonce: 0,
+		AssetRoot:       assetRoot,
+		AssetsInfo:      []*AccountAsset{},
 	}
-	return witness
-}
-
-func Max(api API, a, b Variable) Variable {
-	maxAB := api.Select(api.IsZero(api.Sub(1, api.Cmp(a, b))), a, b)
-	return maxAB
-}
-
-func Min(api API, a, b Variable) Variable {
-	minAB := api.Select(api.IsZero(api.Add(1, api.Cmp(a, b))), a, b)
-	return minAB
 }

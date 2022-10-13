@@ -36,9 +36,6 @@ func NewPureAbiEncoder(context Context) (AbiEncoder, error) {
 		hint.Register(encoder.HintDefaultAbi)
 		hint.Register(encoder.HintTransferAbi)
 		hint.Register(encoder.HintWithdrawAbi)
-		hint.Register(encoder.HintAddLiquidityAbi)
-		hint.Register(encoder.HintRemoveLiquidityAbi)
-		hint.Register(encoder.HintSwapAbi)
 		hint.Register(encoder.HintCreateCollectionAbi)
 		hint.Register(encoder.HintWithdrawNftAbi)
 		hint.Register(encoder.HintTransferNftAbi)
@@ -61,18 +58,6 @@ func (e *pureAbiEncoder) Pack(api frontend.API, name frontend.Variable, args ...
 		return nil, err
 	}
 	withdrawAbiBytes, err := api.Compiler().NewHint(e.HintWithdrawAbi, StaticArgsOutput, inputs...)
-	if err != nil {
-		return nil, err
-	}
-	addLiquidityAbiBytes, err := api.Compiler().NewHint(e.HintAddLiquidityAbi, StaticArgsOutput, inputs...)
-	if err != nil {
-		return nil, err
-	}
-	removeLiquidityAbiBytes, err := api.Compiler().NewHint(e.HintRemoveLiquidityAbi, StaticArgsOutput, inputs...)
-	if err != nil {
-		return nil, err
-	}
-	swapAbiBytes, err := api.Compiler().NewHint(e.HintSwapAbi, StaticArgsOutput, inputs...)
 	if err != nil {
 		return nil, err
 	}
@@ -106,9 +91,6 @@ func (e *pureAbiEncoder) Pack(api frontend.API, name frontend.Variable, args ...
 		shouldSelectBytes[i] = api.Select(e.context.flags.defaultApiFlag, defaultAbiBytes[i], shouldSelectBytes[i])
 		shouldSelectBytes[i] = api.Select(e.context.flags.transferApiFlag, transferAbiBytes[i], shouldSelectBytes[i])
 		shouldSelectBytes[i] = api.Select(e.context.flags.withdrawApiFlag, withdrawAbiBytes[i], shouldSelectBytes[i])
-		shouldSelectBytes[i] = api.Select(e.context.flags.addLiquidityAbiFlag, addLiquidityAbiBytes[i], shouldSelectBytes[i])
-		shouldSelectBytes[i] = api.Select(e.context.flags.removeLiquidityApiFlag, removeLiquidityAbiBytes[i], shouldSelectBytes[i])
-		shouldSelectBytes[i] = api.Select(e.context.flags.swapApiFlag, swapAbiBytes[i], shouldSelectBytes[i])
 		shouldSelectBytes[i] = api.Select(e.context.flags.createCollectionApiFlag, createCollectionAbiBytes[i], shouldSelectBytes[i])
 		shouldSelectBytes[i] = api.Select(e.context.flags.withdrawNftApiFlag, withdrawNftAbiBytes[i], shouldSelectBytes[i])
 		shouldSelectBytes[i] = api.Select(e.context.flags.transferNftApiFlag, transferNftAbiBytes[i], shouldSelectBytes[i])
@@ -190,50 +172,6 @@ func (e *pureHintAbiEncoder) HintWithdrawAbi(curveId ecc.ID, inputs []*big.Int, 
 
 	bytes, err := e.ABI.Pack("Withdraw", (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), aa16, (uint32)(inputs[18].Uint64()), (uint16)(inputs[19].Uint64()), (uint16)(inputs[20].Uint64()), ta20, inputs[41].Uint64(), (uint32)(inputs[42].Uint64()), (uint32)(inputs[43].Uint64()))
 
-	if err != nil {
-		return err
-	}
-	for i := range results {
-		results[i].SetUint64(256)
-	}
-	for i, b := range bytes {
-		results[i].SetUint64(uint64(b))
-	}
-	return nil
-}
-
-func (e *pureHintAbiEncoder) HintAddLiquidityAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
-	bytes, err := e.ABI.Pack("AddLiquidity", (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), inputs[2], inputs[3], (uint32)(inputs[4].Uint64()), (uint16)(inputs[5].Uint64()), (uint16)(inputs[6].Uint64()), inputs[7].Uint64(), (uint32)(inputs[8].Uint64()), (uint32)(inputs[9].Uint64()))
-
-	if err != nil {
-		return err
-	}
-	for i := range results {
-		results[i].SetUint64(256)
-	}
-	for i, b := range bytes {
-		results[i].SetUint64(uint64(b))
-	}
-	return nil
-}
-
-func (e *pureHintAbiEncoder) HintRemoveLiquidityAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
-	bytes, err := e.ABI.Pack("RemoveLiquidity", (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), inputs[2], inputs[3], inputs[4], (uint32)(inputs[5].Uint64()), (uint16)(inputs[6].Uint64()), (uint16)(inputs[7].Uint64()), inputs[8].Uint64(), (uint32)(inputs[9].Uint64()), (uint32)(inputs[10].Uint64()))
-
-	if err != nil {
-		return err
-	}
-	for i := range results {
-		results[i].SetUint64(256)
-	}
-	for i, b := range bytes {
-		results[i].SetUint64(uint64(b))
-	}
-	return nil
-}
-
-func (e *pureHintAbiEncoder) HintSwapAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
-	bytes, err := e.ABI.Pack("Swap", (uint32)(inputs[0].Uint64()), (uint16)(inputs[1].Uint64()), inputs[2], inputs[3], (uint32)(inputs[4].Uint64()), (uint16)(inputs[5].Uint64()), (uint16)(inputs[6].Uint64()), inputs[7].Uint64(), (uint32)(inputs[8].Uint64()), (uint32)(inputs[9].Uint64()))
 	if err != nil {
 		return err
 	}

@@ -31,14 +31,9 @@ type TxConstraints struct {
 	TxType Variable
 	// different transactions
 	RegisterZnsTxInfo      RegisterZnsTxConstraints
-	CreatePairTxInfo       CreatePairTxConstraints
-	UpdatePairRateTxInfo   UpdatePairRateTxConstraints
 	DepositTxInfo          DepositTxConstraints
 	DepositNftTxInfo       DepositNftTxConstraints
 	TransferTxInfo         TransferTxConstraints
-	SwapTxInfo             SwapTxConstraints
-	AddLiquidityTxInfo     AddLiquidityTxConstraints
-	RemoveLiquidityTxInfo  RemoveLiquidityTxConstraints
 	CreateCollectionTxInfo CreateCollectionTxConstraints
 	MintNftTxInfo          MintNftTxConstraints
 	TransferNftTxInfo      TransferNftTxConstraints
@@ -58,10 +53,6 @@ type TxConstraints struct {
 	AccountRootBefore Variable
 	// account before info, size is 5
 	AccountsInfoBefore [NbAccountsPerTx]types.AccountConstraints
-	// liquidity root before
-	LiquidityRootBefore Variable
-	// liquidity before
-	LiquidityBefore types.LiquidityConstraints
 	// nft root before
 	NftRootBefore Variable
 	// nft before
@@ -70,8 +61,6 @@ type TxConstraints struct {
 	StateRootBefore Variable
 	// before account asset merkle proof
 	MerkleProofsAccountAssetsBefore [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels]Variable
-	// before liquidity merkle proof
-	MerkleProofsLiquidityBefore [LiquidityMerkleLevels]Variable
 	// before nft tree merkle proof
 	MerkleProofsNftBefore [NftMerkleLevels]Variable
 	// before account merkle proof
@@ -87,7 +76,7 @@ func (circuit TxConstraints) Define(api API) error {
 		return err
 	}
 
-	_, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228)
+	_, _, _, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228, []int64{0})
 	if err != nil {
 		return err
 	}
@@ -99,18 +88,15 @@ func VerifyTransaction(
 	tx TxConstraints,
 	hFunc MiMC,
 	blockCreatedAt Variable,
-) (isOnChainOp Variable, pubData [types.PubDataSizePerTx]Variable, err error) {
+	gasAssetIds []int64,
+) (isOnChainOp Variable, pubData [types.PubDataSizePerTx]Variable, roots [types.NbRoots]Variable,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints, err error) {
 	// compute tx type
 	isEmptyTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeEmptyTx))
 	isRegisterZnsTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeRegisterZns))
-	isCreatePairTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeCreatePair))
-	isUpdatePairRateTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeUpdatePairRate))
 	isDepositTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeDeposit))
 	isDepositNftTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeDepositNft))
 	isTransferTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeTransfer))
-	isSwapTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeSwap))
-	isAddLiquidityTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeAddLiquidity))
-	isRemoveLiquidityTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeRemoveLiquidity))
 	isWithdrawTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeWithdraw))
 	isCreateCollectionTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeCreateCollection))
 	isMintNftTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeMintNft))
@@ -124,9 +110,6 @@ func VerifyTransaction(
 	// verify nonce
 	isLayer2Tx := api.Add(
 		isTransferTx,
-		isSwapTx,
-		isAddLiquidityTx,
-		isRemoveLiquidityTx,
 		isWithdrawTx,
 		isCreateCollectionTx,
 		isMintNftTx,
@@ -140,8 +123,6 @@ func VerifyTransaction(
 		isRegisterZnsTx,
 		isDepositTx,
 		isDepositNftTx,
-		isCreatePairTx,
-		isUpdatePairRateTx,
 		isWithdrawTx,
 		isWithdrawNftTx,
 		isFullExitTx,
@@ -150,36 +131,27 @@ func VerifyTransaction(
 
 	// get hash value from tx based on tx type
 	// transfer tx
-	hashVal := types.ComputeHashFromTransferTx(tx.TransferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
-	// swap tx
-	hashValCheck := types.ComputeHashFromSwapTx(tx.SwapTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
-	hashVal = api.Select(isSwapTx, hashValCheck, hashVal)
-	// add liquidity tx
-	hashValCheck = types.ComputeHashFromAddLiquidityTx(tx.AddLiquidityTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
-	hashVal = api.Select(isAddLiquidityTx, hashValCheck, hashVal)
-	// remove liquidity tx
-	hashValCheck = types.ComputeHashFromRemoveLiquidityTx(tx.RemoveLiquidityTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
-	hashVal = api.Select(isRemoveLiquidityTx, hashValCheck, hashVal)
+	hashVal := types.ComputeHashFromTransferTx(api, tx.TransferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	// withdraw tx
-	hashValCheck = types.ComputeHashFromWithdrawTx(tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck := types.ComputeHashFromWithdrawTx(api, tx.WithdrawTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isWithdrawTx, hashValCheck, hashVal)
 	// createCollection tx
-	hashValCheck = types.ComputeHashFromCreateCollectionTx(tx.CreateCollectionTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = types.ComputeHashFromCreateCollectionTx(api, tx.CreateCollectionTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isCreateCollectionTx, hashValCheck, hashVal)
 	// mint nft tx
 	hashValCheck = types.ComputeHashFromMintNftTx(api, tx.MintNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isMintNftTx, hashValCheck, hashVal)
 	// transfer nft tx
-	hashValCheck = types.ComputeHashFromTransferNftTx(tx.TransferNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = types.ComputeHashFromTransferNftTx(api, tx.TransferNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isTransferNftTx, hashValCheck, hashVal)
 	// set nft price tx
-	hashValCheck = types.ComputeHashFromAtomicMatchTx(tx.AtomicMatchTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = types.ComputeHashFromAtomicMatchTx(api, tx.AtomicMatchTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isAtomicMatchTx, hashValCheck, hashVal)
 	// buy nft tx
-	hashValCheck = types.ComputeHashFromCancelOfferTx(tx.CancelOfferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = types.ComputeHashFromCancelOfferTx(api, tx.CancelOfferTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isCancelOfferTx, hashValCheck, hashVal)
 	// withdraw nft tx
-	hashValCheck = types.ComputeHashFromWithdrawNftTx(tx.WithdrawNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
+	hashValCheck = types.ComputeHashFromWithdrawNftTx(api, tx.WithdrawNftTxInfo, tx.Nonce, tx.ExpiredAt, hFunc)
 	hashVal = api.Select(isWithdrawNftTx, hashValCheck, hashVal)
 	hFunc.Reset()
 
@@ -195,7 +167,7 @@ func VerifyTransaction(
 	)
 	if err != nil {
 		log.Println("[VerifyTx] invalid signature:", err)
-		return nil, pubData, err
+		return nil, pubData, roots, gasDeltas, err
 	}
 
 	// verify transactions
@@ -204,28 +176,12 @@ func VerifyTransaction(
 	}
 	pubDataCheck := types.VerifyRegisterZNSTx(api, isRegisterZnsTx, tx.RegisterZnsTxInfo, tx.AccountsInfoBefore)
 	pubData = SelectPubData(api, isRegisterZnsTx, pubDataCheck, pubData)
-	pubDataCheck = types.VerifyCreatePairTx(api, isCreatePairTx, tx.CreatePairTxInfo, tx.LiquidityBefore)
-	pubData = SelectPubData(api, isCreatePairTx, pubDataCheck, pubData)
-	pubDataCheck = types.VerifyUpdatePairRateTx(api, isUpdatePairRateTx, tx.UpdatePairRateTxInfo, tx.LiquidityBefore)
-	pubData = SelectPubData(api, isUpdatePairRateTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyDepositTx(api, isDepositTx, tx.DepositTxInfo, tx.AccountsInfoBefore)
 	pubData = SelectPubData(api, isDepositTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyDepositNftTx(api, isDepositNftTx, tx.DepositNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	pubData = SelectPubData(api, isDepositNftTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyTransferTx(api, isTransferTx, &tx.TransferTxInfo, tx.AccountsInfoBefore)
 	pubData = SelectPubData(api, isTransferTx, pubDataCheck, pubData)
-	pubDataCheck = types.VerifySwapTx(api, isSwapTx, &tx.SwapTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
-	pubData = SelectPubData(api, isSwapTx, pubDataCheck, pubData)
-	pubDataCheck, err = types.VerifyAddLiquidityTx(api, isAddLiquidityTx, &tx.AddLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
-	if err != nil {
-		return nil, pubData, err
-	}
-	pubData = SelectPubData(api, isAddLiquidityTx, pubDataCheck, pubData)
-	pubDataCheck, err = types.VerifyRemoveLiquidityTx(api, isRemoveLiquidityTx, &tx.RemoveLiquidityTxInfo, tx.AccountsInfoBefore, tx.LiquidityBefore)
-	if err != nil {
-		return nil, pubData, err
-	}
-	pubData = SelectPubData(api, isRemoveLiquidityTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyCreateCollectionTx(api, isCreateCollectionTx, &tx.CreateCollectionTxInfo, tx.AccountsInfoBefore)
 	pubData = SelectPubData(api, isCreateCollectionTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyWithdrawTx(api, isWithdrawTx, &tx.WithdrawTxInfo, tx.AccountsInfoBefore)
@@ -240,7 +196,7 @@ func VerifyTransaction(
 		hFunc,
 	)
 	if err != nil {
-		return nil, pubData, err
+		return nil, pubData, roots, gasDeltas, err
 	}
 	pubData = SelectPubData(api, isAtomicMatchTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyCancelOfferTx(api, isCancelOfferTx, &tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
@@ -257,28 +213,14 @@ func VerifyTransaction(
 
 	// empty delta
 	var (
-		assetDeltas    [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints
-		liquidityDelta LiquidityDeltaConstraints
-		nftDelta       NftDeltaConstraints
+		assetDeltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints
+		nftDelta    NftDeltaConstraints
 	)
 	for i := 0; i < NbAccountsPerTx; i++ {
 		assetDeltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
-			EmptyAccountAssetDeltaConstraints(),
 		}
-	}
-	liquidityDelta = LiquidityDeltaConstraints{
-		AssetAId:             tx.LiquidityBefore.AssetAId,
-		AssetBId:             tx.LiquidityBefore.AssetBId,
-		AssetADelta:          types.ZeroInt,
-		AssetBDelta:          types.ZeroInt,
-		LpDelta:              types.ZeroInt,
-		KLast:                tx.LiquidityBefore.KLast,
-		FeeRate:              tx.LiquidityBefore.FeeRate,
-		TreasuryAccountIndex: tx.LiquidityBefore.TreasuryAccountIndex,
-		TreasuryRate:         tx.LiquidityBefore.TreasuryRate,
 	}
 	nftDelta = NftDeltaConstraints{
 		CreatorAccountIndex: tx.NftBefore.CreatorAccountIndex,
@@ -289,61 +231,54 @@ func VerifyTransaction(
 		CreatorTreasuryRate: tx.NftBefore.CreatorTreasuryRate,
 		CollectionId:        tx.NftBefore.CollectionId,
 	}
+	for i := 0; i < NbGasAssetsPerTx; i++ {
+		gasDeltas[i] = EmptyGasDeltaConstraints(gasAssetIds[0])
+	}
 
 	// register
 	accountDelta := GetAccountDeltaFromRegisterZNS(tx.RegisterZnsTxInfo)
 	// deposit
 	assetDeltasCheck := GetAssetDeltasFromDeposit(tx.DepositTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isDepositTx, assetDeltasCheck, assetDeltas)
-	// create pair
-	liquidityDeltaCheck := GetLiquidityDeltaFromCreatePair(tx.CreatePairTxInfo)
-	liquidityDelta = SelectLiquidityDelta(api, isCreatePairTx, liquidityDeltaCheck, liquidityDelta)
-	// update pair rate
-	liquidityDeltaCheck = GetLiquidityDeltaFromUpdatePairRate(tx.UpdatePairRateTxInfo, tx.LiquidityBefore)
-	liquidityDelta = SelectLiquidityDelta(api, isUpdatePairRateTx, liquidityDeltaCheck, liquidityDelta)
 	// generic transfer
-	assetDeltasCheck = GetAssetDeltasFromTransfer(api, tx.TransferTxInfo)
+	assetDeltasCheck, gasDeltasCheck := GetAssetDeltasFromTransfer(api, tx.TransferTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isTransferTx, assetDeltasCheck, assetDeltas)
-	// swap
-	assetDeltasCheck, liquidityDeltaCheck = GetAssetDeltasAndLiquidityDeltaFromSwap(api, tx.SwapTxInfo, tx.LiquidityBefore)
-	assetDeltas = SelectAssetDeltas(api, isSwapTx, assetDeltasCheck, assetDeltas)
-	liquidityDelta = SelectLiquidityDelta(api, isSwapTx, liquidityDeltaCheck, liquidityDelta)
-	// add liquidity
-	assetDeltasCheck, liquidityDeltaCheck = GetAssetDeltasAndLiquidityDeltaFromAddLiquidity(api, tx.AddLiquidityTxInfo, tx.LiquidityBefore)
-	assetDeltas = SelectAssetDeltas(api, isAddLiquidityTx, assetDeltasCheck, assetDeltas)
-	liquidityDelta = SelectLiquidityDelta(api, isAddLiquidityTx, liquidityDeltaCheck, liquidityDelta)
-	// remove liquidity
-	assetDeltasCheck, liquidityDeltaCheck = GetAssetDeltasAndLiquidityDeltaFromRemoveLiquidity(api, tx.RemoveLiquidityTxInfo, tx.LiquidityBefore)
-	assetDeltas = SelectAssetDeltas(api, isRemoveLiquidityTx, assetDeltasCheck, assetDeltas)
-	liquidityDelta = SelectLiquidityDelta(api, isRemoveLiquidityTx, liquidityDeltaCheck, liquidityDelta)
+	gasDeltas = SelectGasDeltas(api, isTransferTx, gasDeltasCheck, gasDeltas)
 	// withdraw
-	assetDeltasCheck = GetAssetDeltasFromWithdraw(api, tx.WithdrawTxInfo)
+	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromWithdraw(api, tx.WithdrawTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isWithdrawTx, assetDeltasCheck, assetDeltas)
+	gasDeltas = SelectGasDeltas(api, isWithdrawTx, gasDeltasCheck, gasDeltas)
 	// deposit nft
 	nftDeltaCheck := GetNftDeltaFromDepositNft(tx.DepositNftTxInfo)
 	nftDelta = SelectNftDeltas(api, isDepositNftTx, nftDeltaCheck, nftDelta)
 	// create collection
-	assetDeltasCheck = GetAssetDeltasFromCreateCollection(api, tx.CreateCollectionTxInfo)
+	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromCreateCollection(api, tx.CreateCollectionTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isCreateCollectionTx, assetDeltasCheck, assetDeltas)
+	gasDeltas = SelectGasDeltas(api, isCreateCollectionTx, gasDeltasCheck, gasDeltas)
 	// mint nft
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromMintNft(api, tx.MintNftTxInfo)
+	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromMintNft(api, tx.MintNftTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isMintNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isMintNftTx, nftDeltaCheck, nftDelta)
+	gasDeltas = SelectGasDeltas(api, isMintNftTx, gasDeltasCheck, gasDeltas)
 	// transfer nft
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromTransferNft(api, tx.TransferNftTxInfo, tx.NftBefore)
+	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromTransferNft(api, tx.TransferNftTxInfo, tx.NftBefore)
 	assetDeltas = SelectAssetDeltas(api, isTransferNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isTransferNftTx, nftDeltaCheck, nftDelta)
+	gasDeltas = SelectGasDeltas(api, isTransferNftTx, gasDeltasCheck, gasDeltas)
 	// set nft price
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromAtomicMatch(api, isAtomicMatchTx, tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
+	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromAtomicMatch(api, isAtomicMatchTx, tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	assetDeltas = SelectAssetDeltas(api, isAtomicMatchTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isAtomicMatchTx, nftDeltaCheck, nftDelta)
+	gasDeltas = SelectGasDeltas(api, isAtomicMatchTx, gasDeltasCheck, gasDeltas)
 	// buy nft
-	assetDeltasCheck = GetAssetDeltasFromCancelOffer(api, isCancelOfferTx, tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
+	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromCancelOffer(api, isCancelOfferTx, tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
 	assetDeltas = SelectAssetDeltas(api, isCancelOfferTx, assetDeltasCheck, assetDeltas)
+	gasDeltas = SelectGasDeltas(api, isCancelOfferTx, gasDeltasCheck, gasDeltas)
 	// withdraw nft
-	assetDeltasCheck, nftDeltaCheck = GetAssetDeltasAndNftDeltaFromWithdrawNft(api, tx.WithdrawNftTxInfo)
+	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromWithdrawNft(api, tx.WithdrawNftTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isWithdrawNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isWithdrawNftTx, nftDeltaCheck, nftDelta)
+	gasDeltas = SelectGasDeltas(api, isWithdrawNftTx, gasDeltasCheck, gasDeltas)
 	// full exit
 	assetDeltasCheck = GetAssetDeltasFromFullExit(api, tx.FullExitTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isFullExitTx, assetDeltasCheck, assetDeltas)
@@ -358,8 +293,6 @@ func VerifyTransaction(
 	// update nonce
 	AccountsInfoAfter[0].Nonce = api.Add(AccountsInfoAfter[0].Nonce, isLayer2Tx)
 	AccountsInfoAfter[0].CollectionNonce = api.Add(AccountsInfoAfter[0].CollectionNonce, isCreateCollectionTx)
-	// update liquidity
-	LiquidityAfter := UpdateLiquidity(api, tx.LiquidityBefore, liquidityDelta)
 	// update nft
 	NftAfter := UpdateNft(tx.NftBefore, nftDelta)
 
@@ -367,14 +300,13 @@ func VerifyTransaction(
 	hFunc.Reset()
 	hFunc.Write(
 		tx.AccountRootBefore,
-		tx.LiquidityRootBefore,
 		tx.NftRootBefore,
 	)
 	oldStateRoot := hFunc.Sum()
 	notEmptyTx := api.IsZero(isEmptyTx)
 	types.IsVariableEqual(api, notEmptyTx, oldStateRoot, tx.StateRootBefore)
 
-	NewAccountRoot := tx.AccountRootBefore
+	newAccountRoot := tx.AccountRootBefore
 	for i := 0; i < NbAccountsPerTx; i++ {
 		var (
 			NewAccountAssetsRoot = tx.AccountsInfoBefore[i].AssetRoot
@@ -386,7 +318,6 @@ func VerifyTransaction(
 			hFunc.Reset()
 			hFunc.Write(
 				tx.AccountsInfoBefore[i].AssetsInfo[j].Balance,
-				tx.AccountsInfoBefore[i].AssetsInfo[j].LpAmount,
 				tx.AccountsInfoBefore[i].AssetsInfo[j].OfferCanceledOrFinalized,
 			)
 			assetNodeHash := hFunc.Sum()
@@ -404,7 +335,6 @@ func VerifyTransaction(
 			hFunc.Reset()
 			hFunc.Write(
 				AccountsInfoAfter[i].AssetsInfo[j].Balance,
-				AccountsInfoAfter[i].AssetsInfo[j].LpAmount,
 				AccountsInfoAfter[i].AssetsInfo[j].OfferCanceledOrFinalized,
 			)
 			assetNodeHash = hFunc.Sum()
@@ -432,7 +362,7 @@ func VerifyTransaction(
 			api,
 			notEmptyTx,
 			hFunc,
-			NewAccountRoot,
+			newAccountRoot,
 			accountNodeHash,
 			tx.MerkleProofsAccountBefore[i][:],
 			accountIndexMerkleHelper,
@@ -449,55 +379,11 @@ func VerifyTransaction(
 		accountNodeHash = hFunc.Sum()
 		hFunc.Reset()
 		// update merkle proof
-		NewAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, tx.MerkleProofsAccountBefore[i][:], accountIndexMerkleHelper)
+		newAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, tx.MerkleProofsAccountBefore[i][:], accountIndexMerkleHelper)
 	}
 
-	//// liquidity tree
-	NewLiquidityRoot := tx.LiquidityRootBefore
-	api.AssertIsLessOrEqual(tx.LiquidityBefore.PairIndex, LastPairIndex)
-	pairIndexMerkleHelper := PairIndexToMerkleHelper(api, tx.LiquidityBefore.PairIndex)
-	hFunc.Write(
-		tx.LiquidityBefore.AssetAId,
-		tx.LiquidityBefore.AssetA,
-		tx.LiquidityBefore.AssetBId,
-		tx.LiquidityBefore.AssetB,
-		tx.LiquidityBefore.LpAmount,
-		tx.LiquidityBefore.KLast,
-		tx.LiquidityBefore.FeeRate,
-		tx.LiquidityBefore.TreasuryAccountIndex,
-		tx.LiquidityBefore.TreasuryRate,
-	)
-	liquidityNodeHash := hFunc.Sum()
-	// verify account merkle proof
-	hFunc.Reset()
-	types.VerifyMerkleProof(
-		api,
-		notEmptyTx,
-		hFunc,
-		NewLiquidityRoot,
-		liquidityNodeHash,
-		tx.MerkleProofsLiquidityBefore[:],
-		pairIndexMerkleHelper,
-	)
-	hFunc.Reset()
-	hFunc.Write(
-		LiquidityAfter.AssetAId,
-		LiquidityAfter.AssetA,
-		LiquidityAfter.AssetBId,
-		LiquidityAfter.AssetB,
-		LiquidityAfter.LpAmount,
-		LiquidityAfter.KLast,
-		LiquidityAfter.FeeRate,
-		LiquidityAfter.TreasuryAccountIndex,
-		LiquidityAfter.TreasuryRate,
-	)
-	liquidityNodeHash = hFunc.Sum()
-	hFunc.Reset()
-	// update merkle proof
-	NewLiquidityRoot = types.UpdateMerkleProof(api, hFunc, liquidityNodeHash, tx.MerkleProofsLiquidityBefore[:], pairIndexMerkleHelper)
-
 	//// nft tree
-	NewNftRoot := tx.NftRootBefore
+	newNftRoot := tx.NftRootBefore
 	api.AssertIsLessOrEqual(tx.NftBefore.NftIndex, LastNftIndex)
 	nftIndexMerkleHelper := NftIndexToMerkleHelper(api, tx.NftBefore.NftIndex)
 	hFunc.Reset()
@@ -517,7 +403,7 @@ func VerifyTransaction(
 		api,
 		notEmptyTx,
 		hFunc,
-		NewNftRoot,
+		newNftRoot,
 		nftNodeHash,
 		tx.MerkleProofsNftBefore[:],
 		nftIndexMerkleHelper,
@@ -535,44 +421,42 @@ func VerifyTransaction(
 	nftNodeHash = hFunc.Sum()
 	hFunc.Reset()
 	// update merkle proof
-	NewNftRoot = types.UpdateMerkleProof(api, hFunc, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)
+	newNftRoot = types.UpdateMerkleProof(api, hFunc, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)
 
 	// check state root
 	hFunc.Reset()
 	hFunc.Write(
-		NewAccountRoot,
-		NewLiquidityRoot,
-		NewNftRoot,
+		newAccountRoot,
+		newNftRoot,
 	)
 	newStateRoot := hFunc.Sum()
 	types.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
-	return isOnChainOp, pubData, nil
+
+	roots[0] = newAccountRoot
+	roots[1] = newNftRoot
+	return isOnChainOp, pubData, roots, gasDeltas, nil
 }
 
-func EmptyTx() (oTx *Tx) {
+func EmptyTx(stateRoot []byte) (oTx *Tx) {
 	oTx = &Tx{
 		TxType:            types.TxTypeEmptyTx,
 		Nonce:             0,
 		ExpiredAt:         0,
 		Signature:         types.EmptySignature(),
 		AccountRootBefore: make([]byte, 32),
-		AccountsInfoBefore: [5]*types.Account{
-			types.EmptyAccount(0, make([]byte, 32)),
+		AccountsInfoBefore: [NbAccountsPerTx]*types.Account{
 			types.EmptyAccount(0, make([]byte, 32)),
 			types.EmptyAccount(0, make([]byte, 32)),
 			types.EmptyAccount(0, make([]byte, 32)),
 			types.EmptyAccount(0, make([]byte, 32)),
 		},
-		LiquidityRootBefore:             make([]byte, 32),
-		LiquidityBefore:                 types.EmptyLiquidity(0),
 		NftRootBefore:                   make([]byte, 32),
 		NftBefore:                       types.EmptyNft(0),
-		StateRootBefore:                 make([]byte, 32),
+		StateRootBefore:                 stateRoot,
 		MerkleProofsAccountAssetsBefore: [NbAccountsPerTx][NbAccountAssetsPerAccount][AssetMerkleLevels][]byte{},
 		MerkleProofsAccountBefore:       [NbAccountsPerTx][AccountMerkleLevels][]byte{},
-		MerkleProofsLiquidityBefore:     [LiquidityMerkleLevels][]byte{},
 		MerkleProofsNftBefore:           [NftMerkleLevels][]byte{},
-		StateRootAfter:                  make([]byte, 32),
+		StateRootAfter:                  stateRoot,
 	}
 	for i := 0; i < NbAccountsPerTx; i++ {
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
@@ -584,9 +468,6 @@ func EmptyTx() (oTx *Tx) {
 			oTx.MerkleProofsAccountBefore[i][j] = make([]byte, 32)
 		}
 	}
-	for i := 0; i < LiquidityMerkleLevels; i++ {
-		oTx.MerkleProofsLiquidityBefore[i] = make([]byte, 32)
-	}
 	for i := 0; i < NftMerkleLevels; i++ {
 		oTx.MerkleProofsNftBefore[i] = make([]byte, 32)
 	}
@@ -596,14 +477,9 @@ func EmptyTx() (oTx *Tx) {
 func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	witness.TxType = int64(oTx.TxType)
 	witness.RegisterZnsTxInfo = types.EmptyRegisterZnsTxWitness()
-	witness.CreatePairTxInfo = types.EmptyCreatePairTxWitness()
-	witness.UpdatePairRateTxInfo = types.EmptyUpdatePairRateTxWitness()
 	witness.DepositTxInfo = types.EmptyDepositTxWitness()
 	witness.DepositNftTxInfo = types.EmptyDepositNftTxWitness()
 	witness.TransferTxInfo = types.EmptyTransferTxWitness()
-	witness.SwapTxInfo = types.EmptySwapTxWitness()
-	witness.AddLiquidityTxInfo = types.EmptyAddLiquidityTxWitness()
-	witness.RemoveLiquidityTxInfo = types.EmptyRemoveLiquidityTxWitness()
 	witness.CreateCollectionTxInfo = types.EmptyCreateCollectionTxWitness()
 	witness.MintNftTxInfo = types.EmptyMintNftTxWitness()
 	witness.TransferNftTxInfo = types.EmptyTransferNftTxWitness()
@@ -622,12 +498,6 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	case types.TxTypeRegisterZns:
 		witness.RegisterZnsTxInfo = types.SetRegisterZnsTxWitness(oTx.RegisterZnsTxInfo)
 		break
-	case types.TxTypeCreatePair:
-		witness.CreatePairTxInfo = types.SetCreatePairTxWitness(oTx.CreatePairTxInfo)
-		break
-	case types.TxTypeUpdatePairRate:
-		witness.UpdatePairRateTxInfo = types.SetUpdatePairRateTxWitness(oTx.UpdatePairRateTxInfo)
-		break
 	case types.TxTypeDeposit:
 		witness.DepositTxInfo = types.SetDepositTxWitness(oTx.DepositTxInfo)
 		break
@@ -636,24 +506,6 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		break
 	case types.TxTypeTransfer:
 		witness.TransferTxInfo = types.SetTransferTxWitness(oTx.TransferTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
-		break
-	case types.TxTypeSwap:
-		witness.SwapTxInfo = types.SetSwapTxWitness(oTx.SwapTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
-		break
-	case types.TxTypeAddLiquidity:
-		witness.AddLiquidityTxInfo = types.SetAddLiquidityTxWitness(oTx.AddLiquidityTxInfo)
-		witness.Signature.R.X = oTx.Signature.R.X
-		witness.Signature.R.Y = oTx.Signature.R.Y
-		witness.Signature.S = oTx.Signature.S[:]
-		break
-	case types.TxTypeRemoveLiquidity:
-		witness.RemoveLiquidityTxInfo = types.SetRemoveLiquidityTxWitness(oTx.RemoveLiquidityTxInfo)
 		witness.Signature.R.X = oTx.Signature.R.X
 		witness.Signature.R.Y = oTx.Signature.R.Y
 		witness.Signature.S = oTx.Signature.S[:]
@@ -713,17 +565,11 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	// set common account & merkle parts
 	// account root before
 	witness.AccountRootBefore = oTx.AccountRootBefore
-	witness.LiquidityRootBefore = oTx.LiquidityRootBefore
 	witness.NftRootBefore = oTx.NftRootBefore
 	witness.StateRootBefore = oTx.StateRootBefore
 	witness.StateRootAfter = oTx.StateRootAfter
 
 	// before
-	witness.LiquidityBefore, err = types.SetLiquidityWitness(oTx.LiquidityBefore)
-	if err != nil {
-		log.Println("[SetTxWitness] unable to set liquidity witness:", err.Error())
-		return witness, err
-	}
 	witness.NftBefore, err = types.SetNftWitness(oTx.NftBefore)
 	if err != nil {
 		log.Println("[SetTxWitness] unable to set nft witness:", err.Error())
@@ -748,10 +594,6 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 			// account before
 			witness.MerkleProofsAccountBefore[i][j] = oTx.MerkleProofsAccountBefore[i][j]
 		}
-	}
-	for i := 0; i < LiquidityMerkleLevels; i++ {
-		// liquidity assets before
-		witness.MerkleProofsLiquidityBefore[i] = oTx.MerkleProofsLiquidityBefore[i]
 	}
 	for i := 0; i < NftMerkleLevels; i++ {
 		// nft assets before

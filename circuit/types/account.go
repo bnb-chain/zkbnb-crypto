@@ -52,8 +52,6 @@ func EmptyAccount(accountIndex int64, assetRoot []byte) *Account {
 		AssetsInfo: [NbAccountAssetsPerAccount]*AccountAsset{
 			EmptyAccountAsset(0),
 			EmptyAccountAsset(0),
-			EmptyAccountAsset(0),
-			EmptyAccountAsset(0),
 		},
 	}
 }
@@ -61,7 +59,6 @@ func EmptyAccount(accountIndex int64, assetRoot []byte) *Account {
 type AccountAsset struct {
 	AssetId                  int64
 	Balance                  *big.Int
-	LpAmount                 *big.Int
 	OfferCanceledOrFinalized *big.Int
 }
 
@@ -69,7 +66,6 @@ func EmptyAccountAsset(assetId int64) *AccountAsset {
 	return &AccountAsset{
 		AssetId:                  assetId,
 		Balance:                  big.NewInt(0),
-		LpAmount:                 big.NewInt(0),
 		OfferCanceledOrFinalized: big.NewInt(0),
 	}
 }

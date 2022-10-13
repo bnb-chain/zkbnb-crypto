@@ -17,6 +17,10 @@
 
 package types
 
+import (
+	"math/big"
+)
+
 func UnpackAmount(api API, packedAmount Variable) Variable {
 	amountBits := api.ToBinary(packedAmount, 40)
 	mantissa := api.FromBinary(amountBits[5:]...)
@@ -39,4 +43,13 @@ func UnpackFee(api API, packedFee Variable) Variable {
 		exponent = api.Select(isRemain, api.Sub(exponent, 1), exponent)
 	}
 	return mantissa
+}
+
+func PackInt64Variables(api API, inputs ...Variable) Variable {
+	res := inputs[0]
+	for _, input := range inputs[1:] {
+		res = api.Mul(res, new(big.Int).Exp(big.NewInt(2), big.NewInt(64), nil))
+		res = api.Add(res, input)
+	}
+	return res
 }

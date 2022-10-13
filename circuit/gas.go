@@ -18,19 +18,12 @@
 package circuit
 
 import (
-	"fmt"
-	"testing"
-
-	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/frontend/cs/r1cs"
+	"github.com/bnb-chain/zkbnb-crypto/circuit/types"
 )
 
-func TestVerifyTransaction(t *testing.T) {
-	var circuit TxConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	if err != nil {
-		t.Fatal(err)
-	}
-	fmt.Println("constraints:", r1cs.GetNbConstraints())
+type Gas struct {
+	GasAssetCount                   int
+	AccountInfoBefore               *types.GasAccount
+	MerkleProofsAccountBefore       [AccountMerkleLevels][]byte
+	MerkleProofsAccountAssetsBefore [][AssetMerkleLevels][]byte
 }

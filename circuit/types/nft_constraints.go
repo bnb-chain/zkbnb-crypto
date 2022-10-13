@@ -44,7 +44,7 @@ func CheckEmptyNftNode(api API, flag Variable, nft NftConstraints) {
 }
 
 /*
-	SetNftWitness: set liquidity witness
+	SetNftWitness: set nft witness
 */
 func SetNftWitness(nft *Nft) (witness NftConstraints, err error) {
 	if nft == nil {
