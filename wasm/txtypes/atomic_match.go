@@ -20,7 +20,6 @@ package txtypes
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"hash"
 	"log"
@@ -28,6 +27,7 @@ import (
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	"github.com/pkg/errors"
 )
 
 type AtomicMatchSegmentFormat struct {
@@ -47,7 +47,7 @@ type AtomicMatchSegmentFormat struct {
 }
 
 /*
-	ConstructMintNftTxInfo: construct mint nft tx, sign txInfo
+ConstructMintNftTxInfo: construct mint nft tx, sign txInfo
 */
 func ConstructAtomicMatchTxInfo(sk *PrivateKey, segmentStr string) (txInfo *AtomicMatchTxInfo, err error) {
 	var segmentFormat *AtomicMatchSegmentFormat
@@ -122,10 +122,10 @@ type AtomicMatchTxInfo struct {
 func (txInfo *AtomicMatchTxInfo) Validate() error {
 	// AccountIndex
 	if txInfo.AccountIndex < minAccountIndex {
-		return fmt.Errorf("AccountIndex should not be less than %d", minAccountIndex)
+		return ErrAccountIndexTooLow
 	}
 	if txInfo.AccountIndex > maxAccountIndex {
-		return fmt.Errorf("AccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrAccountIndexTooHigh
 	}
 
 	// BuyOffer
@@ -133,7 +133,7 @@ func (txInfo *AtomicMatchTxInfo) Validate() error {
 		return fmt.Errorf("BuyOffer should not be nil")
 	}
 	if err := txInfo.BuyOffer.Validate(); err != nil {
-		return fmt.Errorf("BuyOffer is invalid, %s", err.Error())
+		return errors.Wrap(ErrBuyOfferInvalid, err.Error())
 	}
 
 	// SellOffer
@@ -141,23 +141,23 @@ func (txInfo *AtomicMatchTxInfo) Validate() error {
 		return fmt.Errorf("SellOffer should not be nil")
 	}
 	if err := txInfo.SellOffer.Validate(); err != nil {
-		return fmt.Errorf("SellOffer is invalid, %s", err.Error())
+		return errors.Wrap(ErrSellOfferInvalid, err.Error())
 	}
 
 	// GasAccountIndex
 	if txInfo.GasAccountIndex < minAccountIndex {
-		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+		return ErrGasAccountIndexTooLow
 	}
 	if txInfo.GasAccountIndex > maxAccountIndex {
-		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrGasAccountIndexTooHigh
 	}
 
 	// GasFeeAssetId
 	if txInfo.GasFeeAssetId < minAssetId {
-		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+		return ErrGasFeeAssetIdTooLow
 	}
 	if txInfo.GasFeeAssetId > maxAssetId {
-		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+		return ErrGasFeeAssetIdTooHigh
 	}
 
 	// GasFeeAssetAmount
@@ -165,15 +165,15 @@ func (txInfo *AtomicMatchTxInfo) Validate() error {
 		return fmt.Errorf("GasFeeAssetAmount should not be nil")
 	}
 	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
-		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+		return ErrGasFeeAssetAmountTooLow
 	}
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
-		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+		return ErrGasFeeAssetAmountTooHigh
 	}
 
 	// Nonce
 	if txInfo.Nonce < minNonce {
-		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+		return ErrNonceTooLow
 	}
 
 	return nil

@@ -105,36 +105,36 @@ type OfferTxInfo struct {
 func (txInfo *OfferTxInfo) Validate() error {
 	// Type
 	if txInfo.Type != BuyOfferType && txInfo.Type != SellOfferType {
-		return fmt.Errorf("Type should only be buy(%d) and sell(%d)", BuyOfferType, SellOfferType)
+		return ErrOfferTypeInvalid
 	}
 
 	// OfferId
 	if txInfo.OfferId < 0 {
-		return fmt.Errorf("OfferId should not be less than 0")
+		return ErrOfferIdTooLow
 	}
 
 	// AccountIndex
 	if txInfo.AccountIndex < minAccountIndex {
-		return fmt.Errorf("AccountIndex should not be less than %d", minAccountIndex)
+		return ErrAccountIndexTooLow
 	}
 	if txInfo.AccountIndex > maxAccountIndex {
-		return fmt.Errorf("AccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrAccountIndexTooHigh
 	}
 
 	// NftIndex
 	if txInfo.NftIndex < minNftIndex {
-		return fmt.Errorf("NftIndex should not be less than %d", minNftIndex)
+		return ErrNftIndexTooLow
 	}
 	if txInfo.NftIndex > maxNftIndex {
-		return fmt.Errorf("NftIndex should not be larger than %d", maxNftIndex)
+		return ErrNftIndexTooHigh
 	}
 
 	// AssetId
 	if txInfo.AssetId < minAssetId {
-		return fmt.Errorf("AssetId should not be less than %d", minAssetId)
+		return ErrAssetIdTooLow
 	}
 	if txInfo.AssetId > maxAssetId {
-		return fmt.Errorf("AssetId should not be larger than %d", maxAssetId)
+		return ErrAssetIdTooHigh
 	}
 
 	// AssetAmount
@@ -142,23 +142,23 @@ func (txInfo *OfferTxInfo) Validate() error {
 		return fmt.Errorf("AssetAmount should not be nil")
 	}
 	if txInfo.AssetAmount.Cmp(minAssetAmount) <= 0 {
-		return fmt.Errorf("AssetAmount should be larger than %s", minAssetAmount.String())
+		return ErrAssetAmountTooLow
 	}
 	if txInfo.AssetAmount.Cmp(maxAssetAmount) > 0 {
-		return fmt.Errorf("AssetAmount should not be larger than %s", maxAssetAmount.String())
+		return ErrAssetAmountTooHigh
 	}
 
 	// ListedAt
 	if txInfo.ListedAt <= 0 {
-		return fmt.Errorf("ListedAt should be larger than 0")
+		return ErrListedAtTooLow
 	}
 
 	// TreasuryRate
 	if txInfo.TreasuryRate < minTreasuryRate {
-		return fmt.Errorf("TreasuryRate should  not be less than %d", minTreasuryRate)
+		return ErrTreasuryRateTooLow
 	}
 	if txInfo.TreasuryRate > maxTreasuryRate {
-		return fmt.Errorf("TreasuryRate should not be larger than %d", maxTreasuryRate)
+		return ErrTreasuryRateTooHigh
 	}
 	return nil
 }
