@@ -24,3 +24,7 @@ require (
 	golang.org/x/sys v0.0.0-20220927170352-d9d178bc13c6 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
+
+replace (
+	github.com/consensys/gnark => ../gnark-private
+)

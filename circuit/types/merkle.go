@@ -17,6 +17,8 @@
 
 package types
 
+import "github.com/consensys/gnark/std/hash/poseidon"
+
 /*
 VerifyMerkleProof: takes a Merkle root, a proofSet, and a proofIndex and returns
 
@@ -29,7 +31,7 @@ func VerifyMerkleProof(api API, isEnabled Variable, h MiMC, merkleRoot Variable,
 		api.AssertIsBoolean(helper[i])
 		d1 := api.Select(helper[i], proofSet[i], node)
 		d2 := api.Select(helper[i], node, proofSet[i])
-		node = nodeSum(h, d1, d2)
+		node = nodeSumPoseidon(api, d1, d2)
 	}
 	// Compare our calculated Merkle root to the desired Merkle root.
 	IsVariableEqual(api, isEnabled, merkleRoot, node)
@@ -40,7 +42,7 @@ func UpdateMerkleProof(api API, h MiMC, node Variable, proofSet, helper []Variab
 		api.AssertIsBoolean(helper[i])
 		d1 := api.Select(helper[i], proofSet[i], node)
 		d2 := api.Select(helper[i], node, proofSet[i])
-		node = nodeSum(h, d1, d2)
+		node = nodeSumPoseidon(api, d1, d2)
 	}
 	root = node
 	return root
@@ -52,5 +54,10 @@ func nodeSum(h MiMC, a, b Variable) Variable {
 	h.Write(a)
 	h.Write(b)
 	res := h.Sum()
+	return res
+}
+
+func nodeSumPoseidon(api API, a, b Variable) Variable {
+	res := poseidon.Poseidon(api, a, b)
 	return res
 }
