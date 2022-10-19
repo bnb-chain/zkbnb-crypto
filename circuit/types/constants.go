@@ -46,6 +46,8 @@ const (
 
 	PubDataSizePerTx = 6
 
+	PubDataBitsSizePerTx = 1064 // registerZNS
+
 	OfferSizePerAsset = 128
 
 	ChainId = 1

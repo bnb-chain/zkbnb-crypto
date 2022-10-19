@@ -71,9 +71,9 @@ func SelectNftDeltas(
 func SelectPubData(
 	api API,
 	flag Variable,
-	delta, deltaCheck [types.PubDataSizePerTx]Variable,
-) (deltaRes [types.PubDataSizePerTx]Variable) {
-	for i := 0; i < types.PubDataSizePerTx; i++ {
+	delta, deltaCheck [types.PubDataBitsSizePerTx]Variable,
+) (deltaRes [types.PubDataBitsSizePerTx]Variable) {
+	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
 		deltaRes[i] = api.Select(flag, delta[i], deltaCheck[i])
 	}
 	return deltaRes

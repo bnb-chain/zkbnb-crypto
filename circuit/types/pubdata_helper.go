@@ -17,334 +17,460 @@
 
 package types
 
-func CollectPubDataFromRegisterZNS(api API, txInfo RegisterZnsTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromRegisterZNS(api API, txInfo RegisterZnsTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeRegisterZns, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
 	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
-	ABits := append(accountIndexBits, txTypeBits...)
-	var paddingSize [216]Variable
-	for i := 0; i < 216; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	pubData[1] = txInfo.AccountName
-	pubData[2] = txInfo.AccountNameHash
-	pubData[3] = txInfo.PubKey.A.X
-	pubData[4] = txInfo.PubKey.A.Y
-	for i := 5; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], accountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
+	accountNameBits := api.ToBinary(txInfo.AccountName, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], accountNameBits)
+	currentOffset += HashBitsSize
+
+	accountNameHashBits := api.ToBinary(txInfo.AccountNameHash, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], accountNameHashBits)
+	currentOffset += HashBitsSize
+
+	PubkeyXBits := api.ToBinary(txInfo.PubKey.A.X, PubkeyBitsSize)
+	copy(pubData[currentOffset:currentOffset+PubkeyBitsSize], PubkeyXBits)
+	currentOffset += PubkeyBitsSize
+
+	PubkeyYBits := api.ToBinary(txInfo.PubKey.A.Y, PubkeyBitsSize)
+	copy(pubData[currentOffset:currentOffset+PubkeyBitsSize], PubkeyYBits)
+	currentOffset += PubkeyBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
-func CollectPubDataFromDeposit(api API, txInfo DepositTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromDeposit(api API, txInfo DepositTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeDeposit, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
 	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], accountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	assetIdBits := api.ToBinary(txInfo.AssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], assetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	assetAmountBits := api.ToBinary(txInfo.AssetAmount, StateAmountBitsSize)
-	ABits := append(accountIndexBits, txTypeBits...)
-	ABits = append(assetIdBits, ABits...)
-	ABits = append(assetAmountBits, ABits...)
-	var paddingSize [72]Variable
-	for i := 0; i < 72; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	pubData[1] = txInfo.AccountNameHash
-	for i := 2; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+StateAmountBitsSize], assetAmountBits)
+	currentOffset += StateAmountBitsSize
+
+	accountNameHashBits := api.ToBinary(txInfo.AccountNameHash, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], accountNameHashBits)
+	currentOffset += HashBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
-func CollectPubDataFromDepositNft(api API, txInfo DepositNftTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromDepositNft(api API, txInfo DepositNftTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeDepositNft, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
 	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], accountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
-	nftL1AddressBits := api.ToBinary(txInfo.NftL1Address, AddressBitsSize)
+	copy(pubData[currentOffset:currentOffset+NftIndexBitsSize], nftIndexBits)
+	currentOffset += NftIndexBitsSize
+
 	creatorAccountIndexBits := api.ToBinary(txInfo.CreatorAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], creatorAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	creatorTreasuryRateBits := api.ToBinary(txInfo.CreatorTreasuryRate, CreatorTreasuryRateBitsSize)
+	copy(pubData[currentOffset:currentOffset+CreatorTreasuryRateBitsSize], creatorTreasuryRateBits)
+	currentOffset += CreatorTreasuryRateBitsSize
+
 	collectionIdBits := api.ToBinary(txInfo.CollectionId, CollectionIdBitsSize)
-	ABits := append(accountIndexBits, txTypeBits...)
-	ABits = append(nftIndexBits, ABits...)
-	ABits = append(nftL1AddressBits, ABits...)
-	var paddingSize [16]Variable
-	for i := 0; i < 16; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	BBits := append(creatorTreasuryRateBits, creatorAccountIndexBits...)
-	BBits = append(collectionIdBits, BBits...)
-	pubData[1] = api.FromBinary(BBits...)
-	pubData[2] = txInfo.NftContentHash
-	pubData[3] = txInfo.NftL1TokenId
-	pubData[4] = txInfo.AccountNameHash
-	for i := 5; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+CollectionIdBitsSize], collectionIdBits)
+	currentOffset += CollectionIdBitsSize
+
+	nftContentHashBits := api.ToBinary(txInfo.NftContentHash, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], nftContentHashBits)
+	currentOffset += HashBitsSize
+
+	accountNameHashBits := api.ToBinary(txInfo.AccountNameHash, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], accountNameHashBits)
+	currentOffset += HashBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
-func CollectPubDataFromTransfer(api API, txInfo TransferTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromTransfer(api API, txInfo TransferTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeTransfer, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
 	fromAccountIndexBits := api.ToBinary(txInfo.FromAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], fromAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	toAccountIndexBits := api.ToBinary(txInfo.ToAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], toAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	assetIdBits := api.ToBinary(txInfo.AssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], assetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	assetAmountBits := api.ToBinary(txInfo.AssetAmount, PackedAmountBitsSize)
-	gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+PackedAmountBitsSize], assetAmountBits)
+	currentOffset += PackedAmountBitsSize
+
 	gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], gasFeeAssetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
-	ABits := append(fromAccountIndexBits, txTypeBits...)
-	ABits = append(toAccountIndexBits, ABits...)
-	ABits = append(assetIdBits, ABits...)
-	ABits = append(assetAmountBits, ABits...)
-	ABits = append(gasAccountIndexBits, ABits...)
-	ABits = append(gasFeeAssetIdBits, ABits...)
-	ABits = append(gasFeeAssetAmountBits, ABits...)
-	var paddingSize [64]Variable
-	for i := 0; i < 64; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	pubData[1] = txInfo.CallDataHash
-	for i := 2; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+PackedFeeBitsSize], gasFeeAssetAmountBits)
+	currentOffset += PackedFeeBitsSize
+
+	callDataHashBits := api.ToBinary(txInfo.CallDataHash, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], callDataHashBits)
+	currentOffset += HashBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
-func CollectPubDataFromWithdraw(api API, txInfo WithdrawTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromWithdraw(api API, txInfo WithdrawTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeWithdraw, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
 	fromAccountIndexBits := api.ToBinary(txInfo.FromAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], fromAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	toAddressBits := api.ToBinary(txInfo.ToAddress, AddressBitsSize)
+	copy(pubData[currentOffset:currentOffset+AddressBitsSize], toAddressBits)
+	currentOffset += AddressBitsSize
+
 	assetIdBits := api.ToBinary(txInfo.AssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], assetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	assetAmountBits := api.ToBinary(txInfo.AssetAmount, StateAmountBitsSize)
-	gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+StateAmountBitsSize], assetAmountBits)
+	currentOffset += StateAmountBitsSize
+
 	gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], gasFeeAssetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
-	ABits := append(fromAccountIndexBits, txTypeBits...)
-	ABits = append(toAddressBits, ABits...)
-	ABits = append(assetIdBits, ABits...)
-	BBits := append(gasAccountIndexBits, assetAmountBits...)
-	BBits = append(gasFeeAssetIdBits, BBits...)
-	BBits = append(gasFeeAssetAmountBits, BBits...)
-	var paddingSize [40]Variable
-	for i := 0; i < 40; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	pubData[1] = api.FromBinary(BBits...)
-	for i := 2; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+PackedFeeBitsSize], gasFeeAssetAmountBits)
+	currentOffset += PackedFeeBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
-func CollectPubDataFromCreateCollection(api API, txInfo CreateCollectionTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromCreateCollection(api API, txInfo CreateCollectionTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeCreateCollection, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
 	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], accountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	collectionIdBits := api.ToBinary(txInfo.CollectionId, CollectionIdBitsSize)
-	gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+CollectionIdBitsSize], collectionIdBits)
+	currentOffset += CollectionIdBitsSize
+
 	gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], gasFeeAssetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
-	ABits := append(accountIndexBits, txTypeBits...)
-	ABits = append(collectionIdBits, ABits...)
-	ABits = append(gasAccountIndexBits, ABits...)
-	ABits = append(gasFeeAssetIdBits, ABits...)
-	ABits = append(gasFeeAssetAmountBits, ABits...)
-	var paddingSize [136]Variable
-	for i := 0; i < 136; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	for i := 1; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+PackedFeeBitsSize], gasFeeAssetAmountBits)
+	currentOffset += PackedFeeBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
-func CollectPubDataFromMintNft(api API, txInfo MintNftTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromMintNft(api API, txInfo MintNftTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeMintNft, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
 	fromAccountIndexBits := api.ToBinary(txInfo.CreatorAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], fromAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	toAccountIndexBits := api.ToBinary(txInfo.ToAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], toAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
-	gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+NftIndexBitsSize], nftIndexBits)
+	currentOffset += NftIndexBitsSize
+
 	gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], gasFeeAssetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
+	copy(pubData[currentOffset:currentOffset+PackedFeeBitsSize], gasFeeAssetAmountBits)
+	currentOffset += PackedFeeBitsSize
+
 	collectionIdBits := api.ToBinary(txInfo.CollectionId, CollectionIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+CollectionIdBitsSize], collectionIdBits)
+	currentOffset += CollectionIdBitsSize
+
 	creatorTreasuryRateBits := api.ToBinary(txInfo.CreatorTreasuryRate, CreatorTreasuryRateBitsSize)
-	ABits := append(fromAccountIndexBits, txTypeBits...)
-	ABits = append(toAccountIndexBits, ABits...)
-	ABits = append(nftIndexBits, ABits...)
-	ABits = append(gasAccountIndexBits, ABits...)
-	ABits = append(gasFeeAssetIdBits, ABits...)
-	ABits = append(gasFeeAssetAmountBits, ABits...)
-	ABits = append(creatorTreasuryRateBits, ABits...)
-	ABits = append(collectionIdBits, ABits...)
-	var paddingSize [48]Variable
-	for i := 0; i < 48; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	pubData[1] = txInfo.NftContentHash
-	for i := 2; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+CreatorTreasuryRateBitsSize], creatorTreasuryRateBits)
+	currentOffset += CreatorTreasuryRateBitsSize
+
+	nftContentHashBits := api.ToBinary(txInfo.NftContentHash, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], nftContentHashBits)
+	currentOffset += HashBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
-func CollectPubDataFromTransferNft(api API, txInfo TransferNftTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromTransferNft(api API, txInfo TransferNftTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeTransferNft, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
 	fromAccountIndexBits := api.ToBinary(txInfo.FromAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], fromAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	toAccountIndexBits := api.ToBinary(txInfo.ToAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], toAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
-	gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+NftIndexBitsSize], nftIndexBits)
+	currentOffset += NftIndexBitsSize
+
 	gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], gasFeeAssetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
-	ABits := append(fromAccountIndexBits, txTypeBits...)
-	ABits = append(toAccountIndexBits, ABits...)
-	ABits = append(nftIndexBits, ABits...)
-	ABits = append(gasAccountIndexBits, ABits...)
-	ABits = append(gasFeeAssetIdBits, ABits...)
-	ABits = append(gasFeeAssetAmountBits, ABits...)
-	var paddingSize [80]Variable
-	for i := 0; i < 80; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	pubData[1] = txInfo.CallDataHash
-	for i := 2; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+PackedFeeBitsSize], gasFeeAssetAmountBits)
+	currentOffset += PackedFeeBitsSize
+
+	callDataHashBits := api.ToBinary(txInfo.CallDataHash, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], callDataHashBits)
+	currentOffset += HashBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
-func CollectPubDataFromAtomicMatch(api API, txInfo AtomicMatchTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromAtomicMatch(api API, txInfo AtomicMatchTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeAtomicMatch, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
 	nftIndexBits := api.ToBinary(txInfo.BuyOffer.NftIndex, NftIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+NftIndexBitsSize], nftIndexBits)
+	currentOffset += NftIndexBitsSize
+
 	submitterAccountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], submitterAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	buyerAccountIndexBits := api.ToBinary(txInfo.BuyOffer.AccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], buyerAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	buyerOfferIdBits := api.ToBinary(txInfo.BuyOffer.OfferId, OfferIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+OfferIdBitsSize], buyerOfferIdBits)
+	currentOffset += OfferIdBitsSize
+
 	sellerAccountIndexBits := api.ToBinary(txInfo.SellOffer.AccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], sellerAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	sellerOfferIdBits := api.ToBinary(txInfo.SellOffer.OfferId, OfferIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+OfferIdBitsSize], sellerOfferIdBits)
+	currentOffset += OfferIdBitsSize
+
 	assetIdBits := api.ToBinary(txInfo.SellOffer.AssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], assetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	assetAmountBits := api.ToBinary(txInfo.SellOffer.AssetAmount, PackedAmountBitsSize)
+	copy(pubData[currentOffset:currentOffset+PackedAmountBitsSize], assetAmountBits)
+	currentOffset += PackedAmountBitsSize
+
 	creatorAmountBits := api.ToBinary(txInfo.CreatorAmount, PackedAmountBitsSize)
+	copy(pubData[currentOffset:currentOffset+PackedAmountBitsSize], creatorAmountBits)
+	currentOffset += PackedAmountBitsSize
+
 	treasuryAmountBits := api.ToBinary(txInfo.TreasuryAmount, PackedAmountBitsSize)
-	gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+PackedAmountBitsSize], treasuryAmountBits)
+	currentOffset += PackedAmountBitsSize
+
 	gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], gasFeeAssetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
-	ABits := append(submitterAccountIndexBits, txTypeBits...)
-	ABits = append(buyerAccountIndexBits, ABits...)
-	ABits = append(buyerOfferIdBits, ABits...)
-	ABits = append(sellerAccountIndexBits, ABits...)
-	ABits = append(sellerOfferIdBits, ABits...)
-	ABits = append(nftIndexBits, ABits...)
-	ABits = append(assetIdBits, ABits...)
-	var paddingSize [48]Variable
-	for i := 0; i < 48; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	BBits := append(creatorAmountBits, assetAmountBits...)
-	BBits = append(treasuryAmountBits, BBits...)
-	BBits = append(gasAccountIndexBits, BBits...)
-	BBits = append(gasFeeAssetIdBits, BBits...)
-	BBits = append(gasFeeAssetAmountBits, BBits...)
-	pubData[0] = api.FromBinary(ABits...)
-	pubData[1] = api.FromBinary(BBits...)
-	for i := 2; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+PackedFeeBitsSize], gasFeeAssetAmountBits)
+	currentOffset += PackedFeeBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
-func CollectPubDataFromCancelOffer(api API, txInfo CancelOfferTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromCancelOffer(api API, txInfo CancelOfferTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeCancelOffer, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
 	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], accountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
 	offerIdBits := api.ToBinary(txInfo.OfferId, OfferIdBitsSize)
-	gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+OfferIdBitsSize], offerIdBits)
+	currentOffset += OfferIdBitsSize
+
 	gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], gasFeeAssetIdBits)
+	currentOffset += AssetIdBitsSize
+
 	gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
-	ABits := append(accountIndexBits, txTypeBits...)
-	ABits = append(offerIdBits, ABits...)
-	ABits = append(gasAccountIndexBits, ABits...)
-	ABits = append(gasFeeAssetIdBits, ABits...)
-	ABits = append(gasFeeAssetAmountBits, ABits...)
-	var paddingSize [128]Variable
-	for i := 0; i < 128; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	for i := 1; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+PackedFeeBitsSize], gasFeeAssetAmountBits)
+	currentOffset += PackedFeeBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
 func CollectPubDataFromWithdrawNft(api API, txInfo WithdrawNftTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+	currentOffset := 0
 	txTypeBits := api.ToBinary(TxTypeWithdrawNft, TxTypeBitsSize)
-	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
-	creatorAccountIndexBits := api.ToBinary(txInfo.CreatorAccountIndex, AccountIndexBitsSize)
-	creatorTreasuryRateBits := api.ToBinary(txInfo.CreatorTreasuryRate, FeeRateBitsSize)
-	nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
-	collectionIdBits := api.ToBinary(txInfo.CollectionId, CollectionIdBitsSize)
-	toAddressBits := api.ToBinary(txInfo.ToAddress, AddressBitsSize)
-	gasAccountIndexBits := api.ToBinary(txInfo.GasAccountIndex, AccountIndexBitsSize)
-	gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
-	gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
-	ABits := append(accountIndexBits, txTypeBits...)
-	ABits = append(creatorAccountIndexBits, ABits...)
-	ABits = append(creatorTreasuryRateBits, ABits...)
-	ABits = append(nftIndexBits, ABits...)
-	ABits = append(collectionIdBits, ABits...)
-	var paddingSize [112]Variable
-	for i := 0; i < 112; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	pubData[1] = txInfo.NftL1Address
-	CBits := append(gasAccountIndexBits, toAddressBits...)
-	CBits = append(gasFeeAssetIdBits, CBits...)
-	CBits = append(gasFeeAssetAmountBits, CBits...)
-	pubData[2] = api.FromBinary(CBits...)
-	pubData[3] = txInfo.NftContentHash
-	pubData[4] = txInfo.NftL1TokenId
-	pubData[5] = txInfo.CreatorAccountNameHash
-	return pubData
-}
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
 
-func CollectPubDataFromFullExit(api API, txInfo FullExitTxConstraints) (pubData [PubDataSizePerTx]Variable) {
-	txTypeBits := api.ToBinary(TxTypeFullExit, TxTypeBitsSize)
 	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
-	assetIdBits := api.ToBinary(txInfo.AssetId, AssetIdBitsSize)
-	assetAmountBits := api.ToBinary(txInfo.AssetAmount, StateAmountBitsSize)
-	ABits := append(accountIndexBits, txTypeBits...)
-	ABits = append(assetIdBits, ABits...)
-	ABits = append(assetAmountBits, ABits...)
-	var paddingSize [72]Variable
-	for i := 0; i < 72; i++ {
-		paddingSize[i] = 0
-	}
-	ABits = append(paddingSize[:], ABits...)
-	pubData[0] = api.FromBinary(ABits...)
-	pubData[1] = txInfo.AccountNameHash
-	for i := 2; i < PubDataSizePerTx; i++ {
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], accountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
+	creatorAccountIndexBits := api.ToBinary(txInfo.CreatorAccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], creatorAccountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
+	creatorTreasuryRateBits := api.ToBinary(txInfo.CreatorTreasuryRate, FeeRateBitsSize)
+	copy(pubData[currentOffset:currentOffset+FeeRateBitsSize], creatorTreasuryRateBits)
+	currentOffset += FeeRateBitsSize
+
+	nftIndexBits := api.ToBinary(txInfo.NftIndex, NftIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+NftIndexBitsSize], nftIndexBits)
+	currentOffset += NftIndexBitsSize
+
+	collectionIdBits := api.ToBinary(txInfo.CollectionId, CollectionIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+CollectionIdBitsSize], collectionIdBits)
+	currentOffset += CollectionIdBitsSize
+
+	toAddressBits := api.ToBinary(txInfo.ToAddress, AddressBitsSize)
+	copy(pubData[currentOffset:currentOffset+AddressBitsSize], toAddressBits)
+	currentOffset += AddressBitsSize
+
+	gasFeeAssetIdBits := api.ToBinary(txInfo.GasFeeAssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], gasFeeAssetIdBits)
+	currentOffset += AssetIdBitsSize
+
+	gasFeeAssetAmountBits := api.ToBinary(txInfo.GasFeeAssetAmount, PackedFeeBitsSize)
+	copy(pubData[currentOffset:currentOffset+PackedFeeBitsSize], gasFeeAssetAmountBits)
+	currentOffset += PackedFeeBitsSize
+
+	nftContentHashBits := api.ToBinary(txInfo.NftContentHash, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], nftContentHashBits)
+	currentOffset += HashBitsSize
+
+	creatorAccountNameHashBits := api.ToBinary(txInfo.CreatorAccountNameHash, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], creatorAccountNameHashBits)
+	currentOffset += HashBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	return pubData
 }
 
-func CollectPubDataFromFullExitNft(api API, txInfo FullExitNftTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+func CollectPubDataFromFullExit(api API, txInfo FullExitTxConstraints) (pubData [PubDataSizePerTx]Variable) {
+	currentOffset := 0
+	txTypeBits := api.ToBinary(TxTypeFullExit, TxTypeBitsSize)
+	copy(pubData[currentOffset:currentOffset+TxTypeBitsSize], txTypeBits)
+	currentOffset += TxTypeBitsSize
+
+	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
+	copy(pubData[currentOffset:currentOffset+AccountIndexBitsSize], accountIndexBits)
+	currentOffset += AccountIndexBitsSize
+
+	assetIdBits := api.ToBinary(txInfo.AssetId, AssetIdBitsSize)
+	copy(pubData[currentOffset:currentOffset+AssetIdBitsSize], assetIdBits)
+	currentOffset += AssetIdBitsSize
+
+	assetAmountBits := api.ToBinary(txInfo.AssetAmount, StateAmountBitsSize)
+	copy(pubData[currentOffset:currentOffset+StateAmountBitsSize], assetAmountBits)
+	currentOffset += StateAmountBitsSize
+
+	accountNameHashBits := api.ToBinary(txInfo.AccountNameHash, HashBitsSize)
+	copy(pubData[currentOffset:currentOffset+HashBitsSize], accountNameHashBits)
+	currentOffset += HashBitsSize
+
+	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
+		pubData[i] = 0
+	}
+	return pubData
+}
+
+func CollectPubDataFromFullExitNft(api API, txInfo FullExitNftTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+
 	txTypeBits := api.ToBinary(TxTypeFullExitNft, TxTypeBitsSize)
 	accountIndexBits := api.ToBinary(txInfo.AccountIndex, AccountIndexBitsSize)
 	creatorAccountIndexBits := api.ToBinary(txInfo.CreatorAccountIndex, AccountIndexBitsSize)

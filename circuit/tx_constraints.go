@@ -90,7 +90,7 @@ func VerifyTransaction(
 	blockCreatedAt Variable,
 	gasAssetIds []int64,
 	oldRoots [types.NbRoots]Variable,
-) (isOnChainOp Variable, pubData [types.PubDataSizePerTx]Variable, roots [types.NbRoots]Variable,
+) (isOnChainOp Variable, pubData [types.PubDataBitsSizePerTx]Variable, roots [types.NbRoots]Variable,
 	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints, err error) {
 	// compute tx type
 	isEmptyTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeEmptyTx))
