@@ -87,7 +87,7 @@ func VerifyTransferTx(
 	api API, flag Variable,
 	tx *TransferTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	fromAccount := 0
 	toAccount := 1
 

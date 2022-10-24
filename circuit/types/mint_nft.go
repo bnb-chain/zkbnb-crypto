@@ -95,7 +95,7 @@ func VerifyMintNftTx(
 	api API, flag Variable,
 	tx *MintNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	fromAccount := 0
 	toAccount := 1
 

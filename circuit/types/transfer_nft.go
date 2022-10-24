@@ -85,7 +85,7 @@ func VerifyTransferNftTx(
 	tx *TransferNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	fromAccount := 0
 	toAccount := 1
 	pubData = CollectPubDataFromTransferNft(api, *tx)

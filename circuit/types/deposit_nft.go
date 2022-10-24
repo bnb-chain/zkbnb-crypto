@@ -80,7 +80,7 @@ func VerifyDepositNftTx(
 	tx DepositNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	pubData = CollectPubDataFromDepositNft(api, tx)
 
 	// verify params

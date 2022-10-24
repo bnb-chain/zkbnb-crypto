@@ -76,7 +76,7 @@ func VerifyCreateCollectionTx(
 	api API, flag Variable,
 	tx *CreateCollectionTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	fromAccount := 0
 	pubData = CollectPubDataFromCreateCollection(api, *tx)
 	// verify params

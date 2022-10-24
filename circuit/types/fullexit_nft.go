@@ -82,7 +82,7 @@ func VerifyFullExitNftTx(
 	api API, flag Variable,
 	tx FullExitNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints, nftBefore NftConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	pubData = CollectPubDataFromFullExitNft(api, tx)
 	// verify params
 	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)

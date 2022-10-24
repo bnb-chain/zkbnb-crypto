@@ -108,7 +108,7 @@ func VerifyWithdrawNftTx(
 	tx *WithdrawNftTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 	nftBefore NftConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	fromAccount := 0
 	creatorAccount := 0
 	pubData = CollectPubDataFromWithdrawNft(api, *tx)

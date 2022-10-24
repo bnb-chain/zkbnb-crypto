@@ -65,7 +65,7 @@ func VerifyBlock(
 		gasDeltas       [NbGasAssetsPerTx]GasDeltaConstraints
 		needGas         Variable
 	)
-	pendingCommitmentData := make([]Variable, types.PubDataSizePerTx*block.TxsCount+5)
+	pendingCommitmentData := make([]Variable, types.PubDataBitsSizePerTx*block.TxsCount+5)
 	// write basic info into hFunc
 	pendingCommitmentData[0] = block.BlockNumber
 	pendingCommitmentData[1] = block.CreatedAt
@@ -88,7 +88,7 @@ func VerifyBlock(
 		log.Println("unable to verify transaction, err:", err)
 		return err
 	}
-	for i := 0; i < types.PubDataSizePerTx; i++ {
+	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
 		pendingCommitmentData[count] = pendingPubData[i]
 		count++
 	}
@@ -113,7 +113,7 @@ func VerifyBlock(
 			log.Println("unable to verify transaction, err:", err)
 			return err
 		}
-		for j := 0; j < types.PubDataSizePerTx; j++ {
+		for j := 0; j < types.PubDataBitsSizePerTx; j++ {
 			pendingCommitmentData[count] = pendingPubData[j]
 			count++
 		}

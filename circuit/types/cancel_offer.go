@@ -69,7 +69,7 @@ func VerifyCancelOfferTx(
 	api API, flag Variable,
 	tx *CancelOfferTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	fromAccount := 0
 	pubData = CollectPubDataFromCancelOffer(api, *tx)
 	// verify params

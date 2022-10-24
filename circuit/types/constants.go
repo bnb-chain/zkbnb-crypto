@@ -46,7 +46,7 @@ const (
 
 	PubDataSizePerTx = 6
 
-	PubDataBitsSizePerTx = 1064 // registerZNS
+	PubDataBitsSizePerTx = 968 // registerZNS
 
 	OfferSizePerAsset = 128
 

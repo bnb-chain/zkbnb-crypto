@@ -172,7 +172,7 @@ func VerifyTransaction(
 	}
 
 	// verify transactions
-	for i := 0; i < types.PubDataSizePerTx; i++ {
+	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	pubDataCheck := types.VerifyRegisterZNSTx(api, isRegisterZnsTx, tx.RegisterZnsTxInfo, tx.AccountsInfoBefore)

@@ -48,3 +48,9 @@ func Min(api API, a, b Variable) Variable {
 	minAB := api.Select(api.IsZero(api.Add(1, api.Cmp(a, b))), a, b)
 	return minAB
 }
+
+func CopyLittleEndianSlice(target []Variable, src []Variable) {
+	for i, j := len(target)-1, 0; i >= 0; i, j = i-1, j+1 {
+		target[i] = src[j]
+	}
+}

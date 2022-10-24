@@ -58,7 +58,7 @@ func VerifyDepositTx(
 	api API, flag Variable,
 	tx DepositTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	pubData = CollectPubDataFromDeposit(api, tx)
 	// verify params
 	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)
