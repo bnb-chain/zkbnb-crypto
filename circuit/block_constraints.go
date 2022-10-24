@@ -78,9 +78,12 @@ func VerifyBlock(
 	for i := 0; i < gasAssetCount; i++ {
 		blockGasDeltas[i] = Variable(0)
 	}
+	for i := 0; i < types.NbRoots; i++ {
+		roots[i] = Variable(0)
+	}
 
 	onChainOpsCount = 0
-	isOnChainOp, pendingPubData, roots, gasDeltas, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt, block.GasAssetIds)
+	isOnChainOp, pendingPubData, roots, gasDeltas, err := VerifyTransaction(api, block.Txs[0], hFunc, block.CreatedAt, block.GasAssetIds, roots)
 	if err != nil {
 		log.Println("unable to verify transaction, err:", err)
 		return err
@@ -105,7 +108,7 @@ func VerifyBlock(
 	for i := 1; i < block.TxsCount; i++ {
 		api.AssertIsEqual(block.Txs[i-1].StateRootAfter, block.Txs[i].StateRootBefore)
 		hFunc.Reset()
-		isOnChainOp, pendingPubData, roots, gasDeltas, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt, block.GasAssetIds)
+		isOnChainOp, pendingPubData, roots, gasDeltas, err = VerifyTransaction(api, block.Txs[i], hFunc, block.CreatedAt, block.GasAssetIds, roots)
 		if err != nil {
 			log.Println("unable to verify transaction, err:", err)
 			return err
@@ -138,7 +141,8 @@ func VerifyBlock(
 		atomicMatchTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeAtomicMatch))
 		withdrawNftTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeWithdrawNft))
 		transferNft := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeTransferNft))
-		needGas = api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(transferTx, withdrawTx), createCollectionTx), mintNftTx), cancelOfferTx), atomicMatchTx), withdrawNftTx), transferNft)
+		txNeedGas := api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(transferTx, withdrawTx), createCollectionTx), mintNftTx), cancelOfferTx), atomicMatchTx), withdrawNftTx), transferNft)
+		needGas = api.Or(needGas, txNeedGas)
 	}
 
 	types.IsVariableEqual(api, needGas, block.Gas.AccountInfoBefore.AccountIndex, block.GasAccountIndex)
