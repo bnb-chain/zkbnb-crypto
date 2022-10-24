@@ -76,7 +76,7 @@ func (circuit TxConstraints) Define(api API) error {
 		return err
 	}
 
-	_, _, _, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228, []int64{0})
+	_, _, _, _, err = VerifyTransaction(api, circuit, hFunc, 1633400952228, []int64{0}, [types.NbRoots]Variable{Variable(0), Variable(0)})
 	if err != nil {
 		return err
 	}
@@ -89,6 +89,7 @@ func VerifyTransaction(
 	hFunc MiMC,
 	blockCreatedAt Variable,
 	gasAssetIds []int64,
+	oldRoots [types.NbRoots]Variable,
 ) (isOnChainOp Variable, pubData [types.PubDataSizePerTx]Variable, roots [types.NbRoots]Variable,
 	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints, err error) {
 	// compute tx type
@@ -380,6 +381,7 @@ func VerifyTransaction(
 		hFunc.Reset()
 		// update merkle proof
 		newAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, tx.MerkleProofsAccountBefore[i][:], accountIndexMerkleHelper)
+		oldRoots[0] = api.Select(isEmptyTx, oldRoots[0], newAccountRoot)
 	}
 
 	//// nft tree
@@ -422,6 +424,7 @@ func VerifyTransaction(
 	hFunc.Reset()
 	// update merkle proof
 	newNftRoot = types.UpdateMerkleProof(api, hFunc, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)
+	oldRoots[1] = api.Select(isEmptyTx, oldRoots[1], newNftRoot)
 
 	// check state root
 	hFunc.Reset()
@@ -432,8 +435,8 @@ func VerifyTransaction(
 	newStateRoot := hFunc.Sum()
 	types.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
 
-	roots[0] = newAccountRoot
-	roots[1] = newNftRoot
+	roots[0] = oldRoots[0]
+	roots[1] = oldRoots[1]
 	return isOnChainOp, pubData, roots, gasDeltas, nil
 }
 
