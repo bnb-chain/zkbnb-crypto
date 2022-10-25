@@ -17,10 +17,6 @@
 
 package types
 
-import (
-	"math/big"
-)
-
 type FullExitNftTx struct {
 	AccountIndex           int64
 	AccountNameHash        []byte
@@ -30,8 +26,6 @@ type FullExitNftTx struct {
 	NftIndex               int64
 	CollectionId           int64
 	NftContentHash         []byte
-	NftL1Address           string
-	NftL1TokenId           *big.Int
 }
 
 type FullExitNftTxConstraints struct {
@@ -43,8 +37,6 @@ type FullExitNftTxConstraints struct {
 	NftIndex               Variable
 	CollectionId           Variable
 	NftContentHash         Variable
-	NftL1Address           Variable
-	NftL1TokenId           Variable
 }
 
 func EmptyFullExitNftTxWitness() (witness FullExitNftTxConstraints) {
@@ -57,8 +49,6 @@ func EmptyFullExitNftTxWitness() (witness FullExitNftTxConstraints) {
 		NftIndex:               ZeroInt,
 		CollectionId:           ZeroInt,
 		NftContentHash:         ZeroInt,
-		NftL1Address:           ZeroInt,
-		NftL1TokenId:           ZeroInt,
 	}
 }
 
@@ -72,8 +62,6 @@ func SetFullExitNftTxWitness(tx *FullExitNftTx) (witness FullExitNftTxConstraint
 		NftIndex:               tx.NftIndex,
 		CollectionId:           tx.CollectionId,
 		NftContentHash:         tx.NftContentHash,
-		NftL1Address:           tx.NftL1Address,
-		NftL1TokenId:           tx.NftL1TokenId,
 	}
 	return witness
 }
@@ -94,10 +82,6 @@ func VerifyFullExitNftTx(
 	IsVariableEqual(api, isCheck, tx.CreatorTreasuryRate, nftBefore.CreatorTreasuryRate)
 	isOwner := api.And(api.IsZero(api.Sub(tx.AccountIndex, nftBefore.OwnerAccountIndex)), flag)
 	IsVariableEqual(api, isOwner, tx.NftContentHash, nftBefore.NftContentHash)
-	IsVariableEqual(api, isOwner, tx.NftL1Address, nftBefore.NftL1Address)
-	IsVariableEqual(api, isOwner, tx.NftL1TokenId, nftBefore.NftL1TokenId)
 	tx.NftContentHash = api.Select(isOwner, tx.NftContentHash, 0)
-	tx.NftL1Address = api.Select(isOwner, tx.NftL1Address, 0)
-	tx.NftL1TokenId = api.Select(isOwner, tx.NftL1TokenId, 0)
 	return pubData
 }

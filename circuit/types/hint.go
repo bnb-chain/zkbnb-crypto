@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"fmt"
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc"
@@ -31,11 +30,11 @@ func Keccak256(_ ecc.ID, inputs []*big.Int, outputs []*big.Int) error {
 	}
 
 	buf.Write(inputs[len(inputs)-1].FillBytes(make([]byte, 32)))
-	fmt.Printf("commitment is: %x\n", buf.Bytes())
+	// fmt.Printf("commitment is: %x\n", buf.Bytes())
 	hashVal := crypto.Keccak256Hash(buf.Bytes())
 	result := outputs[0]
 	result.SetBytes(hashVal[:])
-	fmt.Printf("commitment hash is: %x\n", hashVal[:])
+	// fmt.Printf("commitment hash is: %x\n", hashVal[:])
 	return nil
 }
 

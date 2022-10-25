@@ -19,7 +19,7 @@ func TestTransactionConstraintsCounts(t *testing.T) {
 
 func TestBlockConstraintsCounts(t *testing.T) {
 	var blockCircuit BlockConstraints
-	blockCircuit.TxsCount = 10
+	blockCircuit.TxsCount = 1
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	blockCircuit.Txs = make([]TxConstraints, blockCircuit.TxsCount)

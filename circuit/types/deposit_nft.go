@@ -17,17 +17,11 @@
 
 package types
 
-import (
-	"math/big"
-)
-
 type DepositNftTx struct {
 	AccountIndex        int64
 	NftIndex            int64
-	NftL1Address        string
 	AccountNameHash     []byte
 	NftContentHash      []byte
-	NftL1TokenId        *big.Int
 	CreatorAccountIndex int64
 	CreatorTreasuryRate int64
 	CollectionId        int64
@@ -38,8 +32,6 @@ type DepositNftTxConstraints struct {
 	AccountNameHash     Variable
 	NftIndex            Variable
 	NftContentHash      Variable
-	NftL1Address        Variable
-	NftL1TokenId        Variable
 	CreatorAccountIndex Variable
 	CreatorTreasuryRate Variable
 	CollectionId        Variable
@@ -51,8 +43,6 @@ func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
 		AccountNameHash:     ZeroInt,
 		NftIndex:            ZeroInt,
 		NftContentHash:      ZeroInt,
-		NftL1Address:        ZeroInt,
-		NftL1TokenId:        ZeroInt,
 		CreatorAccountIndex: ZeroInt,
 		CreatorTreasuryRate: ZeroInt,
 		CollectionId:        ZeroInt,
@@ -65,8 +55,6 @@ func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) 
 		AccountNameHash:     tx.AccountNameHash,
 		NftIndex:            tx.NftIndex,
 		NftContentHash:      tx.NftContentHash,
-		NftL1Address:        tx.NftL1Address,
-		NftL1TokenId:        tx.NftL1TokenId,
 		CreatorAccountIndex: tx.CreatorAccountIndex,
 		CreatorTreasuryRate: tx.CreatorTreasuryRate,
 		CollectionId:        tx.CollectionId,

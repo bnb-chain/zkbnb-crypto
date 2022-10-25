@@ -227,8 +227,6 @@ func GetZeroTxConstraint() TxConstraints {
 		NftContentHash:      0,
 		CreatorAccountIndex: 0,
 		OwnerAccountIndex:   0,
-		NftL1Address:        0,
-		NftL1TokenId:        0,
 		CreatorTreasuryRate: 0,
 		CollectionId:        0,
 	}

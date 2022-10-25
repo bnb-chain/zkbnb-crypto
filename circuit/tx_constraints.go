@@ -227,8 +227,6 @@ func VerifyTransaction(
 		CreatorAccountIndex: tx.NftBefore.CreatorAccountIndex,
 		OwnerAccountIndex:   tx.NftBefore.OwnerAccountIndex,
 		NftContentHash:      tx.NftBefore.NftContentHash,
-		NftL1Address:        tx.NftBefore.NftL1Address,
-		NftL1TokenId:        tx.NftBefore.NftL1TokenId,
 		CreatorTreasuryRate: tx.NftBefore.CreatorTreasuryRate,
 		CollectionId:        tx.NftBefore.CollectionId,
 	}
@@ -393,8 +391,6 @@ func VerifyTransaction(
 		tx.NftBefore.CreatorAccountIndex,
 		tx.NftBefore.OwnerAccountIndex,
 		tx.NftBefore.NftContentHash,
-		tx.NftBefore.NftL1Address,
-		tx.NftBefore.NftL1TokenId,
 		tx.NftBefore.CreatorTreasuryRate,
 		tx.NftBefore.CollectionId,
 	)
@@ -415,8 +411,6 @@ func VerifyTransaction(
 		NftAfter.CreatorAccountIndex,
 		NftAfter.OwnerAccountIndex,
 		NftAfter.NftContentHash,
-		NftAfter.NftL1Address,
-		NftAfter.NftL1TokenId,
 		NftAfter.CreatorTreasuryRate,
 		NftAfter.CollectionId,
 	)
