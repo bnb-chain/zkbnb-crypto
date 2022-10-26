@@ -26,7 +26,7 @@ VerifyMerkleProof: takes a Merkle root, a proofSet, and a proofIndex and returns
 	root. False is returned if the proof set or Merkle root is nil, and if
 	'numLeaves' equals 0.
 */
-func VerifyMerkleProof(api API, isEnabled Variable, h MiMC, merkleRoot Variable, node Variable, proofSet, helper []Variable) {
+func VerifyMerkleProof(api API, isEnabled Variable, merkleRoot Variable, node Variable, proofSet, helper []Variable) {
 	for i := 0; i < len(proofSet); i++ {
 		api.AssertIsBoolean(helper[i])
 		d1 := api.Select(helper[i], proofSet[i], node)
@@ -37,7 +37,7 @@ func VerifyMerkleProof(api API, isEnabled Variable, h MiMC, merkleRoot Variable,
 	IsVariableEqual(api, isEnabled, merkleRoot, node)
 }
 
-func UpdateMerkleProof(api API, h MiMC, node Variable, proofSet, helper []Variable) (root Variable) {
+func UpdateMerkleProof(api API, node Variable, proofSet, helper []Variable) (root Variable) {
 	for i := 0; i < len(proofSet); i++ {
 		api.AssertIsBoolean(helper[i])
 		d1 := api.Select(helper[i], proofSet[i], node)

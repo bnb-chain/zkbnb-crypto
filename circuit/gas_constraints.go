@@ -19,6 +19,7 @@ package circuit
 
 import (
 	"errors"
+	"github.com/consensys/gnark/std/hash/poseidon"
 	"log"
 
 	"github.com/bnb-chain/zkbnb-crypto/circuit/types"
@@ -48,7 +49,6 @@ func VerifyGas(
 	gas GasConstraints,
 	needGas Variable,
 	gasAssetDeltas []Variable,
-	hFunc MiMC,
 	accountRoot Variable) (newAccountRoot Variable, err error) {
 	newAccountRoot = accountRoot
 	newAccountAssetsRoot := gas.AccountInfoBefore.AssetRoot
@@ -59,68 +59,50 @@ func VerifyGas(
 	gasAssetCount := len(gasAssetDeltas)
 	for i := 0; i < gasAssetCount; i++ {
 		assetMerkleHelper := AssetIdToMerkleHelper(api, gas.AccountInfoBefore.AssetsInfo[i].AssetId)
-		hFunc.Reset()
-		hFunc.Write(
+		assetNodeHash := poseidon.Poseidon(api,
 			gas.AccountInfoBefore.AssetsInfo[i].Balance,
-			gas.AccountInfoBefore.AssetsInfo[i].OfferCanceledOrFinalized,
-		)
-		assetNodeHash := hFunc.Sum()
-		hFunc.Reset()
+			gas.AccountInfoBefore.AssetsInfo[i].OfferCanceledOrFinalized)
 		types.VerifyMerkleProof(
 			api,
 			needGas,
-			hFunc,
 			newAccountAssetsRoot,
 			assetNodeHash,
 			gas.MerkleProofsAccountAssetsBefore[i][:],
 			assetMerkleHelper,
 		)
-		hFunc.Reset()
-		hFunc.Write(
+		assetNodeHash = poseidon.Poseidon(api,
 			api.Add(gas.AccountInfoBefore.AssetsInfo[i].Balance, gasAssetDeltas[i]),
-			gas.AccountInfoBefore.AssetsInfo[i].OfferCanceledOrFinalized,
-		)
-		assetNodeHash = hFunc.Sum()
-		hFunc.Reset()
+			gas.AccountInfoBefore.AssetsInfo[i].OfferCanceledOrFinalized)
 		newAccountAssetsRoot = types.UpdateMerkleProof(
-			api, hFunc, assetNodeHash, gas.MerkleProofsAccountAssetsBefore[i][:], assetMerkleHelper)
+			api, assetNodeHash, gas.MerkleProofsAccountAssetsBefore[i][:], assetMerkleHelper)
 	}
 	// verify account node hash
 	accountIndexMerkleHelper := AccountIndexToMerkleHelper(api, gas.AccountInfoBefore.AccountIndex)
-	hFunc.Reset()
-	hFunc.Write(
+	accountNodeHash := poseidon.Poseidon(api,
 		gas.AccountInfoBefore.AccountNameHash,
 		gas.AccountInfoBefore.AccountPk.A.X,
 		gas.AccountInfoBefore.AccountPk.A.Y,
 		gas.AccountInfoBefore.Nonce,
 		gas.AccountInfoBefore.CollectionNonce,
-		gas.AccountInfoBefore.AssetRoot,
-	)
-	accountNodeHash := hFunc.Sum()
+		gas.AccountInfoBefore.AssetRoot)
 	// verify account merkle proof
-	hFunc.Reset()
 	types.VerifyMerkleProof(
 		api,
 		needGas,
-		hFunc,
 		newAccountRoot,
 		accountNodeHash,
 		gas.MerkleProofsAccountBefore[:],
 		accountIndexMerkleHelper,
 	)
-	hFunc.Reset()
-	hFunc.Write(
+	accountNodeHash = poseidon.Poseidon(api,
 		gas.AccountInfoBefore.AccountNameHash,
 		gas.AccountInfoBefore.AccountPk.A.X,
 		gas.AccountInfoBefore.AccountPk.A.Y,
 		gas.AccountInfoBefore.Nonce,
 		gas.AccountInfoBefore.CollectionNonce,
-		newAccountAssetsRoot,
-	)
-	accountNodeHash = hFunc.Sum()
-	hFunc.Reset()
+		newAccountAssetsRoot)
 	// update merkle proof
-	newAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, gas.MerkleProofsAccountBefore[:], accountIndexMerkleHelper)
+	newAccountRoot = types.UpdateMerkleProof(api, accountNodeHash, gas.MerkleProofsAccountBefore[:], accountIndexMerkleHelper)
 	return newAccountRoot, err
 }
 

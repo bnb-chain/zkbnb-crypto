@@ -19,6 +19,7 @@ package circuit
 
 import (
 	"errors"
+	"github.com/consensys/gnark/std/hash/poseidon"
 	"log"
 
 	"github.com/consensys/gnark/std/hash/mimc"
@@ -296,12 +297,7 @@ func VerifyTransaction(
 	NftAfter := UpdateNft(tx.NftBefore, nftDelta)
 
 	// check old state root
-	hFunc.Reset()
-	hFunc.Write(
-		tx.AccountRootBefore,
-		tx.NftRootBefore,
-	)
-	oldStateRoot := hFunc.Sum()
+	oldStateRoot := poseidon.Poseidon(api, tx.AccountRootBefore, tx.NftRootBefore)
 	notEmptyTx := api.IsZero(isEmptyTx)
 	types.IsVariableEqual(api, notEmptyTx, oldStateRoot, tx.StateRootBefore)
 
@@ -314,71 +310,54 @@ func VerifyTransaction(
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
 			api.AssertIsLessOrEqual(tx.AccountsInfoBefore[i].AssetsInfo[j].AssetId, LastAccountAssetId)
 			assetMerkleHelper := AssetIdToMerkleHelper(api, tx.AccountsInfoBefore[i].AssetsInfo[j].AssetId)
-			hFunc.Reset()
-			hFunc.Write(
+			assetNodeHash := poseidon.Poseidon(api,
 				tx.AccountsInfoBefore[i].AssetsInfo[j].Balance,
-				tx.AccountsInfoBefore[i].AssetsInfo[j].OfferCanceledOrFinalized,
-			)
-			assetNodeHash := hFunc.Sum()
+				tx.AccountsInfoBefore[i].AssetsInfo[j].OfferCanceledOrFinalized)
 			// verify account asset merkle proof
-			hFunc.Reset()
 			types.VerifyMerkleProof(
 				api,
 				notEmptyTx,
-				hFunc,
 				NewAccountAssetsRoot,
 				assetNodeHash,
 				tx.MerkleProofsAccountAssetsBefore[i][j][:],
 				assetMerkleHelper,
 			)
-			hFunc.Reset()
-			hFunc.Write(
+			assetNodeHash = poseidon.Poseidon(api,
 				AccountsInfoAfter[i].AssetsInfo[j].Balance,
-				AccountsInfoAfter[i].AssetsInfo[j].OfferCanceledOrFinalized,
-			)
-			assetNodeHash = hFunc.Sum()
-			hFunc.Reset()
+				AccountsInfoAfter[i].AssetsInfo[j].OfferCanceledOrFinalized)
+
 			// update merkle proof
 			NewAccountAssetsRoot = types.UpdateMerkleProof(
-				api, hFunc, assetNodeHash, tx.MerkleProofsAccountAssetsBefore[i][j][:], assetMerkleHelper)
+				api, assetNodeHash, tx.MerkleProofsAccountAssetsBefore[i][j][:], assetMerkleHelper)
 		}
 		// verify account node hash
 		api.AssertIsLessOrEqual(tx.AccountsInfoBefore[i].AccountIndex, LastAccountIndex)
 		accountIndexMerkleHelper := AccountIndexToMerkleHelper(api, tx.AccountsInfoBefore[i].AccountIndex)
-		hFunc.Reset()
-		hFunc.Write(
+		accountNodeHash := poseidon.Poseidon(api,
 			tx.AccountsInfoBefore[i].AccountNameHash,
 			tx.AccountsInfoBefore[i].AccountPk.A.X,
 			tx.AccountsInfoBefore[i].AccountPk.A.Y,
 			tx.AccountsInfoBefore[i].Nonce,
 			tx.AccountsInfoBefore[i].CollectionNonce,
-			tx.AccountsInfoBefore[i].AssetRoot,
-		)
-		accountNodeHash := hFunc.Sum()
+			tx.AccountsInfoBefore[i].AssetRoot)
 		// verify account merkle proof
-		hFunc.Reset()
 		types.VerifyMerkleProof(
 			api,
 			notEmptyTx,
-			hFunc,
 			newAccountRoot,
 			accountNodeHash,
 			tx.MerkleProofsAccountBefore[i][:],
 			accountIndexMerkleHelper,
 		)
-		hFunc.Reset()
-		hFunc.Write(
+		accountNodeHash = poseidon.Poseidon(api,
 			AccountsInfoAfter[i].AccountNameHash,
 			AccountsInfoAfter[i].AccountPk.A.X,
 			AccountsInfoAfter[i].AccountPk.A.Y,
 			AccountsInfoAfter[i].Nonce,
 			AccountsInfoAfter[i].CollectionNonce,
-			NewAccountAssetsRoot,
-		)
-		accountNodeHash = hFunc.Sum()
-		hFunc.Reset()
+			NewAccountAssetsRoot)
 		// update merkle proof
-		newAccountRoot = types.UpdateMerkleProof(api, hFunc, accountNodeHash, tx.MerkleProofsAccountBefore[i][:], accountIndexMerkleHelper)
+		newAccountRoot = types.UpdateMerkleProof(api, accountNodeHash, tx.MerkleProofsAccountBefore[i][:], accountIndexMerkleHelper)
 		oldRoots[0] = api.Select(isEmptyTx, oldRoots[0], newAccountRoot)
 	}
 
@@ -386,47 +365,32 @@ func VerifyTransaction(
 	newNftRoot := tx.NftRootBefore
 	api.AssertIsLessOrEqual(tx.NftBefore.NftIndex, LastNftIndex)
 	nftIndexMerkleHelper := NftIndexToMerkleHelper(api, tx.NftBefore.NftIndex)
-	hFunc.Reset()
-	hFunc.Write(
-		tx.NftBefore.CreatorAccountIndex,
+	nftNodeHash := poseidon.Poseidon(api, tx.NftBefore.CreatorAccountIndex,
 		tx.NftBefore.OwnerAccountIndex,
 		tx.NftBefore.NftContentHash,
 		tx.NftBefore.CreatorTreasuryRate,
-		tx.NftBefore.CollectionId,
-	)
-	nftNodeHash := hFunc.Sum()
+		tx.NftBefore.CollectionId)
 	// verify account merkle proof
-	hFunc.Reset()
 	types.VerifyMerkleProof(
 		api,
 		notEmptyTx,
-		hFunc,
 		newNftRoot,
 		nftNodeHash,
 		tx.MerkleProofsNftBefore[:],
 		nftIndexMerkleHelper,
 	)
-	hFunc.Reset()
-	hFunc.Write(
+	nftNodeHash = poseidon.Poseidon(api,
 		NftAfter.CreatorAccountIndex,
 		NftAfter.OwnerAccountIndex,
 		NftAfter.NftContentHash,
 		NftAfter.CreatorTreasuryRate,
-		NftAfter.CollectionId,
-	)
-	nftNodeHash = hFunc.Sum()
-	hFunc.Reset()
+		NftAfter.CollectionId)
 	// update merkle proof
-	newNftRoot = types.UpdateMerkleProof(api, hFunc, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)
+	newNftRoot = types.UpdateMerkleProof(api, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)
 	oldRoots[1] = api.Select(isEmptyTx, oldRoots[1], newNftRoot)
 
 	// check state root
-	hFunc.Reset()
-	hFunc.Write(
-		newAccountRoot,
-		newNftRoot,
-	)
-	newStateRoot := hFunc.Sum()
+	newStateRoot := poseidon.Poseidon(api, newAccountRoot, newNftRoot)
 	types.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
 
 	roots[0] = oldRoots[0]

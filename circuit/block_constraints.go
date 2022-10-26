@@ -18,6 +18,7 @@
 package circuit
 
 import (
+	"github.com/consensys/gnark/std/hash/poseidon"
 	"log"
 
 	"github.com/consensys/gnark/std/hash/mimc"
@@ -146,18 +147,12 @@ func VerifyBlock(
 	}
 
 	types.IsVariableEqual(api, needGas, block.Gas.AccountInfoBefore.AccountIndex, block.GasAccountIndex)
-	roots[0], err = VerifyGas(api, block.Gas, needGas, blockGasDeltas, hFunc, roots[0])
+	roots[0], err = VerifyGas(api, block.Gas, needGas, blockGasDeltas, roots[0])
 	if err != nil {
 		log.Println("unable to verify gas, err:", err)
 		return err
 	}
-	hFunc.Reset()
-	for i := 0; i < types.NbRoots; i++ {
-		hFunc.Write(
-			roots[i],
-		)
-	}
-	newStateRoot := hFunc.Sum()
+	newStateRoot := poseidon.Poseidon(api, roots[:]...)
 	types.IsVariableEqual(api, needGas, block.NewStateRoot, newStateRoot)
 
 	notNeedGas := api.Xor(1, needGas)
