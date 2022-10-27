@@ -17,6 +17,8 @@
 
 package types
 
+import "github.com/consensys/gnark/std/hash/poseidon"
+
 type MintNftTx struct {
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
@@ -78,17 +80,10 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 	return witness
 }
 
-func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
-	hFunc.Reset()
-	hFunc.Write(
-		PackInt64Variables(api, ChainId, tx.CreatorAccountIndex, nonce, expiredAt),
-		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
-		PackInt64Variables(api, tx.ToAccountIndex, tx.CreatorTreasuryRate, tx.CollectionId),
-		tx.ToAccountNameHash,
-		tx.NftContentHash,
-	)
-	hashVal = hFunc.Sum()
-	return hashVal
+func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
+	return poseidon.Poseidon(api, ChainId, tx.CreatorAccountIndex, nonce, expiredAt,
+		tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.ToAccountIndex,
+		tx.CreatorTreasuryRate, tx.CollectionId, tx.ToAccountNameHash, tx.NftContentHash)
 }
 
 func VerifyMintNftTx(

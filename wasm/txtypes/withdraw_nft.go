@@ -18,7 +18,6 @@
 package txtypes
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -200,19 +199,13 @@ func (txInfo *WithdrawNftTxInfo) GetExpiredAt() int64 {
 }
 
 func (txInfo *WithdrawNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
-	hFunc.Reset()
-	var buf bytes.Buffer
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
 	if err != nil {
 		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
-	WriteInt64IntoBuf(&buf, ChainId, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt)
-	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex, txInfo.GasFeeAssetId, packedFee)
-	WriteInt64IntoBuf(&buf, txInfo.NftIndex)
-	buf.Write(PaddingAddressToBytes32(txInfo.ToAddress))
-	hFunc.Write(buf.Bytes())
-	msgHash = hFunc.Sum(nil)
+	msgHash = Poseidon(ChainId, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
+		txInfo.GasFeeAssetId, packedFee, txInfo.NftIndex, PaddingAddressToBytes32(txInfo.ToAddress))
 	return msgHash, nil
 }
 

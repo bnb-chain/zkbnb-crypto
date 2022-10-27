@@ -21,6 +21,10 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/poseidon"
 	"log"
 	"math/big"
 
@@ -156,4 +160,32 @@ func ParsePublicKey(pkStr string) (pk *eddsa.PublicKey, err error) {
 		return nil, errors.New("invalid public key")
 	}
 	return pk, nil
+}
+
+type PoseidonVariable interface {
+}
+
+func Poseidon(variables ...PoseidonVariable) []byte {
+	frArrays := make([]*fr.Element, len(variables))
+	for i, v := range variables {
+		if vi, ok := v.(int64); ok {
+			frArrays[i] = fr.FromBigInt(new(big.Int).SetInt64(vi))
+		}
+
+		if vi, ok := v.(string); ok {
+			frArrays[i] = fr.FromBigInt(new(big.Int).SetBytes(ffmath.Mod(new(big.Int).SetBytes(common.FromHex(vi)), curve.Modulus).FillBytes(make([]byte, 32))))
+		}
+
+		if vi, ok := v.([]byte); ok {
+			frArrays[i] = fr.FromBigInt(new(big.Int).SetBytes(ffmath.Mod(new(big.Int).SetBytes(vi), curve.Modulus).FillBytes(make([]byte, 32))))
+		}
+
+		if vi, ok := v.(*big.Int); ok {
+			frArrays[i] = fr.FromBigInt(vi)
+		}
+	}
+
+	frELement := poseidon.Poseidon(frArrays...)
+	poseidonHashBytes := frELement.Bytes()
+	return poseidonHashBytes[:]
 }

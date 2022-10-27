@@ -17,6 +17,8 @@
 
 package types
 
+import "github.com/consensys/gnark/std/hash/poseidon"
+
 type CreateCollectionTx struct {
 	AccountIndex      int64
 	CollectionId      int64
@@ -62,14 +64,8 @@ func SetCreateCollectionTxWitness(tx *CreateCollectionTx) (witness CreateCollect
 	return witness
 }
 
-func ComputeHashFromCreateCollectionTx(api API, tx CreateCollectionTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
-	hFunc.Reset()
-	hFunc.Write(
-		PackInt64Variables(api, ChainId, tx.AccountIndex, nonce, expiredAt),
-		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
-	)
-	hashVal = hFunc.Sum()
-	return hashVal
+func ComputeHashFromCreateCollectionTx(api API, tx CreateCollectionTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
+	return poseidon.Poseidon(api, ChainId, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount)
 }
 
 func VerifyCreateCollectionTx(
