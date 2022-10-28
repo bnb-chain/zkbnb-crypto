@@ -41,7 +41,7 @@ type CreateCollectionSegmentFormat struct {
 }
 
 /*
-	ConstructCreateCollectionTxInfo: construct mint nft tx, sign txInfo
+ConstructCreateCollectionTxInfo: construct mint nft tx, sign txInfo
 */
 func ConstructCreateCollectionTxInfo(sk *PrivateKey, segmentStr string) (txInfo *CreateCollectionTxInfo, err error) {
 	var segmentFormat *CreateCollectionSegmentFormat
@@ -102,39 +102,39 @@ type CreateCollectionTxInfo struct {
 func (txInfo *CreateCollectionTxInfo) Validate() error {
 	// AccountIndex
 	if txInfo.AccountIndex < minAccountIndex {
-		return fmt.Errorf("AccountIndex should not be less than %d", minAccountIndex)
+		return ErrAccountIndexTooLow
 	}
 	if txInfo.AccountIndex > maxAccountIndex {
-		return fmt.Errorf("AccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrAccountIndexTooHigh
 	}
 
 	// Name
 	if len(txInfo.Name) < minCollectionNameLength {
-		return fmt.Errorf("length of Name should not be less than %d", minCollectionNameLength)
+		return ErrCollectionNameTooShort
 	}
 	if len(txInfo.Name) > maxCollectionNameLength {
-		return fmt.Errorf("length of Name should not be larger than %d", maxCollectionNameLength)
+		return ErrCollectionNameTooLong
 	}
 
 	// Introduction
 	if len(txInfo.Introduction) > maxCollectionIntroductionLength {
-		return fmt.Errorf("length of Introduction should not be larger than %d", maxCollectionIntroductionLength)
+		return ErrIntroductionTooLong
 	}
 
 	// GasAccountIndex
 	if txInfo.GasAccountIndex < minAccountIndex {
-		return fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex)
+		return ErrGasAccountIndexTooLow
 	}
 	if txInfo.GasAccountIndex > maxAccountIndex {
-		return fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex)
+		return ErrGasAccountIndexTooHigh
 	}
 
 	// GasFeeAssetId
 	if txInfo.GasFeeAssetId < minAssetId {
-		return fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId)
+		return ErrGasFeeAssetIdTooLow
 	}
 	if txInfo.GasFeeAssetId > maxAssetId {
-		return fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId)
+		return ErrGasFeeAssetIdTooHigh
 	}
 
 	// GasFeeAssetAmount
@@ -142,15 +142,15 @@ func (txInfo *CreateCollectionTxInfo) Validate() error {
 		return fmt.Errorf("GasFeeAssetAmount should not be nil")
 	}
 	if txInfo.GasFeeAssetAmount.Cmp(minPackedFeeAmount) < 0 {
-		return fmt.Errorf("GasFeeAssetAmount should not be less than %s", minPackedFeeAmount.String())
+		return ErrGasFeeAssetAmountTooLow
 	}
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
-		return fmt.Errorf("GasFeeAssetAmount should not be larger than %s", maxPackedFeeAmount.String())
+		return ErrGasFeeAssetAmountTooHigh
 	}
 
 	// Nonce
 	if txInfo.Nonce < minNonce {
-		return fmt.Errorf("Nonce should not be less than %d", minNonce)
+		return ErrNonceTooLow
 	}
 
 	return nil
