@@ -58,7 +58,7 @@ func VerifyRegisterZNSTx(
 	api API, flag Variable,
 	tx RegisterZnsTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	pubData = CollectPubDataFromRegisterZNS(api, tx)
 	CheckEmptyAccountNode(api, flag, accountsBefore[0])
 	return pubData

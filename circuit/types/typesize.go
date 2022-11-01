@@ -30,4 +30,7 @@ const (
 	PackedAmountBitsSize        = 40
 	PackedFeeBitsSize           = 16
 	AddressBitsSize             = 160
+	AccountNameBitsSize         = 160
+	HashBitsSize                = 256
+	PubkeyBitsSize              = 256
 )

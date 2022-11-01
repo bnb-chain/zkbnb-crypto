@@ -145,8 +145,6 @@ func GetNftDeltaFromDepositNft(
 		CreatorAccountIndex: txInfo.CreatorAccountIndex,
 		OwnerAccountIndex:   txInfo.AccountIndex,
 		NftContentHash:      txInfo.NftContentHash,
-		NftL1Address:        txInfo.NftL1Address,
-		NftL1TokenId:        txInfo.NftL1TokenId,
 		CreatorTreasuryRate: txInfo.CreatorTreasuryRate,
 		CollectionId:        txInfo.CollectionId,
 	}
@@ -246,8 +244,6 @@ func GetAssetDeltasAndNftDeltaFromMintNft(
 		CreatorAccountIndex: txInfo.CreatorAccountIndex,
 		OwnerAccountIndex:   txInfo.ToAccountIndex,
 		NftContentHash:      txInfo.NftContentHash,
-		NftL1Address:        types.ZeroInt,
-		NftL1TokenId:        types.ZeroInt,
 		CreatorTreasuryRate: txInfo.CreatorTreasuryRate,
 		CollectionId:        txInfo.CollectionId,
 	}
@@ -284,8 +280,6 @@ func GetAssetDeltasAndNftDeltaFromTransferNft(
 		CreatorAccountIndex: nftBefore.CreatorAccountIndex,
 		OwnerAccountIndex:   txInfo.ToAccountIndex,
 		NftContentHash:      nftBefore.NftContentHash,
-		NftL1Address:        nftBefore.NftL1Address,
-		NftL1TokenId:        nftBefore.NftL1TokenId,
 		CreatorTreasuryRate: nftBefore.CreatorTreasuryRate,
 		CollectionId:        nftBefore.CollectionId,
 	}
@@ -375,8 +369,6 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		CreatorAccountIndex: nftBefore.CreatorAccountIndex,
 		OwnerAccountIndex:   txInfo.BuyOffer.AccountIndex,
 		NftContentHash:      nftBefore.NftContentHash,
-		NftL1Address:        nftBefore.NftL1Address,
-		NftL1TokenId:        nftBefore.NftL1TokenId,
 		CreatorTreasuryRate: nftBefore.CreatorTreasuryRate,
 		CollectionId:        nftBefore.CollectionId,
 	}
@@ -463,8 +455,6 @@ func GetAssetDeltasAndNftDeltaFromWithdrawNft(
 		CreatorAccountIndex: types.ZeroInt,
 		OwnerAccountIndex:   types.ZeroInt,
 		NftContentHash:      types.ZeroInt,
-		NftL1Address:        types.ZeroInt,
-		NftL1TokenId:        types.ZeroInt,
 		CreatorTreasuryRate: types.ZeroInt,
 		CollectionId:        types.ZeroInt,
 	}
@@ -498,8 +488,6 @@ func GetNftDeltaFromFullExitNft() (nftDelta NftDeltaConstraints) {
 		CreatorAccountIndex: types.ZeroInt,
 		OwnerAccountIndex:   types.ZeroInt,
 		NftContentHash:      types.ZeroInt,
-		NftL1Address:        types.ZeroInt,
-		NftL1TokenId:        types.ZeroInt,
 		CreatorTreasuryRate: types.ZeroInt,
 		CollectionId:        types.ZeroInt,
 	}

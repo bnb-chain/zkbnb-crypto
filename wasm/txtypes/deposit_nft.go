@@ -13,8 +13,6 @@ type DepositNftTxInfo struct {
 	AccountNameHash     []byte
 	CreatorAccountIndex int64
 	CreatorTreasuryRate int64
-	NftL1Address        string
-	NftL1TokenId        *big.Int
 	NftContentHash      []byte
 	CollectionId        int64
 

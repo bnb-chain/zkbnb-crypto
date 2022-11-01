@@ -83,7 +83,7 @@ func VerifyWithdrawTx(
 	api API, flag Variable,
 	tx *WithdrawTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	fromAccount := 0
 	pubData = CollectPubDataFromWithdraw(api, *tx)
 	// verify params

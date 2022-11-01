@@ -61,8 +61,6 @@ func SelectNftDeltas(
 	deltaRes.CreatorAccountIndex = api.Select(flag, delta.CreatorAccountIndex, deltaCheck.CreatorAccountIndex)
 	deltaRes.OwnerAccountIndex = api.Select(flag, delta.OwnerAccountIndex, deltaCheck.OwnerAccountIndex)
 	deltaRes.NftContentHash = api.Select(flag, delta.NftContentHash, deltaCheck.NftContentHash)
-	deltaRes.NftL1Address = api.Select(flag, delta.NftL1Address, deltaCheck.NftL1Address)
-	deltaRes.NftL1TokenId = api.Select(flag, delta.NftL1TokenId, deltaCheck.NftL1TokenId)
 	deltaRes.CreatorTreasuryRate = api.Select(flag, delta.CreatorTreasuryRate, deltaCheck.CreatorTreasuryRate)
 	deltaRes.CollectionId = api.Select(flag, delta.CollectionId, deltaCheck.CollectionId)
 	return deltaRes
@@ -71,9 +69,9 @@ func SelectNftDeltas(
 func SelectPubData(
 	api API,
 	flag Variable,
-	delta, deltaCheck [types.PubDataSizePerTx]Variable,
-) (deltaRes [types.PubDataSizePerTx]Variable) {
-	for i := 0; i < types.PubDataSizePerTx; i++ {
+	delta, deltaCheck [types.PubDataBitsSizePerTx]Variable,
+) (deltaRes [types.PubDataBitsSizePerTx]Variable) {
+	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
 		deltaRes[i] = api.Select(flag, delta[i], deltaCheck[i])
 	}
 	return deltaRes

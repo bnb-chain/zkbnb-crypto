@@ -58,7 +58,7 @@ func VerifyFullExitTx(
 	api API, flag Variable,
 	tx FullExitTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
-) (pubData [PubDataSizePerTx]Variable) {
+) (pubData [PubDataBitsSizePerTx]Variable) {
 	pubData = CollectPubDataFromFullExit(api, tx)
 	// verify params
 	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)

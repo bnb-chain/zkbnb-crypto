@@ -104,7 +104,7 @@ func VerifyAtomicMatchTx(
 	nftBefore NftConstraints,
 	blockCreatedAt Variable,
 	hFunc MiMC,
-) (pubData [PubDataSizePerTx]Variable, err error) {
+) (pubData [PubDataBitsSizePerTx]Variable, err error) {
 	fromAccount := 0
 	buyAccount := 1
 	sellAccount := 2

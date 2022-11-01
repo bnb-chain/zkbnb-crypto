@@ -90,7 +90,7 @@ func VerifyTransaction(
 	blockCreatedAt Variable,
 	gasAssetIds []int64,
 	oldRoots [types.NbRoots]Variable,
-) (isOnChainOp Variable, pubData [types.PubDataSizePerTx]Variable, roots [types.NbRoots]Variable,
+) (isOnChainOp Variable, pubData [types.PubDataBitsSizePerTx]Variable, roots [types.NbRoots]Variable,
 	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints, err error) {
 	// compute tx type
 	isEmptyTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeEmptyTx))
@@ -172,7 +172,7 @@ func VerifyTransaction(
 	}
 
 	// verify transactions
-	for i := 0; i < types.PubDataSizePerTx; i++ {
+	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
 	pubDataCheck := types.VerifyRegisterZNSTx(api, isRegisterZnsTx, tx.RegisterZnsTxInfo, tx.AccountsInfoBefore)
@@ -227,8 +227,6 @@ func VerifyTransaction(
 		CreatorAccountIndex: tx.NftBefore.CreatorAccountIndex,
 		OwnerAccountIndex:   tx.NftBefore.OwnerAccountIndex,
 		NftContentHash:      tx.NftBefore.NftContentHash,
-		NftL1Address:        tx.NftBefore.NftL1Address,
-		NftL1TokenId:        tx.NftBefore.NftL1TokenId,
 		CreatorTreasuryRate: tx.NftBefore.CreatorTreasuryRate,
 		CollectionId:        tx.NftBefore.CollectionId,
 	}
@@ -393,8 +391,6 @@ func VerifyTransaction(
 		tx.NftBefore.CreatorAccountIndex,
 		tx.NftBefore.OwnerAccountIndex,
 		tx.NftBefore.NftContentHash,
-		tx.NftBefore.NftL1Address,
-		tx.NftBefore.NftL1TokenId,
 		tx.NftBefore.CreatorTreasuryRate,
 		tx.NftBefore.CollectionId,
 	)
@@ -415,8 +411,6 @@ func VerifyTransaction(
 		NftAfter.CreatorAccountIndex,
 		NftAfter.OwnerAccountIndex,
 		NftAfter.NftContentHash,
-		NftAfter.NftL1Address,
-		NftAfter.NftL1TokenId,
 		NftAfter.CreatorTreasuryRate,
 		NftAfter.CollectionId,
 	)
