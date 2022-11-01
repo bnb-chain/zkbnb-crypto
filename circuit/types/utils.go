@@ -54,3 +54,9 @@ func CopyLittleEndianSlice(target []Variable, src []Variable) {
 		target[i] = src[j]
 	}
 }
+
+func copyLittleEndianSliceAndShiftOffset(api API, txField Variable, txFiledBitsSize int, currentOffset *int, pubData []Variable) {
+	txFiledBits := api.ToBinary(txField, txFiledBitsSize)
+	CopyLittleEndianSlice(pubData[*currentOffset:*currentOffset+txFiledBitsSize], txFiledBits)
+	*currentOffset += txFiledBitsSize
+}
