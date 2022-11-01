@@ -17,6 +17,8 @@
 
 package types
 
+import "github.com/consensys/gnark/std/hash/poseidon"
+
 type AtomicMatchTx struct {
 	AccountIndex      int64
 	BuyOffer          *OfferTx
@@ -52,15 +54,11 @@ func EmptyAtomicMatchTxWitness() (witness AtomicMatchTxConstraints) {
 	}
 }
 
-func ComputeHashFromOfferTx(api API, tx OfferTxConstraints, hFunc MiMC) (hashVal Variable) {
-	hFunc.Reset()
-	hFunc.Write(
-		PackInt64Variables(api, tx.Type, tx.OfferId, tx.AccountIndex, tx.NftIndex),
-		PackInt64Variables(api, tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt),
-		tx.TreasuryRate,
+func ComputeHashFromOfferTx(api API, tx OfferTxConstraints) (hashVal Variable) {
+	return poseidon.Poseidon(api,
+		tx.Type, tx.OfferId, tx.AccountIndex, tx.NftIndex,
+		tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt, tx.TreasuryRate,
 	)
-	hashVal = hFunc.Sum()
-	return hashVal
 }
 
 func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraints) {
@@ -77,24 +75,24 @@ func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraint
 	return witness
 }
 
-func ComputeHashFromAtomicMatchTx(api API, tx AtomicMatchTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
-	hFunc.Reset()
-	hFunc.Write(
-		PackInt64Variables(api, ChainId, tx.AccountIndex, nonce, expiredAt),
-		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
-		PackInt64Variables(api, tx.BuyOffer.Type, tx.BuyOffer.OfferId, tx.BuyOffer.AccountIndex, tx.BuyOffer.NftIndex),
-		PackInt64Variables(api, tx.BuyOffer.AssetId, tx.BuyOffer.AssetAmount, tx.BuyOffer.ListedAt, tx.BuyOffer.ExpiredAt),
+func ComputeHashFromAtomicMatchTx(api API, tx AtomicMatchTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
+	buyerOfferHash := poseidon.Poseidon(api,
+		tx.BuyOffer.Type, tx.BuyOffer.OfferId, tx.BuyOffer.AccountIndex, tx.BuyOffer.NftIndex,
+		tx.BuyOffer.AssetId, tx.BuyOffer.AssetAmount, tx.BuyOffer.ListedAt, tx.BuyOffer.ExpiredAt,
 		tx.BuyOffer.Sig.R.X,
 		tx.BuyOffer.Sig.R.Y,
 		tx.BuyOffer.Sig.S,
-		PackInt64Variables(api, tx.SellOffer.Type, tx.SellOffer.OfferId, tx.SellOffer.AccountIndex, tx.SellOffer.NftIndex),
-		PackInt64Variables(api, tx.SellOffer.AssetId, tx.SellOffer.AssetAmount, tx.SellOffer.ListedAt, tx.SellOffer.ExpiredAt),
+	)
+	sellerOfferHash := poseidon.Poseidon(api,
+		tx.SellOffer.Type, tx.SellOffer.OfferId, tx.SellOffer.AccountIndex, tx.SellOffer.NftIndex,
+		tx.SellOffer.AssetId, tx.SellOffer.AssetAmount, tx.SellOffer.ListedAt, tx.SellOffer.ExpiredAt,
 		tx.SellOffer.Sig.R.X,
 		tx.SellOffer.Sig.R.Y,
 		tx.SellOffer.Sig.S,
 	)
-	hashVal = hFunc.Sum()
-	return hashVal
+	return poseidon.Poseidon(api,
+		ChainId, TxTypeAtomicMatch, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount, buyerOfferHash, sellerOfferHash,
+	)
 }
 
 func VerifyAtomicMatchTx(
@@ -127,7 +125,7 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.BuyOffer.TreasuryRate, tx.SellOffer.TreasuryRate)
 	// verify signature
 	hFunc.Reset()
-	buyOfferHash := ComputeHashFromOfferTx(api, tx.BuyOffer, hFunc)
+	buyOfferHash := ComputeHashFromOfferTx(api, tx.BuyOffer)
 	hFunc.Reset()
 	notBuyer := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.BuyOffer.AccountIndex)))
 	notBuyer = api.And(flag, notBuyer)
@@ -136,7 +134,7 @@ func VerifyAtomicMatchTx(
 		return pubData, err
 	}
 	hFunc.Reset()
-	sellOfferHash := ComputeHashFromOfferTx(api, tx.SellOffer, hFunc)
+	sellOfferHash := ComputeHashFromOfferTx(api, tx.SellOffer)
 	hFunc.Reset()
 	notSeller := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.SellOffer.AccountIndex)))
 	notSeller = api.And(flag, notSeller)

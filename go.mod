@@ -13,7 +13,6 @@ require (
 
 require (
 	github.com/btcsuite/btcd/btcec/v2 v2.1.2 // indirect
-	github.com/consensys/bavard v0.1.13 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.2.0 // indirect
@@ -24,9 +23,8 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/sys v0.0.0-20220927170352-d9d178bc13c6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	rsc.io/tmplfunc v0.0.3 // indirect
 )
 
-replace (
-	github.com/consensys/gnark => ../gnark-private
-)
+replace github.com/consensys/gnark => github.com/bnb-chain/gnark v0.7.1-0.20221031143243-a94d59b60efe
+
+replace github.com/consensys/gnark-crypto => github.com/bnb-chain/gnark-crypto v0.7.1-0.20221101004736-92cbe59f55b4

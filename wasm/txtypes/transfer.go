@@ -18,7 +18,6 @@
 package txtypes
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,10 +26,6 @@ import (
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/ethereum/go-ethereum/common"
-
-	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 )
 
 type TransferSegmentFormat struct {
@@ -236,8 +231,6 @@ func (txInfo *TransferTxInfo) GetExpiredAt() int64 {
 }
 
 func (txInfo *TransferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
-	hFunc.Reset()
-	var buf bytes.Buffer
 	packedAmount, err := ToPackedAmount(txInfo.AssetAmount)
 	if err != nil {
 		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
@@ -248,13 +241,9 @@ func (txInfo *TransferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) 
 		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
-	WriteInt64IntoBuf(&buf, ChainId, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt)
-	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex, txInfo.GasFeeAssetId, packedFee)
-	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex, txInfo.AssetId, packedAmount)
-	buf.Write(ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus).FillBytes(make([]byte, 32)))
-	buf.Write(ffmath.Mod(new(big.Int).SetBytes(txInfo.CallDataHash), curve.Modulus).FillBytes(make([]byte, 32)))
-	hFunc.Write(buf.Bytes())
-	msgHash = hFunc.Sum(nil)
+	msgHash = Poseidon(ChainId, TxTypeTransfer, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
+		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.AssetId, packedAmount,
+		txInfo.ToAccountNameHash, txInfo.CallDataHash)
 	return msgHash, nil
 }
 

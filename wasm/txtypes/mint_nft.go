@@ -18,19 +18,17 @@
 package txtypes
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
-	"github.com/ethereum/go-ethereum/common"
-
-	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 )
 
 type MintNftSegmentFormat struct {
@@ -228,20 +226,15 @@ func (txInfo *MintNftTxInfo) GetExpiredAt() int64 {
 }
 
 func (txInfo *MintNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
-	hFunc.Reset()
-	var buf bytes.Buffer
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
 	if err != nil {
 		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
-	WriteInt64IntoBuf(&buf, ChainId, txInfo.CreatorAccountIndex, txInfo.Nonce, txInfo.ExpiredAt)
-	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex, txInfo.GasFeeAssetId, packedFee)
-	WriteInt64IntoBuf(&buf, txInfo.ToAccountIndex, txInfo.CreatorTreasuryRate, txInfo.NftCollectionId)
-	WriteBigIntIntoBuf(&buf, ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus))
-	WriteBigIntIntoBuf(&buf, ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.NftContentHash)), curve.Modulus))
-	hFunc.Write(buf.Bytes())
-	msgHash = hFunc.Sum(nil)
+	msgHash = Poseidon(ChainId, TxTypeMintNft, txInfo.CreatorAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
+		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.CreatorTreasuryRate, txInfo.NftCollectionId,
+		ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus),
+		ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.NftContentHash)), curve.Modulus))
 	return msgHash, nil
 }
 
