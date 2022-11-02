@@ -17,6 +17,8 @@
 
 package types
 
+import "github.com/consensys/gnark/std/hash/poseidon"
+
 type WithdrawNftTx struct {
 	AccountIndex           int64
 	CreatorAccountIndex    int64
@@ -78,16 +80,8 @@ func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraint
 	return witness
 }
 
-func ComputeHashFromWithdrawNftTx(api API, tx WithdrawNftTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
-	hFunc.Reset()
-	hFunc.Write(
-		PackInt64Variables(api, ChainId, tx.AccountIndex, nonce, expiredAt),
-		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
-		tx.NftIndex,
-		tx.ToAddress,
-	)
-	hashVal = hFunc.Sum()
-	return hashVal
+func ComputeHashFromWithdrawNftTx(api API, tx WithdrawNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
+	return poseidon.Poseidon(api, ChainId, TxTypeWithdrawNft, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.NftIndex, tx.ToAddress)
 }
 
 func VerifyWithdrawNftTx(

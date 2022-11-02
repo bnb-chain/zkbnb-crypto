@@ -17,6 +17,8 @@
 
 package types
 
+import "github.com/consensys/gnark/std/hash/poseidon"
+
 type TransferTx struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
@@ -70,17 +72,10 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints) {
 	return witness
 }
 
-func ComputeHashFromTransferTx(api API, tx TransferTxConstraints, nonce Variable, expiredAt Variable, hFunc MiMC) (hashVal Variable) {
-	hFunc.Reset()
-	hFunc.Write(
-		PackInt64Variables(api, ChainId, tx.FromAccountIndex, nonce, expiredAt),
-		PackInt64Variables(api, tx.GasAccountIndex, tx.GasFeeAssetId, tx.GasFeeAssetAmount),
-		PackInt64Variables(api, tx.ToAccountIndex, tx.AssetId, tx.AssetAmount),
-		tx.ToAccountNameHash,
-		tx.CallDataHash,
+func ComputeHashFromTransferTx(api API, tx TransferTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
+	return poseidon.Poseidon(api, ChainId, TxTypeTransfer, tx.FromAccountIndex, nonce, expiredAt, tx.GasFeeAssetId,
+		tx.GasFeeAssetAmount, tx.ToAccountIndex, tx.AssetId, tx.AssetAmount, tx.ToAccountNameHash, tx.CallDataHash,
 	)
-	hashVal = hFunc.Sum()
-	return hashVal
 }
 
 func VerifyTransferTx(

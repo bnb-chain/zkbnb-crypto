@@ -17,6 +17,8 @@
 
 package types
 
+import "github.com/consensys/gnark/std/hash/poseidon"
+
 /*
 VerifyMerkleProof: takes a Merkle root, a proofSet, and a proofIndex and returns
 
@@ -24,23 +26,23 @@ VerifyMerkleProof: takes a Merkle root, a proofSet, and a proofIndex and returns
 	root. False is returned if the proof set or Merkle root is nil, and if
 	'numLeaves' equals 0.
 */
-func VerifyMerkleProof(api API, isEnabled Variable, h MiMC, merkleRoot Variable, node Variable, proofSet, helper []Variable) {
+func VerifyMerkleProof(api API, isEnabled Variable, merkleRoot Variable, node Variable, proofSet, helper []Variable) {
 	for i := 0; i < len(proofSet); i++ {
 		api.AssertIsBoolean(helper[i])
 		d1 := api.Select(helper[i], proofSet[i], node)
 		d2 := api.Select(helper[i], node, proofSet[i])
-		node = nodeSum(h, d1, d2)
+		node = nodeSumPoseidon(api, d1, d2)
 	}
 	// Compare our calculated Merkle root to the desired Merkle root.
 	IsVariableEqual(api, isEnabled, merkleRoot, node)
 }
 
-func UpdateMerkleProof(api API, h MiMC, node Variable, proofSet, helper []Variable) (root Variable) {
+func UpdateMerkleProof(api API, node Variable, proofSet, helper []Variable) (root Variable) {
 	for i := 0; i < len(proofSet); i++ {
 		api.AssertIsBoolean(helper[i])
 		d1 := api.Select(helper[i], proofSet[i], node)
 		d2 := api.Select(helper[i], node, proofSet[i])
-		node = nodeSum(h, d1, d2)
+		node = nodeSumPoseidon(api, d1, d2)
 	}
 	root = node
 	return root
@@ -52,5 +54,10 @@ func nodeSum(h MiMC, a, b Variable) Variable {
 	h.Write(a)
 	h.Write(b)
 	res := h.Sum()
+	return res
+}
+
+func nodeSumPoseidon(api API, a, b Variable) Variable {
+	res := poseidon.Poseidon(api, a, b)
 	return res
 }

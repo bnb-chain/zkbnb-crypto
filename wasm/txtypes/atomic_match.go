@@ -18,7 +18,6 @@
 package txtypes
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"hash"
@@ -221,8 +220,6 @@ func (txInfo *AtomicMatchTxInfo) GetExpiredAt() int64 {
 }
 
 func (txInfo *AtomicMatchTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
-	hFunc.Reset()
-	var buf bytes.Buffer
 	packedBuyAmount, err := ToPackedAmount(txInfo.BuyOffer.AssetAmount)
 	if err != nil {
 		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
@@ -238,33 +235,26 @@ func (txInfo *AtomicMatchTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
 		return nil, err
 	}
-	WriteInt64IntoBuf(&buf, ChainId, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt)
-	WriteInt64IntoBuf(&buf, txInfo.GasAccountIndex, txInfo.GasFeeAssetId, packedFee)
-	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.Type, txInfo.BuyOffer.OfferId, txInfo.BuyOffer.AccountIndex, txInfo.BuyOffer.NftIndex)
-	WriteInt64IntoBuf(&buf, txInfo.BuyOffer.AssetId, packedBuyAmount, txInfo.BuyOffer.ListedAt, txInfo.BuyOffer.ExpiredAt)
 	var (
 		buyerSig, sellerSig = new(eddsa.Signature), new(eddsa.Signature)
 	)
 	_, err = buyerSig.SetBytes(txInfo.BuyOffer.Sig)
 	if err != nil {
-		log.Println("[ComputeAtomicMatchMsgHash] unable to convert to sig: ", err.Error())
+		log.Println("[ComputeAtomicMatchMsgHash] unable to convert to buyer sig: ", err.Error())
 		return nil, err
 	}
-	buf.Write(buyerSig.R.X.Marshal())
-	buf.Write(buyerSig.R.Y.Marshal())
-	buf.Write(buyerSig.S[:])
-	WriteInt64IntoBuf(&buf, txInfo.SellOffer.Type, txInfo.SellOffer.OfferId, txInfo.SellOffer.AccountIndex, txInfo.SellOffer.NftIndex)
-	WriteInt64IntoBuf(&buf, txInfo.SellOffer.AssetId, packedSellAmount, txInfo.SellOffer.ListedAt, txInfo.SellOffer.ExpiredAt)
 	_, err = sellerSig.SetBytes(txInfo.SellOffer.Sig)
 	if err != nil {
-		log.Println("[ComputeAtomicMatchMsgHash] unable to convert to sig: ", err.Error())
+		log.Println("[ComputeAtomicMatchMsgHash] unable to convert to seller sig: ", err.Error())
 		return nil, err
 	}
-	buf.Write(sellerSig.R.X.Marshal())
-	buf.Write(sellerSig.R.Y.Marshal())
-	buf.Write(sellerSig.S[:])
-	hFunc.Write(buf.Bytes())
-	msgHash = hFunc.Sum(nil)
+	buyOfferHash := Poseidon(txInfo.BuyOffer.Type, txInfo.BuyOffer.OfferId, txInfo.BuyOffer.AccountIndex, txInfo.BuyOffer.NftIndex,
+		txInfo.BuyOffer.AssetId, packedBuyAmount, txInfo.BuyOffer.ListedAt, txInfo.BuyOffer.ExpiredAt,
+		buyerSig.R.X.Marshal(), buyerSig.R.Y.Marshal(), buyerSig.S[:])
+	sellOfferHash := Poseidon(txInfo.SellOffer.Type, txInfo.SellOffer.OfferId, txInfo.SellOffer.AccountIndex, txInfo.SellOffer.NftIndex,
+		txInfo.SellOffer.AssetId, packedSellAmount, txInfo.SellOffer.ListedAt, txInfo.SellOffer.ExpiredAt,
+		sellerSig.R.X.Marshal(), sellerSig.R.Y.Marshal(), sellerSig.S[:])
+	msgHash = Poseidon(ChainId, TxTypeAtomicMatch, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt, txInfo.GasFeeAssetId, packedFee, buyOfferHash, sellOfferHash)
 	return msgHash, nil
 }
 
