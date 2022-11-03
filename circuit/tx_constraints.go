@@ -51,7 +51,7 @@ type TxConstraints struct {
 	Signature SignatureConstraints
 	// account root before
 	AccountRootBefore Variable
-	// account before info, size is 5
+	// account before info, size is 4
 	AccountsInfoBefore [NbAccountsPerTx]types.AccountConstraints
 	// nft root before
 	NftRootBefore Variable
