@@ -65,6 +65,7 @@ func TestExportSolSmall(t *testing.T) {
 func exportSol(differentBlockSizes []int) {
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
+	sessionName := "zkbnb"
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
 		blockConstraints.TxsCount = differentBlockSizes[i]
@@ -80,37 +81,47 @@ func exportSol(differentBlockSizes []int) {
 			panic(err)
 		}
 
-		pk, vk, err := groth16.Setup(oR1cs)
+		// pk, vk, err := groth16.Setup(oR1cs)
+		err = groth16.SetupLazyWithDump(oR1cs, sessionName+fmt.Sprint(differentBlockSizes[i]))
 		if err != nil {
 			panic(err)
 		}
-		{
-			f, err := os.Create("zkbnb" + fmt.Sprint(differentBlockSizes[i]) + ".vk")
-			if err != nil {
-				panic(err)
+		/*
+			{
+				f, err := os.Create("zkbnb" + fmt.Sprint(differentBlockSizes[i]) + ".vk")
+				if err != nil {
+					panic(err)
+				}
+				_, err = vk.WriteRawTo(f)
+				if err != nil {
+					panic(err)
+				}
 			}
-			_, err = vk.WriteRawTo(f)
-			if err != nil {
-				panic(err)
+			{
+				f, err := os.Create("zkbnb" + fmt.Sprint(differentBlockSizes[i]) + ".pk")
+				if err != nil {
+					panic(err)
+				}
+				_, err = pk.WriteRawTo(f)
+				if err != nil {
+					panic(err)
+				}
 			}
-		}
-		{
-			f, err := os.Create("zkbnb" + fmt.Sprint(differentBlockSizes[i]) + ".pk")
-			if err != nil {
-				panic(err)
-			}
-			_, err = pk.WriteRawTo(f)
-			if err != nil {
-				panic(err)
-			}
-		}
+		*/
 
 		{
+			verifyingKey := groth16.NewVerifyingKey(ecc.BN254)
+			f, _ := os.Open(sessionName + fmt.Sprint(differentBlockSizes[i]) + ".vk.save")
+			_, err = verifyingKey.ReadFrom(f)
+			if err != nil {
+				panic(fmt.Errorf("read file error"))
+			}
+			f.Close()
 			f, err := os.Create("ZkBNBVerifier" + fmt.Sprint(differentBlockSizes[i]) + ".sol")
 			if err != nil {
 				panic(err)
 			}
-			err = vk.ExportSolidity(f)
+			err = verifyingKey.ExportSolidity(f)
 			if err != nil {
 				panic(err)
 			}
