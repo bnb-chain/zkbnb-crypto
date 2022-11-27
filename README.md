@@ -26,6 +26,12 @@ After this command is finished, there will be 4 generated files: `zkbnb.pk_plonk
 
 **NOTICE**: The generated proving and verifying key shouldn't be used in production environment, it's only for test purpose.
 
+## Generate wasm file
+```
+cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" .
+GOOS=js GOARCH=wasm go build -o main.wasm wasm/main.go
+```
+
 ## Contributions
 
 Welcome to make contributions to `github.com/bnb-chain/zkbnb-crypto`. Thanks!
