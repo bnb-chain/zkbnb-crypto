@@ -33,6 +33,7 @@ import (
 GenerateEddsaPrivateKey: generate eddsa private key
 */
 func GenerateEddsaPrivateKey(seed string) (sk *PrivateKey, err error) {
+	// calc hash by using sha256 to not lose seed data
 	hash := sha256.Sum256([]byte(seed))
 	reader := bytes.NewReader(hash[:])
 	sk, err = GenerateKey(reader)
