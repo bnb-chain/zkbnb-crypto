@@ -19,6 +19,7 @@ package tebn254
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"crypto/subtle"
 	"io"
 	"math/big"
@@ -29,12 +30,11 @@ import (
 )
 
 /*
-	GenerateEddsaPrivateKey: generate eddsa private key
+GenerateEddsaPrivateKey: generate eddsa private key
 */
 func GenerateEddsaPrivateKey(seed string) (sk *PrivateKey, err error) {
-	buf := make([]byte, 32)
-	copy(buf, seed)
-	reader := bytes.NewReader(buf)
+	hash := sha256.Sum256([]byte(seed))
+	reader := bytes.NewReader(hash[:])
 	sk, err = GenerateKey(reader)
 	return sk, err
 }
