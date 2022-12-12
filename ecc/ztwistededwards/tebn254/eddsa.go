@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"crypto/subtle"
+	"encoding/hex"
 	"io"
 	"math/big"
 
@@ -30,11 +31,15 @@ import (
 )
 
 /*
-GenerateEddsaPrivateKey: generate eddsa private key
+	GenerateEddsaPrivateKey: generate eddsa private key
 */
 func GenerateEddsaPrivateKey(seed string) (sk *PrivateKey, err error) {
+	buf, err := hex.DecodeString(seed)
+	if err != nil {
+		return nil, err
+	}
 	// calc hash by using sha256 to not lose seed data
-	hash := sha256.Sum256([]byte(seed))
+	hash := sha256.Sum256(buf)
 	reader := bytes.NewReader(hash[:])
 	sk, err = GenerateKey(reader)
 	return sk, err
