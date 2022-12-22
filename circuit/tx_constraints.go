@@ -283,7 +283,7 @@ func VerifyTransaction(
 	assetDeltasCheck = GetAssetDeltasFromFullExit(api, tx.FullExitTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isFullExitTx, assetDeltasCheck, assetDeltas)
 	// full exit nft
-	nftDeltaCheck = GetNftDeltaFromFullExitNft()
+	nftDeltaCheck = GetNftDeltaFromFullExitNft(api, isFullExitNftTx, tx.FullExitNftTxInfo, tx.NftBefore)
 	nftDelta = SelectNftDeltas(api, isFullExitNftTx, nftDeltaCheck, nftDelta)
 	// update accounts
 	AccountsInfoAfter := UpdateAccounts(api, tx.AccountsInfoBefore, assetDeltas)
@@ -365,7 +365,8 @@ func VerifyTransaction(
 	newNftRoot := tx.NftRootBefore
 	api.AssertIsLessOrEqual(tx.NftBefore.NftIndex, LastNftIndex)
 	nftIndexMerkleHelper := NftIndexToMerkleHelper(api, tx.NftBefore.NftIndex)
-	nftNodeHash := poseidon.Poseidon(api, tx.NftBefore.CreatorAccountIndex,
+	nftNodeHash := poseidon.Poseidon(api,
+		tx.NftBefore.CreatorAccountIndex,
 		tx.NftBefore.OwnerAccountIndex,
 		tx.NftBefore.NftContentHash,
 		tx.NftBefore.CreatorTreasuryRate,

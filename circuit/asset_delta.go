@@ -483,13 +483,23 @@ func GetAssetDeltasFromFullExit(
 	return deltas
 }
 
-func GetNftDeltaFromFullExitNft() (nftDelta NftDeltaConstraints) {
+func GetNftDeltaFromFullExitNft(
+	api API,
+	flag Variable,
+	txInfo FullExitNftTxConstraints,
+	nftBefore NftConstraints) (nftDelta NftDeltaConstraints) {
+	isOwner := api.And(api.IsZero(api.Sub(txInfo.AccountIndex, nftBefore.OwnerAccountIndex)), flag)
+	creatorAccountIndex := api.Select(isOwner, types.ZeroInt, nftBefore.CreatorAccountIndex)
+	ownerAccountIndex := api.Select(isOwner, types.ZeroInt, nftBefore.OwnerAccountIndex)
+	nftContentHash := api.Select(isOwner, types.ZeroInt, nftBefore.NftContentHash)
+	creatorTreasuryRate := api.Select(isOwner, types.ZeroInt, nftBefore.CreatorTreasuryRate)
+	collectionId := api.Select(isOwner, types.ZeroInt, nftBefore.CollectionId)
 	nftDelta = NftDeltaConstraints{
-		CreatorAccountIndex: types.ZeroInt,
-		OwnerAccountIndex:   types.ZeroInt,
-		NftContentHash:      types.ZeroInt,
-		CreatorTreasuryRate: types.ZeroInt,
-		CollectionId:        types.ZeroInt,
+		CreatorAccountIndex: creatorAccountIndex,
+		OwnerAccountIndex:   ownerAccountIndex,
+		NftContentHash:      nftContentHash,
+		CreatorTreasuryRate: creatorTreasuryRate,
+		CollectionId:        collectionId,
 	}
 	return nftDelta
 }
