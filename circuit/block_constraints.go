@@ -18,6 +18,7 @@
 package circuit
 
 import (
+	"fmt"
 	"github.com/consensys/gnark/std/hash/poseidon"
 	"log"
 
@@ -159,8 +160,12 @@ func VerifyBlock(
 	types.IsVariableEqual(api, notNeedGas, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
 
 	pendingCommitmentData[count] = onChainOpsCount
+	fmt.Println("pendingCommitmentData---", pendingCommitmentData)
+
 	commitments, _ := api.Compiler().NewHint(types.Keccak256, 1, pendingCommitmentData[:]...)
 	api.AssertIsEqual(commitments[0], block.BlockCommitment)
+	fmt.Println("block.BlockCommitment---", block.BlockCommitment)
+
 	return nil
 }
 

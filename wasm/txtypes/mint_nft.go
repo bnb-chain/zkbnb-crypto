@@ -35,7 +35,7 @@ type MintNftSegmentFormat struct {
 	CreatorAccountIndex int64  `json:"creator_account_index"`
 	ToAccountIndex      int64  `json:"to_account_index"`
 	ToAccountNameHash   string `json:"to_account_name_hash"`
-	//NftContentHash      string `json:"nft_content_hash"`
+	NftContentHash      string `json:"nft_content_hash"`
 	NftCollectionId     int64  `json:"nft_collection_id"`
 	CreatorTreasuryRate int64  `json:"creator_treasury_rate"`
 	GasAccountIndex     int64  `json:"gas_account_index"`
@@ -62,7 +62,7 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 		CreatorAccountIndex: segmentFormat.CreatorAccountIndex,
 		ToAccountIndex:      segmentFormat.ToAccountIndex,
 		ToAccountNameHash:   segmentFormat.ToAccountNameHash,
-		//NftContentHash:      segmentFormat.NftContentHash,
+		NftContentHash:      segmentFormat.NftContentHash,
 		NftCollectionId:     segmentFormat.NftCollectionId,
 		CreatorTreasuryRate: segmentFormat.CreatorTreasuryRate,
 		GasAccountIndex:     segmentFormat.GasAccountIndex,
