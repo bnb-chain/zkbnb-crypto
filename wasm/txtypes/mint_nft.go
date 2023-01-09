@@ -35,7 +35,7 @@ type MintNftSegmentFormat struct {
 	CreatorAccountIndex int64  `json:"creator_account_index"`
 	ToAccountIndex      int64  `json:"to_account_index"`
 	ToAccountNameHash   string `json:"to_account_name_hash"`
-	NftContentHash      string `json:"nft_content_hash"`
+	//NftContentHash      string `json:"nft_content_hash"`
 	NftCollectionId     int64  `json:"nft_collection_id"`
 	CreatorTreasuryRate int64  `json:"creator_treasury_rate"`
 	GasAccountIndex     int64  `json:"gas_account_index"`
@@ -62,7 +62,7 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 		CreatorAccountIndex: segmentFormat.CreatorAccountIndex,
 		ToAccountIndex:      segmentFormat.ToAccountIndex,
 		ToAccountNameHash:   segmentFormat.ToAccountNameHash,
-		NftContentHash:      segmentFormat.NftContentHash,
+		//NftContentHash:      segmentFormat.NftContentHash,
 		NftCollectionId:     segmentFormat.NftCollectionId,
 		CreatorTreasuryRate: segmentFormat.CreatorTreasuryRate,
 		GasAccountIndex:     segmentFormat.GasAccountIndex,
@@ -105,6 +105,15 @@ type MintNftTxInfo struct {
 	ExpiredAt           int64
 	Nonce               int64
 	Sig                 []byte
+	MetaData            *NftMetaData
+	IpnsKey             string
+}
+
+type NftMetaData struct {
+	Image       string
+	Name        string
+	Description string
+	Attributes  string
 }
 
 func (txInfo *MintNftTxInfo) Validate() error {
@@ -130,9 +139,9 @@ func (txInfo *MintNftTxInfo) Validate() error {
 	}
 
 	// NftContentHash
-	if !IsValidHash(txInfo.NftContentHash) {
-		return ErrNftContentHashInvalid
-	}
+	//if !IsValidHash(txInfo.NftContentHash) {
+	//	return ErrNftContentHashInvalid
+	//}
 
 	// NftCollectionId
 	if txInfo.NftCollectionId < minCollectionId {
@@ -233,8 +242,7 @@ func (txInfo *MintNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	}
 	msgHash = Poseidon(ChainId, TxTypeMintNft, txInfo.CreatorAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
 		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.CreatorTreasuryRate, txInfo.NftCollectionId,
-		ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus),
-		ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.NftContentHash)), curve.Modulus))
+		ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus))
 	return msgHash, nil
 }
 
