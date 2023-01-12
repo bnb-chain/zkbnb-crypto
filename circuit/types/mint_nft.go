@@ -83,7 +83,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
 	return poseidon.Poseidon(api, ChainId, TxTypeMintNft, tx.CreatorAccountIndex, nonce, expiredAt,
 		tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.ToAccountIndex,
-		tx.CreatorTreasuryRate, tx.CollectionId, tx.ToAccountNameHash, tx.NftContentHash)
+		tx.CreatorTreasuryRate, tx.CollectionId, tx.ToAccountNameHash)
 }
 
 func VerifyMintNftTx(
