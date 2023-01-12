@@ -106,7 +106,8 @@ type MintNftTxInfo struct {
 	Nonce               int64
 	Sig                 []byte
 	MetaData            *NftMetaData
-	IpnsKey             string
+	IpnsName            string
+	IpnsId              string
 }
 
 type NftMetaData struct {
