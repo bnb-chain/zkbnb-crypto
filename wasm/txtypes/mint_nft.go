@@ -111,10 +111,11 @@ type MintNftTxInfo struct {
 }
 
 type NftMetaData struct {
-	Image       string
-	Name        string
-	Description string
-	Attributes  string
+	Image            string
+	Name             string
+	Description      string
+	Attributes       string
+	MutableAttribute string
 }
 
 func (txInfo *MintNftTxInfo) Validate() error {
