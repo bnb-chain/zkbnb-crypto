@@ -60,7 +60,8 @@ func SelectNftDeltas(
 ) (deltaRes NftDeltaConstraints) {
 	deltaRes.CreatorAccountIndex = api.Select(flag, delta.CreatorAccountIndex, deltaCheck.CreatorAccountIndex)
 	deltaRes.OwnerAccountIndex = api.Select(flag, delta.OwnerAccountIndex, deltaCheck.OwnerAccountIndex)
-	deltaRes.NftContentHash = api.Select(flag, delta.NftContentHash, deltaCheck.NftContentHash)
+	deltaRes.NftContentHash[0] = api.Select(flag, delta.NftContentHash[0], deltaCheck.NftContentHash[0])
+	deltaRes.NftContentHash[1] = api.Select(flag, delta.NftContentHash[1], deltaCheck.NftContentHash[1])
 	deltaRes.CreatorTreasuryRate = api.Select(flag, delta.CreatorTreasuryRate, deltaCheck.CreatorTreasuryRate)
 	deltaRes.CollectionId = api.Select(flag, delta.CollectionId, deltaCheck.CollectionId)
 	return deltaRes

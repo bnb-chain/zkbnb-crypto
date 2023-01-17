@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestTransactionConstraintsCounts(t *testing.T) {
+func TestTransactionConstraintsCount(t *testing.T) {
 	var txCircuit TxConstraints
 	r1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &txCircuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
