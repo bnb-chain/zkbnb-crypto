@@ -160,7 +160,8 @@ func VerifyBlock(
 	types.IsVariableEqual(api, notNeedGas, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
 
 	pendingCommitmentData[count] = onChainOpsCount
-	pubDataBytes, _ := api.Compiler().NewHint(types.PubDataToBytes, 1, pendingCommitmentData[:]...)
+	outputBytesLen := 5*32 + len(pendingCommitmentData[:]) - 5
+	pubDataBytes, _ := api.Compiler().NewHint(types.PubDataToBytes, outputBytesLen, pendingCommitmentData[:]...)
 	commitment := keccak.Keccak256Api(api, pubDataBytes[:]...)
 	api.AssertIsEqual(commitment, block.BlockCommitment)
 	return nil
