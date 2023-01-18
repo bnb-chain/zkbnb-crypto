@@ -18,6 +18,7 @@
 package circuit
 
 import (
+	keccak "github.com/consensys/gnark/std/hash/keccak256"
 	"github.com/consensys/gnark/std/hash/poseidon"
 	"log"
 
@@ -159,8 +160,9 @@ func VerifyBlock(
 	types.IsVariableEqual(api, notNeedGas, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
 
 	pendingCommitmentData[count] = onChainOpsCount
-	commitments, _ := api.Compiler().NewHint(types.Keccak256, 1, pendingCommitmentData[:]...)
-	api.AssertIsEqual(commitments[0], block.BlockCommitment)
+	pubDataBytes, _ := api.Compiler().NewHint(types.PubDataToBytes, 1, pendingCommitmentData[:]...)
+	commitment := keccak.Keccak256Api(api, pubDataBytes[:]...)
+	api.AssertIsEqual(commitment, block.BlockCommitment)
 	return nil
 }
 
