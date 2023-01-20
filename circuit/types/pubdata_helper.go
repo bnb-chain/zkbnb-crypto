@@ -17,8 +17,6 @@
 
 package types
 
-import "fmt"
-
 func CollectPubDataFromRegisterZNS(api API, txInfo RegisterZnsTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
 	currentOffset := 0
 	copyLittleEndianSliceAndShiftOffset(api, TxTypeRegisterZns, TxTypeBitsSize, &currentOffset, pubData[:])
@@ -129,7 +127,6 @@ func CollectPubDataFromMintNft(api API, txInfo MintNftTxConstraints) (pubData [P
 	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
-	fmt.Println("pubData-----", pubData)
 	return pubData
 }
 
