@@ -59,10 +59,7 @@ func PubDataToBytes(_ ecc.ID, inputs []*big.Int, outputs []*big.Int) error {
 	}
 
 	buf.Write(inputs[len(inputs)-1].FillBytes(make([]byte, 32)))
-	result := buf.Bytes()
-	for i := range result {
-		outputs[i].SetUint64(uint64(result[i]))
-	}
+	outputs[0].SetBytes(buf.Bytes()[:])
 	return nil
 }
 

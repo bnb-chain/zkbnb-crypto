@@ -67,7 +67,8 @@ func VerifyBlock(
 		gasDeltas       [NbGasAssetsPerTx]GasDeltaConstraints
 		needGas         Variable
 	)
-	pendingCommitmentData := make([]Variable, types.PubDataBitsSizePerTx*block.TxsCount+5)
+	blockInfoCount := 5
+	pendingCommitmentData := make([]Variable, types.PubDataBitsSizePerTx*block.TxsCount+blockInfoCount)
 	// write basic info into hFunc
 	pendingCommitmentData[0] = block.BlockNumber
 	pendingCommitmentData[1] = block.CreatedAt
@@ -160,8 +161,8 @@ func VerifyBlock(
 	types.IsVariableEqual(api, notNeedGas, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
 
 	pendingCommitmentData[count] = onChainOpsCount
-	outputBytesLen := 5*32 + len(pendingCommitmentData[:]) - 5
-	pubDataBytes, _ := api.Compiler().NewHint(types.PubDataToBytes, outputBytesLen, pendingCommitmentData[:]...)
+	outputBytesCount := blockInfoCount*32 + (types.PubDataBitsSizePerTx*block.TxsCount)/8
+	pubDataBytes, _ := api.Compiler().NewHint(types.PubDataToBytes, outputBytesCount, pendingCommitmentData[:]...)
 	commitment := keccak.Keccak256Api(api, pubDataBytes[:]...)
 	api.AssertIsEqual(commitment, block.BlockCommitment)
 	return nil
