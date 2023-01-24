@@ -96,6 +96,20 @@ type CreateCollectionTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+	MetaData          *CollectionMetaData
+}
+
+type CollectionMetaData struct {
+	LogoImage         string
+	FeaturedImage     string
+	BannerImage       string
+	Shortname         string
+	ExternalLink      string
+	TwitterUserName   string
+	InstagramUserName string
+	TelegramLink      string
+	DiscordLink       string
+	CategoryID        int64
 }
 
 func (txInfo *CreateCollectionTxInfo) Validate() error {

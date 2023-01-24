@@ -19,6 +19,7 @@ package types
 
 import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
+	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
 	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
 )
@@ -59,4 +60,14 @@ func copyLittleEndianSliceAndShiftOffset(api API, txField Variable, txFiledBitsS
 	txFiledBits := api.ToBinary(txField, txFiledBitsSize)
 	CopyLittleEndianSlice(pubData[*currentOffset:*currentOffset+txFiledBitsSize], txFiledBits)
 	*currentOffset += txFiledBitsSize
+}
+
+func GetNftContentHashFromBytes(hash []byte) [2]frontend.Variable {
+	var nftContentHash [2]Variable
+	if len(hash) >= NftContentHashBytesSize {
+		nftContentHash = [2]Variable{hash[:NftContentHashBytesSize], hash[NftContentHashBytesSize:]}
+	} else {
+		nftContentHash = [2]Variable{hash[:], ZeroInt}
+	}
+	return nftContentHash
 }

@@ -24,7 +24,7 @@ import (
 type NftDeltaConstraints struct {
 	CreatorAccountIndex Variable
 	OwnerAccountIndex   Variable
-	NftContentHash      Variable
+	NftContentHash      [2]Variable
 	CreatorTreasuryRate Variable
 	CollectionId        Variable
 }
@@ -33,7 +33,7 @@ func EmptyNftDeltaConstraints() NftDeltaConstraints {
 	return NftDeltaConstraints{
 		CreatorAccountIndex: types.ZeroInt,
 		OwnerAccountIndex:   types.ZeroInt,
-		NftContentHash:      types.ZeroInt,
+		NftContentHash:      [2]Variable{types.ZeroInt, types.ZeroInt},
 		CreatorTreasuryRate: types.ZeroInt,
 		CollectionId:        types.ZeroInt,
 	}

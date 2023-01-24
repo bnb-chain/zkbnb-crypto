@@ -159,8 +159,10 @@ func VerifyBlock(
 	types.IsVariableEqual(api, notNeedGas, block.NewStateRoot, block.Txs[block.TxsCount-1].StateRootAfter)
 
 	pendingCommitmentData[count] = onChainOpsCount
+
 	commitments, _ := api.Compiler().NewHint(types.Keccak256, 1, pendingCommitmentData[:]...)
 	api.AssertIsEqual(commitments[0], block.BlockCommitment)
+
 	return nil
 }
 
@@ -219,7 +221,7 @@ func GetZeroTxConstraint() TxConstraints {
 	// before
 	zeroTxConstraint.NftBefore = NftConstraints{
 		NftIndex:            0,
-		NftContentHash:      0,
+		NftContentHash:      [2]Variable{0, 0},
 		CreatorAccountIndex: 0,
 		OwnerAccountIndex:   0,
 		CreatorTreasuryRate: 0,
