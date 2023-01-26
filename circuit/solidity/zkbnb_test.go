@@ -86,25 +86,22 @@ func exportSol(differentBlockSizes []int) {
 		if err != nil {
 			panic(err)
 		}
-
-		verifyingKey := groth16.NewVerifyingKey(ecc.BN254)
-		f, _ := os.Open(sessionName + fmt.Sprint(differentBlockSizes[i]) + ".vk.save")
-		_, err = verifyingKey.ReadFrom(f)
-		if err != nil {
-			panic(fmt.Errorf("read file error"))
+		{
+			verifyingKey := groth16.NewVerifyingKey(ecc.BN254)
+			f, _ := os.Open(sessionName + fmt.Sprint(differentBlockSizes[i]) + ".vk.save")
+			_, err = verifyingKey.ReadFrom(f)
+			if err != nil {
+				panic(fmt.Errorf("read file error"))
+			}
+			f.Close()
+			f, err := os.Create("ZkBNBVerifier" + fmt.Sprint(differentBlockSizes[i]) + ".sol")
+			if err != nil {
+				panic(err)
+			}
+			err = verifyingKey.ExportSolidity(f)
+			if err != nil {
+				panic(err)
+			}
 		}
-		err = f.Close()
-		if err != nil {
-			panic(err)
-		}
-		f, err = os.Create("ZkBNBVerifier" + fmt.Sprint(differentBlockSizes[i]) + ".sol")
-		if err != nil {
-			panic(err)
-		}
-		err = verifyingKey.ExportSolidity(f)
-		if err != nil {
-			panic(err)
-		}
-
 	}
 }
