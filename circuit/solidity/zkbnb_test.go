@@ -77,6 +77,7 @@ func exportSol(differentBlockSizes []int) {
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
 		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
+		fmt.Printf("Constraints num=%v\n", oR1cs.GetNbConstraints())
 		if err != nil {
 			panic(err)
 		}
