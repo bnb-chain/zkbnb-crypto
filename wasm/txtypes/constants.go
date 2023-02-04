@@ -81,7 +81,7 @@ const (
 	maxTreasuryRate int64 = 10000
 
 	minCollectionNameLength int = 1
-	maxCollectionNameLength int = 50
+	maxCollectionNameLength int = 64
 
 	maxCollectionIntroductionLength int = 1000
 )
