@@ -96,7 +96,6 @@ type CreateCollectionTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
-	MetaData          string
 }
 
 func (txInfo *CreateCollectionTxInfo) Validate() error {
