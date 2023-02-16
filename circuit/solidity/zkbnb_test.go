@@ -31,7 +31,7 @@ import (
 	"github.com/bnb-chain/zkbnb-crypto/circuit"
 )
 
-var blockSize = flag.Int("blocksize", -1, "block size that will be used for proof generation and verification")
+var blockSize = flag.Int("blocksize", 10, "block size that will be used for proof generation and verification")
 
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := []int{1, 10}
