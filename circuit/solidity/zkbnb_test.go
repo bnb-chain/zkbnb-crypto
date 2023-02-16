@@ -18,6 +18,7 @@
 package solidity
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"testing"
@@ -29,6 +30,8 @@ import (
 
 	"github.com/bnb-chain/zkbnb-crypto/circuit"
 )
+
+var blockSize = flag.Int("blocksize", -1, "block size that will be used for proof generation and verification")
 
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := []int{1, 10}
@@ -53,7 +56,10 @@ func TestCompileCircuit(t *testing.T) {
 }
 
 func TestExportSol(t *testing.T) {
-	differentBlockSizes := []int{1, 10}
+	if *blockSize <= 0 {
+		panic(fmt.Sprintf("-blocksize arg is required to be bigger than %v", *blockSize))
+	}
+	differentBlockSizes := []int{1, *blockSize}
 	exportSol(differentBlockSizes)
 }
 
