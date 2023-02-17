@@ -105,17 +105,10 @@ type MintNftTxInfo struct {
 	ExpiredAt           int64
 	Nonce               int64
 	Sig                 []byte
-	MetaData            *NftMetaData
+	MetaData            string
+	MutableAttributes   string
 	IpnsName            string
 	IpnsId              string
-}
-
-type NftMetaData struct {
-	Image            string
-	Name             string
-	Description      string
-	Attributes       string
-	MutableAttribute string
 }
 
 func (txInfo *MintNftTxInfo) Validate() error {
