@@ -81,7 +81,7 @@ func PaddingAddressToBytes32(addr string) []byte {
 }
 
 /*
-	ToPackedAmount: convert big int to 40 bit, 5 bits for 10^x, 35 bits for a * 10^x
+ToPackedAmount: convert big int to 40 bit, 5 bits for 10^x, 35 bits for a * 10^x
 */
 func ToPackedAmount(amount *big.Int) (res int64, err error) {
 	return util.ToPackedAmount(amount)
@@ -92,7 +92,7 @@ func CleanPackedAmount(amount *big.Int) (nAmount *big.Int, err error) {
 }
 
 /*
-	ToPackedFee: convert big int to 16 bit, 5 bits for 10^x, 11 bits for a * 10^x
+ToPackedFee: convert big int to 16 bit, 5 bits for 10^x, 11 bits for a * 10^x
 */
 func ToPackedFee(amount *big.Int) (res int64, err error) {
 	return util.ToPackedFee(amount)
@@ -175,6 +175,11 @@ func FromHexStrToFr(s string) (*fr.Element, error) {
 	if !success {
 		return nil, errors.New("not a valid hex str")
 	}
+	return FromBigIntToFr(n), nil
+}
+
+func FromBytesToFr(b []byte) (*fr.Element, error) {
+	n := new(big.Int).SetBytes(b)
 	return FromBigIntToFr(n), nil
 }
 

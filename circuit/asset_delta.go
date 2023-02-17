@@ -454,7 +454,7 @@ func GetAssetDeltasAndNftDeltaFromWithdrawNft(
 	nftDelta = NftDeltaConstraints{
 		CreatorAccountIndex: types.ZeroInt,
 		OwnerAccountIndex:   types.ZeroInt,
-		NftContentHash:      types.ZeroInt,
+		NftContentHash:      [2]Variable{types.ZeroInt, types.ZeroInt},
 		CreatorTreasuryRate: types.ZeroInt,
 		CollectionId:        types.ZeroInt,
 	}
@@ -491,7 +491,9 @@ func GetNftDeltaFromFullExitNft(
 	isOwner := api.And(api.IsZero(api.Sub(txInfo.AccountIndex, nftBefore.OwnerAccountIndex)), flag)
 	creatorAccountIndex := api.Select(isOwner, types.ZeroInt, nftBefore.CreatorAccountIndex)
 	ownerAccountIndex := api.Select(isOwner, types.ZeroInt, nftBefore.OwnerAccountIndex)
-	nftContentHash := api.Select(isOwner, types.ZeroInt, nftBefore.NftContentHash)
+	nftContentHash := [2]Variable{}
+	nftContentHash[0] = api.Select(isOwner, types.ZeroInt, nftBefore.NftContentHash[0])
+	nftContentHash[1] = api.Select(isOwner, types.ZeroInt, nftBefore.NftContentHash[1])
 	creatorTreasuryRate := api.Select(isOwner, types.ZeroInt, nftBefore.CreatorTreasuryRate)
 	collectionId := api.Select(isOwner, types.ZeroInt, nftBefore.CollectionId)
 	nftDelta = NftDeltaConstraints{

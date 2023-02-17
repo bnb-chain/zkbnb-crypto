@@ -48,6 +48,8 @@ const (
 
 	PubDataBitsSizePerTx = 968 // registerZNS
 
+	NftContentHashBytesSize = 16
+
 	OfferSizePerAsset = 128
 
 	ChainId = 1

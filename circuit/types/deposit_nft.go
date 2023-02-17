@@ -31,7 +31,7 @@ type DepositNftTxConstraints struct {
 	AccountIndex        Variable
 	AccountNameHash     Variable
 	NftIndex            Variable
-	NftContentHash      Variable
+	NftContentHash      [2]Variable
 	CreatorAccountIndex Variable
 	CreatorTreasuryRate Variable
 	CollectionId        Variable
@@ -42,7 +42,7 @@ func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
 		AccountIndex:        ZeroInt,
 		AccountNameHash:     ZeroInt,
 		NftIndex:            ZeroInt,
-		NftContentHash:      ZeroInt,
+		NftContentHash:      [2]Variable{ZeroInt, ZeroInt},
 		CreatorAccountIndex: ZeroInt,
 		CreatorTreasuryRate: ZeroInt,
 		CollectionId:        ZeroInt,
@@ -54,7 +54,7 @@ func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) 
 		AccountIndex:        tx.AccountIndex,
 		AccountNameHash:     tx.AccountNameHash,
 		NftIndex:            tx.NftIndex,
-		NftContentHash:      tx.NftContentHash,
+		NftContentHash:      GetNftContentHashFromBytes(tx.NftContentHash),
 		CreatorAccountIndex: tx.CreatorAccountIndex,
 		CreatorTreasuryRate: tx.CreatorTreasuryRate,
 		CollectionId:        tx.CollectionId,
