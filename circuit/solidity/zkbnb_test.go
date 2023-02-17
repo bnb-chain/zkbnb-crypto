@@ -18,8 +18,11 @@
 package solidity
 
 import (
+	"flag"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc"
@@ -30,8 +33,10 @@ import (
 	"github.com/bnb-chain/zkbnb-crypto/circuit"
 )
 
+var optionalBlockSizes = flag.String("blocksizes", "1,10", "block size that will be used for proof generation and verification")
+
 func TestCompileCircuit(t *testing.T) {
-	differentBlockSizes := []int{1, 10}
+	differentBlockSizes := optionalBlockSizesInt()
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	for i := 0; i < len(differentBlockSizes); i++ {
@@ -53,8 +58,7 @@ func TestCompileCircuit(t *testing.T) {
 }
 
 func TestExportSol(t *testing.T) {
-	differentBlockSizes := []int{1, 10}
-	exportSol(differentBlockSizes)
+	exportSol(optionalBlockSizesInt())
 }
 
 func TestExportSolSmall(t *testing.T) {
@@ -105,4 +109,17 @@ func exportSol(differentBlockSizes []int) {
 			}
 		}
 	}
+}
+
+func optionalBlockSizesInt() []int {
+	blockSizesStr := strings.Split(*optionalBlockSizes, ",")
+	blockSizesInt := make([]int, len(blockSizesStr))
+	for i := range blockSizesStr {
+		v, err := strconv.Atoi(blockSizesStr[i])
+		if err != nil {
+			panic(err)
+		}
+		blockSizesInt[i] = v
+	}
+	return blockSizesInt
 }
