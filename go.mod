@@ -26,6 +26,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/consensys/gnark => github.com/bnb-chain/gnark v0.7.1-0.20230206150652-4e87ef37b4e7
+replace github.com/consensys/gnark => github.com/ruslangm/gnark v0.7.1-0.20230301160822-536fa6f95f0e
 
 replace github.com/consensys/gnark-crypto => github.com/bnb-chain/gnark-crypto v0.7.1-0.20230203031630-7c643ad11891
