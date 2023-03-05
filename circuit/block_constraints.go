@@ -196,7 +196,7 @@ func SetBlockWitness(oBlock *Block) (witness BlockConstraints, err error) {
 func GetZeroTxConstraint() TxConstraints {
 	var zeroTxConstraint TxConstraints
 	zeroTxConstraint.TxType = 0
-	zeroTxConstraint.RegisterZnsTxInfo = types.EmptyRegisterZnsTxWitness()
+	zeroTxConstraint.ChangePubKeyTxInfo = types.EmptyChangePubKeyTxWitness()
 	zeroTxConstraint.DepositTxInfo = types.EmptyDepositTxWitness()
 	zeroTxConstraint.DepositNftTxInfo = types.EmptyDepositNftTxWitness()
 	zeroTxConstraint.TransferTxInfo = types.EmptyTransferTxWitness()
@@ -234,7 +234,7 @@ func GetZeroTxConstraint() TxConstraints {
 		// set witness
 		zeroAccountConstraint := types.AccountConstraints{
 			AccountIndex:    0,
-			AccountNameHash: 0,
+			L1Address:       0,
 			AccountPk:       types.EmptyPublicKeyWitness(),
 			Nonce:           0,
 			CollectionNonce: 0,

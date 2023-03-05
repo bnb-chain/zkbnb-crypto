@@ -31,7 +31,7 @@ type TxConstraints struct {
 	// tx type
 	TxType Variable
 	// different transactions
-	RegisterZnsTxInfo      RegisterZnsTxConstraints
+	ChangePubKeyTxInfo     ChangePubKeyTxConstraints
 	DepositTxInfo          DepositTxConstraints
 	DepositNftTxInfo       DepositNftTxConstraints
 	TransferTxInfo         TransferTxConstraints
@@ -95,7 +95,7 @@ func VerifyTransaction(
 	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints, err error) {
 	// compute tx type
 	isEmptyTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeEmptyTx))
-	isRegisterZnsTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeRegisterZns))
+	isTypeChangePubKey := api.IsZero(api.Sub(tx.TxType, types.TxTypeChangePubKey))
 	isDepositTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeDeposit))
 	isDepositNftTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeDepositNft))
 	isTransferTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeTransfer))
@@ -122,7 +122,7 @@ func VerifyTransaction(
 	)
 
 	isOnChainOp = api.Add(
-		isRegisterZnsTx,
+		isTypeChangePubKey,
 		isDepositTx,
 		isDepositNftTx,
 		isWithdrawTx,
@@ -176,8 +176,8 @@ func VerifyTransaction(
 	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
-	pubDataCheck := types.VerifyRegisterZNSTx(api, isRegisterZnsTx, tx.RegisterZnsTxInfo, tx.AccountsInfoBefore)
-	pubData = SelectPubData(api, isRegisterZnsTx, pubDataCheck, pubData)
+	pubDataCheck := types.VerifyChangePubKeyTx(api, isTypeChangePubKey, tx.ChangePubKeyTxInfo, tx.AccountsInfoBefore)
+	pubData = SelectPubData(api, isTypeChangePubKey, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyDepositTx(api, isDepositTx, tx.DepositTxInfo, tx.AccountsInfoBefore)
 	pubData = SelectPubData(api, isDepositTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyDepositNftTx(api, isDepositNftTx, tx.DepositNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
@@ -236,7 +236,7 @@ func VerifyTransaction(
 	}
 
 	// register
-	accountDelta := GetAccountDeltaFromRegisterZNS(tx.RegisterZnsTxInfo)
+	accountDelta := GetAccountDeltaFromChangePubKey(tx.ChangePubKeyTxInfo)
 	// deposit
 	assetDeltasCheck := GetAssetDeltasFromDeposit(tx.DepositTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isDepositTx, assetDeltasCheck, assetDeltas)
@@ -287,9 +287,9 @@ func VerifyTransaction(
 	nftDelta = SelectNftDeltas(api, isFullExitNftTx, nftDeltaCheck, nftDelta)
 	// update accounts
 	AccountsInfoAfter := UpdateAccounts(api, tx.AccountsInfoBefore, assetDeltas)
-	AccountsInfoAfter[0].AccountNameHash = api.Select(isRegisterZnsTx, accountDelta.AccountNameHash, AccountsInfoAfter[0].AccountNameHash)
-	AccountsInfoAfter[0].AccountPk.A.X = api.Select(isRegisterZnsTx, accountDelta.PubKey.A.X, AccountsInfoAfter[0].AccountPk.A.X)
-	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isRegisterZnsTx, accountDelta.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
+	AccountsInfoAfter[0].L1Address = api.Select(isTypeChangePubKey, accountDelta.L1Address, AccountsInfoAfter[0].L1Address)
+	AccountsInfoAfter[0].AccountPk.A.X = api.Select(isTypeChangePubKey, accountDelta.PubKey.A.X, AccountsInfoAfter[0].AccountPk.A.X)
+	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isTypeChangePubKey, accountDelta.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
 	// update nonce
 	AccountsInfoAfter[0].Nonce = api.Add(AccountsInfoAfter[0].Nonce, isLayer2Tx)
 	AccountsInfoAfter[0].CollectionNonce = api.Add(AccountsInfoAfter[0].CollectionNonce, isCreateCollectionTx)
@@ -334,7 +334,7 @@ func VerifyTransaction(
 		api.AssertIsLessOrEqual(tx.AccountsInfoBefore[i].AccountIndex, LastAccountIndex)
 		accountIndexMerkleHelper := AccountIndexToMerkleHelper(api, tx.AccountsInfoBefore[i].AccountIndex)
 		accountNodeHash := poseidon.Poseidon(api,
-			tx.AccountsInfoBefore[i].AccountNameHash,
+			tx.AccountsInfoBefore[i].L1Address,
 			tx.AccountsInfoBefore[i].AccountPk.A.X,
 			tx.AccountsInfoBefore[i].AccountPk.A.Y,
 			tx.AccountsInfoBefore[i].Nonce,
@@ -350,7 +350,7 @@ func VerifyTransaction(
 			accountIndexMerkleHelper,
 		)
 		accountNodeHash = poseidon.Poseidon(api,
-			AccountsInfoAfter[i].AccountNameHash,
+			AccountsInfoAfter[i].L1Address,
 			AccountsInfoAfter[i].AccountPk.A.X,
 			AccountsInfoAfter[i].AccountPk.A.Y,
 			AccountsInfoAfter[i].Nonce,
@@ -458,7 +458,7 @@ func EmptyTx(stateRoot []byte) (oTx *Tx) {
 
 func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	witness.TxType = int64(oTx.TxType)
-	witness.RegisterZnsTxInfo = types.EmptyRegisterZnsTxWitness()
+	witness.ChangePubKeyTxInfo = types.EmptyChangePubKeyTxWitness()
 	witness.DepositTxInfo = types.EmptyDepositTxWitness()
 	witness.DepositNftTxInfo = types.EmptyDepositNftTxWitness()
 	witness.TransferTxInfo = types.EmptyTransferTxWitness()
@@ -477,8 +477,8 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 	switch oTx.TxType {
 	case types.TxTypeEmptyTx:
 		break
-	case types.TxTypeRegisterZns:
-		witness.RegisterZnsTxInfo = types.SetRegisterZnsTxWitness(oTx.RegisterZnsTxInfo)
+	case types.TxTypeChangePubKey:
+		witness.ChangePubKeyTxInfo = types.SetChangePubKeyTxWitness(oTx.ChangePubKeyTxInfo)
 		break
 	case types.TxTypeDeposit:
 		witness.DepositTxInfo = types.SetDepositTxWitness(oTx.DepositTxInfo)

@@ -46,7 +46,7 @@ const (
 
 	PubDataSizePerTx = 6
 
-	PubDataBitsSizePerTx = 968 // registerZNS
+	PubDataBitsSizePerTx = 968 // registerZNS to TxTypeChangePubKey
 
 	NftContentHashBytesSize = 16
 
@@ -57,7 +57,7 @@ const (
 
 const (
 	TxTypeEmptyTx = iota
-	TxTypeRegisterZns
+	TxTypeChangePubKey
 	TxTypeDeposit
 	TxTypeDepositNft
 	TxTypeTransfer

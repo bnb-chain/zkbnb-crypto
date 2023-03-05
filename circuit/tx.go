@@ -25,7 +25,7 @@ type Tx struct {
 	// tx type
 	TxType uint8
 	// different transactions
-	RegisterZnsTxInfo      *RegisterZnsTx
+	ChangePubKeyTxInfo     *ChangePubKeyTx
 	DepositTxInfo          *DepositTx
 	DepositNftTxInfo       *DepositNftTx
 	TransferTxInfo         *TransferTx

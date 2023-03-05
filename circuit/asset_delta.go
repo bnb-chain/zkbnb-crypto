@@ -24,8 +24,8 @@ import (
 )
 
 type AccountDeltaConstraints struct {
-	AccountNameHash Variable
-	PubKey          eddsa.PublicKey
+	L1Address Variable
+	PubKey    eddsa.PublicKey
 }
 
 type AccountAssetDeltaConstraints struct {
@@ -86,12 +86,12 @@ func GetGasDeltas(gasFeeAssetId, gasFeeAssetAmount Variable) (
 	return gasDeltas
 }
 
-func GetAccountDeltaFromRegisterZNS(
-	txInfo RegisterZnsTxConstraints,
+func GetAccountDeltaFromChangePubKey(
+	txInfo ChangePubKeyTxConstraints,
 ) (accountDelta AccountDeltaConstraints) {
 	accountDelta = AccountDeltaConstraints{
-		AccountNameHash: txInfo.AccountNameHash,
-		PubKey:          txInfo.PubKey,
+		L1Address: txInfo.L1Address,
+		PubKey:    txInfo.PubKey,
 	}
 	return accountDelta
 }

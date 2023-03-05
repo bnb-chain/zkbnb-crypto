@@ -10,8 +10,8 @@ type FullExitTxInfo struct {
 	TxType uint8
 
 	// Get from layer1 events.
-	AccountNameHash []byte
-	AssetId         int64
+	L1Address string
+	AssetId   int64
 
 	// Set by layer2.
 	AccountIndex int64

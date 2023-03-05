@@ -10,9 +10,9 @@ type DepositTxInfo struct {
 	TxType uint8
 
 	// Get from layer1 events.
-	AccountNameHash []byte
-	AssetId         int64
-	AssetAmount     *big.Int
+	L1Address   string
+	AssetId     int64
+	AssetAmount *big.Int
 
 	// Set by layer2.
 	AccountIndex int64

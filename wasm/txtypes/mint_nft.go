@@ -34,7 +34,7 @@ import (
 type MintNftSegmentFormat struct {
 	CreatorAccountIndex int64  `json:"creator_account_index"`
 	ToAccountIndex      int64  `json:"to_account_index"`
-	ToAccountNameHash   string `json:"to_account_name_hash"`
+	ToL1Address         string `json:"to_l1_address"`
 	NftContentHash      string `json:"nft_content_hash"`
 	NftCollectionId     int64  `json:"nft_collection_id"`
 	CreatorTreasuryRate int64  `json:"creator_treasury_rate"`
@@ -61,7 +61,7 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 	txInfo = &MintNftTxInfo{
 		CreatorAccountIndex: segmentFormat.CreatorAccountIndex,
 		ToAccountIndex:      segmentFormat.ToAccountIndex,
-		ToAccountNameHash:   segmentFormat.ToAccountNameHash,
+		ToL1Address:         segmentFormat.ToL1Address,
 		NftContentHash:      segmentFormat.NftContentHash,
 		NftCollectionId:     segmentFormat.NftCollectionId,
 		CreatorTreasuryRate: segmentFormat.CreatorTreasuryRate,
@@ -94,7 +94,7 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 type MintNftTxInfo struct {
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
-	ToAccountNameHash   string
+	ToL1Address         string
 	NftIndex            int64
 	NftContentHash      string
 	NftCollectionId     int64
@@ -128,15 +128,10 @@ func (txInfo *MintNftTxInfo) Validate() error {
 		return ErrToAccountIndexTooHigh
 	}
 
-	// ToAccountNameHash
-	if !IsValidHash(txInfo.ToAccountNameHash) {
-		return ErrToAccountNameHashInvalid
+	// ToL1Address
+	if !IsValidHash(txInfo.ToL1Address) {
+		return ErrToL1AddressInvalid
 	}
-
-	// NftContentHash
-	//if !IsValidHash(txInfo.NftContentHash) {
-	//	return ErrNftContentHashInvalid
-	//}
 
 	// NftCollectionId
 	if txInfo.NftCollectionId < minCollectionId {
@@ -237,7 +232,7 @@ func (txInfo *MintNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	}
 	msgHash = Poseidon(ChainId, TxTypeMintNft, txInfo.CreatorAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
 		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.CreatorTreasuryRate, txInfo.NftCollectionId,
-		ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus))
+		ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToL1Address)), curve.Modulus))
 	return msgHash, nil
 }
 

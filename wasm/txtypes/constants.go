@@ -44,7 +44,7 @@ const (
 
 const (
 	TxTypeEmpty = iota
-	TxTypeRegisterZns
+	TxTypeChangePubKey
 	TxTypeDeposit
 	TxTypeDepositNft
 	TxTypeTransfer
@@ -62,6 +62,8 @@ const (
 
 const (
 	HashLength int = 32
+
+	l1AddressHashLength int = 20
 
 	minAccountIndex int64 = 0
 	maxAccountIndex int64 = (1 << 32) - 1

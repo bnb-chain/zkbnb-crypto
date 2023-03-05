@@ -31,7 +31,7 @@ import (
 type TransferSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
 	ToAccountIndex    int64  `json:"to_account_index"`
-	ToAccountNameHash string `json:"to_account_name"`
+	ToL1Address       string `json:"to_l1_address"`
 	AssetId           int64  `json:"asset_id"`
 	AssetAmount       string `json:"asset_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
@@ -65,7 +65,7 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 	txInfo = &TransferTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToAccountIndex:    segmentFormat.ToAccountIndex,
-		ToAccountNameHash: segmentFormat.ToAccountNameHash,
+		ToL1Address:       segmentFormat.ToL1Address,
 		AssetId:           segmentFormat.AssetId,
 		AssetAmount:       assetAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
@@ -103,7 +103,7 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 type TransferTxInfo struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
-	ToAccountNameHash string
+	ToL1Address       string
 	AssetId           int64
 	AssetAmount       *big.Int
 	GasAccountIndex   int64
@@ -177,9 +177,9 @@ func (txInfo *TransferTxInfo) Validate() error {
 		return ErrNonceTooLow
 	}
 
-	// ToAccountNameHash
-	if !IsValidHash(txInfo.ToAccountNameHash) {
-		return ErrToAccountNameHashInvalid
+	// ToL1Address
+	if !IsValidHash(txInfo.ToL1Address) {
+		return ErrToL1AddressInvalid
 	}
 
 	// CallDataHash
@@ -243,7 +243,7 @@ func (txInfo *TransferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) 
 	}
 	msgHash = Poseidon(ChainId, TxTypeTransfer, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
 		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.AssetId, packedAmount,
-		txInfo.ToAccountNameHash, txInfo.CallDataHash)
+		txInfo.ToL1Address, txInfo.CallDataHash)
 	return msgHash, nil
 }
 

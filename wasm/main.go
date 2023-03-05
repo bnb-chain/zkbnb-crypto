@@ -44,6 +44,7 @@ func main() {
 	js.Global().Set("eddsaVerify", src2.EddsaVerify())
 
 	// transaction
+	js.Global().Set("signChangePubKeyTx", src2.ChangePubKeyTx())
 	// asset
 	js.Global().Set("signTransfer", src2.TransferTx())
 	js.Global().Set("signWithdraw", src2.WithdrawTx())

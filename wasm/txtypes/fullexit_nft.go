@@ -10,16 +10,15 @@ type FullExitNftTxInfo struct {
 	TxType uint8
 
 	// Get from layer1 events.
-	NftIndex        int64
-	AccountNameHash []byte
-
+	NftIndex  int64
+	L1Address string
 	// Set by layer2.
-	AccountIndex           int64
-	CreatorAccountIndex    int64
-	CreatorTreasuryRate    int64
-	CreatorAccountNameHash []byte
-	NftContentHash         []byte
-	CollectionId           int64
+	AccountIndex        int64
+	CreatorAccountIndex int64
+	CreatorTreasuryRate int64
+	CreatorL1Address    string
+	NftContentHash      []byte
+	CollectionId        int64
 }
 
 func (txInfo *FullExitNftTxInfo) GetTxType() int {

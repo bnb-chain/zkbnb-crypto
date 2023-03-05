@@ -10,7 +10,7 @@ type DepositNftTxInfo struct {
 	TxType uint8
 
 	// Get from layer1 events.
-	AccountNameHash     []byte
+	L1Address           string
 	CreatorAccountIndex int64
 	CreatorTreasuryRate int64
 	NftContentHash      []byte

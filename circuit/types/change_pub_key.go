@@ -21,45 +21,45 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 )
 
-type RegisterZnsTx struct {
-	AccountIndex    int64
-	AccountName     []byte
-	AccountNameHash []byte
-	PubKey          *eddsa.PublicKey
+type ChangePubKeyTx struct {
+	AccountIndex int64
+	AccountName  []byte
+	L1Address    []byte
+	PubKey       *eddsa.PublicKey
 }
 
-type RegisterZnsTxConstraints struct {
-	AccountIndex    Variable
-	AccountName     Variable
-	AccountNameHash Variable
-	PubKey          PublicKeyConstraints
+type ChangePubKeyTxConstraints struct {
+	AccountIndex Variable
+	AccountName  Variable
+	L1Address    Variable
+	PubKey       PublicKeyConstraints
 }
 
-func EmptyRegisterZnsTxWitness() (witness RegisterZnsTxConstraints) {
-	return RegisterZnsTxConstraints{
-		AccountIndex:    ZeroInt,
-		AccountName:     ZeroInt,
-		AccountNameHash: ZeroInt,
-		PubKey:          EmptyPublicKeyWitness(),
+func EmptyChangePubKeyTxWitness() (witness ChangePubKeyTxConstraints) {
+	return ChangePubKeyTxConstraints{
+		AccountIndex: ZeroInt,
+		AccountName:  ZeroInt,
+		L1Address:    ZeroInt,
+		PubKey:       EmptyPublicKeyWitness(),
 	}
 }
 
-func SetRegisterZnsTxWitness(tx *RegisterZnsTx) (witness RegisterZnsTxConstraints) {
-	witness = RegisterZnsTxConstraints{
-		AccountIndex:    tx.AccountIndex,
-		AccountName:     tx.AccountName,
-		AccountNameHash: tx.AccountNameHash,
-		PubKey:          SetPubKeyWitness(tx.PubKey),
+func SetChangePubKeyTxWitness(tx *ChangePubKeyTx) (witness ChangePubKeyTxConstraints) {
+	witness = ChangePubKeyTxConstraints{
+		AccountIndex: tx.AccountIndex,
+		AccountName:  tx.AccountName,
+		L1Address:    tx.L1Address,
+		PubKey:       SetPubKeyWitness(tx.PubKey),
 	}
 	return witness
 }
 
-func VerifyRegisterZNSTx(
+func VerifyChangePubKeyTx(
 	api API, flag Variable,
-	tx RegisterZnsTxConstraints,
+	tx ChangePubKeyTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 ) (pubData [PubDataBitsSizePerTx]Variable) {
-	pubData = CollectPubDataFromRegisterZNS(api, tx)
+	pubData = CollectPubDataFromChangePubKey(api, tx)
 	CheckEmptyAccountNode(api, flag, accountsBefore[0])
 	return pubData
 }

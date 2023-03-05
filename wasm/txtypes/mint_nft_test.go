@@ -44,21 +44,21 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 				ToAccountIndex:      maxAccountIndex + 1,
 			},
 		},
-		// ToAccountNameHash
+		// ToL1Address
 		{
-			fmt.Errorf("ToAccountNameHash(0000000000000000000000000000000000000000000000000000000000000000) is invalid"),
+			fmt.Errorf("ToL1Address(0000000000000000000000000000000000000000000000000000000000000000) is invalid"),
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{0}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{0}, 32)),
 			},
 		},
 		{
-			fmt.Errorf("ToAccountNameHash(01010101010101010101010101010101010101010101010101010101010101) is invalid"),
+			fmt.Errorf("ToL1Address(01010101010101010101010101010101010101010101010101010101010101) is invalid"),
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 31)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 31)),
 			},
 		},
 		// NftContentHash
@@ -67,7 +67,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{0}, 32)),
 			},
 		},
@@ -76,7 +76,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 31)),
 			},
 		},
@@ -86,7 +86,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     minCollectionId - 1,
 			},
@@ -96,7 +96,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     maxCollectionId + 1,
 			},
@@ -107,7 +107,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: minTreasuryRate - 1,
@@ -118,7 +118,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: maxTreasuryRate + 1,
@@ -130,7 +130,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: 10,
@@ -142,7 +142,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: 10,
@@ -155,7 +155,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: 10,
@@ -168,7 +168,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: 10,
@@ -182,7 +182,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: 10,
@@ -195,7 +195,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: 10,
@@ -209,7 +209,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: 10,
@@ -224,7 +224,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: 10,
@@ -241,7 +241,7 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
-				ToAccountNameHash:   hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
 				CreatorTreasuryRate: 10,

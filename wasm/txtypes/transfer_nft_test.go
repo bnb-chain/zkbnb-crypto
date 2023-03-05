@@ -61,93 +61,93 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 				ToAccountIndex:   maxAccountIndex + 1,
 			},
 		},
-		// ToAccountNameHash
+		// ToL1Address
 		{
-			fmt.Errorf("ToAccountNameHash(%s) is invalid", "0000000000000000000000000000000000000000000000000000000000000000"),
+			fmt.Errorf("ToL1Address(%s) is invalid", "0000000000000000000000000000000000000000000000000000000000000000"),
 			&TransferNftTxInfo{
-				FromAccountIndex:  1,
-				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{0}, 32)),
+				FromAccountIndex: 1,
+				ToAccountIndex:   2,
+				ToL1Address:      hex.EncodeToString(bytes.Repeat([]byte{0}, 32)),
 			},
 		},
 		{
-			fmt.Errorf("ToAccountNameHash(%s) is invalid", "01010101010101010101010101010101010101010101010101010101010101"),
+			fmt.Errorf("ToL1Address(%s) is invalid", "01010101010101010101010101010101010101010101010101010101010101"),
 			&TransferNftTxInfo{
-				FromAccountIndex:  1,
-				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 31)),
+				FromAccountIndex: 1,
+				ToAccountIndex:   2,
+				ToL1Address:      hex.EncodeToString(bytes.Repeat([]byte{1}, 31)),
 			},
 		},
 		// NftIndex
 		{
 			fmt.Errorf("NftIndex should not be less than %d", minNftIndex),
 			&TransferNftTxInfo{
-				FromAccountIndex:  1,
-				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftIndex:          minNftIndex - 1,
+				FromAccountIndex: 1,
+				ToAccountIndex:   2,
+				ToL1Address:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				NftIndex:         minNftIndex - 1,
 			},
 		},
 		{
 			fmt.Errorf("NftIndex should not be larger than %d", maxNftIndex),
 			&TransferNftTxInfo{
-				FromAccountIndex:  1,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftIndex:          maxNftIndex + 1,
+				FromAccountIndex: 1,
+				ToL1Address:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				NftIndex:         maxNftIndex + 1,
 			},
 		},
 		// GasAccountIndex
 		{
 			fmt.Errorf("GasAccountIndex should not be less than %d", minAccountIndex),
 			&TransferNftTxInfo{
-				FromAccountIndex:  1,
-				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftIndex:          3,
-				GasAccountIndex:   -1,
+				FromAccountIndex: 1,
+				ToAccountIndex:   2,
+				ToL1Address:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				NftIndex:         3,
+				GasAccountIndex:  -1,
 			},
 		},
 		{
 			fmt.Errorf("GasAccountIndex should not be larger than %d", maxAccountIndex),
 			&TransferNftTxInfo{
-				FromAccountIndex:  1,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftIndex:          3,
-				GasAccountIndex:   maxAccountIndex + 1,
+				FromAccountIndex: 1,
+				ToL1Address:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				NftIndex:         3,
+				GasAccountIndex:  maxAccountIndex + 1,
 			},
 		},
 		// GasFeeAssetId
 		{
 			fmt.Errorf("GasFeeAssetId should not be less than %d", minAssetId),
 			&TransferNftTxInfo{
-				FromAccountIndex:  1,
-				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftIndex:          3,
-				GasAccountIndex:   0,
-				GasFeeAssetId:     -1,
+				FromAccountIndex: 1,
+				ToAccountIndex:   2,
+				ToL1Address:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				NftIndex:         3,
+				GasAccountIndex:  0,
+				GasFeeAssetId:    -1,
 			},
 		},
 		{
 			fmt.Errorf("GasFeeAssetId should not be larger than %d", maxAssetId),
 			&TransferNftTxInfo{
-				FromAccountIndex:  1,
-				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftIndex:          3,
-				GasAccountIndex:   0,
-				GasFeeAssetId:     maxAssetId + 1,
+				FromAccountIndex: 1,
+				ToAccountIndex:   2,
+				ToL1Address:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				NftIndex:         3,
+				GasAccountIndex:  0,
+				GasFeeAssetId:    maxAssetId + 1,
 			},
 		},
 		// GasFeeAssetAmount
 		{
 			fmt.Errorf("GasFeeAssetAmount should not be nil"),
 			&TransferNftTxInfo{
-				FromAccountIndex:  1,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
-				NftIndex:          3,
-				GasAccountIndex:   0,
-				GasFeeAssetId:     3,
+				FromAccountIndex: 1,
+				ToL1Address:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				NftIndex:         3,
+				GasAccountIndex:  0,
+				GasFeeAssetId:    3,
 			},
 		},
 		{
@@ -155,7 +155,7 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 			&TransferNftTxInfo{
 				FromAccountIndex:  1,
 				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:       hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftIndex:          3,
 				GasAccountIndex:   0,
 				GasFeeAssetId:     3,
@@ -167,7 +167,7 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 			&TransferNftTxInfo{
 				FromAccountIndex:  1,
 				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:       hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftIndex:          3,
 				GasAccountIndex:   0,
 				GasFeeAssetId:     3,
@@ -180,7 +180,7 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 			&TransferNftTxInfo{
 				FromAccountIndex:  1,
 				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:       hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftIndex:          3,
 				GasAccountIndex:   0,
 				GasFeeAssetId:     3,
@@ -193,7 +193,7 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 			&TransferNftTxInfo{
 				FromAccountIndex:  1,
 				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:       hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftIndex:          3,
 				GasAccountIndex:   0,
 				GasFeeAssetId:     3,
@@ -207,7 +207,7 @@ func TestValidateTransferNftTxInfo(t *testing.T) {
 			&TransferNftTxInfo{
 				FromAccountIndex:  1,
 				ToAccountIndex:    2,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:       hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftIndex:          3,
 				GasAccountIndex:   0,
 				GasFeeAssetId:     3,

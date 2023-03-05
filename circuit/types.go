@@ -34,7 +34,7 @@ type (
 	API                  = frontend.API
 	MiMC                 = mimc.MiMC
 
-	RegisterZnsTx      = types.RegisterZnsTx
+	ChangePubKeyTx     = types.ChangePubKeyTx
 	DepositTx          = types.DepositTx
 	DepositNftTx       = types.DepositNftTx
 	TransferTx         = types.TransferTx
@@ -48,7 +48,7 @@ type (
 	FullExitTx         = types.FullExitTx
 	FullExitNftTx      = types.FullExitNftTx
 
-	RegisterZnsTxConstraints      = types.RegisterZnsTxConstraints
+	ChangePubKeyTxConstraints     = types.ChangePubKeyTxConstraints
 	DepositTxConstraints          = types.DepositTxConstraints
 	DepositNftTxConstraints       = types.DepositNftTxConstraints
 	TransferTxConstraints         = types.TransferTxConstraints

@@ -83,20 +83,20 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 }
 
 type WithdrawNftTxInfo struct {
-	AccountIndex           int64
-	CreatorAccountIndex    int64
-	CreatorAccountNameHash []byte
-	CreatorTreasuryRate    int64
-	NftIndex               int64
-	NftContentHash         []byte
-	CollectionId           int64
-	ToAddress              string
-	GasAccountIndex        int64
-	GasFeeAssetId          int64
-	GasFeeAssetAmount      *big.Int
-	ExpiredAt              int64
-	Nonce                  int64
-	Sig                    []byte
+	AccountIndex        int64
+	CreatorAccountIndex int64
+	CreatorL1Address    string
+	CreatorTreasuryRate int64
+	NftIndex            int64
+	NftContentHash      []byte
+	CollectionId        int64
+	ToAddress           string
+	GasAccountIndex     int64
+	GasFeeAssetId       int64
+	GasFeeAssetAmount   *big.Int
+	ExpiredAt           int64
+	Nonce               int64
+	Sig                 []byte
 }
 
 func (txInfo *WithdrawNftTxInfo) Validate() error {

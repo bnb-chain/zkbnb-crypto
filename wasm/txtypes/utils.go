@@ -126,7 +126,7 @@ func IsValidHash(hash string) bool {
 	if err != nil {
 		return false
 	}
-	if len(hashBytes) != HashLength {
+	if len(hashBytes) != l1AddressHashLength {
 		return false
 	}
 

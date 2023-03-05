@@ -24,7 +24,7 @@ import (
 type MintNftTx struct {
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
-	ToAccountNameHash   []byte
+	ToL1Address         []byte
 	NftIndex            int64
 	NftContentHash      []byte
 	CreatorTreasuryRate int64
@@ -38,7 +38,7 @@ type MintNftTx struct {
 type MintNftTxConstraints struct {
 	CreatorAccountIndex Variable
 	ToAccountIndex      Variable
-	ToAccountNameHash   Variable
+	ToL1Address         Variable
 	NftIndex            Variable
 	NftContentHash      [2]Variable
 	CreatorTreasuryRate Variable
@@ -53,7 +53,7 @@ func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 	return MintNftTxConstraints{
 		CreatorAccountIndex: ZeroInt,
 		ToAccountIndex:      ZeroInt,
-		ToAccountNameHash:   ZeroInt,
+		ToL1Address:         ZeroInt,
 		NftIndex:            ZeroInt,
 		NftContentHash:      [2]Variable{ZeroInt, ZeroInt},
 		CreatorTreasuryRate: ZeroInt,
@@ -69,7 +69,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 	witness = MintNftTxConstraints{
 		CreatorAccountIndex: tx.CreatorAccountIndex,
 		ToAccountIndex:      tx.ToAccountIndex,
-		ToAccountNameHash:   tx.ToAccountNameHash,
+		ToL1Address:         tx.ToL1Address,
 		NftIndex:            tx.NftIndex,
 		NftContentHash:      GetNftContentHashFromBytes(tx.NftContentHash),
 		CreatorTreasuryRate: tx.CreatorTreasuryRate,
@@ -85,7 +85,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
 	return poseidon.Poseidon(api, ChainId, TxTypeMintNft, tx.CreatorAccountIndex, nonce, expiredAt,
 		tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.ToAccountIndex,
-		tx.CreatorTreasuryRate, tx.CollectionId, tx.ToAccountNameHash)
+		tx.CreatorTreasuryRate, tx.CollectionId, tx.ToL1Address)
 }
 
 func VerifyMintNftTx(
@@ -104,7 +104,7 @@ func VerifyMintNftTx(
 	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[fromAccount].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
 	// account name hash
-	IsVariableEqual(api, flag, tx.ToAccountNameHash, accountsBefore[toAccount].AccountNameHash)
+	IsVariableEqual(api, flag, tx.ToL1Address, accountsBefore[toAccount].L1Address)
 	// content hash
 	isZero := api.Or(api.IsZero(tx.NftContentHash[0]), api.IsZero(tx.NftContentHash[1]))
 	IsVariableEqual(api, flag, isZero, 0)
