@@ -18,6 +18,7 @@ type FullExitNftTxInfo struct {
 	CreatorTreasuryRate int64
 	CreatorL1Address    string
 	NftContentHash      []byte
+	NftContentType      int8
 	CollectionId        int64
 }
 
