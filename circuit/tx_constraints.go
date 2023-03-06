@@ -111,6 +111,7 @@ func VerifyTransaction(
 
 	// verify nonce
 	isLayer2Tx := api.Add(
+		isTypeChangePubKey,
 		isTransferTx,
 		isWithdrawTx,
 		isCreateCollectionTx,

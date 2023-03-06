@@ -136,6 +136,7 @@ func VerifyBlock(
 
 	needGas = Variable(0)
 	for i := 0; i < block.TxsCount; i++ {
+		changePubKeyTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeChangePubKey))
 		transferTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeTransfer))
 		withdrawTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeWithdraw))
 		createCollectionTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeCreateCollection))
@@ -144,7 +145,7 @@ func VerifyBlock(
 		atomicMatchTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeAtomicMatch))
 		withdrawNftTx := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeWithdrawNft))
 		transferNft := api.IsZero(api.Sub(block.Txs[i].TxType, types.TxTypeTransferNft))
-		txNeedGas := api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(transferTx, withdrawTx), createCollectionTx), mintNftTx), cancelOfferTx), atomicMatchTx), withdrawNftTx), transferNft)
+		txNeedGas := api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(api.Or(transferTx, changePubKeyTx), withdrawTx), createCollectionTx), mintNftTx), cancelOfferTx), atomicMatchTx), withdrawNftTx), transferNft)
 		needGas = api.Or(needGas, txNeedGas)
 	}
 
