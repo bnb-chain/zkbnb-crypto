@@ -22,7 +22,7 @@ import "github.com/consensys/gnark/std/hash/poseidon"
 type TransferNftTx struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
-	ToL1Address       []byte
+	ToL1Address       string
 	NftIndex          int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64

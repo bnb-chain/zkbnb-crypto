@@ -23,14 +23,12 @@ import (
 
 type ChangePubKeyTx struct {
 	AccountIndex int64
-	AccountName  []byte
-	L1Address    []byte
+	L1Address    string
 	PubKey       *eddsa.PublicKey
 }
 
 type ChangePubKeyTxConstraints struct {
 	AccountIndex Variable
-	AccountName  Variable
 	L1Address    Variable
 	PubKey       PublicKeyConstraints
 }
@@ -38,7 +36,6 @@ type ChangePubKeyTxConstraints struct {
 func EmptyChangePubKeyTxWitness() (witness ChangePubKeyTxConstraints) {
 	return ChangePubKeyTxConstraints{
 		AccountIndex: ZeroInt,
-		AccountName:  ZeroInt,
 		L1Address:    ZeroInt,
 		PubKey:       EmptyPublicKeyWitness(),
 	}
@@ -47,7 +44,6 @@ func EmptyChangePubKeyTxWitness() (witness ChangePubKeyTxConstraints) {
 func SetChangePubKeyTxWitness(tx *ChangePubKeyTx) (witness ChangePubKeyTxConstraints) {
 	witness = ChangePubKeyTxConstraints{
 		AccountIndex: tx.AccountIndex,
-		AccountName:  tx.AccountName,
 		L1Address:    tx.L1Address,
 		PubKey:       SetPubKeyWitness(tx.PubKey),
 	}

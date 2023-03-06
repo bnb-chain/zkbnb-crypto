@@ -22,7 +22,7 @@ import "github.com/consensys/gnark/std/hash/poseidon"
 type WithdrawNftTx struct {
 	AccountIndex        int64
 	CreatorAccountIndex int64
-	CreatorL1Address    []byte
+	CreatorL1Address    string
 	CreatorTreasuryRate int64
 	NftIndex            int64
 	NftContentHash      []byte
