@@ -18,6 +18,7 @@
 package circuit
 
 import (
+	"github.com/consensys/gnark/std/gkr/gkr"
 	"github.com/consensys/gnark/std/hash/poseidon"
 	"github.com/consensys/gnark/std/hash/sha256"
 	"log"
@@ -38,6 +39,7 @@ type BlockConstraints struct {
 	Gas             GasConstraints
 	GasAssetIds     []int64
 	GasAccountIndex int64
+	GKRs            gkr.GkrCircuit
 }
 
 func (circuit BlockConstraints) Define(api API) error {
@@ -51,6 +53,7 @@ func (circuit BlockConstraints) Define(api API) error {
 	if err != nil {
 		return err
 	}
+	circuit.GKRs.AssertValid(api)
 	return nil
 }
 

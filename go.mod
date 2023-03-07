@@ -18,6 +18,7 @@ require (
 	github.com/fxamacker/cbor/v2 v2.4.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
+	github.com/pkg/profile v1.5.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/rs/zerolog v1.26.1 // indirect
@@ -26,6 +27,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/consensys/gnark => github.com/ruslangm/gnark v0.7.1-0.20230301160822-536fa6f95f0e
+replace github.com/consensys/gnark => github.com/ruslangm/gnark v0.7.1-0.20230306090530-978465e25ede
 
 replace github.com/consensys/gnark-crypto => github.com/bnb-chain/gnark-crypto v0.7.1-0.20230203031630-7c643ad11891

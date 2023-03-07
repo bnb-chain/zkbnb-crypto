@@ -17,7 +17,9 @@
 
 package types
 
-import "github.com/consensys/gnark/std/hash/poseidon"
+import (
+	"github.com/consensys/gnark/std/hash/mimc_gkr"
+)
 
 /*
 VerifyMerkleProof: takes a Merkle root, a proofSet, and a proofIndex and returns
@@ -58,6 +60,5 @@ func nodeSum(h MiMC, a, b Variable) Variable {
 }
 
 func nodeSumPoseidon(api API, a, b Variable) Variable {
-	res := poseidon.Poseidon(api, a, b)
-	return res
+	return mimc_gkr.NewMimcWithGKR(api, a, b)
 }

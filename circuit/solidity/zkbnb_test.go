@@ -40,6 +40,7 @@ func TestCompileCircuit(t *testing.T) {
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	for i := 0; i < len(differentBlockSizes); i++ {
+		bN := 13
 		var blockConstraints circuit.BlockConstraints
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
@@ -48,8 +49,9 @@ func TestCompileCircuit(t *testing.T) {
 		}
 		blockConstraints.GasAssetIds = gasAssetIds
 		blockConstraints.GasAccountIndex = gasAccountIndex
+		blockConstraints.GKRs.AllocateGKRCircuit(bN)
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(bN))
 		if err != nil {
 			panic(err)
 		}
@@ -62,7 +64,7 @@ func TestExportSol(t *testing.T) {
 }
 
 func TestExportSolSmall(t *testing.T) {
-	differentBlockSizes := []int{1}
+	differentBlockSizes := []int{10}
 	exportSol(differentBlockSizes)
 }
 
@@ -70,8 +72,10 @@ func exportSol(differentBlockSizes []int) {
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	sessionName := "zkbnb"
+
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
+		bN := 30
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
 		for i := 0; i < blockConstraints.TxsCount; i++ {
@@ -80,7 +84,8 @@ func exportSol(differentBlockSizes []int) {
 		blockConstraints.GasAssetIds = gasAssetIds
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
+		blockConstraints.GKRs.AllocateGKRCircuit(bN)
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(bN))
 		fmt.Printf("Constraints num=%v\n", oR1cs.GetNbConstraints())
 		if err != nil {
 			panic(err)
