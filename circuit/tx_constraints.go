@@ -240,10 +240,10 @@ func VerifyTransaction(
 		gasDeltas[i] = EmptyGasDeltaConstraints(gasAssetIds[0])
 	}
 
-	// register
+	// change pub key
 	assetDeltasCheck, gasDeltasCheck, accountDelta := GetAccountDeltaFromChangePubKey(api, tx.ChangePubKeyTxInfo)
-	assetDeltas = SelectAssetDeltas(api, isTransferTx, assetDeltasCheck, assetDeltas)
-	gasDeltas = SelectGasDeltas(api, isTransferTx, gasDeltasCheck, gasDeltas)
+	assetDeltas = SelectAssetDeltas(api, isChangePubKey, assetDeltasCheck, assetDeltas)
+	gasDeltas = SelectGasDeltas(api, isChangePubKey, gasDeltasCheck, gasDeltas)
 	// deposit
 	assetDeltasCheck = GetAssetDeltasFromDeposit(tx.DepositTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isDepositTx, assetDeltasCheck, assetDeltas)
