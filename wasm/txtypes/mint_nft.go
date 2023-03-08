@@ -21,9 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/bnb-chain/zkbnb-crypto/ffmath"
-	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
@@ -215,8 +212,16 @@ func (txInfo *MintNftTxInfo) GetTxType() int {
 	return TxTypeMintNft
 }
 
+func (txInfo *MintNftTxInfo) GetAccountIndex() int64 {
+	return txInfo.CreatorAccountIndex
+}
+
 func (txInfo *MintNftTxInfo) GetFromAccountIndex() int64 {
 	return txInfo.CreatorAccountIndex
+}
+
+func (txInfo *MintNftTxInfo) GetToAccountIndex() int64 {
+	return txInfo.ToAccountIndex
 }
 
 func (txInfo *MintNftTxInfo) GetNonce() int64 {
@@ -235,7 +240,7 @@ func (txInfo *MintNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	}
 	msgHash = Poseidon(ChainId, TxTypeMintNft, txInfo.CreatorAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
 		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.CreatorTreasuryRate, txInfo.NftCollectionId,
-		ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToL1Address)), curve.Modulus))
+		PaddingAddressToBytes32(txInfo.ToL1Address), txInfo.NftContentType)
 	return msgHash, nil
 }
 

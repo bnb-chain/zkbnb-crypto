@@ -229,6 +229,7 @@ func GetZeroTxConstraint() TxConstraints {
 		OwnerAccountIndex:   0,
 		CreatorTreasuryRate: 0,
 		CollectionId:        0,
+		NftContentType:      0,
 	}
 	// account before info, size is 4
 	for i := 0; i < NbAccountsPerTx; i++ {

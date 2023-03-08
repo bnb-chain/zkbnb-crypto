@@ -190,7 +190,7 @@ func (txInfo *OfferTxInfo) GetTxType() int {
 	return TxTypeOffer
 }
 
-func (txInfo *OfferTxInfo) GetFromAccountIndex() int64 {
+func (txInfo *OfferTxInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
 }
 

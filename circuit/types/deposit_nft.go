@@ -25,6 +25,7 @@ type DepositNftTx struct {
 	CreatorAccountIndex int64
 	CreatorTreasuryRate int64
 	CollectionId        int64
+	NftContentType      int8
 }
 
 type DepositNftTxConstraints struct {
@@ -35,6 +36,7 @@ type DepositNftTxConstraints struct {
 	CreatorAccountIndex Variable
 	CreatorTreasuryRate Variable
 	CollectionId        Variable
+	NftContentType      Variable
 }
 
 func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
@@ -46,6 +48,7 @@ func EmptyDepositNftTxWitness() (witness DepositNftTxConstraints) {
 		CreatorAccountIndex: ZeroInt,
 		CreatorTreasuryRate: ZeroInt,
 		CollectionId:        ZeroInt,
+		NftContentType:      ZeroInt,
 	}
 }
 
@@ -58,6 +61,7 @@ func SetDepositNftTxWitness(tx *DepositNftTx) (witness DepositNftTxConstraints) 
 		CreatorAccountIndex: tx.CreatorAccountIndex,
 		CreatorTreasuryRate: tx.CreatorTreasuryRate,
 		CollectionId:        tx.CollectionId,
+		NftContentType:      tx.NftContentType,
 	}
 	return witness
 }
@@ -78,5 +82,7 @@ func VerifyDepositNftTx(
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	// account name hash
 	IsVariableEqual(api, flag, tx.L1Address, accountsBefore[0].L1Address)
+	//NftContentType
+	IsVariableEqual(api, flag, tx.NftContentType, nftBefore.NftContentType)
 	return pubData
 }

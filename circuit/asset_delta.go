@@ -87,13 +87,31 @@ func GetGasDeltas(gasFeeAssetId, gasFeeAssetAmount Variable) (
 }
 
 func GetAccountDeltaFromChangePubKey(
+	api API,
 	txInfo ChangePubKeyTxConstraints,
-) (accountDelta AccountDeltaConstraints) {
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints,
+	accountDelta AccountDeltaConstraints) {
+	// from account
+	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+		{
+			BalanceDelta:             api.Neg(txInfo.GasFeeAssetAmount),
+			OfferCanceledOrFinalized: types.ZeroInt,
+		},
+		EmptyAccountAssetDeltaConstraints(),
+	}
+	for i := 1; i < NbAccountsPerTx; i++ {
+		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+			EmptyAccountAssetDeltaConstraints(),
+			EmptyAccountAssetDeltaConstraints(),
+		}
+	}
+	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
 	accountDelta = AccountDeltaConstraints{
 		L1Address: txInfo.L1Address,
 		PubKey:    txInfo.PubKey,
 	}
-	return accountDelta
+	return deltas, gasDeltas, accountDelta
 }
 
 func GetAssetDeltasFromDeposit(
@@ -147,6 +165,7 @@ func GetNftDeltaFromDepositNft(
 		NftContentHash:      txInfo.NftContentHash,
 		CreatorTreasuryRate: txInfo.CreatorTreasuryRate,
 		CollectionId:        txInfo.CollectionId,
+		NftContentType:      txInfo.NftContentType,
 	}
 	return nftDelta
 }
@@ -246,6 +265,7 @@ func GetAssetDeltasAndNftDeltaFromMintNft(
 		NftContentHash:      txInfo.NftContentHash,
 		CreatorTreasuryRate: txInfo.CreatorTreasuryRate,
 		CollectionId:        txInfo.CollectionId,
+		NftContentType:      txInfo.NftContentType,
 	}
 	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
 	return deltas, nftDelta, gasDeltas
@@ -282,6 +302,7 @@ func GetAssetDeltasAndNftDeltaFromTransferNft(
 		NftContentHash:      nftBefore.NftContentHash,
 		CreatorTreasuryRate: nftBefore.CreatorTreasuryRate,
 		CollectionId:        nftBefore.CollectionId,
+		NftContentType:      nftBefore.NftContentType,
 	}
 	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
 	return deltas, nftDelta, gasDeltas
@@ -371,6 +392,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		NftContentHash:      nftBefore.NftContentHash,
 		CreatorTreasuryRate: nftBefore.CreatorTreasuryRate,
 		CollectionId:        nftBefore.CollectionId,
+		NftContentType:      nftBefore.NftContentType,
 	}
 
 	gasDeltas[0].AssetId = txInfo.BuyOffer.AssetId
@@ -457,6 +479,7 @@ func GetAssetDeltasAndNftDeltaFromWithdrawNft(
 		NftContentHash:      [2]Variable{types.ZeroInt, types.ZeroInt},
 		CreatorTreasuryRate: types.ZeroInt,
 		CollectionId:        types.ZeroInt,
+		NftContentType:      types.ZeroInt,
 	}
 	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
 	return deltas, nftDelta, gasDeltas
@@ -496,12 +519,14 @@ func GetNftDeltaFromFullExitNft(
 	nftContentHash[1] = api.Select(isOwner, types.ZeroInt, nftBefore.NftContentHash[1])
 	creatorTreasuryRate := api.Select(isOwner, types.ZeroInt, nftBefore.CreatorTreasuryRate)
 	collectionId := api.Select(isOwner, types.ZeroInt, nftBefore.CollectionId)
+	nftContentType := api.Select(isOwner, types.ZeroInt, nftBefore.NftContentType)
 	nftDelta = NftDeltaConstraints{
 		CreatorAccountIndex: creatorAccountIndex,
 		OwnerAccountIndex:   ownerAccountIndex,
 		NftContentHash:      nftContentHash,
 		CreatorTreasuryRate: creatorTreasuryRate,
 		CollectionId:        collectionId,
+		NftContentType:      nftContentType,
 	}
 	return nftDelta
 }

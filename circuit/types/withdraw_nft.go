@@ -31,6 +31,7 @@ type WithdrawNftTx struct {
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   int64
 	CollectionId        int64
+	NftContentType      int8
 }
 
 type WithdrawNftTxConstraints struct {
@@ -45,6 +46,7 @@ type WithdrawNftTxConstraints struct {
 	GasFeeAssetId       Variable
 	GasFeeAssetAmount   Variable
 	CollectionId        Variable
+	NftContentType      Variable
 }
 
 func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
@@ -60,6 +62,7 @@ func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
 		GasFeeAssetId:       ZeroInt,
 		GasFeeAssetAmount:   ZeroInt,
 		CollectionId:        ZeroInt,
+		NftContentType:      ZeroInt,
 	}
 }
 
@@ -76,12 +79,13 @@ func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraint
 		GasFeeAssetId:       tx.GasFeeAssetId,
 		GasFeeAssetAmount:   tx.GasFeeAssetAmount,
 		CollectionId:        tx.CollectionId,
+		NftContentType:      tx.NftContentType,
 	}
 	return witness
 }
 
 func ComputeHashFromWithdrawNftTx(api API, tx WithdrawNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
-	return poseidon.Poseidon(api, ChainId, TxTypeWithdrawNft, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.NftIndex, tx.ToAddress)
+	return poseidon.Poseidon(api, ChainId, TxTypeWithdrawNft, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.NftIndex, tx.ToAddress, tx.NftContentType)
 }
 
 func VerifyWithdrawNftTx(
@@ -102,6 +106,8 @@ func VerifyWithdrawNftTx(
 	IsVariableEqual(api, flag, tx.CreatorL1Address, accountsBefore[creatorAccount].L1Address)
 	// collection id
 	IsVariableEqual(api, flag, tx.CollectionId, nftBefore.CollectionId)
+	//NftContentType
+	IsVariableEqual(api, flag, tx.NftContentType, nftBefore.NftContentType)
 	// asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	// nft info

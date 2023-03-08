@@ -24,6 +24,7 @@ type Nft struct {
 	OwnerAccountIndex   int64
 	CreatorTreasuryRate int64
 	CollectionId        int64
+	NftContentType      int8
 }
 
 func EmptyNft(nftIndex int64) *Nft {
@@ -34,5 +35,6 @@ func EmptyNft(nftIndex int64) *Nft {
 		OwnerAccountIndex:   0,
 		CreatorTreasuryRate: 0,
 		CollectionId:        0,
+		NftContentType:      0,
 	}
 }

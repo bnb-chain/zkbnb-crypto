@@ -162,7 +162,15 @@ func (txInfo *ChangePubKeyInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *ChangePubKeyInfo) GetAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *ChangePubKeyInfo) GetFromAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
+func (txInfo *ChangePubKeyInfo) GetToAccountIndex() int64 {
 	return txInfo.AccountIndex
 }
 

@@ -33,6 +33,7 @@ type MintNftTx struct {
 	GasFeeAssetAmount   int64
 	CollectionId        int64
 	ExpiredAt           int64
+	NftContentType      int8
 }
 
 type MintNftTxConstraints struct {
@@ -47,6 +48,7 @@ type MintNftTxConstraints struct {
 	GasFeeAssetAmount   Variable
 	CollectionId        Variable
 	ExpiredAt           Variable
+	NftContentType      Variable
 }
 
 func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
@@ -62,6 +64,7 @@ func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 		GasFeeAssetAmount:   ZeroInt,
 		CollectionId:        ZeroInt,
 		ExpiredAt:           ZeroInt,
+		NftContentType:      ZeroInt,
 	}
 }
 
@@ -78,6 +81,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 		GasFeeAssetAmount:   tx.GasFeeAssetAmount,
 		CollectionId:        tx.CollectionId,
 		ExpiredAt:           tx.ExpiredAt,
+		NftContentType:      tx.NftContentType,
 	}
 	return witness
 }
@@ -85,7 +89,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
 	return poseidon.Poseidon(api, ChainId, TxTypeMintNft, tx.CreatorAccountIndex, nonce, expiredAt,
 		tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.ToAccountIndex,
-		tx.CreatorTreasuryRate, tx.CollectionId, tx.ToL1Address)
+		tx.CreatorTreasuryRate, tx.CollectionId, tx.ToL1Address, tx.NftContentType)
 }
 
 func VerifyMintNftTx(
@@ -103,7 +107,7 @@ func VerifyMintNftTx(
 	// account index
 	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[fromAccount].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
-	// account name hash
+	// account address
 	IsVariableEqual(api, flag, tx.ToL1Address, accountsBefore[toAccount].L1Address)
 	// content hash
 	isZero := api.Or(api.IsZero(tx.NftContentHash[0]), api.IsZero(tx.NftContentHash[1]))
@@ -115,5 +119,7 @@ func VerifyMintNftTx(
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	// collection id should be less than creator's collection nonce
 	IsVariableLess(api, flag, tx.CollectionId, accountsBefore[fromAccount].CollectionNonce)
+	//NftContentType
+	IsVariableEqual(api, flag, tx.NftContentType, nftBefore.NftContentType)
 	return pubData
 }

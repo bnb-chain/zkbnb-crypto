@@ -95,7 +95,7 @@ func VerifyTransaction(
 	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints, err error) {
 	// compute tx type
 	isEmptyTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeEmptyTx))
-	isTypeChangePubKey := api.IsZero(api.Sub(tx.TxType, types.TxTypeChangePubKey))
+	isChangePubKey := api.IsZero(api.Sub(tx.TxType, types.TxTypeChangePubKey))
 	isDepositTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeDeposit))
 	isDepositNftTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeDepositNft))
 	isTransferTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeTransfer))
@@ -111,7 +111,7 @@ func VerifyTransaction(
 
 	// verify nonce
 	isLayer2Tx := api.Add(
-		isTypeChangePubKey,
+		isChangePubKey,
 		isTransferTx,
 		isWithdrawTx,
 		isCreateCollectionTx,
@@ -123,7 +123,7 @@ func VerifyTransaction(
 	)
 
 	isOnChainOp = api.Add(
-		isTypeChangePubKey,
+		isChangePubKey,
 		isDepositTx,
 		isDepositNftTx,
 		isWithdrawTx,
@@ -156,6 +156,9 @@ func VerifyTransaction(
 	// withdraw nft tx
 	hashValCheck = types.ComputeHashFromWithdrawNftTx(api, tx.WithdrawNftTxInfo, tx.Nonce, tx.ExpiredAt)
 	hashVal = api.Select(isWithdrawNftTx, hashValCheck, hashVal)
+	// change pub key
+	hashValCheck = types.ComputeHashFromChangePubKeyTx(api, tx.ChangePubKeyTxInfo, tx.Nonce, tx.ExpiredAt)
+	hashVal = api.Select(isChangePubKey, hashValCheck, hashVal)
 	hFunc.Reset()
 
 	types.IsVariableEqual(api, isLayer2Tx, tx.AccountsInfoBefore[0].Nonce, tx.Nonce)
@@ -177,8 +180,8 @@ func VerifyTransaction(
 	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
-	pubDataCheck := types.VerifyChangePubKeyTx(api, isTypeChangePubKey, tx.ChangePubKeyTxInfo, tx.AccountsInfoBefore)
-	pubData = SelectPubData(api, isTypeChangePubKey, pubDataCheck, pubData)
+	pubDataCheck := types.VerifyChangePubKeyTx(api, isChangePubKey, &tx.ChangePubKeyTxInfo, tx.AccountsInfoBefore)
+	pubData = SelectPubData(api, isChangePubKey, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyDepositTx(api, isDepositTx, tx.DepositTxInfo, tx.AccountsInfoBefore)
 	pubData = SelectPubData(api, isDepositTx, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyDepositNftTx(api, isDepositNftTx, tx.DepositNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
@@ -231,18 +234,21 @@ func VerifyTransaction(
 		NftContentHash:      tx.NftBefore.NftContentHash,
 		CreatorTreasuryRate: tx.NftBefore.CreatorTreasuryRate,
 		CollectionId:        tx.NftBefore.CollectionId,
+		NftContentType:      tx.NftBefore.NftContentType,
 	}
 	for i := 0; i < NbGasAssetsPerTx; i++ {
 		gasDeltas[i] = EmptyGasDeltaConstraints(gasAssetIds[0])
 	}
 
 	// register
-	accountDelta := GetAccountDeltaFromChangePubKey(tx.ChangePubKeyTxInfo)
+	assetDeltasCheck, gasDeltasCheck, accountDelta := GetAccountDeltaFromChangePubKey(api, tx.ChangePubKeyTxInfo)
+	assetDeltas = SelectAssetDeltas(api, isTransferTx, assetDeltasCheck, assetDeltas)
+	gasDeltas = SelectGasDeltas(api, isTransferTx, gasDeltasCheck, gasDeltas)
 	// deposit
-	assetDeltasCheck := GetAssetDeltasFromDeposit(tx.DepositTxInfo)
+	assetDeltasCheck = GetAssetDeltasFromDeposit(tx.DepositTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isDepositTx, assetDeltasCheck, assetDeltas)
 	// generic transfer
-	assetDeltasCheck, gasDeltasCheck := GetAssetDeltasFromTransfer(api, tx.TransferTxInfo)
+	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromTransfer(api, tx.TransferTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isTransferTx, assetDeltasCheck, assetDeltas)
 	gasDeltas = SelectGasDeltas(api, isTransferTx, gasDeltasCheck, gasDeltas)
 	// withdraw
@@ -288,9 +294,9 @@ func VerifyTransaction(
 	nftDelta = SelectNftDeltas(api, isFullExitNftTx, nftDeltaCheck, nftDelta)
 	// update accounts
 	AccountsInfoAfter := UpdateAccounts(api, tx.AccountsInfoBefore, assetDeltas)
-	AccountsInfoAfter[0].L1Address = api.Select(isTypeChangePubKey, accountDelta.L1Address, AccountsInfoAfter[0].L1Address)
-	AccountsInfoAfter[0].AccountPk.A.X = api.Select(isTypeChangePubKey, accountDelta.PubKey.A.X, AccountsInfoAfter[0].AccountPk.A.X)
-	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isTypeChangePubKey, accountDelta.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
+	AccountsInfoAfter[0].L1Address = api.Select(isChangePubKey, accountDelta.L1Address, AccountsInfoAfter[0].L1Address)
+	AccountsInfoAfter[0].AccountPk.A.X = api.Select(isChangePubKey, accountDelta.PubKey.A.X, AccountsInfoAfter[0].AccountPk.A.X)
+	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isChangePubKey, accountDelta.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
 	// update nonce
 	AccountsInfoAfter[0].Nonce = api.Add(AccountsInfoAfter[0].Nonce, isLayer2Tx)
 	AccountsInfoAfter[0].CollectionNonce = api.Add(AccountsInfoAfter[0].CollectionNonce, isCreateCollectionTx)
@@ -373,14 +379,18 @@ func VerifyTransaction(
 		tx.NftBefore.OwnerAccountIndex,
 		tx.NftBefore.NftContentHash[0],
 		tx.NftBefore.CreatorTreasuryRate,
-		tx.NftBefore.CollectionId)
+		tx.NftBefore.CollectionId,
+		tx.NftBefore.NftContentType,
+	)
 	nftIpfsNodeHash := poseidon.Poseidon(api,
 		tx.NftBefore.CreatorAccountIndex,
 		tx.NftBefore.OwnerAccountIndex,
 		tx.NftBefore.NftContentHash[0],
 		tx.NftBefore.NftContentHash[1],
 		tx.NftBefore.CreatorTreasuryRate,
-		tx.NftBefore.CollectionId)
+		tx.NftBefore.CollectionId,
+		tx.NftBefore.NftContentType,
+	)
 	nftNodeHash := api.Select(isNotIpfsNftContentHash, nftNotIpfsNodeHash, nftIpfsNodeHash)
 	// verify account merkle proof
 	types.VerifyMerkleProof(
@@ -398,14 +408,18 @@ func VerifyTransaction(
 		NftAfter.OwnerAccountIndex,
 		NftAfter.NftContentHash[0],
 		NftAfter.CreatorTreasuryRate,
-		NftAfter.CollectionId)
+		NftAfter.CollectionId,
+		NftAfter.NftContentType,
+	)
 	nftIpfsNodeHash = poseidon.Poseidon(api,
 		NftAfter.CreatorAccountIndex,
 		NftAfter.OwnerAccountIndex,
 		NftAfter.NftContentHash[0],
 		NftAfter.NftContentHash[1],
 		NftAfter.CreatorTreasuryRate,
-		NftAfter.CollectionId)
+		NftAfter.CollectionId,
+		NftAfter.NftContentType,
+	)
 	nftNodeHash = api.Select(isNotIpfsNftContentHash, nftNotIpfsNodeHash, nftIpfsNodeHash)
 	// update merkle proof
 	newNftRoot = types.UpdateMerkleProof(api, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)

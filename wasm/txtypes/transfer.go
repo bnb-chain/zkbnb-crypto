@@ -218,8 +218,16 @@ func (txInfo *TransferTxInfo) GetTxType() int {
 	return TxTypeTransfer
 }
 
+func (txInfo *TransferTxInfo) GetAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *TransferTxInfo) GetFromAccountIndex() int64 {
 	return txInfo.FromAccountIndex
+}
+
+func (txInfo *TransferTxInfo) GetToAccountIndex() int64 {
+	return txInfo.ToAccountIndex
 }
 
 func (txInfo *TransferTxInfo) GetNonce() int64 {
@@ -243,7 +251,7 @@ func (txInfo *TransferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) 
 	}
 	msgHash = Poseidon(ChainId, TxTypeTransfer, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
 		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.AssetId, packedAmount,
-		txInfo.ToL1Address, txInfo.CallDataHash)
+		PaddingAddressToBytes32(txInfo.ToL1Address), txInfo.CallDataHash)
 	return msgHash, nil
 }
 

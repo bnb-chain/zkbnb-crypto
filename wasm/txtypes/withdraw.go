@@ -192,8 +192,16 @@ func (txInfo *WithdrawTxInfo) GetTxType() int {
 	return TxTypeWithdraw
 }
 
+func (txInfo *WithdrawTxInfo) GetAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *WithdrawTxInfo) GetFromAccountIndex() int64 {
 	return txInfo.FromAccountIndex
+}
+
+func (txInfo *WithdrawTxInfo) GetToAccountIndex() int64 {
+	return NilAccountIndex
 }
 
 func (txInfo *WithdrawTxInfo) GetNonce() int64 {

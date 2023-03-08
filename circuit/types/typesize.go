@@ -23,6 +23,7 @@ const (
 	OfferIdBitsSize             = 24
 	FeeRateBitsSize             = 16
 	AccountIndexBitsSize        = 32
+	NonceBitsSize               = 32
 	AssetIdBitsSize             = 16
 	NftIndexBitsSize            = 40
 	CreatorTreasuryRateBitsSize = 16

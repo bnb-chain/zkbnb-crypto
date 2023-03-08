@@ -29,6 +29,7 @@ type NftConstraints struct {
 	OwnerAccountIndex   Variable
 	CreatorTreasuryRate Variable
 	CollectionId        Variable
+	NftContentType      Variable
 }
 
 func CheckEmptyNftNode(api API, flag Variable, nft NftConstraints) {
@@ -38,6 +39,7 @@ func CheckEmptyNftNode(api API, flag Variable, nft NftConstraints) {
 	IsVariableEqual(api, flag, nft.OwnerAccountIndex, ZeroInt)
 	IsVariableEqual(api, flag, nft.CreatorTreasuryRate, ZeroInt)
 	IsVariableEqual(api, flag, nft.CollectionId, ZeroInt)
+	IsVariableEqual(api, flag, nft.NftContentType, ZeroInt)
 }
 
 /*
@@ -56,6 +58,7 @@ func SetNftWitness(nft *Nft) (witness NftConstraints, err error) {
 		OwnerAccountIndex:   nft.OwnerAccountIndex,
 		CreatorTreasuryRate: nft.CreatorTreasuryRate,
 		CollectionId:        nft.CollectionId,
+		NftContentType:      nft.NftContentType,
 	}
 	return witness, nil
 }

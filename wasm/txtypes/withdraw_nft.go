@@ -185,8 +185,16 @@ func (txInfo *WithdrawNftTxInfo) GetTxType() int {
 	return TxTypeWithdrawNft
 }
 
+func (txInfo *WithdrawNftTxInfo) GetAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *WithdrawNftTxInfo) GetFromAccountIndex() int64 {
 	return txInfo.AccountIndex
+}
+
+func (txInfo *WithdrawNftTxInfo) GetToAccountIndex() int64 {
+	return NilAccountIndex
 }
 
 func (txInfo *WithdrawNftTxInfo) GetNonce() int64 {
@@ -204,7 +212,7 @@ func (txInfo *WithdrawNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeWithdrawNft, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.NftIndex, PaddingAddressToBytes32(txInfo.ToAddress))
+		txInfo.GasFeeAssetId, packedFee, txInfo.NftIndex, PaddingAddressToBytes32(txInfo.ToAddress), txInfo.NftContentType)
 	return msgHash, nil
 }
 

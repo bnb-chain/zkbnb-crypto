@@ -26,6 +26,7 @@ type FullExitNftTx struct {
 	NftIndex            int64
 	CollectionId        int64
 	NftContentHash      []byte
+	NftContentType      int8
 }
 
 type FullExitNftTxConstraints struct {
@@ -37,6 +38,7 @@ type FullExitNftTxConstraints struct {
 	NftIndex            Variable
 	CollectionId        Variable
 	NftContentHash      [2]Variable
+	NftContentType      Variable
 }
 
 func EmptyFullExitNftTxWitness() (witness FullExitNftTxConstraints) {
@@ -49,6 +51,7 @@ func EmptyFullExitNftTxWitness() (witness FullExitNftTxConstraints) {
 		NftIndex:            ZeroInt,
 		CollectionId:        ZeroInt,
 		NftContentHash:      [2]Variable{ZeroInt, ZeroInt},
+		NftContentType:      ZeroInt,
 	}
 }
 
@@ -62,6 +65,7 @@ func SetFullExitNftTxWitness(tx *FullExitNftTx) (witness FullExitNftTxConstraint
 		NftIndex:            tx.NftIndex,
 		CollectionId:        tx.CollectionId,
 		NftContentHash:      GetNftContentHashFromBytes(tx.NftContentHash),
+		NftContentType:      tx.NftContentType,
 	}
 	return witness
 }
@@ -89,5 +93,7 @@ func VerifyFullExitNftTx(
 	IsVariableEqual(api, isOwner, tx.NftContentHash[1], nftBefore.NftContentHash[1])
 	tx.NftContentHash[0] = api.Select(isOwner, tx.NftContentHash[0], 0)
 	tx.NftContentHash[1] = api.Select(isOwner, tx.NftContentHash[1], 0)
+	//NftContentType
+	IsVariableEqual(api, flag, tx.NftContentType, nftBefore.NftContentType)
 	return pubData
 }

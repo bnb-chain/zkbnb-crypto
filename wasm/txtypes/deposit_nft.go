@@ -36,7 +36,15 @@ func (txInfo *DepositNftTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *DepositNftTxInfo) GetAccountIndex() int64 {
+	return NilAccountIndex
+}
+
 func (txInfo *DepositNftTxInfo) GetFromAccountIndex() int64 {
+	return NilAccountIndex
+}
+
+func (txInfo *DepositNftTxInfo) GetToAccountIndex() int64 {
 	return NilAccountIndex
 }
 

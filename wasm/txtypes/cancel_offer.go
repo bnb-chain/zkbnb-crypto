@@ -168,7 +168,15 @@ func (txInfo *CancelOfferTxInfo) GetTxType() int {
 	return TxTypeCancelOffer
 }
 
+func (txInfo *CancelOfferTxInfo) GetAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *CancelOfferTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
+func (txInfo *CancelOfferTxInfo) GetToAccountIndex() int64 {
 	return txInfo.AccountIndex
 }
 

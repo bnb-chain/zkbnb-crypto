@@ -207,8 +207,16 @@ func (txInfo *AtomicMatchTxInfo) GetTxType() int {
 	return TxTypeAtomicMatch
 }
 
-func (txInfo *AtomicMatchTxInfo) GetFromAccountIndex() int64 {
+func (txInfo *AtomicMatchTxInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
+}
+
+func (txInfo *AtomicMatchTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.SellOffer.AccountIndex
+}
+
+func (txInfo *AtomicMatchTxInfo) GetToAccountIndex() int64 {
+	return txInfo.BuyOffer.AccountIndex
 }
 
 func (txInfo *AtomicMatchTxInfo) GetNonce() int64 {
