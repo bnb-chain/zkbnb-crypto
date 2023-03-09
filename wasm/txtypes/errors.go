@@ -44,4 +44,5 @@ var (
 	ErrToAddressInvalid           = fmt.Errorf("ToAddress is invalid")
 	ErrBuyOfferInvalid            = fmt.Errorf("BuyOffer is invalid")
 	ErrSellOfferInvalid           = fmt.Errorf("SellOffer is invalid")
+	ErrL1SigInvalid               = fmt.Errorf("L1Sig is invalid")
 )

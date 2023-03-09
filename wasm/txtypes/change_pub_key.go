@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"hash"
 	"log"
 	"math/big"
@@ -81,6 +85,7 @@ type ChangePubKeyInfo struct {
 	GasFeeAssetAmount *big.Int
 	ExpiredAt         int64
 	Sig               []byte
+	L1Sig             string
 }
 
 func (txInfo *ChangePubKeyInfo) GetTxType() int {
@@ -135,6 +140,9 @@ func (txInfo *ChangePubKeyInfo) Validate() error {
 	if !IsValidHash(txInfo.L1Address) {
 		return ErrToL1AddressInvalid
 	}
+	if len(txInfo.L1Sig) == 0 {
+		return ErrL1SigInvalid
+	}
 	return nil
 }
 
@@ -172,6 +180,30 @@ func (txInfo *ChangePubKeyInfo) GetFromAccountIndex() int64 {
 
 func (txInfo *ChangePubKeyInfo) GetToAccountIndex() int64 {
 	return txInfo.AccountIndex
+}
+
+func (txInfo *ChangePubKeyInfo) GetL1Signature() string {
+	return ""
+}
+
+func (txInfo *ChangePubKeyInfo) GetL1AddressBySignatureInfo() (common.Address, common.Address) {
+	message := accounts.TextHash([]byte(txInfo.L1Sig))
+	//Decode from signature string to get the signature byte array
+	signatureContent, err := hexutil.Decode(txInfo.GetL1Signature())
+	if err != nil {
+		return [20]byte{}, [20]byte{}
+	}
+	signatureContent[64] -= 27 // Transform yellow paper V from 27/28 to 0/1
+
+	//Calculate the public key from the signature and source string
+	signaturePublicKey, err := crypto.SigToPub(message, signatureContent)
+	if err != nil {
+		return [20]byte{}, [20]byte{}
+	}
+
+	//Calculate the address from the public key
+	publicAddress := crypto.PubkeyToAddress(*signaturePublicKey)
+	return publicAddress, [20]byte{}
 }
 
 func (txInfo *ChangePubKeyInfo) GetNonce() int64 {

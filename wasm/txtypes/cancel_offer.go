@@ -21,6 +21,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bnb-chain/zkbnb-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"hash"
 	"log"
 	"math/big"
@@ -89,6 +95,7 @@ type CancelOfferTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+	L1Sig             string
 }
 
 func (txInfo *CancelOfferTxInfo) Validate() error {
@@ -137,6 +144,9 @@ func (txInfo *CancelOfferTxInfo) Validate() error {
 		return ErrNonceTooLow
 	}
 
+	if len(txInfo.L1Sig) == 0 {
+		return ErrL1SigInvalid
+	}
 	return nil
 }
 
@@ -178,6 +188,32 @@ func (txInfo *CancelOfferTxInfo) GetFromAccountIndex() int64 {
 
 func (txInfo *CancelOfferTxInfo) GetToAccountIndex() int64 {
 	return txInfo.AccountIndex
+}
+
+func (txInfo *CancelOfferTxInfo) GetL1Signature() string {
+	signatureBody := fmt.Sprintf(signature.SignatureTemplateCancelOffer, txInfo.OfferId,
+		txInfo.AccountIndex, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	return signatureBody
+}
+
+func (txInfo *CancelOfferTxInfo) GetL1AddressBySignatureInfo() (common.Address, common.Address) {
+	message := accounts.TextHash([]byte(txInfo.L1Sig))
+	//Decode from signature string to get the signature byte array
+	signatureContent, err := hexutil.Decode(txInfo.GetL1Signature())
+	if err != nil {
+		return [20]byte{}, [20]byte{}
+	}
+	signatureContent[64] -= 27 // Transform yellow paper V from 27/28 to 0/1
+
+	//Calculate the public key from the signature and source string
+	signaturePublicKey, err := crypto.SigToPub(message, signatureContent)
+	if err != nil {
+		return [20]byte{}, [20]byte{}
+	}
+
+	//Calculate the address from the public key
+	publicAddress := crypto.PubkeyToAddress(*signaturePublicKey)
+	return publicAddress, [20]byte{}
 }
 
 func (txInfo *CancelOfferTxInfo) GetNonce() int64 {

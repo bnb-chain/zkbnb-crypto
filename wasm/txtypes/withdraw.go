@@ -21,6 +21,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bnb-chain/zkbnb-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	"hash"
 	"log"
 	"math/big"
@@ -101,6 +107,7 @@ type WithdrawTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+	L1Sig             string
 }
 
 func (txInfo *WithdrawTxInfo) Validate() error {
@@ -160,7 +167,9 @@ func (txInfo *WithdrawTxInfo) Validate() error {
 	if !IsValidL1Address(txInfo.ToAddress) {
 		return ErrToAddressInvalid
 	}
-
+	if len(txInfo.L1Sig) == 0 {
+		return ErrL1SigInvalid
+	}
 	return nil
 }
 
@@ -202,6 +211,32 @@ func (txInfo *WithdrawTxInfo) GetFromAccountIndex() int64 {
 
 func (txInfo *WithdrawTxInfo) GetToAccountIndex() int64 {
 	return NilAccountIndex
+}
+
+func (txInfo *WithdrawTxInfo) GetL1Signature() string {
+	signatureBody := fmt.Sprintf(signature.SignatureTemplateWithdrawal, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.ToAddress,
+		util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	return signatureBody
+}
+
+func (txInfo *WithdrawTxInfo) GetL1AddressBySignatureInfo() (common.Address, common.Address) {
+	message := accounts.TextHash([]byte(txInfo.L1Sig))
+	//Decode from signature string to get the signature byte array
+	signatureContent, err := hexutil.Decode(txInfo.GetL1Signature())
+	if err != nil {
+		return [20]byte{}, [20]byte{}
+	}
+	signatureContent[64] -= 27 // Transform yellow paper V from 27/28 to 0/1
+
+	//Calculate the public key from the signature and source string
+	signaturePublicKey, err := crypto.SigToPub(message, signatureContent)
+	if err != nil {
+		return [20]byte{}, [20]byte{}
+	}
+
+	//Calculate the address from the public key
+	publicAddress := crypto.PubkeyToAddress(*signaturePublicKey)
+	return publicAddress, [20]byte{}
 }
 
 func (txInfo *WithdrawTxInfo) GetNonce() int64 {

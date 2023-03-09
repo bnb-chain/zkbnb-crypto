@@ -20,6 +20,7 @@ package txtypes
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
@@ -217,6 +218,16 @@ func (txInfo *AtomicMatchTxInfo) GetFromAccountIndex() int64 {
 
 func (txInfo *AtomicMatchTxInfo) GetToAccountIndex() int64 {
 	return txInfo.BuyOffer.AccountIndex
+}
+
+func (txInfo *AtomicMatchTxInfo) GetL1Signature() string {
+	return ""
+}
+
+func (txInfo *AtomicMatchTxInfo) GetL1AddressBySignatureInfo() (common.Address, common.Address) {
+	sellL1Sig, _ := txInfo.SellOffer.GetL1AddressBySignatureInfo()
+	buyL1Sig, _ := txInfo.BuyOffer.GetL1AddressBySignatureInfo()
+	return sellL1Sig, buyL1Sig
 }
 
 func (txInfo *AtomicMatchTxInfo) GetNonce() int64 {

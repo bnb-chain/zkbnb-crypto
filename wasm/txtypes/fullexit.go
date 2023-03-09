@@ -2,6 +2,7 @@ package txtypes
 
 import (
 	"errors"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"math/big"
 )
@@ -40,6 +41,14 @@ func (txInfo *FullExitTxInfo) GetFromAccountIndex() int64 {
 
 func (txInfo *FullExitTxInfo) GetToAccountIndex() int64 {
 	return NilAccountIndex
+}
+
+func (txInfo *FullExitTxInfo) GetL1Signature() string {
+	return ""
+}
+
+func (txInfo *FullExitTxInfo) GetL1AddressBySignatureInfo() (common.Address, common.Address) {
+	return [20]byte{}, [20]byte{}
 }
 
 func (txInfo *FullExitTxInfo) GetNonce() int64 {

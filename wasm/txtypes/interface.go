@@ -1,6 +1,7 @@
 package txtypes
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"math/big"
 )
@@ -17,6 +18,10 @@ type TxInfo interface {
 	GetFromAccountIndex() int64
 
 	GetToAccountIndex() int64
+
+	GetL1Signature() string
+
+	GetL1AddressBySignatureInfo() (common.Address, common.Address)
 
 	GetNonce() int64
 

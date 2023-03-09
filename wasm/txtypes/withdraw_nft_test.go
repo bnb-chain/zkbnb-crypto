@@ -34,7 +34,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            minNftIndex - 1,
 			},
 		},
@@ -43,7 +43,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            maxNftIndex + 1,
 			},
 		},
@@ -53,7 +53,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            5,
 				NftContentHash:      bytes.Repeat([]byte{1}, 32),
 				CollectionId:        11,
@@ -66,7 +66,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            5,
 				NftContentHash:      bytes.Repeat([]byte{1}, 32),
 				CollectionId:        11,
@@ -79,7 +79,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            5,
 				NftContentHash:      bytes.Repeat([]byte{1}, 32),
 				CollectionId:        11,
@@ -93,7 +93,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            5,
 				NftContentHash:      bytes.Repeat([]byte{1}, 32),
 				CollectionId:        11,
@@ -107,7 +107,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            5,
 				NftContentHash:      bytes.Repeat([]byte{1}, 32),
 				CollectionId:        11,
@@ -122,7 +122,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            5,
 				NftContentHash:      bytes.Repeat([]byte{1}, 32),
 				CollectionId:        11,
@@ -136,7 +136,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            5,
 				NftContentHash:      bytes.Repeat([]byte{1}, 32),
 				CollectionId:        11,
@@ -151,7 +151,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            5,
 				NftContentHash:      bytes.Repeat([]byte{1}, 32),
 				CollectionId:        11,
@@ -167,7 +167,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            5,
 				NftContentHash:      bytes.Repeat([]byte{1}, 32),
 				CollectionId:        11,
@@ -185,7 +185,7 @@ func TestValidateWithdrawNftTxInfo(t *testing.T) {
 			&WithdrawNftTxInfo{
 				AccountIndex:        1,
 				CreatorAccountIndex: 1,
-				CreatorL1Address:    bytes.Repeat([]byte{1}, 32),
+				CreatorL1Address:    "",
 				NftIndex:            5,
 				NftContentHash:      bytes.Repeat([]byte{1}, 32),
 				CollectionId:        11,

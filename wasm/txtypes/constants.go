@@ -58,6 +58,7 @@ const (
 	TxTypeFullExit
 	TxTypeFullExitNft
 	TxTypeOffer
+	TxTypeUpdateNFT
 )
 
 const (
