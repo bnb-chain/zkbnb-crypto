@@ -51,8 +51,8 @@ func (txInfo *FullExitNftTxInfo) GetL1Signature() string {
 	return ""
 }
 
-func (txInfo *FullExitNftTxInfo) GetL1AddressBySignatureInfo() (common.Address, common.Address) {
-	return [20]byte{}, [20]byte{}
+func (txInfo *FullExitNftTxInfo) GetL1AddressBySignatureInfo() common.Address {
+	return [20]byte{}
 }
 
 func (txInfo *FullExitNftTxInfo) GetNonce() int64 {

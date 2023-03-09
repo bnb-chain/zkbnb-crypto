@@ -224,10 +224,8 @@ func (txInfo *AtomicMatchTxInfo) GetL1Signature() string {
 	return ""
 }
 
-func (txInfo *AtomicMatchTxInfo) GetL1AddressBySignatureInfo() (common.Address, common.Address) {
-	sellL1Sig, _ := txInfo.SellOffer.GetL1AddressBySignatureInfo()
-	buyL1Sig, _ := txInfo.BuyOffer.GetL1AddressBySignatureInfo()
-	return sellL1Sig, buyL1Sig
+func (txInfo *AtomicMatchTxInfo) GetL1AddressBySignatureInfo() common.Address {
+	return [20]byte{}
 }
 
 func (txInfo *AtomicMatchTxInfo) GetNonce() int64 {

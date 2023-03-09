@@ -47,8 +47,8 @@ func (txInfo *DepositTxInfo) GetL1Signature() string {
 	return ""
 }
 
-func (txInfo *DepositTxInfo) GetL1AddressBySignatureInfo() (common.Address, common.Address) {
-	return [20]byte{}, [20]byte{}
+func (txInfo *DepositTxInfo) GetL1AddressBySignatureInfo() common.Address {
+	return [20]byte{}
 }
 
 func (txInfo *DepositTxInfo) GetNonce() int64 {

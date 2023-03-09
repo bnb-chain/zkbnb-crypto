@@ -21,7 +21,7 @@ type TxInfo interface {
 
 	GetL1Signature() string
 
-	GetL1AddressBySignatureInfo() (common.Address, common.Address)
+	GetL1AddressBySignatureInfo() common.Address
 
 	GetNonce() int64
 
