@@ -32,15 +32,15 @@ func (txInfo *FullExitTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *FullExitTxInfo) GetAccountIndex() int64 {
-	return NilAccountIndex
+	return txInfo.AccountIndex
 }
 
 func (txInfo *FullExitTxInfo) GetFromAccountIndex() int64 {
-	return NilAccountIndex
+	return txInfo.AccountIndex
 }
 
 func (txInfo *FullExitTxInfo) GetToAccountIndex() int64 {
-	return NilAccountIndex
+	return txInfo.AccountIndex
 }
 
 func (txInfo *FullExitTxInfo) GetL1Signature() string {

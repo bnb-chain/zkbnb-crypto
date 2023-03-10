@@ -32,15 +32,15 @@ func (txInfo *DepositTxInfo) VerifySignature(pubKey string) error {
 }
 
 func (txInfo *DepositTxInfo) GetAccountIndex() int64 {
-	return NilAccountIndex
+	return txInfo.AccountIndex
 }
 
 func (txInfo *DepositTxInfo) GetFromAccountIndex() int64 {
-	return NilAccountIndex
+	return txInfo.AccountIndex
 }
 
 func (txInfo *DepositTxInfo) GetToAccountIndex() int64 {
-	return NilAccountIndex
+	return txInfo.AccountIndex
 }
 
 func (txInfo *DepositTxInfo) GetL1Signature() string {
