@@ -116,7 +116,8 @@ func GetAccountDeltaFromChangePubKey(
 
 func GetAssetDeltasFromDeposit(
 	txInfo DepositTxConstraints,
-) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
+) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
+	accountDelta AccountDeltaConstraints) {
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
 			BalanceDelta:             txInfo.AssetAmount,
@@ -130,7 +131,10 @@ func GetAssetDeltasFromDeposit(
 			EmptyAccountAssetDeltaConstraints(),
 		}
 	}
-	return deltas
+	accountDelta = AccountDeltaConstraints{
+		L1Address: txInfo.L1Address,
+	}
+	return deltas, accountDelta
 }
 
 func GetAssetDeltasFromCreateCollection(
@@ -158,7 +162,8 @@ func GetAssetDeltasFromCreateCollection(
 
 func GetNftDeltaFromDepositNft(
 	txInfo DepositNftTxConstraints,
-) (nftDelta NftDeltaConstraints) {
+) (nftDelta NftDeltaConstraints,
+	accountDelta AccountDeltaConstraints) {
 	nftDelta = NftDeltaConstraints{
 		CreatorAccountIndex: txInfo.CreatorAccountIndex,
 		OwnerAccountIndex:   txInfo.AccountIndex,
@@ -167,14 +172,18 @@ func GetNftDeltaFromDepositNft(
 		CollectionId:        txInfo.CollectionId,
 		NftContentType:      txInfo.NftContentType,
 	}
-	return nftDelta
+	accountDelta = AccountDeltaConstraints{
+		L1Address: txInfo.L1Address,
+	}
+	return nftDelta, accountDelta
 }
 
 func GetAssetDeltasFromTransfer(
 	api API,
 	txInfo TransferTxConstraints,
 ) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
-	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints,
+	accountDelta AccountDeltaConstraints) {
 	// from account
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		// asset A
@@ -202,9 +211,11 @@ func GetAssetDeltasFromTransfer(
 			EmptyAccountAssetDeltaConstraints(),
 		}
 	}
-
 	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
-	return deltas, gasDeltas
+	accountDelta = AccountDeltaConstraints{
+		L1Address: txInfo.ToL1Address,
+	}
+	return deltas, gasDeltas, accountDelta
 }
 
 func GetAssetDeltasFromWithdraw(
