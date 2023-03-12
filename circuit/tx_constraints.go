@@ -295,6 +295,9 @@ func VerifyTransaction(
 	// update accounts
 	AccountsInfoAfter := UpdateAccounts(api, tx.AccountsInfoBefore, assetDeltas)
 	AccountsInfoAfter[0].L1Address = api.Select(isChangePubKey, accountDelta.L1Address, AccountsInfoAfter[0].L1Address)
+	AccountsInfoAfter[0].L1Address = api.Select(isDepositTx, accountDelta.L1Address, AccountsInfoAfter[0].L1Address)
+	AccountsInfoAfter[0].L1Address = api.Select(isDepositNftTx, accountDelta.L1Address, AccountsInfoAfter[0].L1Address)
+	AccountsInfoAfter[0].L1Address = api.Select(isTransferTx, accountDelta.L1Address, AccountsInfoAfter[0].L1Address)
 	AccountsInfoAfter[0].AccountPk.A.X = api.Select(isChangePubKey, accountDelta.PubKey.A.X, AccountsInfoAfter[0].AccountPk.A.X)
 	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isChangePubKey, accountDelta.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
 	// update nonce
