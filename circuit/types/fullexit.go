@@ -23,7 +23,7 @@ import (
 
 type FullExitTx struct {
 	AccountIndex int64
-	L1Address    string
+	L1Address    []byte
 	AssetId      int64
 	AssetAmount  *big.Int
 }

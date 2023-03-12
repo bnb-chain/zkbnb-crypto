@@ -24,7 +24,7 @@ import (
 type MintNftTx struct {
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
-	ToL1Address         string
+	ToL1Address         []byte
 	NftIndex            int64
 	NftContentHash      []byte
 	CreatorTreasuryRate int64

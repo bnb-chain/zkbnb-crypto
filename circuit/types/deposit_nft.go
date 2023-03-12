@@ -20,7 +20,7 @@ package types
 type DepositNftTx struct {
 	AccountIndex        int64
 	NftIndex            int64
-	L1Address           string
+	L1Address           []byte
 	NftContentHash      []byte
 	CreatorAccountIndex int64
 	CreatorTreasuryRate int64

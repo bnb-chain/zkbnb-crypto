@@ -19,9 +19,9 @@ package types
 
 type FullExitNftTx struct {
 	AccountIndex        int64
-	L1Address           string
+	L1Address           []byte
 	CreatorAccountIndex int64
-	CreatorL1Address    string
+	CreatorL1Address    []byte
 	CreatorTreasuryRate int64
 	NftIndex            int64
 	CollectionId        int64

@@ -25,7 +25,7 @@ import (
 
 type ChangePubKeyTx struct {
 	AccountIndex      int64
-	L1Address         string
+	L1Address         []byte
 	PubKey            *eddsa.PublicKey
 	Nonce             int64
 	GasFeeAssetId     int64
