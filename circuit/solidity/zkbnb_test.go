@@ -40,7 +40,7 @@ func TestCompileCircuit(t *testing.T) {
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	for i := 0; i < len(differentBlockSizes); i++ {
-		bN := 13
+		bN := 16
 		var blockConstraints circuit.BlockConstraints
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
@@ -64,7 +64,7 @@ func TestExportSol(t *testing.T) {
 }
 
 func TestExportSolSmall(t *testing.T) {
-	differentBlockSizes := []int{10}
+	differentBlockSizes := []int{64}
 	exportSol(differentBlockSizes)
 }
 
@@ -75,7 +75,7 @@ func exportSol(differentBlockSizes []int) {
 
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
-		bN := 30
+		bN := 16
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
 		for i := 0; i < blockConstraints.TxsCount; i++ {
@@ -92,6 +92,8 @@ func exportSol(differentBlockSizes []int) {
 		}
 
 		// pk, vk, err := groth16.Setup(oR1cs)
+		internal, secret, public := oR1cs.GetNbVariables()
+		fmt.Printf("Variables num=%v\n", internal+secret+public)
 		err = groth16.SetupLazyWithDump(oR1cs, sessionName+fmt.Sprint(differentBlockSizes[i]))
 		if err != nil {
 			panic(err)

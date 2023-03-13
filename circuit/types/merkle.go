@@ -19,6 +19,7 @@ package types
 
 import (
 	"github.com/consensys/gnark/std/hash/mimc_gkr"
+	"github.com/consensys/gnark/std/hash/poseidon"
 )
 
 /*
@@ -44,7 +45,7 @@ func UpdateMerkleProof(api API, node Variable, proofSet, helper []Variable) (roo
 		api.AssertIsBoolean(helper[i])
 		d1 := api.Select(helper[i], proofSet[i], node)
 		d2 := api.Select(helper[i], node, proofSet[i])
-		node = nodeSumPoseidon(api, d1, d2)
+		node = nodeSumMimc(api, d1, d2)
 	}
 	root = node
 	return root
@@ -60,5 +61,10 @@ func nodeSum(h MiMC, a, b Variable) Variable {
 }
 
 func nodeSumPoseidon(api API, a, b Variable) Variable {
+	res := poseidon.Poseidon(api, a, b)
+	return res
+}
+
+func nodeSumMimc(api API, a, b Variable) Variable {
 	return mimc_gkr.NewMimcWithGKR(api, a, b)
 }

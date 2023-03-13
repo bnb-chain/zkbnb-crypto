@@ -19,7 +19,6 @@ package circuit
 
 import (
 	"github.com/consensys/gnark/std/gkr/gkr"
-	"github.com/consensys/gnark/std/hash/poseidon"
 	"github.com/consensys/gnark/std/hash/sha256"
 	"log"
 
@@ -157,7 +156,7 @@ func VerifyBlock(
 		log.Println("unable to verify gas, err:", err)
 		return err
 	}
-	newStateRoot := poseidon.Poseidon(api, roots[:]...)
+	newStateRoot := types.MimcWithGkr(api, roots[:]...)
 	types.IsVariableEqual(api, needGas, block.NewStateRoot, newStateRoot)
 
 	notNeedGas := api.Xor(1, needGas)

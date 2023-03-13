@@ -19,7 +19,6 @@ package circuit
 
 import (
 	"errors"
-	"github.com/consensys/gnark/std/hash/poseidon"
 	"log"
 
 	"github.com/bnb-chain/zkbnb-crypto/circuit/types"
@@ -59,7 +58,7 @@ func VerifyGas(
 	gasAssetCount := len(gasAssetDeltas)
 	for i := 0; i < gasAssetCount; i++ {
 		assetMerkleHelper := AssetIdToMerkleHelper(api, gas.AccountInfoBefore.AssetsInfo[i].AssetId)
-		assetNodeHash := poseidon.Poseidon(api,
+		assetNodeHash := types.MimcWithGkr(api,
 			gas.AccountInfoBefore.AssetsInfo[i].Balance,
 			gas.AccountInfoBefore.AssetsInfo[i].OfferCanceledOrFinalized)
 		types.VerifyMerkleProof(
@@ -70,7 +69,7 @@ func VerifyGas(
 			gas.MerkleProofsAccountAssetsBefore[i][:],
 			assetMerkleHelper,
 		)
-		assetNodeHash = poseidon.Poseidon(api,
+		assetNodeHash = types.MimcWithGkr(api,
 			api.Add(gas.AccountInfoBefore.AssetsInfo[i].Balance, gasAssetDeltas[i]),
 			gas.AccountInfoBefore.AssetsInfo[i].OfferCanceledOrFinalized)
 		newAccountAssetsRoot = types.UpdateMerkleProof(
@@ -78,7 +77,7 @@ func VerifyGas(
 	}
 	// verify account node hash
 	accountIndexMerkleHelper := AccountIndexToMerkleHelper(api, gas.AccountInfoBefore.AccountIndex)
-	accountNodeHash := poseidon.Poseidon(api,
+	accountNodeHash := types.MimcWithGkr(api,
 		gas.AccountInfoBefore.AccountNameHash,
 		gas.AccountInfoBefore.AccountPk.A.X,
 		gas.AccountInfoBefore.AccountPk.A.Y,
@@ -94,7 +93,7 @@ func VerifyGas(
 		gas.MerkleProofsAccountBefore[:],
 		accountIndexMerkleHelper,
 	)
-	accountNodeHash = poseidon.Poseidon(api,
+	accountNodeHash = types.MimcWithGkr(api,
 		gas.AccountInfoBefore.AccountNameHash,
 		gas.AccountInfoBefore.AccountPk.A.X,
 		gas.AccountInfoBefore.AccountPk.A.Y,
