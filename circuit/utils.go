@@ -53,17 +53,6 @@ func SelectGasDeltas(
 	return deltasRes
 }
 
-func SelectAccountDelta(
-	api API,
-	flag Variable,
-	accountDelta, accountDeltaCheck AccountDeltaConstraints,
-) (accountDeltaRes AccountDeltaConstraints) {
-	accountDeltaRes.PubKey.A.X = api.Select(flag, accountDelta.PubKey.A.X, accountDeltaCheck.PubKey.A.X)
-	accountDeltaRes.PubKey.A.Y = api.Select(flag, accountDelta.PubKey.A.Y, accountDeltaCheck.PubKey.A.Y)
-	accountDeltaRes.L1Address = api.Select(flag, accountDelta.L1Address, accountDeltaCheck.L1Address)
-	return accountDeltaRes
-}
-
 func SelectNftDeltas(
 	api API,
 	flag Variable,

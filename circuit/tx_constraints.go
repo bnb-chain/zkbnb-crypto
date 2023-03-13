@@ -219,9 +219,8 @@ func VerifyTransaction(
 
 	// empty delta
 	var (
-		assetDeltas  [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints
-		accountDelta AccountDeltaConstraints
-		nftDelta     NftDeltaConstraints
+		assetDeltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints
+		nftDelta    NftDeltaConstraints
 	)
 	for i := 0; i < NbAccountsPerTx; i++ {
 		assetDeltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
@@ -242,28 +241,24 @@ func VerifyTransaction(
 	}
 
 	// change pub key
-	assetDeltasCheck, gasDeltasCheck, accountDeltaCheck := GetAccountDeltaFromChangePubKey(api, tx.ChangePubKeyTxInfo)
+	assetDeltasCheck, gasDeltasCheck, accountDeltaCheckChangePubKey := GetAccountDeltaFromChangePubKey(api, tx.ChangePubKeyTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isChangePubKey, assetDeltasCheck, assetDeltas)
 	gasDeltas = SelectGasDeltas(api, isChangePubKey, gasDeltasCheck, gasDeltas)
-	accountDelta = SelectAccountDelta(api, isChangePubKey, accountDeltaCheck, accountDelta)
 	// deposit
-	assetDeltasCheck, accountDeltaCheck = GetAssetDeltasFromDeposit(tx.DepositTxInfo)
+	assetDeltasCheck, accountDeltaCheckDeposit := GetAssetDeltasFromDeposit(tx.DepositTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isDepositTx, assetDeltasCheck, assetDeltas)
-	accountDelta = SelectAccountDelta(api, isDepositTx, accountDeltaCheck, accountDelta)
 
 	// generic transfer
-	assetDeltasCheck, gasDeltasCheck, accountDeltaCheck = GetAssetDeltasFromTransfer(api, tx.TransferTxInfo)
+	assetDeltasCheck, gasDeltasCheck, accountDeltaCheckTransfer := GetAssetDeltasFromTransfer(api, tx.TransferTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isTransferTx, assetDeltasCheck, assetDeltas)
 	gasDeltas = SelectGasDeltas(api, isTransferTx, gasDeltasCheck, gasDeltas)
-	accountDelta = SelectAccountDelta(api, isTransferTx, accountDeltaCheck, accountDelta)
 	// withdraw
 	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromWithdraw(api, tx.WithdrawTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isWithdrawTx, assetDeltasCheck, assetDeltas)
 	gasDeltas = SelectGasDeltas(api, isWithdrawTx, gasDeltasCheck, gasDeltas)
 	// deposit nft
-	nftDeltaCheck, accountDeltaCheck := GetNftDeltaFromDepositNft(tx.DepositNftTxInfo)
+	nftDeltaCheck, accountDeltaCheckDepositNft := GetNftDeltaFromDepositNft(tx.DepositNftTxInfo)
 	nftDelta = SelectNftDeltas(api, isDepositNftTx, nftDeltaCheck, nftDelta)
-	accountDelta = SelectAccountDelta(api, isDepositNftTx, accountDeltaCheck, accountDelta)
 	// create collection
 	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromCreateCollection(api, tx.CreateCollectionTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isCreateCollectionTx, assetDeltasCheck, assetDeltas)
@@ -301,12 +296,12 @@ func VerifyTransaction(
 	// update accounts
 	AccountsInfoAfter := UpdateAccounts(api, tx.AccountsInfoBefore, assetDeltas)
 
-	AccountsInfoAfter[0].L1Address = api.Select(isDepositTx, accountDelta.L1Address, AccountsInfoAfter[0].L1Address)
-	AccountsInfoAfter[0].L1Address = api.Select(isDepositNftTx, accountDelta.L1Address, AccountsInfoAfter[0].L1Address)
-	AccountsInfoAfter[1].L1Address = api.Select(isTransferTx, accountDelta.L1Address, AccountsInfoAfter[1].L1Address)
+	AccountsInfoAfter[0].L1Address = api.Select(isDepositTx, accountDeltaCheckDeposit.L1Address, AccountsInfoAfter[0].L1Address)
+	AccountsInfoAfter[0].L1Address = api.Select(isDepositNftTx, accountDeltaCheckDepositNft.L1Address, AccountsInfoAfter[0].L1Address)
+	AccountsInfoAfter[1].L1Address = api.Select(isTransferTx, accountDeltaCheckTransfer.L1Address, AccountsInfoAfter[1].L1Address)
 
-	AccountsInfoAfter[0].AccountPk.A.X = api.Select(isChangePubKey, accountDelta.PubKey.A.X, AccountsInfoAfter[0].AccountPk.A.X)
-	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isChangePubKey, accountDelta.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
+	AccountsInfoAfter[0].AccountPk.A.X = api.Select(isChangePubKey, accountDeltaCheckChangePubKey.PubKey.A.X, AccountsInfoAfter[0].AccountPk.A.X)
+	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isChangePubKey, accountDeltaCheckChangePubKey.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
 	// update nonce
 	AccountsInfoAfter[0].Nonce = api.Add(AccountsInfoAfter[0].Nonce, isLayer2Tx)
 	AccountsInfoAfter[0].CollectionNonce = api.Add(AccountsInfoAfter[0].CollectionNonce, isCreateCollectionTx)

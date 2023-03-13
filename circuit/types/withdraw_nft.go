@@ -31,7 +31,7 @@ type WithdrawNftTx struct {
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   int64
 	CollectionId        int64
-	NftContentType      int8
+	NftContentType      int64
 }
 
 type WithdrawNftTxConstraints struct {

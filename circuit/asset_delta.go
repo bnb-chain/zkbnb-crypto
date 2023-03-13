@@ -108,8 +108,7 @@ func GetAccountDeltaFromChangePubKey(
 	}
 	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
 	accountDelta = AccountDeltaConstraints{
-		L1Address: txInfo.L1Address,
-		PubKey:    txInfo.PubKey,
+		PubKey: txInfo.PubKey,
 	}
 	return deltas, gasDeltas, accountDelta
 }
