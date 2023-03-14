@@ -47,11 +47,11 @@ func (txInfo *DepositTxInfo) GetToAccountIndex() int64 {
 	return txInfo.AccountIndex
 }
 
-func (txInfo *DepositTxInfo) GetL1Signature() string {
+func (txInfo *DepositTxInfo) GetL1SignatureBody() string {
 	return ""
 }
 
-func (txInfo *DepositTxInfo) GetL1AddressBySignatureInfo() common.Address {
+func (txInfo *DepositTxInfo) GetL1AddressBySignature() common.Address {
 	return [20]byte{}
 }
 

@@ -21,9 +21,9 @@ type TxInfo interface {
 
 	GetToAccountIndex() int64
 
-	GetL1Signature() string
+	GetL1SignatureBody() string
 
-	GetL1AddressBySignatureInfo() common.Address
+	GetL1AddressBySignature() common.Address
 
 	GetNonce() int64
 

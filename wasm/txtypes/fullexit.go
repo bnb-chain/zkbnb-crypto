@@ -47,11 +47,11 @@ func (txInfo *FullExitTxInfo) GetToAccountIndex() int64 {
 	return txInfo.AccountIndex
 }
 
-func (txInfo *FullExitTxInfo) GetL1Signature() string {
+func (txInfo *FullExitTxInfo) GetL1SignatureBody() string {
 	return ""
 }
 
-func (txInfo *FullExitTxInfo) GetL1AddressBySignatureInfo() common.Address {
+func (txInfo *FullExitTxInfo) GetL1AddressBySignature() common.Address {
 	return [20]byte{}
 }
 
