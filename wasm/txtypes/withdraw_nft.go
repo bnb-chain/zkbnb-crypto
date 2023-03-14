@@ -160,9 +160,6 @@ func (txInfo *WithdrawNftTxInfo) Validate() error {
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
 	}
-	if len(txInfo.L1Sig) == 0 {
-		return ErrL1SigInvalid
-	}
 	return nil
 }
 

@@ -193,9 +193,6 @@ func (txInfo *TransferTxInfo) Validate() error {
 	if !IsValidHashBytes(txInfo.CallDataHash) {
 		return ErrCallDataHashInvalid
 	}
-	if len(txInfo.L1Sig) == 0 {
-		return ErrL1SigInvalid
-	}
 	return nil
 }
 

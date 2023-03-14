@@ -169,9 +169,6 @@ func (txInfo *OfferTxInfo) Validate() error {
 		return ErrTreasuryRateTooHigh
 	}
 
-	if len(txInfo.L1Sig) == 0 {
-		return ErrL1SigInvalid
-	}
 	return nil
 }
 

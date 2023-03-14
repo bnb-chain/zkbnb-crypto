@@ -167,9 +167,6 @@ func (txInfo *WithdrawTxInfo) Validate() error {
 	if !IsValidL1Address(txInfo.ToAddress) {
 		return ErrToAddressInvalid
 	}
-	if len(txInfo.L1Sig) == 0 {
-		return ErrL1SigInvalid
-	}
 	return nil
 }
 
