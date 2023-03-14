@@ -396,11 +396,11 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		},
 		EmptyAccountAssetDeltaConstraints(),
 	}
-	for i := 4; i < NbAccountsPerTx; i++ {
-		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-			EmptyAccountAssetDeltaConstraints(),
-		}
-	}
+	//for i := 4; i < NbAccountsPerTx; i++ {
+	//	deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+	//		EmptyAccountAssetDeltaConstraints(),
+	//	}
+	//}
 	nftDelta = NftDeltaConstraints{
 		CreatorAccountIndex: nftBefore.CreatorAccountIndex,
 		OwnerAccountIndex:   txInfo.BuyOffer.AccountIndex,
