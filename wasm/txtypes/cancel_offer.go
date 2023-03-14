@@ -144,9 +144,6 @@ func (txInfo *CancelOfferTxInfo) Validate() error {
 		return ErrNonceTooLow
 	}
 
-	if len(txInfo.L1Sig) == 0 {
-		return ErrL1SigInvalid
-	}
 	return nil
 }
 
@@ -197,9 +194,9 @@ func (txInfo *CancelOfferTxInfo) GetL1Signature() string {
 }
 
 func (txInfo *CancelOfferTxInfo) GetL1AddressBySignatureInfo() common.Address {
-	message := accounts.TextHash([]byte(txInfo.L1Sig))
+	message := accounts.TextHash([]byte(txInfo.GetL1Signature()))
 	//Decode from signature string to get the signature byte array
-	signatureContent, err := hexutil.Decode(txInfo.GetL1Signature())
+	signatureContent, err := hexutil.Decode(txInfo.L1Sig)
 	if err != nil {
 		return [20]byte{}
 	}

@@ -140,9 +140,6 @@ func (txInfo *ChangePubKeyInfo) Validate() error {
 	if !IsValidHash(txInfo.L1Address) {
 		return ErrToL1AddressInvalid
 	}
-	if len(txInfo.L1Sig) == 0 {
-		return ErrL1SigInvalid
-	}
 	return nil
 }
 
@@ -183,13 +180,13 @@ func (txInfo *ChangePubKeyInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *ChangePubKeyInfo) GetL1Signature() string {
-	return ""
+	return "xx"
 }
 
 func (txInfo *ChangePubKeyInfo) GetL1AddressBySignatureInfo() common.Address {
-	message := accounts.TextHash([]byte(txInfo.L1Sig))
+	message := accounts.TextHash([]byte(txInfo.GetL1Signature()))
 	//Decode from signature string to get the signature byte array
-	signatureContent, err := hexutil.Decode(txInfo.GetL1Signature())
+	signatureContent, err := hexutil.Decode(txInfo.L1Sig)
 	if err != nil {
 		return [20]byte{}
 	}
