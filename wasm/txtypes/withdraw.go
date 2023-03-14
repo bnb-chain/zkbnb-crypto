@@ -236,7 +236,7 @@ func (txInfo *WithdrawTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) 
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeWithdraw, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt, txInfo.GasFeeAssetId, packedFee,
-		txInfo.AssetId, txInfo.AssetAmount, PaddingAddressToBytes32(txInfo.ToAddress))
+		txInfo.AssetId, txInfo.AssetAmount, PaddingAddressToBytes20(txInfo.ToAddress))
 	return msgHash, nil
 }
 

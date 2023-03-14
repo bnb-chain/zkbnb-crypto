@@ -210,7 +210,7 @@ func (txInfo *ChangePubKeyInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeChangePubKey, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt, txInfo.GasFeeAssetId, packedFee,
-		PaddingAddressToBytes32(txInfo.L1Address), txInfo.PubKeyX, txInfo.PubKeyY)
+		PaddingAddressToBytes20(txInfo.L1Address), txInfo.PubKeyX, txInfo.PubKeyY)
 	return msgHash, nil
 }
 

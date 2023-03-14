@@ -268,7 +268,7 @@ func (txInfo *TransferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) 
 	}
 	msgHash = Poseidon(ChainId, TxTypeTransfer, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
 		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.AssetId, packedAmount,
-		PaddingAddressToBytes32(txInfo.ToL1Address), txInfo.CallDataHash)
+		PaddingAddressToBytes20(txInfo.ToL1Address), txInfo.CallDataHash)
 	return msgHash, nil
 }
 

@@ -245,7 +245,7 @@ func (txInfo *TransferNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeTransferNft, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.NftIndex, PaddingAddressToBytes32(txInfo.ToL1Address),
+		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.NftIndex, PaddingAddressToBytes20(txInfo.ToL1Address),
 		txInfo.CallDataHash)
 	return msgHash, nil
 }
