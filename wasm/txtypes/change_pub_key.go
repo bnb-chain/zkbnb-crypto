@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -165,6 +166,13 @@ func (txInfo *ChangePubKeyInfo) VerifySignature(pubKey string) error {
 		return errors.New("invalid signature")
 	}
 	return nil
+}
+
+func (txInfo *ChangePubKeyInfo) GetPubKey() string {
+	pk := new(eddsa.PublicKey)
+	pk.A.X.SetBytes(txInfo.PubKeyX)
+	pk.A.Y.SetBytes(txInfo.PubKeyY)
+	return common.Bytes2Hex(pk.Bytes())
 }
 
 func (txInfo *ChangePubKeyInfo) GetAccountIndex() int64 {

@@ -192,6 +192,10 @@ func (txInfo *CreateCollectionTxInfo) GetTxType() int {
 	return TxTypeCreateCollection
 }
 
+func (txInfo *CreateCollectionTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *CreateCollectionTxInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
 }

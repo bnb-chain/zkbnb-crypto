@@ -227,6 +227,10 @@ func (txInfo *TransferTxInfo) GetTxType() int {
 	return TxTypeTransfer
 }
 
+func (txInfo *TransferTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *TransferTxInfo) GetAccountIndex() int64 {
 	return txInfo.FromAccountIndex
 }

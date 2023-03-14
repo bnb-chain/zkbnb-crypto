@@ -210,6 +210,10 @@ func (txInfo *TransferNftTxInfo) GetTxType() int {
 	return TxTypeTransferNft
 }
 
+func (txInfo *TransferNftTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *TransferNftTxInfo) GetAccountIndex() int64 {
 	return txInfo.FromAccountIndex
 }

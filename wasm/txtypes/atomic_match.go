@@ -208,6 +208,10 @@ func (txInfo *AtomicMatchTxInfo) GetTxType() int {
 	return TxTypeAtomicMatch
 }
 
+func (txInfo *AtomicMatchTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *AtomicMatchTxInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
 }

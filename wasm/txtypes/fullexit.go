@@ -31,6 +31,10 @@ func (txInfo *FullExitTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *FullExitTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *FullExitTxInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
 }

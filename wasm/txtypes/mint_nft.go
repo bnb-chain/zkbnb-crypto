@@ -221,6 +221,10 @@ func (txInfo *MintNftTxInfo) GetTxType() int {
 	return TxTypeMintNft
 }
 
+func (txInfo *MintNftTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *MintNftTxInfo) GetAccountIndex() int64 {
 	return txInfo.CreatorAccountIndex
 }

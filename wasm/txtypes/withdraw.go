@@ -201,6 +201,10 @@ func (txInfo *WithdrawTxInfo) GetTxType() int {
 	return TxTypeWithdraw
 }
 
+func (txInfo *WithdrawTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *WithdrawTxInfo) GetAccountIndex() int64 {
 	return txInfo.FromAccountIndex
 }

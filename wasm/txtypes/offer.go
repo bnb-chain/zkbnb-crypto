@@ -199,6 +199,10 @@ func (txInfo *OfferTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *OfferTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *OfferTxInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
 }

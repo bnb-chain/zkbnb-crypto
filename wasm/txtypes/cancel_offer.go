@@ -175,6 +175,10 @@ func (txInfo *CancelOfferTxInfo) GetTxType() int {
 	return TxTypeCancelOffer
 }
 
+func (txInfo *CancelOfferTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *CancelOfferTxInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
 }

@@ -194,6 +194,10 @@ func (txInfo *WithdrawNftTxInfo) GetTxType() int {
 	return TxTypeWithdrawNft
 }
 
+func (txInfo *WithdrawNftTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *WithdrawNftTxInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
 }

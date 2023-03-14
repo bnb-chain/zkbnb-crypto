@@ -13,6 +13,8 @@ type TxInfo interface {
 
 	VerifySignature(pubKey string) error
 
+	GetPubKey() string
+
 	GetAccountIndex() int64
 
 	GetFromAccountIndex() int64

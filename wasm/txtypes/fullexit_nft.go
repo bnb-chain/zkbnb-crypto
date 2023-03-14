@@ -35,6 +35,10 @@ func (txInfo *FullExitNftTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *FullExitNftTxInfo) GetPubKey() string {
+	return ""
+}
+
 func (txInfo *FullExitNftTxInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
 }
