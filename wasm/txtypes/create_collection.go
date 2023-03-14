@@ -208,7 +208,7 @@ func (txInfo *CreateCollectionTxInfo) GetL1SignatureBody() string {
 	return signatureBody
 }
 
-func (txInfo *CreateCollectionTxInfo) GetL1AddressBySignatureInfo() common.Address {
+func (txInfo *CreateCollectionTxInfo) GetL1AddressBySignature() common.Address {
 	return signature.CalculateL1AddressBySignature(txInfo.GetL1SignatureBody(), txInfo.L1Sig)
 }
 
