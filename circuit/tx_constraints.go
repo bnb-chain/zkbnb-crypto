@@ -162,13 +162,18 @@ func VerifyTransaction(
 	hFunc.Reset()
 
 	types.IsVariableEqual(api, isLayer2Tx, tx.AccountsInfoBefore[0].Nonce, tx.Nonce)
+
+	accountsBeforePK := types.EmptyPublicKeyWitness()
+	accountsBeforePK.A.X = api.Select(isChangePubKey, tx.ChangePubKeyTxInfo.PubKey.A.X, tx.AccountsInfoBefore[0].AccountPk.A.X)
+	accountsBeforePK.A.Y = api.Select(isChangePubKey, tx.ChangePubKeyTxInfo.PubKey.A.Y, tx.AccountsInfoBefore[0].AccountPk.A.Y)
+
 	// verify signature
 	err = types.VerifyEddsaSig(
 		isLayer2Tx,
 		api,
 		hFunc,
 		hashVal,
-		tx.AccountsInfoBefore[0].AccountPk,
+		accountsBeforePK,
 		tx.Signature,
 	)
 	if err != nil {
@@ -500,6 +505,9 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		break
 	case types.TxTypeChangePubKey:
 		witness.ChangePubKeyTxInfo = types.SetChangePubKeyTxWitness(oTx.ChangePubKeyTxInfo)
+		witness.Signature.R.X = oTx.Signature.R.X
+		witness.Signature.R.Y = oTx.Signature.R.Y
+		witness.Signature.S = oTx.Signature.S[:]
 		break
 	case types.TxTypeDeposit:
 		witness.DepositTxInfo = types.SetDepositTxWitness(oTx.DepositTxInfo)

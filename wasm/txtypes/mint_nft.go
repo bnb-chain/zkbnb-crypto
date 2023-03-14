@@ -276,7 +276,7 @@ func (txInfo *MintNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	}
 	msgHash = Poseidon(ChainId, TxTypeMintNft, txInfo.CreatorAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
 		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.CreatorTreasuryRate, txInfo.NftCollectionId,
-		PaddingAddressToBytes32(txInfo.ToL1Address), txInfo.NftContentType)
+		PaddingAddressToBytes20(txInfo.ToL1Address), txInfo.NftContentType)
 	return msgHash, nil
 }
 
