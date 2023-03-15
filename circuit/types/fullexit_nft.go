@@ -84,12 +84,12 @@ func VerifyFullExitNftTx(
 	isFullExitSuccess := api.IsZero(api.Cmp(txInfoL1Address, beforeL1Address))
 	isOwner := api.Add(isFullExitSuccess, api.And(api.IsZero(api.Sub(tx.AccountIndex, nftBefore.OwnerAccountIndex)), flag))
 
-	tx.CreatorAccountIndex = api.Select(isOwner, ZeroInt, tx.CreatorAccountIndex)
-	tx.NftContentHash[0] = api.Select(isOwner, ZeroInt, tx.NftContentHash[0])
-	tx.NftContentHash[1] = api.Select(isOwner, ZeroInt, tx.NftContentHash[1])
-	tx.CreatorTreasuryRate = api.Select(isOwner, ZeroInt, tx.CreatorTreasuryRate)
-	tx.CollectionId = api.Select(isOwner, ZeroInt, tx.CollectionId)
-	tx.NftContentType = api.Select(isOwner, ZeroInt, tx.NftContentType)
+	tx.CreatorAccountIndex = api.Select(isOwner, tx.CreatorAccountIndex, ZeroInt)
+	tx.NftContentHash[0] = api.Select(isOwner, tx.NftContentHash[0], ZeroInt)
+	tx.NftContentHash[1] = api.Select(isOwner, tx.NftContentHash[1], ZeroInt)
+	tx.CreatorTreasuryRate = api.Select(isOwner, tx.CreatorTreasuryRate, ZeroInt)
+	tx.CollectionId = api.Select(isOwner, tx.CollectionId, ZeroInt)
+	tx.NftContentType = api.Select(isOwner, tx.NftContentType, ZeroInt)
 
 	pubData = CollectPubDataFromFullExitNft(api, tx)
 	// verify params
@@ -102,8 +102,6 @@ func VerifyFullExitNftTx(
 	IsVariableEqual(api, isOwner, tx.CreatorTreasuryRate, nftBefore.CreatorTreasuryRate)
 	IsVariableEqual(api, isOwner, tx.NftContentHash[0], nftBefore.NftContentHash[0])
 	IsVariableEqual(api, isOwner, tx.NftContentHash[1], nftBefore.NftContentHash[1])
-	tx.NftContentHash[0] = api.Select(isOwner, tx.NftContentHash[0], 0)
-	tx.NftContentHash[1] = api.Select(isOwner, tx.NftContentHash[1], 0)
 	//NftContentType
 	IsVariableEqual(api, flag, tx.NftContentType, nftBefore.NftContentType)
 	return pubData
