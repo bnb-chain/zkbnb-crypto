@@ -525,8 +525,14 @@ func GetNftDeltaFromFullExitNft(
 	api API,
 	flag Variable,
 	txInfo FullExitNftTxConstraints,
+	accountsBefore [NbAccountsPerTx]types.AccountConstraints,
 	nftBefore NftConstraints) (nftDelta NftDeltaConstraints) {
-	isOwner := api.And(api.IsZero(api.Sub(txInfo.AccountIndex, nftBefore.OwnerAccountIndex)), flag)
+	fromAccount := 0
+
+	txInfoL1Address := api.Select(flag, txInfo.L1Address, 0)
+	beforeL1Address := api.Select(flag, accountsBefore[fromAccount].L1Address, 0)
+	isFullExitSuccess := api.IsZero(api.Cmp(txInfoL1Address, beforeL1Address))
+	isOwner := api.Add(isFullExitSuccess, api.And(api.IsZero(api.Sub(txInfo.AccountIndex, nftBefore.OwnerAccountIndex)), flag))
 	creatorAccountIndex := api.Select(isOwner, types.ZeroInt, nftBefore.CreatorAccountIndex)
 	ownerAccountIndex := api.Select(isOwner, types.ZeroInt, nftBefore.OwnerAccountIndex)
 	nftContentHash := [2]Variable{}

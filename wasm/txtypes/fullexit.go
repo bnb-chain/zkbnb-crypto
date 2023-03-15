@@ -11,12 +11,12 @@ type FullExitTxInfo struct {
 	TxType uint8
 
 	// Get from layer1 events.
-	L1Address string
-	AssetId   int64
+	L1Address    string
+	AssetId      int64
+	AccountIndex int64
 
 	// Set by layer2.
-	AccountIndex int64
-	AssetAmount  *big.Int
+	AssetAmount *big.Int
 }
 
 func (txInfo *FullExitTxInfo) GetTxType() int {

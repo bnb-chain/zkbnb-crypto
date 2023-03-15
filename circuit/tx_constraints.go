@@ -296,7 +296,7 @@ func VerifyTransaction(
 	assetDeltasCheck = GetAssetDeltasFromFullExit(api, tx.FullExitTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isFullExitTx, assetDeltasCheck, assetDeltas)
 	// full exit nft
-	nftDeltaCheck = GetNftDeltaFromFullExitNft(api, isFullExitNftTx, tx.FullExitNftTxInfo, tx.NftBefore)
+	nftDeltaCheck = GetNftDeltaFromFullExitNft(api, isFullExitNftTx, tx.FullExitNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	nftDelta = SelectNftDeltas(api, isFullExitNftTx, nftDeltaCheck, nftDelta)
 	// update accounts
 	AccountsInfoAfter := UpdateAccounts(api, tx.AccountsInfoBefore, assetDeltas)

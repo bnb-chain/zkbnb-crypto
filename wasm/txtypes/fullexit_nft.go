@@ -11,10 +11,10 @@ type FullExitNftTxInfo struct {
 	TxType uint8
 
 	// Get from layer1 events.
-	NftIndex  int64
-	L1Address string
+	NftIndex     int64
+	L1Address    string
+	AccountIndex int64
 	// Set by layer2.
-	AccountIndex        int64
 	CreatorAccountIndex int64
 	CreatorTreasuryRate int64
 	CreatorL1Address    string
