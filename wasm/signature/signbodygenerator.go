@@ -17,9 +17,9 @@ const (
 	// SignatureTemplateCancelOffer /* CancelOffer ${offerId} by: ${accountIndex} \nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
 	SignatureTemplateCancelOffer = "CancelOffer %d by: %d \nFee: %s %d\nNonce: %d"
 	// SignatureTemplateUpdateNFT /* AccountIndex:{AccountIndex}\nNftIndex:{NftIndex}\nNonce:{Nonce} */
-	SignatureTemplateUpdateNFT = "AccountIndex:%d\nNftIndex:%d\nNonce:%d"
+	SignatureTemplateUpdateNFT = "Update NFT \nAccountIndex: %d\nNftIndex: %d\nNonce: %d"
 	// SignatureTemplateChangePubKey /* Change Public Key \nPubKeyX:${pubKeyX} \nPubKeyY:${pubKeyY} \nAccountIndex:${accountIndex} \nNonce: ${nonce} */
-	SignatureTemplateChangePubKey = "Change Public Key \nPubKeyX:%s \nPubKeyY:%s \nAccountIndex:%d \nNonce:%d"
+	SignatureTemplateChangePubKey = "Register zkBNB Account\n\npubkeyX: 0x%s\npubkeyY: 0x%s\nnonce: %s\naccount index: %s\n\nOnly sign this message for a trusted client!"
 	// SignatureTemplateOffer /* Offer NFT Tx \nAccountIndex:${accountIndex} \nNftIndex:${nftIndex} \nAssetId:${assetId} \nAssetAmount: ${assetAmount} */
 	SignatureTemplateOffer = "Offer NFT Tx \nAccountIndex:%d \nNftIndex:%d \nAssetId:%d \nAssetAmount:%s"
 )
