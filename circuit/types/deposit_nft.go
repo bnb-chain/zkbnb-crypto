@@ -25,7 +25,7 @@ type DepositNftTx struct {
 	CreatorAccountIndex int64
 	CreatorTreasuryRate int64
 	CollectionId        int64
-	NftContentType      int8
+	NftContentType      int64
 }
 
 type DepositNftTxConstraints struct {

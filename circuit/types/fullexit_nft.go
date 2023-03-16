@@ -26,7 +26,7 @@ type FullExitNftTx struct {
 	NftIndex            int64
 	CollectionId        int64
 	NftContentHash      []byte
-	NftContentType      int8
+	NftContentType      int64
 }
 
 type FullExitNftTxConstraints struct {

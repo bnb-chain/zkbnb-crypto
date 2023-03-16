@@ -33,7 +33,7 @@ type MintNftTx struct {
 	GasFeeAssetAmount   int64
 	CollectionId        int64
 	ExpiredAt           int64
-	NftContentType      int8
+	NftContentType      int64
 }
 
 type MintNftTxConstraints struct {
