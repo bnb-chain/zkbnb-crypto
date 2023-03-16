@@ -61,11 +61,11 @@ func VerifyFullExitTx(
 ) (pubData [PubDataBitsSizePerTx]Variable) {
 	txInfoL1Address := api.Select(flag, tx.L1Address, 0)
 	beforeL1Address := api.Select(flag, accountsBefore[0].L1Address, 0)
-	isOwner := api.Add(api.IsZero(api.Cmp(txInfoL1Address, beforeL1Address)), flag)
+	isOwner := api.And(api.IsZero(api.Cmp(txInfoL1Address, beforeL1Address)), flag)
 	tx.AssetAmount = api.Select(isOwner, tx.AssetAmount, 0)
 	pubData = CollectPubDataFromFullExit(api, tx)
 	// verify params
-	IsVariableEqual(api, flag, tx.L1Address, accountsBefore[0].L1Address)
+	IsVariableEqual(api, isOwner, tx.L1Address, accountsBefore[0].L1Address)
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 
