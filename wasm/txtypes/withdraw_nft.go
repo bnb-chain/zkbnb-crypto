@@ -92,7 +92,7 @@ type WithdrawNftTxInfo struct {
 	CreatorTreasuryRate int64
 	NftIndex            int64
 	NftContentHash      []byte
-	NftContentType      int8
+	NftContentType      int64
 	CollectionId        int64
 	ToAddress           string
 	GasAccountIndex     int64
@@ -229,7 +229,7 @@ func (txInfo *WithdrawNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeWithdrawNft, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.NftIndex, PaddingAddressToBytes20(txInfo.ToAddress), txInfo.NftContentType)
+		txInfo.GasFeeAssetId, packedFee, txInfo.NftIndex, PaddingAddressToBytes20(txInfo.ToAddress))
 	return msgHash, nil
 }
 
