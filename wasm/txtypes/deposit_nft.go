@@ -14,7 +14,7 @@ type DepositNftTxInfo struct {
 	L1Address           string
 	CreatorAccountIndex int64
 	CreatorTreasuryRate int64
-	NftContentType      int8
+	NftContentType      int64
 	NftContentHash      []byte
 	CollectionId        int64
 

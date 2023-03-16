@@ -92,7 +92,7 @@ type WithdrawNftTxInfo struct {
 	CreatorTreasuryRate int64
 	NftIndex            int64
 	NftContentHash      []byte
-	NftContentType      int8
+	NftContentType      int64
 	CollectionId        int64
 	ToAddress           string
 	GasAccountIndex     int64
