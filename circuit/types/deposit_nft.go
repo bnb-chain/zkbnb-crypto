@@ -80,8 +80,10 @@ func VerifyDepositNftTx(
 	CheckEmptyNftNode(api, flag, nftBefore)
 	// account index
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
-	// account name hash
-	IsVariableEqual(api, flag, tx.L1Address, accountsBefore[0].L1Address)
+	// account address
+	isNewAccount := api.IsZero(api.Cmp(accountsBefore[0].L1Address, ZeroInt))
+	address := api.Select(isNewAccount, tx.L1Address, accountsBefore[0].L1Address)
+	IsVariableEqual(api, flag, tx.L1Address, address)
 	//NftContentType
 	IsVariableEqual(api, flag, tx.NftContentType, nftBefore.NftContentType)
 	return pubData

@@ -61,7 +61,9 @@ func VerifyDepositTx(
 ) (pubData [PubDataBitsSizePerTx]Variable) {
 	pubData = CollectPubDataFromDeposit(api, tx)
 	// verify params
-	//IsVariableEqual(api, flag, tx.L1Address, accountsBefore[0].L1Address)
+	isNewAccount := api.IsZero(api.Cmp(accountsBefore[0].L1Address, ZeroInt))
+	address := api.Select(isNewAccount, tx.L1Address, accountsBefore[0].L1Address)
+	IsVariableEqual(api, flag, tx.L1Address, address)
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	return pubData

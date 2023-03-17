@@ -88,7 +88,9 @@ func VerifyTransferNftTx(
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[fromAccount].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
 	// account address
-	//IsVariableEqual(api, flag, tx.ToL1Address, accountsBefore[toAccount].L1Address)
+	isNewAccount := api.IsZero(api.Cmp(accountsBefore[toAccount].L1Address, ZeroInt))
+	address := api.Select(isNewAccount, tx.ToL1Address, accountsBefore[toAccount].L1Address)
+	IsVariableEqual(api, flag, tx.ToL1Address, address)
 	// asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	// nft info

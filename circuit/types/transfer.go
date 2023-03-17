@@ -91,8 +91,7 @@ func VerifyTransferTx(
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[fromAccount].AccountIndex)
-	//IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
-	// account name hash
+	// account to l1Address
 	IsVariableEqual(api, flag, tx.ToL1Address, accountsBefore[toAccount].L1Address)
 	// asset id
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
