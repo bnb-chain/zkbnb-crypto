@@ -33,7 +33,6 @@ import (
 
 type TransferSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
-	ToAccountIndex    int64  `json:"to_account_index"`
 	ToL1Address       string `json:"to_l1_address"`
 	AssetId           int64  `json:"asset_id"`
 	AssetAmount       string `json:"asset_amount"`
@@ -67,7 +66,6 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	txInfo = &TransferTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
-		ToAccountIndex:    segmentFormat.ToAccountIndex,
 		ToL1Address:       segmentFormat.ToL1Address,
 		AssetId:           segmentFormat.AssetId,
 		AssetAmount:       assetAmount,
@@ -239,7 +237,7 @@ func (txInfo *TransferTxInfo) GetToAccountIndex() int64 {
 
 func (txInfo *TransferTxInfo) GetL1SignatureBody() string {
 	signatureBody := fmt.Sprintf(signature.SignatureTemplateTransfer, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.FromAccountIndex,
-		txInfo.ToAccountIndex, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+		txInfo.ToL1Address, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
 	return signatureBody
 }
 
@@ -267,7 +265,7 @@ func (txInfo *TransferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) 
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeTransfer, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.AssetId, packedAmount,
+		txInfo.GasFeeAssetId, packedFee, txInfo.AssetId, packedAmount,
 		PaddingAddressToBytes20(txInfo.ToL1Address), txInfo.CallDataHash)
 	return msgHash, nil
 }

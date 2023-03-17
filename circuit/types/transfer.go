@@ -74,7 +74,7 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints) {
 
 func ComputeHashFromTransferTx(api API, tx TransferTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
 	return poseidon.Poseidon(api, ChainId, TxTypeTransfer, tx.FromAccountIndex, nonce, expiredAt, tx.GasFeeAssetId,
-		tx.GasFeeAssetAmount, tx.ToAccountIndex, tx.AssetId, tx.AssetAmount, tx.ToL1Address, tx.CallDataHash,
+		tx.GasFeeAssetAmount, tx.AssetId, tx.AssetAmount, tx.ToL1Address, tx.CallDataHash,
 	)
 }
 
@@ -91,9 +91,9 @@ func VerifyTransferTx(
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[fromAccount].AccountIndex)
-	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
+	//IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
 	// account name hash
-	//IsVariableEqual(api, flag, tx.ToL1Address, accountsBefore[toAccount].L1Address)
+	IsVariableEqual(api, flag, tx.ToL1Address, accountsBefore[toAccount].L1Address)
 	// asset id
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[toAccount].AssetsInfo[0].AssetId)
