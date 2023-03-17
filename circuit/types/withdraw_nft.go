@@ -17,8 +17,6 @@
 
 package types
 
-import "github.com/consensys/gnark/std/hash/poseidon"
-
 type WithdrawNftTx struct {
 	AccountIndex           int64
 	CreatorAccountIndex    int64
@@ -81,7 +79,7 @@ func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraint
 }
 
 func ComputeHashFromWithdrawNftTx(api API, tx WithdrawNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
-	return poseidon.Poseidon(api, ChainId, TxTypeWithdrawNft, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.NftIndex, tx.ToAddress)
+	return MimcWithGkr(api, ChainId, TxTypeWithdrawNft, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.NftIndex, tx.ToAddress)
 }
 
 func VerifyWithdrawNftTx(

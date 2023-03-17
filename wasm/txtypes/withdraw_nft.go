@@ -202,7 +202,7 @@ func (txInfo *WithdrawNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
-	msgHash = Poseidon(ChainId, TxTypeWithdrawNft, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
+	msgHash = GMimcHash(ChainId, TxTypeWithdrawNft, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
 		txInfo.GasFeeAssetId, packedFee, txInfo.NftIndex, PaddingAddressToBytes32(txInfo.ToAddress))
 	return msgHash, nil
 }

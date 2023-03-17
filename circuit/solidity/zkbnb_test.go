@@ -64,8 +64,7 @@ func TestExportSol(t *testing.T) {
 }
 
 func TestExportSolSmall(t *testing.T) {
-	differentBlockSizes := []int{64}
-	exportSol(differentBlockSizes)
+	exportSol(optionalBlockSizesInt())
 }
 
 func exportSol(differentBlockSizes []int) {
@@ -75,7 +74,7 @@ func exportSol(differentBlockSizes []int) {
 
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
-		bN := 16
+		bN := 13
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
 		for i := 0; i < blockConstraints.TxsCount; i++ {

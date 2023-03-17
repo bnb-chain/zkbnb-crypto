@@ -17,8 +17,6 @@
 
 package types
 
-import "github.com/consensys/gnark/std/hash/poseidon"
-
 type TransferNftTx struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
@@ -69,7 +67,7 @@ func SetTransferNftTxWitness(tx *TransferNftTx) (witness TransferNftTxConstraint
 }
 
 func ComputeHashFromTransferNftTx(api API, tx TransferNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
-	return poseidon.Poseidon(api, ChainId, TxTypeTransferNft, tx.FromAccountIndex, nonce, expiredAt, tx.GasFeeAssetId,
+	return MimcWithGkr(api, ChainId, TxTypeTransferNft, tx.FromAccountIndex, nonce, expiredAt, tx.GasFeeAssetId,
 		tx.GasFeeAssetAmount, tx.ToAccountIndex, tx.NftIndex, tx.ToAccountNameHash, tx.CallDataHash)
 }
 

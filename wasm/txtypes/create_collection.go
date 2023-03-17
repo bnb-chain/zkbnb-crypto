@@ -201,7 +201,7 @@ func (txInfo *CreateCollectionTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err
 		log.Println("[ComputeTransferMsgHash] unable to packed amount", err.Error())
 		return nil, err
 	}
-	msgHash = Poseidon(ChainId, TxTypeCreateCollection, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
+	msgHash = GMimcHash(ChainId, TxTypeCreateCollection, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
 		txInfo.GasFeeAssetId, packedFee)
 	return msgHash, nil
 }

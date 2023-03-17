@@ -17,8 +17,6 @@
 
 package types
 
-import "github.com/consensys/gnark/std/hash/poseidon"
-
 type CreateCollectionTx struct {
 	AccountIndex      int64
 	CollectionId      int64
@@ -65,7 +63,7 @@ func SetCreateCollectionTxWitness(tx *CreateCollectionTx) (witness CreateCollect
 }
 
 func ComputeHashFromCreateCollectionTx(api API, tx CreateCollectionTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
-	return poseidon.Poseidon(api, ChainId, TxTypeCreateCollection, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount)
+	return MimcWithGkr(api, ChainId, TxTypeCreateCollection, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount)
 }
 
 func VerifyCreateCollectionTx(

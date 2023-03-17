@@ -17,8 +17,6 @@
 
 package types
 
-import "github.com/consensys/gnark/std/hash/poseidon"
-
 type AtomicMatchTx struct {
 	AccountIndex      int64
 	BuyOffer          *OfferTx
@@ -55,7 +53,7 @@ func EmptyAtomicMatchTxWitness() (witness AtomicMatchTxConstraints) {
 }
 
 func ComputeHashFromOfferTx(api API, tx OfferTxConstraints) (hashVal Variable) {
-	return poseidon.Poseidon(api,
+	return MimcWithGkr(api,
 		tx.Type, tx.OfferId, tx.AccountIndex, tx.NftIndex,
 		tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt, tx.TreasuryRate,
 	)
@@ -76,21 +74,21 @@ func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraint
 }
 
 func ComputeHashFromAtomicMatchTx(api API, tx AtomicMatchTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
-	buyerOfferHash := poseidon.Poseidon(api,
+	buyerOfferHash := MimcWithGkr(api,
 		tx.BuyOffer.Type, tx.BuyOffer.OfferId, tx.BuyOffer.AccountIndex, tx.BuyOffer.NftIndex,
 		tx.BuyOffer.AssetId, tx.BuyOffer.AssetAmount, tx.BuyOffer.ListedAt, tx.BuyOffer.ExpiredAt,
 		tx.BuyOffer.Sig.R.X,
 		tx.BuyOffer.Sig.R.Y,
 		tx.BuyOffer.Sig.S,
 	)
-	sellerOfferHash := poseidon.Poseidon(api,
+	sellerOfferHash := MimcWithGkr(api,
 		tx.SellOffer.Type, tx.SellOffer.OfferId, tx.SellOffer.AccountIndex, tx.SellOffer.NftIndex,
 		tx.SellOffer.AssetId, tx.SellOffer.AssetAmount, tx.SellOffer.ListedAt, tx.SellOffer.ExpiredAt,
 		tx.SellOffer.Sig.R.X,
 		tx.SellOffer.Sig.R.Y,
 		tx.SellOffer.Sig.S,
 	)
-	return poseidon.Poseidon(api,
+	return MimcWithGkr(api,
 		ChainId, TxTypeAtomicMatch, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount, buyerOfferHash, sellerOfferHash,
 	)
 }

@@ -19,7 +19,6 @@ package types
 
 import (
 	"github.com/consensys/gnark/std/hash/mimc_gkr"
-	"github.com/consensys/gnark/std/hash/poseidon"
 )
 
 /*
@@ -34,7 +33,7 @@ func VerifyMerkleProof(api API, isEnabled Variable, merkleRoot Variable, node Va
 		api.AssertIsBoolean(helper[i])
 		d1 := api.Select(helper[i], proofSet[i], node)
 		d2 := api.Select(helper[i], node, proofSet[i])
-		node = nodeSumPoseidon(api, d1, d2)
+		node = nodeSumMimc(api, d1, d2)
 	}
 	// Compare our calculated Merkle root to the desired Merkle root.
 	IsVariableEqual(api, isEnabled, merkleRoot, node)
@@ -60,10 +59,10 @@ func nodeSum(h MiMC, a, b Variable) Variable {
 	return res
 }
 
-func nodeSumPoseidon(api API, a, b Variable) Variable {
-	res := poseidon.Poseidon(api, a, b)
-	return res
-}
+//func nodeSumPoseidon(api API, a, b Variable) Variable {
+//	res := poseidon.Poseidon(api, a, b)
+//	return res
+//}
 
 func nodeSumMimc(api API, a, b Variable) Variable {
 	return mimc_gkr.NewMimcWithGKR(api, a, b)
