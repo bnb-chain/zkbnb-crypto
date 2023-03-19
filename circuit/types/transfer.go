@@ -92,7 +92,9 @@ func VerifyTransferTx(
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[fromAccount].AccountIndex)
 	// account to l1Address
-	IsVariableEqual(api, flag, tx.ToL1Address, accountsBefore[toAccount].L1Address)
+	isNewAccount := api.IsZero(api.Cmp(accountsBefore[toAccount].L1Address, ZeroInt))
+	address := api.Select(isNewAccount, tx.ToL1Address, accountsBefore[toAccount].L1Address)
+	IsVariableEqual(api, flag, tx.ToL1Address, address)
 	// asset id
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[toAccount].AssetsInfo[0].AssetId)

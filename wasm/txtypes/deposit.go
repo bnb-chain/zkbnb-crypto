@@ -24,6 +24,12 @@ func (txInfo *DepositTxInfo) GetTxType() int {
 }
 
 func (txInfo *DepositTxInfo) Validate() error {
+	if txInfo.AccountIndex < minAccountIndex-1 {
+		return ErrFromAccountIndexTooLow
+	}
+	if txInfo.AccountIndex > maxAccountIndex {
+		return ErrFromAccountIndexTooHigh
+	}
 	return nil
 }
 

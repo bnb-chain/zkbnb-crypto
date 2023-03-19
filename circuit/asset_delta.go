@@ -287,7 +287,7 @@ func GetAssetDeltasAndNftDeltaFromTransferNft(
 	nftBefore NftConstraints,
 ) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
 	nftDelta NftDeltaConstraints,
-	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints, accountDelta AccountDeltaConstraints) {
 	// from account
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
@@ -315,7 +315,10 @@ func GetAssetDeltasAndNftDeltaFromTransferNft(
 		NftContentType:      nftBefore.NftContentType,
 	}
 	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
-	return deltas, nftDelta, gasDeltas
+	accountDelta = AccountDeltaConstraints{
+		L1Address: txInfo.ToL1Address,
+	}
+	return deltas, nftDelta, gasDeltas, accountDelta
 }
 
 func GetAssetDeltasAndNftDeltaFromAtomicMatch(

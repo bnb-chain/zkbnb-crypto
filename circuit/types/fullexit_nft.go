@@ -79,8 +79,8 @@ func VerifyFullExitNftTx(
 	fromAccount := 0
 	creatorAccount := 1
 
-	txInfoL1Address := api.Select(flag, tx.L1Address, 0)
-	beforeL1Address := api.Select(flag, accountsBefore[fromAccount].L1Address, 0)
+	txInfoL1Address := api.Select(flag, tx.L1Address, ZeroInt)
+	beforeL1Address := api.Select(flag, accountsBefore[fromAccount].L1Address, ZeroInt)
 	isFullExitSuccess := api.IsZero(api.Cmp(txInfoL1Address, beforeL1Address))
 	isOwner := api.And(isFullExitSuccess, api.And(api.IsZero(api.Sub(tx.AccountIndex, nftBefore.OwnerAccountIndex)), flag))
 

@@ -30,6 +30,12 @@ func (txInfo *DepositNftTxInfo) GetTxType() int {
 }
 
 func (txInfo *DepositNftTxInfo) Validate() error {
+	if txInfo.AccountIndex < minAccountIndex-1 {
+		return ErrFromAccountIndexTooLow
+	}
+	if txInfo.AccountIndex > maxAccountIndex {
+		return ErrFromAccountIndexTooHigh
+	}
 	return nil
 }
 

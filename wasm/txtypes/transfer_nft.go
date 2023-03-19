@@ -33,7 +33,6 @@ import (
 
 type TransferNftSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
-	ToAccountIndex    int64  `json:"to_account_index"`
 	ToL1Address       string `json:"to_l1_address"`
 	NftIndex          int64  `json:"nft_index"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
@@ -59,7 +58,6 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 	gasFeeAmount, _ = CleanPackedAmount(gasFeeAmount)
 	txInfo = &TransferNftTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
-		ToAccountIndex:    segmentFormat.ToAccountIndex,
 		ToL1Address:       segmentFormat.ToL1Address,
 		NftIndex:          segmentFormat.NftIndex,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
@@ -116,12 +114,11 @@ func (txInfo *TransferNftTxInfo) Validate() error {
 		return ErrFromAccountIndexTooHigh
 	}
 
-	// ToAccountIndex
-	if txInfo.ToAccountIndex < minAccountIndex {
-		return ErrToAccountIndexTooLow
+	if txInfo.ToAccountIndex < minAccountIndex-1 {
+		return ErrFromAccountIndexTooLow
 	}
 	if txInfo.ToAccountIndex > maxAccountIndex {
-		return ErrToAccountIndexTooHigh
+		return ErrFromAccountIndexTooHigh
 	}
 
 	// ToL1Address
@@ -222,7 +219,7 @@ func (txInfo *TransferNftTxInfo) GetToAccountIndex() int64 {
 
 func (txInfo *TransferNftTxInfo) GetL1SignatureBody() string {
 	signatureBody := fmt.Sprintf(signature.SignatureTemplateTransferNft, txInfo.NftIndex, txInfo.FromAccountIndex,
-		txInfo.ToAccountIndex, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+		txInfo.ToL1Address, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
 	return signatureBody
 }
 
@@ -245,7 +242,7 @@ func (txInfo *TransferNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeTransferNft, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.NftIndex, PaddingAddressToBytes20(txInfo.ToL1Address),
+		txInfo.GasFeeAssetId, packedFee, txInfo.NftIndex, PaddingAddressToBytes20(txInfo.ToL1Address),
 		txInfo.CallDataHash)
 	return msgHash, nil
 }

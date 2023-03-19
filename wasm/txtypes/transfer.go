@@ -127,11 +127,11 @@ func (txInfo *TransferTxInfo) Validate() error {
 		return ErrFromAccountIndexTooHigh
 	}
 
-	if txInfo.ToAccountIndex < minAccountIndex {
-		return ErrToAccountIndexTooLow
+	if txInfo.ToAccountIndex < minAccountIndex-1 {
+		return ErrFromAccountIndexTooLow
 	}
 	if txInfo.ToAccountIndex > maxAccountIndex {
-		return ErrToAccountIndexTooHigh
+		return ErrFromAccountIndexTooHigh
 	}
 
 	if txInfo.AssetId < minAssetId {

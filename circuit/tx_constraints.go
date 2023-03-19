@@ -274,7 +274,7 @@ func VerifyTransaction(
 	nftDelta = SelectNftDeltas(api, isMintNftTx, nftDeltaCheck, nftDelta)
 	gasDeltas = SelectGasDeltas(api, isMintNftTx, gasDeltasCheck, gasDeltas)
 	// transfer nft
-	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromTransferNft(api, tx.TransferNftTxInfo, tx.NftBefore)
+	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck, accountDeltaCheckTransferNft := GetAssetDeltasAndNftDeltaFromTransferNft(api, tx.TransferNftTxInfo, tx.NftBefore)
 	assetDeltas = SelectAssetDeltas(api, isTransferNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isTransferNftTx, nftDeltaCheck, nftDelta)
 	gasDeltas = SelectGasDeltas(api, isTransferNftTx, gasDeltasCheck, gasDeltas)
@@ -304,6 +304,7 @@ func VerifyTransaction(
 	AccountsInfoAfter[0].L1Address = api.Select(isDepositTx, accountDeltaCheckDeposit.L1Address, AccountsInfoAfter[0].L1Address)
 	AccountsInfoAfter[0].L1Address = api.Select(isDepositNftTx, accountDeltaCheckDepositNft.L1Address, AccountsInfoAfter[0].L1Address)
 	AccountsInfoAfter[1].L1Address = api.Select(isTransferTx, accountDeltaCheckTransfer.L1Address, AccountsInfoAfter[1].L1Address)
+	AccountsInfoAfter[1].L1Address = api.Select(isTransferNftTx, accountDeltaCheckTransferNft.L1Address, AccountsInfoAfter[1].L1Address)
 
 	AccountsInfoAfter[0].AccountPk.A.X = api.Select(isChangePubKey, accountDeltaCheckChangePubKey.PubKey.A.X, AccountsInfoAfter[0].AccountPk.A.X)
 	AccountsInfoAfter[0].AccountPk.A.Y = api.Select(isChangePubKey, accountDeltaCheckChangePubKey.PubKey.A.Y, AccountsInfoAfter[0].AccountPk.A.Y)
