@@ -18,6 +18,7 @@
 package types
 
 import (
+	"github.com/consensys/gnark/std/hash/poseidon"
 	"math/big"
 )
 
@@ -67,7 +68,7 @@ func SetWithdrawTxWitness(tx *WithdrawTx) (witness WithdrawTxConstraints) {
 }
 
 func ComputeHashFromWithdrawTx(api API, tx WithdrawTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
-	return MimcWithGkr(api, ChainId, TxTypeWithdraw, tx.FromAccountIndex, nonce, expiredAt,
+	return poseidon.Poseidon(api, ChainId, TxTypeWithdraw, tx.FromAccountIndex, nonce, expiredAt,
 		tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.AssetId, tx.AssetAmount, tx.ToAddress)
 }
 

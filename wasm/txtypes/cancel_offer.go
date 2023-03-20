@@ -186,7 +186,7 @@ func (txInfo *CancelOfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
 		return nil, err
 	}
-	msgHash = GMimcHash(ChainId, TxTypeCancelOffer, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
+	msgHash = Poseidon(ChainId, TxTypeCancelOffer, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
 		txInfo.GasFeeAssetId, packedFee, txInfo.OfferId)
 	return msgHash, nil
 }

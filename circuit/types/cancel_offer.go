@@ -17,6 +17,8 @@
 
 package types
 
+import "github.com/consensys/gnark/std/hash/poseidon"
+
 type CancelOfferTx struct {
 	AccountIndex      int64
 	OfferId           int64
@@ -55,7 +57,7 @@ func SetCancelOfferTxWitness(tx *CancelOfferTx) (witness CancelOfferTxConstraint
 }
 
 func ComputeHashFromCancelOfferTx(api API, tx CancelOfferTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
-	return MimcWithGkr(api, ChainId, TxTypeCancelOffer, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.OfferId)
+	return poseidon.Poseidon(api, ChainId, TxTypeCancelOffer, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.OfferId)
 }
 
 func VerifyCancelOfferTx(

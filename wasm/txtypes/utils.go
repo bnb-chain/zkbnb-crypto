@@ -24,6 +24,7 @@ import (
 	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
 	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr/poseidon"
 	"github.com/consensys/gnark/backend/hint"
 	"log"
 	"math/big"
@@ -162,7 +163,7 @@ func ParsePublicKey(pkStr string) (pk *eddsa.PublicKey, err error) {
 	return pk, nil
 }
 
-//type PoseidonVariable interface{}
+type PoseidonVariable interface{}
 
 func FromBigIntToFr(b *big.Int) *fr.Element {
 	ele := fr.Element{0, 0, 0, 0}
@@ -183,7 +184,7 @@ func FromBytesToFr(b []byte) (*fr.Element, error) {
 	return FromBigIntToFr(n), nil
 }
 
-/*func Poseidon(variables ...PoseidonVariable) []byte {
+func Poseidon(variables ...PoseidonVariable) []byte {
 	frArrays := make([]*fr.Element, len(variables))
 	for i, v := range variables {
 		if vi, ok := v.(int64); ok {
@@ -209,7 +210,7 @@ func FromBytesToFr(b []byte) (*fr.Element, error) {
 
 	poseidonHashBytes := poseidon.Poseidon(frArrays...).Bytes()
 	return poseidonHashBytes[:]
-}*/
+}
 
 type GMimcVariable interface{}
 
