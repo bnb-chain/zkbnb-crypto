@@ -42,6 +42,9 @@ func CheckEmptyAccountNode(api API, flag Variable, account AccountConstraints) {
 	IsVariableEqual(api, flag, account.Nonce, ZeroInt)
 	IsVariableEqual(api, flag, account.CollectionNonce, ZeroInt)
 	// empty asset
+	api.Println(account.AssetRoot)
+	api.Println(EmptyAssetRoot)
+
 	IsVariableEqual(api, flag, account.AssetRoot, EmptyAssetRoot)
 }
 
