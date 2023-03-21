@@ -64,7 +64,7 @@ func TestExportSol(t *testing.T) {
 }
 
 func TestExportSolSmall(t *testing.T) {
-	differentBlockSizes := []int{64}
+	differentBlockSizes := []int{1}
 	exportSol(differentBlockSizes)
 }
 
