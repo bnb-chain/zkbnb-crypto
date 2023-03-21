@@ -33,14 +33,14 @@ import (
 	"github.com/bnb-chain/zkbnb-crypto/circuit"
 )
 
-var optionalBlockSizes = flag.String("blocksizes", "1,10", "block size that will be used for proof generation and verification")
+var optionalBlockSizes = flag.String("blocksizes", "1", "block size that will be used for proof generation and verification")
 
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := optionalBlockSizesInt()
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	for i := 0; i < len(differentBlockSizes); i++ {
-		bN := 13
+		bN := 10
 		var blockConstraints circuit.BlockConstraints
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
@@ -75,7 +75,7 @@ func exportSol(differentBlockSizes []int) {
 
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
-		bN := 13
+		bN := 10
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
 		for i := 0; i < blockConstraints.TxsCount; i++ {
