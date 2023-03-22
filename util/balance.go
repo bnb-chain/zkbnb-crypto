@@ -104,3 +104,43 @@ func CleanPackedFee(amount *big.Int) (nAmount *big.Int, err error) {
 	nAmount = ffmath.Multiply(oAmount, new(big.Int).Exp(big.NewInt(10), big.NewInt(exponent), nil))
 	return nAmount, nil
 }
+
+func UnpackFee(packedFee *big.Int) (nAmount *big.Int, err error) {
+	amountBits := strconv.FormatInt(packedFee.Int64(), 2)
+	mantissa, err := strconv.ParseInt(amountBits[:len(amountBits)-5], 2, 12)
+	if err != nil {
+		return nil, err
+	}
+	exponent, err := strconv.ParseInt(amountBits[len(amountBits)-5:], 2, 6)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < 32; i++ {
+		isRemain := exponent != 0
+		if isRemain {
+			mantissa = mantissa * 10
+			exponent = exponent - 1
+		}
+	}
+	return new(big.Int).SetInt64(mantissa), nil
+}
+
+func UnpackAmount(packedAmount *big.Int) (nAmount *big.Int, err error) {
+	amountBits := strconv.FormatInt(packedAmount.Int64(), 2)
+	mantissa, err := strconv.ParseInt(amountBits[:len(amountBits)-5], 2, 36)
+	if err != nil {
+		return nil, err
+	}
+	exponent, err := strconv.ParseInt(amountBits[len(amountBits)-5:], 2, 6)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < 32; i++ {
+		isRemain := exponent != 0
+		if isRemain {
+			mantissa = mantissa * 10
+			exponent = exponent - 1
+		}
+	}
+	return new(big.Int).SetInt64(mantissa), nil
+}
