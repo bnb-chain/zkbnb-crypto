@@ -151,7 +151,7 @@ func TestValidateOfferTxInfo(t *testing.T) {
 		},
 		// TreasuryRate
 		{
-			fmt.Errorf("TreasuryRate should  not be less than %d", minTreasuryRate),
+			fmt.Errorf("TreasuryRate should  not be less than %d", minRate),
 			&OfferTxInfo{
 				Type:         1,
 				OfferId:      1,
@@ -161,11 +161,11 @@ func TestValidateOfferTxInfo(t *testing.T) {
 				AssetAmount:  big.NewInt(20),
 				ListedAt:     time.Now().Unix(),
 				ExpiredAt:    time.Now().Add(time.Hour).UnixMilli(),
-				TreasuryRate: minTreasuryRate - 1,
+				TreasuryRate: minRate - 1,
 			},
 		},
 		{
-			fmt.Errorf("TreasuryRate should not be larger than %d", maxTreasuryRate),
+			fmt.Errorf("TreasuryRate should not be larger than %d", maxRate),
 			&OfferTxInfo{
 				Type:         1,
 				OfferId:      1,
@@ -175,7 +175,7 @@ func TestValidateOfferTxInfo(t *testing.T) {
 				AssetAmount:  big.NewInt(20),
 				ListedAt:     time.Now().Unix(),
 				ExpiredAt:    time.Now().Add(time.Hour).UnixMilli(),
-				TreasuryRate: maxTreasuryRate + 1,
+				TreasuryRate: maxRate + 1,
 			},
 		},
 	}

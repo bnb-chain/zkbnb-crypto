@@ -17,17 +17,20 @@
 
 package types
 
-import "github.com/consensys/gnark/std/hash/poseidon"
+import (
+	"github.com/consensys/gnark/std/hash/poseidon"
+)
 
 type AtomicMatchTx struct {
 	AccountIndex      int64
 	BuyOffer          *OfferTx
 	SellOffer         *OfferTx
 	CreatorAmount     int64
-	TreasuryAmount    int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
+	BuyChanelAmount   int64
+	SellChanelAmount  int64
 }
 
 type AtomicMatchTxConstraints struct {
@@ -35,10 +38,11 @@ type AtomicMatchTxConstraints struct {
 	BuyOffer          OfferTxConstraints
 	SellOffer         OfferTxConstraints
 	CreatorAmount     Variable
-	TreasuryAmount    Variable
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
+	BuyChanelAmount   Variable
+	SellChanelAmount  Variable
 }
 
 func EmptyAtomicMatchTxWitness() (witness AtomicMatchTxConstraints) {
@@ -47,17 +51,27 @@ func EmptyAtomicMatchTxWitness() (witness AtomicMatchTxConstraints) {
 		BuyOffer:          EmptyOfferTxWitness(),
 		SellOffer:         EmptyOfferTxWitness(),
 		CreatorAmount:     ZeroInt,
-		TreasuryAmount:    ZeroInt,
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
+		BuyChanelAmount:   ZeroInt,
+		SellChanelAmount:  ZeroInt,
 	}
 }
 
-func ComputeHashFromOfferTx(api API, tx OfferTxConstraints) (hashVal Variable) {
+func ComputeHashFromBuyOfferTx(api API, tx OfferTxConstraints) (hashVal Variable) {
 	return poseidon.Poseidon(api,
 		tx.Type, tx.OfferId, tx.AccountIndex, tx.NftIndex,
-		tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt, tx.TreasuryRate,
+		tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt, tx.ChanelAccountIndex,
+		tx.ChanelRate, tx.PlatformRate, tx.PlatformAmount,
+	)
+}
+
+func ComputeHashFromSellOfferTx(api API, tx OfferTxConstraints) (hashVal Variable) {
+	return poseidon.Poseidon(api,
+		tx.Type, tx.OfferId, tx.AccountIndex, tx.NftIndex,
+		tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt, tx.ChanelAccountIndex,
+		tx.ChanelRate,
 	)
 }
 
@@ -67,10 +81,11 @@ func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraint
 		BuyOffer:          SetOfferTxWitness(tx.BuyOffer),
 		SellOffer:         SetOfferTxWitness(tx.SellOffer),
 		CreatorAmount:     tx.CreatorAmount,
-		TreasuryAmount:    tx.TreasuryAmount,
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
+		BuyChanelAmount:   tx.BuyChanelAmount,
+		SellChanelAmount:  tx.SellChanelAmount,
 	}
 	return witness
 }
@@ -82,14 +97,23 @@ func ComputeHashFromAtomicMatchTx(api API, tx AtomicMatchTxConstraints, nonce Va
 		tx.BuyOffer.Sig.R.X,
 		tx.BuyOffer.Sig.R.Y,
 		tx.BuyOffer.Sig.S,
+		tx.BuyOffer.ChanelAccountIndex,
+		tx.BuyOffer.ChanelRate,
+		tx.BuyOffer.PlatformRate,
+		tx.BuyOffer.PlatformAmount,
 	)
+
 	sellerOfferHash := poseidon.Poseidon(api,
 		tx.SellOffer.Type, tx.SellOffer.OfferId, tx.SellOffer.AccountIndex, tx.SellOffer.NftIndex,
 		tx.SellOffer.AssetId, tx.SellOffer.AssetAmount, tx.SellOffer.ListedAt, tx.SellOffer.ExpiredAt,
 		tx.SellOffer.Sig.R.X,
 		tx.SellOffer.Sig.R.Y,
 		tx.SellOffer.Sig.S,
+		tx.SellOffer.ChanelAccountIndex,
+		tx.SellOffer.ChanelRate,
+		0,
 	)
+
 	return poseidon.Poseidon(api,
 		ChainId, TxTypeAtomicMatch, tx.AccountIndex, nonce, expiredAt, tx.GasFeeAssetId, tx.GasFeeAssetAmount, buyerOfferHash, sellerOfferHash,
 	)
@@ -107,6 +131,8 @@ func VerifyAtomicMatchTx(
 	buyAccount := 1
 	sellAccount := 2
 	creatorAccount := 3
+	buyChanelAccount := 4
+	sellChanelAccount := 5
 
 	pubData = CollectPubDataFromAtomicMatch(api, *tx)
 	// verify params
@@ -116,16 +142,17 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.BuyOffer.AssetAmount, tx.SellOffer.AssetAmount)
 	IsVariableEqual(api, flag, tx.BuyOffer.NftIndex, tx.SellOffer.NftIndex)
 	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[buyAccount].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[creatorAccount].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[buyChanelAccount].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[sellChanelAccount].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[sellAccount].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[creatorAccount].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	IsVariableLessOrEqual(api, flag, blockCreatedAt, tx.BuyOffer.ExpiredAt)
 	IsVariableLessOrEqual(api, flag, blockCreatedAt, tx.SellOffer.ExpiredAt)
 	IsVariableEqual(api, flag, nftBefore.NftIndex, tx.SellOffer.NftIndex)
-	IsVariableEqual(api, flag, tx.BuyOffer.TreasuryRate, tx.SellOffer.TreasuryRate)
 	// verify signature
 	hFunc.Reset()
-	buyOfferHash := ComputeHashFromOfferTx(api, tx.BuyOffer)
+	buyOfferHash := ComputeHashFromBuyOfferTx(api, tx.BuyOffer)
 	hFunc.Reset()
 	notBuyer := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.BuyOffer.AccountIndex)))
 	notBuyer = api.And(flag, notBuyer)
@@ -134,7 +161,7 @@ func VerifyAtomicMatchTx(
 		return pubData, err
 	}
 	hFunc.Reset()
-	sellOfferHash := ComputeHashFromOfferTx(api, tx.SellOffer)
+	sellOfferHash := ComputeHashFromSellOfferTx(api, tx.SellOffer)
 	hFunc.Reset()
 	notSeller := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.SellOffer.AccountIndex)))
 	notSeller = api.And(flag, notSeller)
@@ -151,6 +178,11 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.SellOffer.AccountIndex, accountsBefore[sellAccount].AccountIndex)
 	// creator
 	IsVariableEqual(api, flag, nftBefore.CreatorAccountIndex, accountsBefore[creatorAccount].AccountIndex)
+	// buyChanelAccount
+	IsVariableEqual(api, flag, tx.BuyOffer.ChanelAccountIndex, accountsBefore[buyChanelAccount].AccountIndex)
+	// sellChanelAccount
+	IsVariableEqual(api, flag, tx.SellOffer.ChanelAccountIndex, accountsBefore[sellChanelAccount].AccountIndex)
+
 	// verify buy offer id
 	buyOfferIdBits := api.ToBinary(tx.BuyOffer.OfferId, 24)
 	buyAssetId := api.FromBinary(buyOfferIdBits[7:]...)
@@ -171,9 +203,18 @@ func VerifyAtomicMatchTx(
 	}
 	// buyer should have enough balance
 	tx.BuyOffer.AssetAmount = UnpackAmount(api, tx.BuyOffer.AssetAmount)
-	IsVariableLessOrEqual(api, flag, tx.BuyOffer.AssetAmount, accountsBefore[buyAccount].AssetsInfo[0].Balance)
+	tx.BuyOffer.PlatformAmount = UnpackAmount(api, tx.BuyOffer.PlatformAmount)
+	tx.BuyChanelAmount = UnpackAmount(api, tx.BuyChanelAmount)
+	tx.CreatorAmount = UnpackAmount(api, tx.CreatorAmount)
+	totalAmount := api.Add(tx.BuyOffer.AssetAmount, tx.BuyOffer.PlatformAmount, tx.BuyChanelAmount, tx.CreatorAmount)
+	IsVariableLessOrEqual(api, flag, totalAmount, accountsBefore[buyAccount].AssetsInfo[0].Balance)
 	// submitter should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
+
+	// verify platform amount
+	platformAmount := api.Mul(tx.BuyOffer.AssetAmount, tx.BuyOffer.PlatformRate)
+	platformAmount = api.Div(platformAmount, RateBase)
+	IsVariableEqual(api, flag, tx.BuyOffer.PlatformAmount, platformAmount)
 	return pubData, nil
 }

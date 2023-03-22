@@ -103,25 +103,25 @@ func TestValidateMintNftTxInfo(t *testing.T) {
 		},
 		// CreatorTreasuryRate
 		{
-			fmt.Errorf("CreatorTreasuryRate should  not be less than %d", minTreasuryRate),
+			fmt.Errorf("CreatorTreasuryRate should  not be less than %d", minRate),
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
 				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
-				CreatorTreasuryRate: minTreasuryRate - 1,
+				CreatorTreasuryRate: minRate - 1,
 			},
 		},
 		{
-			fmt.Errorf("CreatorTreasuryRate should not be larger than %d", maxTreasuryRate),
+			fmt.Errorf("CreatorTreasuryRate should not be larger than %d", maxRate),
 			&MintNftTxInfo{
 				CreatorAccountIndex: 1,
 				ToAccountIndex:      2,
 				ToL1Address:         hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftContentHash:      hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				NftCollectionId:     4,
-				CreatorTreasuryRate: maxTreasuryRate + 1,
+				CreatorTreasuryRate: maxRate + 1,
 			},
 		},
 		// GasAccountIndex

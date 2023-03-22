@@ -146,10 +146,10 @@ func (txInfo *MintNftTxInfo) Validate() error {
 	}
 
 	// CreatorTreasuryRate
-	if txInfo.CreatorTreasuryRate < minTreasuryRate {
+	if txInfo.CreatorTreasuryRate < minRate {
 		return ErrCreatorTreasuryRateTooLow
 	}
-	if txInfo.CreatorTreasuryRate > maxTreasuryRate {
+	if txInfo.CreatorTreasuryRate > maxRate {
 		return ErrCreatorTreasuryRateTooHigh
 	}
 

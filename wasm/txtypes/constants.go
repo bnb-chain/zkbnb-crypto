@@ -80,13 +80,15 @@ const (
 
 	minNonce int64 = 0
 
-	minTreasuryRate int64 = 0
-	maxTreasuryRate int64 = 10000
+	minRate int64 = 0
+	maxRate int64 = 10000
 
 	minCollectionNameLength int = 1
 	maxCollectionNameLength int = 64
 
 	maxCollectionIntroductionLength int = 1000
+
+	maxLength int = 2000
 )
 
 var (

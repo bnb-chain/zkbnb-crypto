@@ -37,15 +37,18 @@ const (
 )
 
 type OfferSegmentFormat struct {
-	Type         int64  `json:"type"`
-	OfferId      int64  `json:"offer_id"`
-	AccountIndex int64  `json:"account_index"`
-	NftIndex     int64  `json:"nft_index"`
-	AssetId      int64  `json:"asset_id"`
-	AssetAmount  string `json:"asset_amount"`
-	ListedAt     int64  `json:"listed_at"`
-	ExpiredAt    int64  `json:"expired_at"`
-	TreasuryRate int64  `json:"treasury_rate"`
+	Type               int64  `json:"type"`
+	OfferId            int64  `json:"offer_id"`
+	AccountIndex       int64  `json:"account_index"`
+	NftIndex           int64  `json:"nft_index"`
+	AssetId            int64  `json:"asset_id"`
+	AssetAmount        string `json:"asset_amount"`
+	ListedAt           int64  `json:"listed_at"`
+	ExpiredAt          int64  `json:"expired_at"`
+	ChanelAccountIndex int64  `json:"chanel_account_index"`
+	ChanelRate         int64  `json:"chanel_rate"`
+	PlatformRate       int64  `json:"platform_rate"`
+	PlatformAmount     string `json:"platform_amount"`
 }
 
 func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInfo, err error) {
@@ -57,21 +60,32 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 	}
 	assetAmount, err := StringToBigInt(segmentFormat.AssetAmount)
 	if err != nil {
-		log.Println("[ConstructOfferTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructOfferTxInfo] assetAmount unable to convert string to big int:", err)
 		return nil, err
 	}
 	assetAmount, _ = CleanPackedAmount(assetAmount)
+
+	platformAmount, err := StringToBigInt(segmentFormat.PlatformAmount)
+	if err != nil {
+		log.Println("[ConstructOfferTxInfo] platformAmount unable to convert string to big int:", err)
+		return nil, err
+	}
+	platformAmount, _ = CleanPackedAmount(platformAmount)
+
 	txInfo = &OfferTxInfo{
-		Type:         segmentFormat.Type,
-		OfferId:      segmentFormat.OfferId,
-		AccountIndex: segmentFormat.AccountIndex,
-		NftIndex:     segmentFormat.NftIndex,
-		AssetId:      segmentFormat.AssetId,
-		AssetAmount:  assetAmount,
-		ListedAt:     segmentFormat.ListedAt,
-		ExpiredAt:    segmentFormat.ExpiredAt,
-		TreasuryRate: segmentFormat.TreasuryRate,
-		Sig:          nil,
+		Type:               segmentFormat.Type,
+		OfferId:            segmentFormat.OfferId,
+		AccountIndex:       segmentFormat.AccountIndex,
+		NftIndex:           segmentFormat.NftIndex,
+		AssetId:            segmentFormat.AssetId,
+		AssetAmount:        assetAmount,
+		ListedAt:           segmentFormat.ListedAt,
+		ExpiredAt:          segmentFormat.ExpiredAt,
+		ChanelAccountIndex: segmentFormat.ChanelAccountIndex,
+		ChanelRate:         segmentFormat.ChanelRate,
+		PlatformRate:       segmentFormat.PlatformRate,
+		PlatformAmount:     platformAmount,
+		Sig:                nil,
 	}
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
@@ -92,17 +106,20 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 }
 
 type OfferTxInfo struct {
-	Type         int64
-	OfferId      int64
-	AccountIndex int64
-	NftIndex     int64
-	AssetId      int64
-	AssetAmount  *big.Int
-	ListedAt     int64
-	ExpiredAt    int64
-	TreasuryRate int64
-	Sig          []byte
-	L1Sig        string
+	Type               int64
+	OfferId            int64
+	AccountIndex       int64
+	NftIndex           int64
+	AssetId            int64
+	AssetAmount        *big.Int
+	ListedAt           int64
+	ExpiredAt          int64
+	ChanelAccountIndex int64
+	ChanelRate         int64
+	PlatformRate       int64
+	PlatformAmount     *big.Int
+	Sig                []byte
+	L1Sig              string
 }
 
 func (txInfo *OfferTxInfo) GetTxType() int {
@@ -155,19 +172,45 @@ func (txInfo *OfferTxInfo) Validate() error {
 		return ErrAssetAmountTooHigh
 	}
 
+	// ChanelAccountIndex
+	if txInfo.ChanelAccountIndex < minAccountIndex {
+		return ErrAccountIndexTooLow
+	}
+	if txInfo.ChanelAccountIndex > maxAccountIndex {
+		return ErrAccountIndexTooHigh
+	}
 	// ListedAt
 	if txInfo.ListedAt <= 0 {
 		return ErrListedAtTooLow
 	}
 
-	// TreasuryRate
-	if txInfo.TreasuryRate < minTreasuryRate {
-		return ErrTreasuryRateTooLow
+	//ChanelRate
+	if txInfo.ChanelRate < minRate {
+		return ErrChanelRateTooLow
 	}
-	if txInfo.TreasuryRate > maxTreasuryRate {
-		return ErrTreasuryRateTooHigh
+	if txInfo.ChanelRate > maxRate {
+		return ErrChanelRateTooHigh
 	}
 
+	if txInfo.Type == BuyOfferType {
+		//PlatformFeeRate
+		if txInfo.PlatformRate < minRate {
+			return ErrPlatformFeeRateTooLow
+		}
+		if txInfo.PlatformRate > maxRate {
+			return ErrPlatformFeeRateTooHigh
+		}
+		//PlatformFee
+		if txInfo.PlatformAmount == nil {
+			return fmt.Errorf("PlatformAmount should not be nil")
+		}
+		if txInfo.PlatformAmount.Cmp(minAssetAmount) <= 0 {
+			return ErrPlatformFeeTooLow
+		}
+		if txInfo.PlatformAmount.Cmp(maxAssetAmount) > 0 {
+			return ErrPlatformFeeTooHigh
+		}
+	}
 	return nil
 }
 
@@ -232,13 +275,26 @@ func (txInfo *OfferTxInfo) GetExpiredAt() int64 {
 func (txInfo *OfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	packedAmount, err := ToPackedAmount(txInfo.AssetAmount)
 	if err != nil {
-		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		log.Println("[ComputeTransferMsgHash] assetAmount unable to packed amount:", err.Error())
 		return nil, err
 	}
-	msgHash = Poseidon(txInfo.Type, txInfo.OfferId, txInfo.AccountIndex, txInfo.NftIndex,
-		txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.TreasuryRate,
-	)
-	return msgHash, nil
+	if txInfo.Type == BuyOfferType {
+		packedPlatformAmount, err := ToPackedAmount(txInfo.PlatformAmount)
+		if err != nil {
+			log.Println("[ComputeTransferMsgHash] platformAmount unable to packed amount:", err.Error())
+			return nil, err
+		}
+
+		msgHash = Poseidon(txInfo.Type, txInfo.OfferId, txInfo.AccountIndex, txInfo.NftIndex,
+			txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.ChanelAccountIndex,
+			txInfo.ChanelRate, txInfo.PlatformRate, packedPlatformAmount)
+		return msgHash, nil
+	} else {
+		msgHash = Poseidon(txInfo.Type, txInfo.OfferId, txInfo.AccountIndex, txInfo.NftIndex,
+			txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.ChanelAccountIndex,
+			txInfo.ChanelRate)
+		return msgHash, nil
+	}
 }
 
 func (txInfo *OfferTxInfo) GetGas() (int64, int64, *big.Int) {

@@ -457,6 +457,8 @@ func EmptyTx(stateRoot []byte) (oTx *Tx) {
 			types.EmptyAccount(0, make([]byte, 32)),
 			types.EmptyAccount(0, make([]byte, 32)),
 			types.EmptyAccount(0, make([]byte, 32)),
+			types.EmptyAccount(0, make([]byte, 32)),
+			types.EmptyAccount(0, make([]byte, 32)),
 		},
 		NftRootBefore:                   make([]byte, 32),
 		NftBefore:                       types.EmptyNft(0),
