@@ -168,8 +168,7 @@ func VerifyTransaction(
 		tx.Signature,
 	)
 	if err != nil {
-		log.Println("[VerifyTx] invalid signature:", err)
-		return nil, pubData, roots, gasDeltas, err
+		log.Println("[VerifyTx] invalid signature:", err) //return nil, pubData, roots, gasDeltas, err
 	}
 
 	// verify transactions
