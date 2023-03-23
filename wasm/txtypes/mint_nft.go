@@ -66,7 +66,7 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 		NftContentType:      segmentFormat.NftContentType,
 		NftContentHash:      segmentFormat.NftContentHash,
 		NftCollectionId:     segmentFormat.NftCollectionId,
-		CreatorTreasuryRate: segmentFormat.CreatorTreasuryRate,
+		RoyaltyRate:         segmentFormat.CreatorTreasuryRate,
 		GasAccountIndex:     segmentFormat.GasAccountIndex,
 		GasFeeAssetId:       segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount:   gasFeeAmount,
@@ -101,7 +101,7 @@ type MintNftTxInfo struct {
 	NftContentHash      string
 	NftContentType      int64
 	NftCollectionId     int64
-	CreatorTreasuryRate int64
+	RoyaltyRate         int64
 	GasAccountIndex     int64
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   *big.Int
@@ -145,12 +145,12 @@ func (txInfo *MintNftTxInfo) Validate() error {
 		return ErrNftCollectionIdTooHigh
 	}
 
-	// CreatorTreasuryRate
-	if txInfo.CreatorTreasuryRate < minRate {
-		return ErrCreatorTreasuryRateTooLow
+	// RoyaltyRate
+	if txInfo.RoyaltyRate < minRate {
+		return ErrRoyaltyRateTooLow
 	}
-	if txInfo.CreatorTreasuryRate > maxRate {
-		return ErrCreatorTreasuryRateTooHigh
+	if txInfo.RoyaltyRate > maxRate {
+		return ErrRoyaltyRateTooHigh
 	}
 
 	// GasAccountIndex
@@ -256,7 +256,7 @@ func (txInfo *MintNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeMintNft, txInfo.CreatorAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.CreatorTreasuryRate, txInfo.NftCollectionId,
+		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.RoyaltyRate, txInfo.NftCollectionId,
 		PaddingAddressToBytes20(txInfo.ToL1Address), txInfo.NftContentType)
 	return msgHash, nil
 }

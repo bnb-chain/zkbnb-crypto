@@ -45,10 +45,11 @@ type OfferSegmentFormat struct {
 	AssetAmount        string `json:"asset_amount"`
 	ListedAt           int64  `json:"listed_at"`
 	ExpiredAt          int64  `json:"expired_at"`
+	RoyaltyRate        int64  `json:"royalty_rate"`
 	ChanelAccountIndex int64  `json:"chanel_account_index"`
 	ChanelRate         int64  `json:"chanel_rate"`
-	PlatformRate       int64  `json:"platform_rate"`
-	PlatformAmount     string `json:"platform_amount"`
+	ProtocolRate       int64  `json:"protocol_rate"`
+	ProtocolAmount     string `json:"protocol_amount"`
 }
 
 func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInfo, err error) {
@@ -65,12 +66,12 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 	}
 	assetAmount, _ = CleanPackedAmount(assetAmount)
 
-	platformAmount, err := StringToBigInt(segmentFormat.PlatformAmount)
+	protocolAmount, err := StringToBigInt(segmentFormat.ProtocolAmount)
 	if err != nil {
-		log.Println("[ConstructOfferTxInfo] platformAmount unable to convert string to big int:", err)
+		log.Println("[ConstructOfferTxInfo] protocolAmount unable to convert string to big int:", err)
 		return nil, err
 	}
-	platformAmount, _ = CleanPackedAmount(platformAmount)
+	protocolAmount, _ = CleanPackedAmount(protocolAmount)
 
 	txInfo = &OfferTxInfo{
 		Type:               segmentFormat.Type,
@@ -81,10 +82,11 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 		AssetAmount:        assetAmount,
 		ListedAt:           segmentFormat.ListedAt,
 		ExpiredAt:          segmentFormat.ExpiredAt,
+		RoyaltyRate:        segmentFormat.RoyaltyRate,
 		ChanelAccountIndex: segmentFormat.ChanelAccountIndex,
 		ChanelRate:         segmentFormat.ChanelRate,
-		PlatformRate:       segmentFormat.PlatformRate,
-		PlatformAmount:     platformAmount,
+		ProtocolRate:       segmentFormat.ProtocolRate,
+		ProtocolAmount:     protocolAmount,
 		Sig:                nil,
 	}
 	// compute call data hash
@@ -114,10 +116,11 @@ type OfferTxInfo struct {
 	AssetAmount        *big.Int
 	ListedAt           int64
 	ExpiredAt          int64
+	RoyaltyRate        int64
 	ChanelAccountIndex int64
 	ChanelRate         int64
-	PlatformRate       int64
-	PlatformAmount     *big.Int
+	ProtocolRate       int64
+	ProtocolAmount     *big.Int
 	Sig                []byte
 	L1Sig              string
 }
@@ -184,31 +187,38 @@ func (txInfo *OfferTxInfo) Validate() error {
 		return ErrListedAtTooLow
 	}
 
-	//ChanelRate
-	if txInfo.ChanelRate < minRate {
-		return ErrChanelRateTooLow
-	}
-	if txInfo.ChanelRate > maxRate {
-		return ErrChanelRateTooHigh
-	}
-
 	if txInfo.Type == BuyOfferType {
-		//PlatformFeeRate
-		if txInfo.PlatformRate < minRate {
-			return ErrPlatformFeeRateTooLow
+		//ChanelRate
+		if txInfo.ChanelRate < minRate {
+			return ErrChanelRateTooLow
 		}
-		if txInfo.PlatformRate > maxRate {
-			return ErrPlatformFeeRateTooHigh
+		if txInfo.ChanelRate > maxRate {
+			return ErrChanelRateTooHigh
 		}
-		//PlatformFee
-		if txInfo.PlatformAmount == nil {
-			return fmt.Errorf("PlatformAmount should not be nil")
+		//ProtocolRate
+		if txInfo.ProtocolRate < minRate {
+			return ErrProtocolRateTooLow
 		}
-		if txInfo.PlatformAmount.Cmp(minAssetAmount) <= 0 {
-			return ErrPlatformFeeTooLow
+		if txInfo.ProtocolRate > maxRate {
+			return ErrProtocolRateTooHigh
 		}
-		if txInfo.PlatformAmount.Cmp(maxAssetAmount) > 0 {
-			return ErrPlatformFeeTooHigh
+		//ProtocolAmount
+		if txInfo.ProtocolAmount == nil {
+			return fmt.Errorf("ProtocolAmount should not be nil")
+		}
+		if txInfo.ProtocolAmount.Cmp(minAssetAmount) <= 0 {
+			return ErrProtocolAmountTooLow
+		}
+		if txInfo.ProtocolAmount.Cmp(maxAssetAmount) > 0 {
+			return ErrProtocolAmountTooHigh
+		}
+	} else {
+		//ChanelRate
+		if txInfo.ChanelRate < minRate {
+			return ErrChanelRateTooLow
+		}
+		if txInfo.ChanelRate > maxSellRate {
+			return ErrChanelRateTooHigh
 		}
 	}
 	return nil
@@ -279,15 +289,14 @@ func (txInfo *OfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 		return nil, err
 	}
 	if txInfo.Type == BuyOfferType {
-		packedPlatformAmount, err := ToPackedAmount(txInfo.PlatformAmount)
+		packedProtocolAmount, err := ToPackedAmount(txInfo.ProtocolAmount)
 		if err != nil {
-			log.Println("[ComputeTransferMsgHash] platformAmount unable to packed amount:", err.Error())
+			log.Println("[ComputeTransferMsgHash] protocolAmount unable to packed amount:", err.Error())
 			return nil, err
 		}
-
 		msgHash = Poseidon(txInfo.Type, txInfo.OfferId, txInfo.AccountIndex, txInfo.NftIndex,
-			txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.ChanelAccountIndex,
-			txInfo.ChanelRate, txInfo.PlatformRate, packedPlatformAmount)
+			txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.ChanelAccountIndex, txInfo.RoyaltyRate,
+			txInfo.ChanelRate, txInfo.ProtocolRate, packedProtocolAmount, 0)
 		return msgHash, nil
 	} else {
 		msgHash = Poseidon(txInfo.Type, txInfo.OfferId, txInfo.AccountIndex, txInfo.NftIndex,

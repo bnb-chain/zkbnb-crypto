@@ -16,7 +16,7 @@ type FullExitNftTxInfo struct {
 	AccountIndex int64
 	// Set by layer2.
 	CreatorAccountIndex int64
-	CreatorTreasuryRate int64
+	RoyaltyRate         int64
 	CreatorL1Address    string
 	NftContentHash      []byte
 	NftContentType      int64

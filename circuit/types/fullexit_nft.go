@@ -22,7 +22,7 @@ type FullExitNftTx struct {
 	L1Address           []byte
 	CreatorAccountIndex int64
 	CreatorL1Address    []byte
-	CreatorTreasuryRate int64
+	RoyaltyRate         int64
 	NftIndex            int64
 	CollectionId        int64
 	NftContentHash      []byte
@@ -34,7 +34,7 @@ type FullExitNftTxConstraints struct {
 	L1Address           Variable
 	CreatorAccountIndex Variable
 	CreatorL1Address    Variable
-	CreatorTreasuryRate Variable
+	RoyaltyRate         Variable
 	NftIndex            Variable
 	CollectionId        Variable
 	NftContentHash      [2]Variable
@@ -47,7 +47,7 @@ func EmptyFullExitNftTxWitness() (witness FullExitNftTxConstraints) {
 		L1Address:           ZeroInt,
 		CreatorAccountIndex: ZeroInt,
 		CreatorL1Address:    ZeroInt,
-		CreatorTreasuryRate: ZeroInt,
+		RoyaltyRate:         ZeroInt,
 		NftIndex:            ZeroInt,
 		CollectionId:        ZeroInt,
 		NftContentHash:      [2]Variable{ZeroInt, ZeroInt},
@@ -61,7 +61,7 @@ func SetFullExitNftTxWitness(tx *FullExitNftTx) (witness FullExitNftTxConstraint
 		L1Address:           tx.L1Address,
 		CreatorAccountIndex: tx.CreatorAccountIndex,
 		CreatorL1Address:    tx.CreatorL1Address,
-		CreatorTreasuryRate: tx.CreatorTreasuryRate,
+		RoyaltyRate:         tx.RoyaltyRate,
 		NftIndex:            tx.NftIndex,
 		CollectionId:        tx.CollectionId,
 		NftContentHash:      GetNftContentHashFromBytes(tx.NftContentHash),
@@ -87,7 +87,7 @@ func VerifyFullExitNftTx(
 	tx.CreatorAccountIndex = api.Select(isOwner, tx.CreatorAccountIndex, ZeroInt)
 	tx.NftContentHash[0] = api.Select(isOwner, tx.NftContentHash[0], ZeroInt)
 	tx.NftContentHash[1] = api.Select(isOwner, tx.NftContentHash[1], ZeroInt)
-	tx.CreatorTreasuryRate = api.Select(isOwner, tx.CreatorTreasuryRate, ZeroInt)
+	tx.RoyaltyRate = api.Select(isOwner, tx.RoyaltyRate, ZeroInt)
 	tx.CollectionId = api.Select(isOwner, tx.CollectionId, ZeroInt)
 	tx.NftContentType = api.Select(isOwner, tx.NftContentType, ZeroInt)
 
@@ -99,7 +99,7 @@ func VerifyFullExitNftTx(
 	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[creatorAccount].AccountIndex)
 	IsVariableEqual(api, flag, tx.CreatorL1Address, accountsBefore[creatorAccount].L1Address)
 	IsVariableEqual(api, isOwner, tx.CreatorAccountIndex, nftBefore.CreatorAccountIndex)
-	IsVariableEqual(api, isOwner, tx.CreatorTreasuryRate, nftBefore.CreatorTreasuryRate)
+	IsVariableEqual(api, isOwner, tx.RoyaltyRate, nftBefore.RoyaltyRate)
 	IsVariableEqual(api, isOwner, tx.NftContentHash[0], nftBefore.NftContentHash[0])
 	IsVariableEqual(api, isOwner, tx.NftContentHash[1], nftBefore.NftContentHash[1])
 	//NftContentType

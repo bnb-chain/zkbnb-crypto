@@ -23,7 +23,7 @@ type WithdrawNftTx struct {
 	AccountIndex        int64
 	CreatorAccountIndex int64
 	CreatorL1Address    []byte
-	CreatorTreasuryRate int64
+	RoyaltyRate         int64
 	NftIndex            int64
 	NftContentHash      []byte
 	ToAddress           string
@@ -38,7 +38,7 @@ type WithdrawNftTxConstraints struct {
 	AccountIndex        Variable
 	CreatorAccountIndex Variable
 	CreatorL1Address    Variable
-	CreatorTreasuryRate Variable
+	RoyaltyRate         Variable
 	NftIndex            Variable
 	NftContentHash      [2]Variable
 	ToAddress           Variable
@@ -54,7 +54,7 @@ func EmptyWithdrawNftTxWitness() (witness WithdrawNftTxConstraints) {
 		AccountIndex:        ZeroInt,
 		CreatorAccountIndex: ZeroInt,
 		CreatorL1Address:    ZeroInt,
-		CreatorTreasuryRate: ZeroInt,
+		RoyaltyRate:         ZeroInt,
 		NftIndex:            ZeroInt,
 		NftContentHash:      [2]Variable{ZeroInt, ZeroInt},
 		ToAddress:           ZeroInt,
@@ -71,7 +71,7 @@ func SetWithdrawNftTxWitness(tx *WithdrawNftTx) (witness WithdrawNftTxConstraint
 		AccountIndex:        tx.AccountIndex,
 		CreatorAccountIndex: tx.CreatorAccountIndex,
 		CreatorL1Address:    tx.CreatorL1Address,
-		CreatorTreasuryRate: tx.CreatorTreasuryRate,
+		RoyaltyRate:         tx.RoyaltyRate,
 		NftIndex:            tx.NftIndex,
 		NftContentHash:      GetNftContentHashFromBytes(tx.NftContentHash),
 		ToAddress:           tx.ToAddress,
@@ -113,7 +113,7 @@ func VerifyWithdrawNftTx(
 	// nft info
 	IsVariableEqual(api, flag, tx.NftIndex, nftBefore.NftIndex)
 	IsVariableEqual(api, flag, tx.CreatorAccountIndex, nftBefore.CreatorAccountIndex)
-	IsVariableEqual(api, flag, tx.CreatorTreasuryRate, nftBefore.CreatorTreasuryRate)
+	IsVariableEqual(api, flag, tx.RoyaltyRate, nftBefore.RoyaltyRate)
 	IsVariableEqual(api, flag, tx.AccountIndex, nftBefore.OwnerAccountIndex)
 	IsVariableEqual(api, flag, tx.NftContentHash[0], nftBefore.NftContentHash[0])
 	IsVariableEqual(api, flag, tx.NftContentHash[1], nftBefore.NftContentHash[1])

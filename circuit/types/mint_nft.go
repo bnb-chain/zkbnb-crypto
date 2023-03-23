@@ -27,7 +27,7 @@ type MintNftTx struct {
 	ToL1Address         []byte
 	NftIndex            int64
 	NftContentHash      []byte
-	CreatorTreasuryRate int64
+	RoyaltyRate         int64
 	GasAccountIndex     int64
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   int64
@@ -42,7 +42,7 @@ type MintNftTxConstraints struct {
 	ToL1Address         Variable
 	NftIndex            Variable
 	NftContentHash      [2]Variable
-	CreatorTreasuryRate Variable
+	RoyaltyRate         Variable
 	GasAccountIndex     Variable
 	GasFeeAssetId       Variable
 	GasFeeAssetAmount   Variable
@@ -58,7 +58,7 @@ func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 		ToL1Address:         ZeroInt,
 		NftIndex:            ZeroInt,
 		NftContentHash:      [2]Variable{ZeroInt, ZeroInt},
-		CreatorTreasuryRate: ZeroInt,
+		RoyaltyRate:         ZeroInt,
 		GasAccountIndex:     ZeroInt,
 		GasFeeAssetId:       ZeroInt,
 		GasFeeAssetAmount:   ZeroInt,
@@ -75,7 +75,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 		ToL1Address:         tx.ToL1Address,
 		NftIndex:            tx.NftIndex,
 		NftContentHash:      GetNftContentHashFromBytes(tx.NftContentHash),
-		CreatorTreasuryRate: tx.CreatorTreasuryRate,
+		RoyaltyRate:         tx.RoyaltyRate,
 		GasAccountIndex:     tx.GasAccountIndex,
 		GasFeeAssetId:       tx.GasFeeAssetId,
 		GasFeeAssetAmount:   tx.GasFeeAssetAmount,
@@ -89,7 +89,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
 	return poseidon.Poseidon(api, ChainId, TxTypeMintNft, tx.CreatorAccountIndex, nonce, expiredAt,
 		tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.ToAccountIndex,
-		tx.CreatorTreasuryRate, tx.CollectionId, tx.ToL1Address, tx.NftContentType)
+		tx.RoyaltyRate, tx.CollectionId, tx.ToL1Address, tx.NftContentType)
 }
 
 func VerifyMintNftTx(

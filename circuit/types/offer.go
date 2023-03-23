@@ -32,10 +32,11 @@ type OfferTx struct {
 	AssetAmount        int64
 	ListedAt           int64
 	ExpiredAt          int64
+	RoyaltyRate        int64
 	ChanelAccountIndex int64
 	ChanelRate         int64
-	PlatformRate       int64
-	PlatformAmount     int64
+	ProtocolRate       int64
+	ProtocolAmount     int64
 	Sig                *oEddsa.Signature
 }
 
@@ -48,10 +49,11 @@ type OfferTxConstraints struct {
 	AssetAmount        Variable
 	ListedAt           Variable
 	ExpiredAt          Variable
+	RoyaltyRate        Variable
 	ChanelAccountIndex Variable
 	ChanelRate         Variable
-	PlatformRate       Variable
-	PlatformAmount     Variable
+	ProtocolRate       Variable
+	ProtocolAmount     Variable
 	Sig                eddsa.Signature
 }
 
@@ -65,10 +67,11 @@ func EmptyOfferTxWitness() (witness OfferTxConstraints) {
 		AssetAmount:        ZeroInt,
 		ListedAt:           ZeroInt,
 		ExpiredAt:          ZeroInt,
+		RoyaltyRate:        ZeroInt,
 		ChanelAccountIndex: ZeroInt,
 		ChanelRate:         ZeroInt,
-		PlatformRate:       ZeroInt,
-		PlatformAmount:     ZeroInt,
+		ProtocolRate:       ZeroInt,
+		ProtocolAmount:     ZeroInt,
 		Sig: eddsa.Signature{
 			R: twistededwards.Point{
 				X: ZeroInt,
@@ -99,10 +102,11 @@ func SetOfferTxWitness(tx *OfferTx) (witness OfferTxConstraints) {
 		AssetAmount:        tx.AssetAmount,
 		ListedAt:           tx.ListedAt,
 		ExpiredAt:          tx.ExpiredAt,
+		RoyaltyRate:        tx.RoyaltyRate,
 		ChanelAccountIndex: tx.ChanelAccountIndex,
 		ChanelRate:         tx.ChanelRate,
-		PlatformRate:       tx.PlatformRate,
-		PlatformAmount:     tx.PlatformAmount,
+		ProtocolRate:       tx.ProtocolRate,
+		ProtocolAmount:     tx.ProtocolAmount,
 		Sig:                SetSignatureWitness(tx.Sig),
 	}
 	return witness

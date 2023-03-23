@@ -22,7 +22,7 @@ type Nft struct {
 	NftContentHash      []byte
 	CreatorAccountIndex int64
 	OwnerAccountIndex   int64
-	CreatorTreasuryRate int64
+	RoyaltyRate         int64
 	CollectionId        int64
 	NftContentType      int64
 }
@@ -33,7 +33,7 @@ func EmptyNft(nftIndex int64) *Nft {
 		NftContentHash:      []byte{0},
 		CreatorAccountIndex: 0,
 		OwnerAccountIndex:   0,
-		CreatorTreasuryRate: 0,
+		RoyaltyRate:         0,
 		CollectionId:        0,
 		NftContentType:      0,
 	}
