@@ -159,17 +159,17 @@ func VerifyTransaction(
 
 	types.IsVariableEqual(api, isLayer2Tx, tx.AccountsInfoBefore[0].Nonce, tx.Nonce)
 	// verify signature
-	err = types.VerifyEddsaSig(
-		isLayer2Tx,
-		api,
-		hFunc,
-		hashVal,
-		tx.AccountsInfoBefore[0].AccountPk,
-		tx.Signature,
-	)
-	if err != nil {
-		log.Println("[VerifyTx] invalid signature:", err) //return nil, pubData, roots, gasDeltas, err
-	}
+	//err = types.VerifyEddsaSig(
+	//	isLayer2Tx,
+	//	api,
+	//	hFunc,
+	//	hashVal,
+	//	tx.AccountsInfoBefore[0].AccountPk,
+	//	tx.Signature,
+	//)
+	//if err != nil {
+	//	log.Println("[VerifyTx] invalid signature:", err) //return nil, pubData, roots, gasDeltas, err
+	//}
 
 	// verify transactions
 	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
