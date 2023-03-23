@@ -193,7 +193,7 @@ func SetBlockWitness(oBlock *Block) (witness BlockConstraints, err error) {
 		log.Println("fail to set gas witness: ", err.Error())
 		return witness, err
 	}
-	witness.GKRs.AllocateGKRCircuit(16)
+	witness.GKRs.AllocateGKRCircuit(19)
 	return witness, nil
 }
 
