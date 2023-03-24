@@ -295,7 +295,7 @@ func (txInfo *OfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 			return nil, err
 		}
 		msgHash = Poseidon(txInfo.Type, txInfo.OfferId, txInfo.AccountIndex, txInfo.NftIndex,
-			txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.ChanelAccountIndex, txInfo.RoyaltyRate,
+			txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.RoyaltyRate, txInfo.ChanelAccountIndex,
 			txInfo.ChanelRate, txInfo.ProtocolRate, packedProtocolAmount, 0)
 		return msgHash, nil
 	} else {
