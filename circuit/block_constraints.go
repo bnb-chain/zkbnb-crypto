@@ -27,6 +27,8 @@ import (
 	"github.com/bnb-chain/zkbnb-crypto/circuit/types"
 )
 
+var BN = 15
+
 type BlockConstraints struct {
 	BlockNumber     Variable
 	CreatedAt       Variable
@@ -193,7 +195,7 @@ func SetBlockWitness(oBlock *Block) (witness BlockConstraints, err error) {
 		log.Println("fail to set gas witness: ", err.Error())
 		return witness, err
 	}
-	witness.GKRs.AllocateGKRCircuit(17)
+	witness.GKRs.AllocateGKRCircuit(BN)
 	return witness, nil
 }
 

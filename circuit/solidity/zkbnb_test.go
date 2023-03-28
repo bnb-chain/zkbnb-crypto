@@ -40,7 +40,6 @@ func TestCompileCircuit(t *testing.T) {
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	for i := 0; i < len(differentBlockSizes); i++ {
-		bN := 17
 		var blockConstraints circuit.BlockConstraints
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
@@ -49,9 +48,9 @@ func TestCompileCircuit(t *testing.T) {
 		}
 		blockConstraints.GasAssetIds = gasAssetIds
 		blockConstraints.GasAccountIndex = gasAccountIndex
-		blockConstraints.GKRs.AllocateGKRCircuit(bN)
+		blockConstraints.GKRs.AllocateGKRCircuit(circuit.BN)
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(bN))
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(circuit.BN))
 		if err != nil {
 			panic(err)
 		}
@@ -74,7 +73,6 @@ func exportSol(differentBlockSizes []int) {
 
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
-		bN := 17
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
 		for i := 0; i < blockConstraints.TxsCount; i++ {
@@ -83,8 +81,8 @@ func exportSol(differentBlockSizes []int) {
 		blockConstraints.GasAssetIds = gasAssetIds
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		blockConstraints.GKRs.AllocateGKRCircuit(bN)
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(bN))
+		blockConstraints.GKRs.AllocateGKRCircuit(circuit.BN)
+		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(circuit.BN))
 		fmt.Printf("Constraints num=%v\n", oR1cs.GetNbConstraints())
 		if err != nil {
 			panic(err)
