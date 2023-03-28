@@ -40,7 +40,7 @@ func TestCompileCircuit(t *testing.T) {
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	for i := 0; i < len(differentBlockSizes); i++ {
-		bN := 19
+		bN := 17
 		var blockConstraints circuit.BlockConstraints
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
@@ -74,7 +74,7 @@ func exportSol(differentBlockSizes []int) {
 
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
-		bN := 19
+		bN := 17
 		blockConstraints.TxsCount = differentBlockSizes[i]
 		blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
 		for i := 0; i < blockConstraints.TxsCount; i++ {
