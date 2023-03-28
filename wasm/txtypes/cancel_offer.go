@@ -98,10 +98,10 @@ type CancelOfferTxInfo struct {
 func (txInfo *CancelOfferTxInfo) Validate() error {
 	// AccountIndex
 	if txInfo.AccountIndex < minAccountIndex {
-		return ErrGasAccountIndexTooLow
+		return ErrAccountIndexTooLow
 	}
 	if txInfo.AccountIndex > maxAccountIndex {
-		return ErrGasAccountIndexTooHigh
+		return ErrAccountIndexTooHigh
 	}
 
 	// OfferId
