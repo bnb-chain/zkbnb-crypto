@@ -18,8 +18,8 @@
 package circuit
 
 import (
-	keccak "github.com/consensys/gnark/std/hash/keccak256"
 	"github.com/consensys/gnark/std/hash/poseidon"
+	"github.com/consensys/gnark/std/hash/sha256"
 	"log"
 
 	"github.com/consensys/gnark/std/hash/mimc"
@@ -163,7 +163,7 @@ func VerifyBlock(
 	pendingCommitmentData[count] = onChainOpsCount
 	outputBytesCount := blockInfoCount*32 + (types.PubDataBitsSizePerTx*block.TxsCount)/8
 	pubDataBytes, _ := api.Compiler().NewHint(types.PubDataToBytes, outputBytesCount, pendingCommitmentData[:]...)
-	commitment := keccak.Keccak256Api(api, pubDataBytes[:]...)
+	commitment := sha256.Sha256Api(api, pubDataBytes[:]...)
 	api.AssertIsEqual(commitment, block.BlockCommitment)
 	return nil
 }

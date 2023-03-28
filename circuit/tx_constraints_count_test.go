@@ -13,7 +13,7 @@ import (
 
 func TestTransactionConstraintsCounts(t *testing.T) {
 	var txCircuit TxConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &txCircuit, frontend.IgnoreUnconstrainedInputs())
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &txCircuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		fmt.Println("error occured ", err)
 	}
