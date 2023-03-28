@@ -18,10 +18,10 @@
 package solidity
 
 import (
-	"bufio"
 	"encoding/gob"
 	"flag"
 	"fmt"
+	cs "github.com/consensys/gnark/constraint/bn254"
 	"github.com/consensys/gnark/constraint/lazy"
 	"os"
 	"strconv"
@@ -65,7 +65,7 @@ func TestExportSol(t *testing.T) {
 }
 
 func TestExportSolSmall(t *testing.T) {
-	differentBlockSizes := []int{32}
+	differentBlockSizes := []int{16}
 	exportSol(differentBlockSizes)
 }
 
@@ -90,22 +90,16 @@ func exportSol(differentBlockSizes []int) {
 		if err != nil {
 			panic(err)
 		}
-		// pk, vk, err := groth16.Setup(oR1cs)
-		f, err := os.Create("zkbnb" + fmt.Sprint(differentBlockSizes[i]) + ".dump")
-		writer := bufio.NewWriter(f)
-		enc := gob.NewEncoder(writer)
-		err = enc.Encode(oR1cs)
+		err = groth16.SplitDumpR1CSBinary(oR1cs.(*cs.R1CS), sessionName+fmt.Sprint(differentBlockSizes[i]), 1000)
 		if err != nil {
 			panic(err)
 		}
-		err = f.Close()
-		if err != nil {
-			panic(err)
-		}
+
 		pk, vk, err := groth16.Setup(oR1cs)
 		if err != nil {
 			panic(err)
 		}
+
 		err = groth16.SplitDumpPK(pk, sessionName+fmt.Sprint(differentBlockSizes[i]))
 		if err != nil {
 			f, err := os.Create("ZkBNBVerifier" + fmt.Sprint(differentBlockSizes[i]) + ".sol")
