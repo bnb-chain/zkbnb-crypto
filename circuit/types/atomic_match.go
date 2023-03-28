@@ -22,40 +22,43 @@ import (
 )
 
 type AtomicMatchTx struct {
-	AccountIndex      int64
-	BuyOffer          *OfferTx
-	SellOffer         *OfferTx
-	RoyaltyAmount     int64
-	GasAccountIndex   int64
-	GasFeeAssetId     int64
-	GasFeeAssetAmount int64
-	BuyChanelAmount   int64
-	SellChanelAmount  int64
+	AccountIndex         int64
+	BuyOffer             *OfferTx
+	SellOffer            *OfferTx
+	RoyaltyAmount        int64
+	GasAccountIndex      int64
+	GasFeeAssetId        int64
+	GasFeeAssetAmount    int64
+	BuyChanelAmount      int64
+	SellChanelAmount     int64
+	ProtocolAccountIndex int64
 }
 
 type AtomicMatchTxConstraints struct {
-	AccountIndex      Variable
-	BuyOffer          OfferTxConstraints
-	SellOffer         OfferTxConstraints
-	RoyaltyAmount     Variable
-	GasAccountIndex   Variable
-	GasFeeAssetId     Variable
-	GasFeeAssetAmount Variable
-	BuyChanelAmount   Variable
-	SellChanelAmount  Variable
+	AccountIndex         Variable
+	BuyOffer             OfferTxConstraints
+	SellOffer            OfferTxConstraints
+	RoyaltyAmount        Variable
+	GasAccountIndex      Variable
+	GasFeeAssetId        Variable
+	GasFeeAssetAmount    Variable
+	BuyChanelAmount      Variable
+	SellChanelAmount     Variable
+	ProtocolAccountIndex Variable
 }
 
 func EmptyAtomicMatchTxWitness() (witness AtomicMatchTxConstraints) {
 	return AtomicMatchTxConstraints{
-		AccountIndex:      ZeroInt,
-		BuyOffer:          EmptyOfferTxWitness(),
-		SellOffer:         EmptyOfferTxWitness(),
-		RoyaltyAmount:     ZeroInt,
-		GasAccountIndex:   ZeroInt,
-		GasFeeAssetId:     ZeroInt,
-		GasFeeAssetAmount: ZeroInt,
-		BuyChanelAmount:   ZeroInt,
-		SellChanelAmount:  ZeroInt,
+		AccountIndex:         ZeroInt,
+		BuyOffer:             EmptyOfferTxWitness(),
+		SellOffer:            EmptyOfferTxWitness(),
+		RoyaltyAmount:        ZeroInt,
+		GasAccountIndex:      ZeroInt,
+		GasFeeAssetId:        ZeroInt,
+		GasFeeAssetAmount:    ZeroInt,
+		BuyChanelAmount:      ZeroInt,
+		SellChanelAmount:     ZeroInt,
+		ProtocolAccountIndex: ZeroInt,
 	}
 }
 
@@ -77,15 +80,16 @@ func ComputeHashFromSellOfferTx(api API, tx OfferTxConstraints) (hashVal Variabl
 
 func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraints) {
 	witness = AtomicMatchTxConstraints{
-		AccountIndex:      tx.AccountIndex,
-		BuyOffer:          SetOfferTxWitness(tx.BuyOffer),
-		SellOffer:         SetOfferTxWitness(tx.SellOffer),
-		RoyaltyAmount:     tx.RoyaltyAmount,
-		GasAccountIndex:   tx.GasAccountIndex,
-		GasFeeAssetId:     tx.GasFeeAssetId,
-		GasFeeAssetAmount: tx.GasFeeAssetAmount,
-		BuyChanelAmount:   tx.BuyChanelAmount,
-		SellChanelAmount:  tx.SellChanelAmount,
+		AccountIndex:         tx.AccountIndex,
+		BuyOffer:             SetOfferTxWitness(tx.BuyOffer),
+		SellOffer:            SetOfferTxWitness(tx.SellOffer),
+		RoyaltyAmount:        tx.RoyaltyAmount,
+		GasAccountIndex:      tx.GasAccountIndex,
+		GasFeeAssetId:        tx.GasFeeAssetId,
+		GasFeeAssetAmount:    tx.GasFeeAssetAmount,
+		BuyChanelAmount:      tx.BuyChanelAmount,
+		SellChanelAmount:     tx.SellChanelAmount,
+		ProtocolAccountIndex: tx.ProtocolAccountIndex,
 	}
 	return witness
 }
@@ -134,6 +138,7 @@ func VerifyAtomicMatchTx(
 	creatorAccount := 3
 	buyChanelAccount := 4
 	sellChanelAccount := 5
+	protocolAccount := 6
 
 	pubData = CollectPubDataFromAtomicMatch(api, *tx)
 	// verify params
@@ -146,6 +151,7 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[creatorAccount].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[buyChanelAccount].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[sellChanelAccount].AssetsInfo[0].AssetId)
+	IsVariableEqual(api, flag, tx.BuyOffer.AssetId, accountsBefore[protocolAccount].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.SellOffer.AssetId, accountsBefore[sellAccount].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	IsVariableLessOrEqual(api, flag, blockCreatedAt, tx.BuyOffer.ExpiredAt)
@@ -185,6 +191,8 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.BuyOffer.ChanelAccountIndex, accountsBefore[buyChanelAccount].AccountIndex)
 	// sellChanelAccount
 	IsVariableEqual(api, flag, tx.SellOffer.ChanelAccountIndex, accountsBefore[sellChanelAccount].AccountIndex)
+	// sellChanelAccount
+	IsVariableEqual(api, flag, tx.ProtocolAccountIndex, accountsBefore[protocolAccount].AccountIndex)
 
 	// verify buy offer id
 	buyOfferIdBits := api.ToBinary(tx.BuyOffer.OfferId, 24)

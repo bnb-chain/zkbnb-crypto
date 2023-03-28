@@ -420,6 +420,15 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		},
 		EmptyAccountAssetDeltaConstraints(),
 	}
+	// protocol account
+	deltas[6] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+		// asset A
+		{
+			BalanceDelta:             txInfo.BuyOffer.ProtocolAmount,
+			OfferCanceledOrFinalized: types.ZeroInt,
+		},
+		EmptyAccountAssetDeltaConstraints(),
+	}
 	nftDelta = NftDeltaConstraints{
 		CreatorAccountIndex: nftBefore.CreatorAccountIndex,
 		OwnerAccountIndex:   txInfo.BuyOffer.AccountIndex,
@@ -429,13 +438,13 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		NftContentType:      nftBefore.NftContentType,
 	}
 
-	gasDeltas[0].AssetId = txInfo.BuyOffer.AssetId
-	gasDeltas[0].BalanceDelta = txInfo.BuyOffer.ProtocolAmount
+	//gasDeltas[0].AssetId = txInfo.BuyOffer.AssetId
+	//gasDeltas[0].BalanceDelta = txInfo.BuyOffer.ProtocolAmount
 
-	gasDeltas[1].AssetId = txInfo.GasFeeAssetId
-	gasDeltas[1].BalanceDelta = txInfo.GasFeeAssetAmount
+	gasDeltas[0].AssetId = txInfo.GasFeeAssetId
+	gasDeltas[0].BalanceDelta = txInfo.GasFeeAssetAmount
 
-	for i := 2; i < NbGasAssetsPerTx; i++ {
+	for i := 1; i < NbGasAssetsPerTx; i++ {
 		gasDeltas[i] = EmptyGasDeltaConstraints(txInfo.GasFeeAssetId)
 	}
 
