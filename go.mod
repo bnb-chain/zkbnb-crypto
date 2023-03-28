@@ -31,6 +31,6 @@ replace (
 	//github.com/consensys/gnark => github.com/ruslangm/gnark v0.7.1-0.20230307075955-3ac0c726ec0b
 	//github.com/consensys/gnark => github.com/qct/gnark v0.0.0-20230318162802-c2d774dd657b
 	//github.com/consensys/gnark => /Users/damon/GolandProjects/bnb-chain/gnark
-	github.com/consensys/gnark => github.com/ZhAnGeek/gnark v0.7.1-0.20230321124037-bd24cb7586e0
+	github.com/consensys/gnark => github.com/ZhAnGeek/gnark v0.7.1-0.20230328014928-6ceb34a939cf
 	github.com/consensys/gnark-crypto => github.com/bnb-chain/gnark-crypto v0.7.1-0.20230203031630-7c643ad11891
 )
