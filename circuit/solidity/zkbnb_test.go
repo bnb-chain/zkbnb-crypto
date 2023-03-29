@@ -21,7 +21,6 @@ import (
 	"encoding/gob"
 	"flag"
 	"fmt"
-	cs "github.com/consensys/gnark/constraint/bn254"
 	"github.com/consensys/gnark/constraint/lazy"
 	"os"
 	"strconv"
@@ -90,23 +89,31 @@ func exportSol(differentBlockSizes []int) {
 		if err != nil {
 			panic(err)
 		}
-		err = groth16.SplitDumpR1CSBinary(oR1cs.(*cs.R1CS), sessionName+fmt.Sprint(differentBlockSizes[i]), 1000)
+		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
+
+		err = oR1cs.SplitDumpBinary(sessionNameForBlock, 1000)
 		if err != nil {
 			panic(err)
 		}
 
-		pk, vk, err := groth16.Setup(oR1cs)
+		err = groth16.SetupDumpKeys(oR1cs, sessionNameForBlock)
 		if err != nil {
 			panic(err)
 		}
 
-		err = groth16.SplitDumpPK(pk, sessionName+fmt.Sprint(differentBlockSizes[i]))
-		if err != nil {
+		{
+			verifyingKey := groth16.NewVerifyingKey(ecc.BN254)
+			f, _ := os.Open(sessionNameForBlock + ".vk.save")
+			_, err = verifyingKey.ReadFrom(f)
+			if err != nil {
+				panic(fmt.Errorf("read file error"))
+			}
+			f.Close()
 			f, err := os.Create("ZkBNBVerifier" + fmt.Sprint(differentBlockSizes[i]) + ".sol")
 			if err != nil {
 				panic(err)
 			}
-			err = vk.ExportSolidity(f)
+			err = verifyingKey.ExportSolidity(f)
 			if err != nil {
 				panic(err)
 			}
