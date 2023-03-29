@@ -29,8 +29,8 @@ type AtomicMatchTx struct {
 	GasAccountIndex      int64
 	GasFeeAssetId        int64
 	GasFeeAssetAmount    int64
-	BuyChanelAmount      int64
-	SellChanelAmount     int64
+	BuyChannelAmount     int64
+	SellChannelAmount    int64
 	ProtocolAccountIndex int64
 }
 
@@ -42,8 +42,8 @@ type AtomicMatchTxConstraints struct {
 	GasAccountIndex      Variable
 	GasFeeAssetId        Variable
 	GasFeeAssetAmount    Variable
-	BuyChanelAmount      Variable
-	SellChanelAmount     Variable
+	BuyChannelAmount     Variable
+	SellChannelAmount    Variable
 	ProtocolAccountIndex Variable
 }
 
@@ -56,8 +56,8 @@ func EmptyAtomicMatchTxWitness() (witness AtomicMatchTxConstraints) {
 		GasAccountIndex:      ZeroInt,
 		GasFeeAssetId:        ZeroInt,
 		GasFeeAssetAmount:    ZeroInt,
-		BuyChanelAmount:      ZeroInt,
-		SellChanelAmount:     ZeroInt,
+		BuyChannelAmount:     ZeroInt,
+		SellChannelAmount:    ZeroInt,
 		ProtocolAccountIndex: ZeroInt,
 	}
 }
@@ -65,16 +65,16 @@ func EmptyAtomicMatchTxWitness() (witness AtomicMatchTxConstraints) {
 func ComputeHashFromBuyOfferTx(api API, tx OfferTxConstraints) (hashVal Variable) {
 	return poseidon.Poseidon(api,
 		tx.Type, tx.OfferId, tx.AccountIndex, tx.NftIndex,
-		tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt, tx.RoyaltyRate, tx.ChanelAccountIndex,
-		tx.ChanelRate, tx.ProtocolRate, tx.ProtocolAmount, 0,
+		tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt, tx.RoyaltyRate, tx.ChannelAccountIndex,
+		tx.ChannelRate, tx.ProtocolRate, tx.ProtocolAmount, 0,
 	)
 }
 
 func ComputeHashFromSellOfferTx(api API, tx OfferTxConstraints) (hashVal Variable) {
 	return poseidon.Poseidon(api,
 		tx.Type, tx.OfferId, tx.AccountIndex, tx.NftIndex,
-		tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt, tx.ChanelAccountIndex,
-		tx.ChanelRate,
+		tx.AssetId, tx.AssetAmount, tx.ListedAt, tx.ExpiredAt, tx.ChannelAccountIndex,
+		tx.ChannelRate,
 	)
 }
 
@@ -87,8 +87,8 @@ func SetAtomicMatchTxWitness(tx *AtomicMatchTx) (witness AtomicMatchTxConstraint
 		GasAccountIndex:      tx.GasAccountIndex,
 		GasFeeAssetId:        tx.GasFeeAssetId,
 		GasFeeAssetAmount:    tx.GasFeeAssetAmount,
-		BuyChanelAmount:      tx.BuyChanelAmount,
-		SellChanelAmount:     tx.SellChanelAmount,
+		BuyChannelAmount:     tx.BuyChannelAmount,
+		SellChannelAmount:    tx.SellChannelAmount,
 		ProtocolAccountIndex: tx.ProtocolAccountIndex,
 	}
 	return witness
@@ -102,8 +102,8 @@ func ComputeHashFromAtomicMatchTx(api API, tx AtomicMatchTxConstraints, nonce Va
 		tx.BuyOffer.Sig.R.Y,
 		tx.BuyOffer.Sig.S,
 		tx.BuyOffer.RoyaltyRate,
-		tx.BuyOffer.ChanelAccountIndex,
-		tx.BuyOffer.ChanelRate,
+		tx.BuyOffer.ChannelAccountIndex,
+		tx.BuyOffer.ChannelRate,
 		tx.BuyOffer.ProtocolRate,
 		tx.BuyOffer.ProtocolAmount,
 	)
@@ -114,8 +114,8 @@ func ComputeHashFromAtomicMatchTx(api API, tx AtomicMatchTxConstraints, nonce Va
 		tx.SellOffer.Sig.R.X,
 		tx.SellOffer.Sig.R.Y,
 		tx.SellOffer.Sig.S,
-		tx.SellOffer.ChanelAccountIndex,
-		tx.SellOffer.ChanelRate,
+		tx.SellOffer.ChannelAccountIndex,
+		tx.SellOffer.ChannelRate,
 		0,
 	)
 
@@ -188,9 +188,9 @@ func VerifyAtomicMatchTx(
 	// creator
 	IsVariableEqual(api, flag, nftBefore.CreatorAccountIndex, accountsBefore[creatorAccount].AccountIndex)
 	// buyChanelAccount
-	IsVariableEqual(api, flag, tx.BuyOffer.ChanelAccountIndex, accountsBefore[buyChanelAccount].AccountIndex)
+	IsVariableEqual(api, flag, tx.BuyOffer.ChannelAccountIndex, accountsBefore[buyChanelAccount].AccountIndex)
 	// sellChanelAccount
-	IsVariableEqual(api, flag, tx.SellOffer.ChanelAccountIndex, accountsBefore[sellChanelAccount].AccountIndex)
+	IsVariableEqual(api, flag, tx.SellOffer.ChannelAccountIndex, accountsBefore[sellChanelAccount].AccountIndex)
 	// sellChanelAccount
 	IsVariableEqual(api, flag, tx.ProtocolAccountIndex, accountsBefore[protocolAccount].AccountIndex)
 
@@ -215,9 +215,9 @@ func VerifyAtomicMatchTx(
 	// buyer should have enough balance
 	tx.BuyOffer.AssetAmount = UnpackAmount(api, tx.BuyOffer.AssetAmount)
 	tx.BuyOffer.ProtocolAmount = UnpackAmount(api, tx.BuyOffer.ProtocolAmount)
-	tx.BuyChanelAmount = UnpackAmount(api, tx.BuyChanelAmount)
+	tx.BuyChannelAmount = UnpackAmount(api, tx.BuyChannelAmount)
 	tx.RoyaltyAmount = UnpackAmount(api, tx.RoyaltyAmount)
-	totalAmount := api.Add(tx.BuyOffer.AssetAmount, tx.BuyOffer.ProtocolAmount, tx.BuyChanelAmount, tx.RoyaltyAmount)
+	totalAmount := api.Add(tx.BuyOffer.AssetAmount, tx.BuyOffer.ProtocolAmount, tx.BuyChannelAmount, tx.RoyaltyAmount)
 	IsVariableLessOrEqual(api, flag, totalAmount, accountsBefore[buyAccount].AssetsInfo[0].Balance)
 	// submitter should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)

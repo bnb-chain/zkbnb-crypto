@@ -340,14 +340,14 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	}
 	// TODO
 	RoyaltyAmountVar := api.Mul(txInfo.BuyOffer.AssetAmount, nftBefore.RoyaltyRate)
-	buyChanelAmountVar := api.Mul(txInfo.BuyOffer.AssetAmount, txInfo.BuyOffer.ChanelRate)
-	sellChanelAmountVar := api.Mul(txInfo.BuyOffer.AssetAmount, txInfo.SellOffer.ChanelRate)
+	buyChannelAmountVar := api.Mul(txInfo.BuyOffer.AssetAmount, txInfo.BuyOffer.ChannelRate)
+	sellChannelAmountVar := api.Mul(txInfo.BuyOffer.AssetAmount, txInfo.SellOffer.ChannelRate)
 	RoyaltyAmountVar = api.Div(RoyaltyAmountVar, RateBase)
-	buyChanelAmountVar = api.Div(buyChanelAmountVar, RateBase)
-	sellChanelAmountVar = api.Div(sellChanelAmountVar, RateBase)
+	buyChannelAmountVar = api.Div(buyChannelAmountVar, RateBase)
+	sellChannelAmountVar = api.Div(sellChannelAmountVar, RateBase)
 
-	sellerAmount := api.Sub(txInfo.BuyOffer.AssetAmount, sellChanelAmountVar)
-	buyerDelta := api.Neg(api.Add(txInfo.BuyOffer.AssetAmount, RoyaltyAmountVar, buyChanelAmountVar, txInfo.BuyOffer.ProtocolAmount))
+	sellerAmount := api.Sub(txInfo.BuyOffer.AssetAmount, sellChannelAmountVar)
+	buyerDelta := api.Neg(api.Add(txInfo.BuyOffer.AssetAmount, RoyaltyAmountVar, buyChannelAmountVar, txInfo.BuyOffer.ProtocolAmount))
 	sellerDelta := sellerAmount
 	// buyer
 	buyOfferIdBits := api.ToBinary(txInfo.BuyOffer.OfferId, 23)
@@ -406,7 +406,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	deltas[4] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		// asset A
 		{
-			BalanceDelta:             buyChanelAmountVar,
+			BalanceDelta:             buyChannelAmountVar,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
 		EmptyAccountAssetDeltaConstraints(),
@@ -415,7 +415,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	deltas[5] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		// asset A
 		{
-			BalanceDelta:             sellChanelAmountVar,
+			BalanceDelta:             sellChannelAmountVar,
 			OfferCanceledOrFinalized: types.ZeroInt,
 		},
 		EmptyAccountAssetDeltaConstraints(),

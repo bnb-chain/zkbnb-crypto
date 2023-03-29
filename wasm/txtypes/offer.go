@@ -37,19 +37,19 @@ const (
 )
 
 type OfferSegmentFormat struct {
-	Type               int64  `json:"type"`
-	OfferId            int64  `json:"offer_id"`
-	AccountIndex       int64  `json:"account_index"`
-	NftIndex           int64  `json:"nft_index"`
-	AssetId            int64  `json:"asset_id"`
-	AssetAmount        string `json:"asset_amount"`
-	ListedAt           int64  `json:"listed_at"`
-	ExpiredAt          int64  `json:"expired_at"`
-	RoyaltyRate        int64  `json:"royalty_rate"`
-	ChanelAccountIndex int64  `json:"chanel_account_index"`
-	ChanelRate         int64  `json:"chanel_rate"`
-	ProtocolRate       int64  `json:"protocol_rate"`
-	ProtocolAmount     string `json:"protocol_amount"`
+	Type                int64  `json:"type"`
+	OfferId             int64  `json:"offer_id"`
+	AccountIndex        int64  `json:"account_index"`
+	NftIndex            int64  `json:"nft_index"`
+	AssetId             int64  `json:"asset_id"`
+	AssetAmount         string `json:"asset_amount"`
+	ListedAt            int64  `json:"listed_at"`
+	ExpiredAt           int64  `json:"expired_at"`
+	RoyaltyRate         int64  `json:"royalty_rate"`
+	ChannelAccountIndex int64  `json:"channel_account_index"`
+	ChannelRate         int64  `json:"channel_rate"`
+	ProtocolRate        int64  `json:"protocol_rate"`
+	ProtocolAmount      string `json:"protocol_amount"`
 }
 
 func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInfo, err error) {
@@ -74,20 +74,20 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 	protocolAmount, _ = CleanPackedAmount(protocolAmount)
 
 	txInfo = &OfferTxInfo{
-		Type:               segmentFormat.Type,
-		OfferId:            segmentFormat.OfferId,
-		AccountIndex:       segmentFormat.AccountIndex,
-		NftIndex:           segmentFormat.NftIndex,
-		AssetId:            segmentFormat.AssetId,
-		AssetAmount:        assetAmount,
-		ListedAt:           segmentFormat.ListedAt,
-		ExpiredAt:          segmentFormat.ExpiredAt,
-		RoyaltyRate:        segmentFormat.RoyaltyRate,
-		ChanelAccountIndex: segmentFormat.ChanelAccountIndex,
-		ChanelRate:         segmentFormat.ChanelRate,
-		ProtocolRate:       segmentFormat.ProtocolRate,
-		ProtocolAmount:     protocolAmount,
-		Sig:                nil,
+		Type:                segmentFormat.Type,
+		OfferId:             segmentFormat.OfferId,
+		AccountIndex:        segmentFormat.AccountIndex,
+		NftIndex:            segmentFormat.NftIndex,
+		AssetId:             segmentFormat.AssetId,
+		AssetAmount:         assetAmount,
+		ListedAt:            segmentFormat.ListedAt,
+		ExpiredAt:           segmentFormat.ExpiredAt,
+		RoyaltyRate:         segmentFormat.RoyaltyRate,
+		ChannelAccountIndex: segmentFormat.ChannelAccountIndex,
+		ChannelRate:         segmentFormat.ChannelRate,
+		ProtocolRate:        segmentFormat.ProtocolRate,
+		ProtocolAmount:      protocolAmount,
+		Sig:                 nil,
 	}
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
@@ -108,21 +108,21 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 }
 
 type OfferTxInfo struct {
-	Type               int64
-	OfferId            int64
-	AccountIndex       int64
-	NftIndex           int64
-	AssetId            int64
-	AssetAmount        *big.Int
-	ListedAt           int64
-	ExpiredAt          int64
-	RoyaltyRate        int64
-	ChanelAccountIndex int64
-	ChanelRate         int64
-	ProtocolRate       int64
-	ProtocolAmount     *big.Int
-	Sig                []byte
-	L1Sig              string
+	Type                int64
+	OfferId             int64
+	AccountIndex        int64
+	NftIndex            int64
+	AssetId             int64
+	AssetAmount         *big.Int
+	ListedAt            int64
+	ExpiredAt           int64
+	RoyaltyRate         int64
+	ChannelAccountIndex int64
+	ChannelRate         int64
+	ProtocolRate        int64
+	ProtocolAmount      *big.Int
+	Sig                 []byte
+	L1Sig               string
 }
 
 func (txInfo *OfferTxInfo) GetTxType() int {
@@ -175,11 +175,11 @@ func (txInfo *OfferTxInfo) Validate() error {
 		return ErrAssetAmountTooHigh
 	}
 
-	// ChanelAccountIndex
-	if txInfo.ChanelAccountIndex < minAccountIndex {
+	// ChannelAccountIndex
+	if txInfo.ChannelAccountIndex < minAccountIndex {
 		return ErrAccountIndexTooLow
 	}
-	if txInfo.ChanelAccountIndex > maxAccountIndex {
+	if txInfo.ChannelAccountIndex > maxAccountIndex {
 		return ErrAccountIndexTooHigh
 	}
 	// ListedAt
@@ -188,12 +188,12 @@ func (txInfo *OfferTxInfo) Validate() error {
 	}
 
 	if txInfo.Type == BuyOfferType {
-		//ChanelRate
-		if txInfo.ChanelRate < minRate {
-			return ErrChanelRateTooLow
+		//ChannelRate
+		if txInfo.ChannelRate < minRate {
+			return ErrChannelRateTooLow
 		}
-		if txInfo.ChanelRate > maxRate {
-			return ErrChanelRateTooHigh
+		if txInfo.ChannelRate > maxRate {
+			return ErrChannelRateTooHigh
 		}
 		//ProtocolRate
 		if txInfo.ProtocolRate < minRate {
@@ -213,12 +213,12 @@ func (txInfo *OfferTxInfo) Validate() error {
 			return ErrProtocolAmountTooHigh
 		}
 	} else {
-		//ChanelRate
-		if txInfo.ChanelRate < minRate {
-			return ErrChanelRateTooLow
+		//ChannelRate
+		if txInfo.ChannelRate < minRate {
+			return ErrChannelRateTooLow
 		}
-		if txInfo.ChanelRate > maxSellRate {
-			return ErrChanelRateTooHigh
+		if txInfo.ChannelRate > maxSellRate {
+			return ErrChannelRateTooHigh
 		}
 	}
 	return nil
@@ -295,13 +295,13 @@ func (txInfo *OfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 			return nil, err
 		}
 		msgHash = Poseidon(txInfo.Type, txInfo.OfferId, txInfo.AccountIndex, txInfo.NftIndex,
-			txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.RoyaltyRate, txInfo.ChanelAccountIndex,
-			txInfo.ChanelRate, txInfo.ProtocolRate, packedProtocolAmount, 0)
+			txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.RoyaltyRate, txInfo.ChannelAccountIndex,
+			txInfo.ChannelRate, txInfo.ProtocolRate, packedProtocolAmount, 0)
 		return msgHash, nil
 	} else {
 		msgHash = Poseidon(txInfo.Type, txInfo.OfferId, txInfo.AccountIndex, txInfo.NftIndex,
-			txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.ChanelAccountIndex,
-			txInfo.ChanelRate)
+			txInfo.AssetId, packedAmount, txInfo.ListedAt, txInfo.ExpiredAt, txInfo.ChannelAccountIndex,
+			txInfo.ChannelRate)
 		return msgHash, nil
 	}
 }
