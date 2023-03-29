@@ -96,6 +96,17 @@ func exportSol(differentBlockSizes []int) {
 			panic(err)
 		}
 
+		file, err := os.Create(sessionName)
+		if err != nil {
+			panic(err)
+		}
+		file.Close()
+		str := fmt.Sprint(oR1cs.GetNbConstraints())
+		_, err = file.WriteString(str)
+		if err != nil {
+			panic(err)
+		}
+
 		err = groth16.SetupDumpKeys(oR1cs, sessionNameForBlock)
 		if err != nil {
 			panic(err)
