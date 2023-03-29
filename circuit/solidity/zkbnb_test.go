@@ -96,7 +96,7 @@ func exportSol(differentBlockSizes []int) {
 			panic(err)
 		}
 
-		f, err := os.Create(sessionName)
+		f, err := os.Create(sessionNameForBlock + ".r1cslen")
 		if err != nil {
 			panic(err)
 		}
