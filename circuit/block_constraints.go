@@ -27,7 +27,7 @@ import (
 	"github.com/bnb-chain/zkbnb-crypto/circuit/types"
 )
 
-var BN = 15
+var BN = 16
 
 type BlockConstraints struct {
 	BlockNumber     Variable
