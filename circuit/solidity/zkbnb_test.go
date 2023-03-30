@@ -36,7 +36,7 @@ import (
 )
 
 var optionalBlockSizes = flag.String("blocksizes", "1,10", "block size that will be used for proof generation and verification")
-var batchSize = flag.String("batchsize", "1000", "number of r1cs files that will be used for proof generation")
+var batchSize = flag.String("batchsize", "100000", "number of r1cs files that will be used for proof generation")
 
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := optionalBlockSizesInt()
@@ -91,9 +91,12 @@ func exportSol(differentBlockSizes []int) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("Constraints num=%v\n", oR1cs.GetNbConstraints())
-		internal, secret, public := oR1cs.GetNbVariables()
-		fmt.Printf("Variables num=%v\n", internal+secret+public)
+		fmt.Printf("Constraints num=%d\n", oR1cs.GetNbConstraints())
+		nbPublicVariables := oR1cs.GetNbPublicVariables()
+		nbSecretVariables := oR1cs.GetNbSecretVariables()
+		nbInternalVariables := oR1cs.GetNbInternalVariables()
+		fmt.Printf("Variables total=%d, nbPublicVariables=%d, nbSecretVariables=%d, nbInternalVariables=%d\n",
+			nbPublicVariables+nbSecretVariables+nbInternalVariables, nbPublicVariables, nbSecretVariables, nbInternalVariables)
 		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
 
 		batch, err := strconv.Atoi(*batchSize)
