@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"math/big"
 
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -19,7 +18,7 @@ import (
 //	return nil
 //}
 
-func Keccak256(_ ecc.ID, inputs []*big.Int, outputs []*big.Int) error {
+func Keccak256(_ *big.Int, inputs []*big.Int, outputs []*big.Int) error {
 	var buf bytes.Buffer
 	// first 4 elements are: BlockNumber, CreatedAt, OldStateRoot, NewStateRoot
 	// we treat each of them as a 32-bytes variable
@@ -43,7 +42,7 @@ func Keccak256(_ ecc.ID, inputs []*big.Int, outputs []*big.Int) error {
 	return nil
 }
 
-func PubDataToBytes(_ ecc.ID, inputs []*big.Int, outputs []*big.Int) error {
+func PubDataToBytes(_ *big.Int, inputs []*big.Int, outputs []*big.Int) error {
 	var buf bytes.Buffer
 	// first 4 elements are: BlockNumber, CreatedAt, OldStateRoot, NewStateRoot
 	// we treat each of them as a 32-bytes variable

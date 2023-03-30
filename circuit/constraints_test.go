@@ -10,7 +10,7 @@ import (
 
 func TestTransactionConstraintsCount(t *testing.T) {
 	var txCircuit TxConstraints
-	r1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &txCircuit, frontend.IgnoreUnconstrainedInputs())
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &txCircuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		fmt.Println("error occured ", err)
 	}
@@ -30,7 +30,7 @@ func TestBlockConstraintsCounts(t *testing.T) {
 	blockCircuit.GasAccountIndex = gasAccountIndex
 	blockCircuit.Gas = GetZeroGasConstraints(gasAssetIds)
 
-	r1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockCircuit, frontend.IgnoreUnconstrainedInputs())
+	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockCircuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
 		fmt.Println("error occured ", err)
 	}

@@ -18,8 +18,10 @@
 package solidity
 
 import (
+	"encoding/gob"
 	"flag"
 	"fmt"
+	"github.com/consensys/gnark/constraint/lazy"
 	"os"
 	"strconv"
 	"strings"
@@ -50,7 +52,7 @@ func TestCompileCircuit(t *testing.T) {
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.GKRs.AllocateGKRCircuit(circuit.BN)
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(circuit.BN))
+		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(circuit.BN))
 		if err != nil {
 			panic(err)
 		}
@@ -63,12 +65,14 @@ func TestExportSol(t *testing.T) {
 }
 
 func TestExportSolSmall(t *testing.T) {
-	exportSol(optionalBlockSizesInt())
+	differentBlockSizes := []int{1}
+	exportSol(differentBlockSizes)
 }
 
 func exportSol(differentBlockSizes []int) {
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
+	gob.Register(lazy.GeneralLazyInputs{})
 	sessionName := "zkbnb"
 
 	for i := 0; i < len(differentBlockSizes); i++ {
@@ -82,22 +86,38 @@ func exportSol(differentBlockSizes []int) {
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
 		blockConstraints.GKRs.AllocateGKRCircuit(circuit.BN)
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(circuit.BN))
+		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(circuit.BN))
 		fmt.Printf("Constraints num=%v\n", oR1cs.GetNbConstraints())
 		if err != nil {
 			panic(err)
 		}
 
-		// pk, vk, err := groth16.Setup(oR1cs)
 		internal, secret, public := oR1cs.GetNbVariables()
 		fmt.Printf("Variables num=%v\n", internal+secret+public)
-		err = groth16.SetupLazyWithDump(oR1cs, sessionName+fmt.Sprint(differentBlockSizes[i]))
+		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
+		err = oR1cs.SplitDumpBinary(sessionNameForBlock, 1000)
 		if err != nil {
 			panic(err)
 		}
+
+		f, err := os.Create(sessionNameForBlock + ".r1cslen")
+		if err != nil {
+			panic(err)
+		}
+		_, err = f.WriteString(fmt.Sprint(oR1cs.GetNbConstraints()))
+		if err != nil {
+			panic(err)
+		}
+		f.Close()
+
+		err = groth16.SetupDumpKeys(oR1cs, sessionNameForBlock)
+		if err != nil {
+			panic(err)
+		}
+
 		{
 			verifyingKey := groth16.NewVerifyingKey(ecc.BN254)
-			f, _ := os.Open(sessionName + fmt.Sprint(differentBlockSizes[i]) + ".vk.save")
+			f, _ := os.Open(sessionNameForBlock + ".vk.save")
 			_, err = verifyingKey.ReadFrom(f)
 			if err != nil {
 				panic(fmt.Errorf("read file error"))
