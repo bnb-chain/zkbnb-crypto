@@ -90,6 +90,9 @@ const (
 	maxCollectionIntroductionLength int = 1000
 
 	maxLength int = 2000
+
+	minNftContentType int64 = 0
+	maxNftContentType int64 = (1 << 8) - 1
 )
 
 var (

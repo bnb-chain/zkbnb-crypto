@@ -119,5 +119,7 @@ func VerifyMintNftTx(
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	// collection id should be less than creator's collection nonce
 	IsVariableLess(api, flag, tx.CollectionId, accountsBefore[fromAccount].CollectionNonce)
+	//NftContentType
+	IsVariableLessOrEqual(api, flag, 0, tx.NftContentType)
 	return pubData
 }

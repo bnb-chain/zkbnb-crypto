@@ -33,6 +33,8 @@ var (
 	ErrNftContentHashInvalid    = fmt.Errorf("NftContentHash is invalid")
 	ErrNftCollectionIdTooLow    = fmt.Errorf("NftCollectionId should not be less than %d", minCollectionId)
 	ErrNftCollectionIdTooHigh   = fmt.Errorf("NftCollectionId should not be larger than %d", maxCollectionId)
+	ErrNftContentTypeTooLow     = fmt.Errorf("NftCollectionId should not be less than %d", minNftContentType)
+	ErrNftContentTypeTooHigh    = fmt.Errorf("NftCollectionId should not be larger than %d", maxNftContentType)
 	ErrCallDataHashInvalid      = fmt.Errorf("CallDataHash is invalid")
 	ErrCallDataInvalid          = fmt.Errorf("CallData should not be larger than %d", maxLength)
 	ErrMemoInvalid              = fmt.Errorf("Memo should not be larger than %d", maxLength)
