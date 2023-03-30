@@ -52,7 +52,7 @@ func TestCompileCircuit(t *testing.T) {
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.GKRs.AllocateGKRCircuit(circuit.BN)
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(circuit.BN))
+		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGKRBN(circuit.BN))
 		if err != nil {
 			panic(err)
 		}
@@ -86,12 +86,11 @@ func exportSol(differentBlockSizes []int) {
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
 		blockConstraints.GKRs.AllocateGKRCircuit(circuit.BN)
-		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGkrBN(circuit.BN))
-		fmt.Printf("Constraints num=%v\n", oR1cs.GetNbConstraints())
+		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGKRBN(circuit.BN))
 		if err != nil {
 			panic(err)
 		}
-
+		fmt.Printf("Constraints num=%v\n", oR1cs.GetNbConstraints())
 		internal, secret, public := oR1cs.GetNbVariables()
 		fmt.Printf("Variables num=%v\n", internal+secret+public)
 		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
