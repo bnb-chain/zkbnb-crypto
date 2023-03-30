@@ -36,6 +36,7 @@ import (
 )
 
 var optionalBlockSizes = flag.String("blocksizes", "1,10", "block size that will be used for proof generation and verification")
+var batchSize = flag.String("batchsize", "1000", "number of r1cs files that will be used for proof generation")
 
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := optionalBlockSizesInt()
@@ -64,7 +65,7 @@ func TestExportSol(t *testing.T) {
 }
 
 func TestExportSolSmall(t *testing.T) {
-	differentBlockSizes := []int{16}
+	differentBlockSizes := []int{1}
 	exportSol(differentBlockSizes)
 }
 
@@ -91,7 +92,8 @@ func exportSol(differentBlockSizes []int) {
 		}
 		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
 
-		err = oR1cs.SplitDumpBinary(sessionNameForBlock, 1000)
+		batch, err := strconv.Atoi(*batchSize)
+		err = oR1cs.SplitDumpBinary(sessionNameForBlock, batch)
 		if err != nil {
 			panic(err)
 		}
