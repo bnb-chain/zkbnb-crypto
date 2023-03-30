@@ -38,7 +38,7 @@ type MintNftSegmentFormat struct {
 	NftContentType      int64  `json:"nft_content_type"`
 	NftContentHash      string `json:"nft_content_hash"`
 	NftCollectionId     int64  `json:"nft_collection_id"`
-	CreatorTreasuryRate int64  `json:"creator_treasury_rate"`
+	RoyaltyRate         int64  `json:"royalty_rate"`
 	GasAccountIndex     int64  `json:"gas_account_index"`
 	GasFeeAssetId       int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount   string `json:"gas_fee_asset_amount"`
@@ -66,7 +66,7 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 		NftContentType:      segmentFormat.NftContentType,
 		NftContentHash:      segmentFormat.NftContentHash,
 		NftCollectionId:     segmentFormat.NftCollectionId,
-		RoyaltyRate:         segmentFormat.CreatorTreasuryRate,
+		RoyaltyRate:         segmentFormat.RoyaltyRate,
 		GasAccountIndex:     segmentFormat.GasAccountIndex,
 		GasFeeAssetId:       segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount:   gasFeeAmount,

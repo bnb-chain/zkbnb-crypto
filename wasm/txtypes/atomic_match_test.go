@@ -19,7 +19,7 @@ func TestValidateAtomicMatchTxInfo(t *testing.T) {
 		AssetAmount:  big.NewInt(20),
 		ListedAt:     time.Now().Add(time.Hour).UnixMilli(),
 		ExpiredAt:    time.Now().Add(time.Hour).UnixMilli(),
-		TreasuryRate: 10,
+		RoyaltyRate:  10,
 	}
 
 	testCases := []struct {

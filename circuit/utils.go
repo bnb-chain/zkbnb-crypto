@@ -64,7 +64,6 @@ func SelectNftDeltas(
 	deltaRes.NftContentHash[1] = api.Select(flag, delta.NftContentHash[1], deltaCheck.NftContentHash[1])
 	deltaRes.RoyaltyRate = api.Select(flag, delta.RoyaltyRate, deltaCheck.RoyaltyRate)
 	deltaRes.CollectionId = api.Select(flag, delta.CollectionId, deltaCheck.CollectionId)
-	deltaRes.NftContentType = api.Select(flag, delta.NftContentType, deltaCheck.NftContentType)
 	return deltaRes
 }
 

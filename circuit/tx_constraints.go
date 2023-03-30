@@ -239,7 +239,6 @@ func VerifyTransaction(
 		NftContentHash:      tx.NftBefore.NftContentHash,
 		RoyaltyRate:         tx.NftBefore.RoyaltyRate,
 		CollectionId:        tx.NftBefore.CollectionId,
-		NftContentType:      tx.NftBefore.NftContentType,
 	}
 	for i := 0; i < NbGasAssetsPerTx; i++ {
 		gasDeltas[i] = EmptyGasDeltaConstraints(gasAssetIds[0])
@@ -391,7 +390,6 @@ func VerifyTransaction(
 		tx.NftBefore.NftContentHash[0],
 		tx.NftBefore.RoyaltyRate,
 		tx.NftBefore.CollectionId,
-		tx.NftBefore.NftContentType,
 	)
 	nftIpfsNodeHash := poseidon.Poseidon(api,
 		tx.NftBefore.CreatorAccountIndex,
@@ -400,7 +398,6 @@ func VerifyTransaction(
 		tx.NftBefore.NftContentHash[1],
 		tx.NftBefore.RoyaltyRate,
 		tx.NftBefore.CollectionId,
-		tx.NftBefore.NftContentType,
 	)
 	nftNodeHash := api.Select(isNotIpfsNftContentHash, nftNotIpfsNodeHash, nftIpfsNodeHash)
 	// verify account merkle proof
@@ -420,7 +417,6 @@ func VerifyTransaction(
 		NftAfter.NftContentHash[0],
 		NftAfter.RoyaltyRate,
 		NftAfter.CollectionId,
-		NftAfter.NftContentType,
 	)
 	nftIpfsNodeHash = poseidon.Poseidon(api,
 		NftAfter.CreatorAccountIndex,
@@ -429,7 +425,6 @@ func VerifyTransaction(
 		NftAfter.NftContentHash[1],
 		NftAfter.RoyaltyRate,
 		NftAfter.CollectionId,
-		NftAfter.NftContentType,
 	)
 	nftNodeHash = api.Select(isNotIpfsNftContentHash, nftNotIpfsNodeHash, nftIpfsNodeHash)
 	// update merkle proof
@@ -590,7 +585,7 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		return witness, err
 	}
 
-	// account before info, size is 4
+	// account before info, size is 7
 	for i := 0; i < NbAccountsPerTx; i++ {
 		// accounts info before
 		witness.AccountsInfoBefore[i], err = types.SetAccountWitness(oTx.AccountsInfoBefore[i])
