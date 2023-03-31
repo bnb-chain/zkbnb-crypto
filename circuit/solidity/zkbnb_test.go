@@ -36,7 +36,7 @@ import (
 )
 
 var optionalBlockSizes = flag.String("blocksizes", "1,10", "block size that will be used for proof generation and verification")
-var batchSize = flag.String("batchsize", "100000", "number of r1cs files that will be used for proof generation")
+var batchSize = flag.String("batchsize", "1000000", "number of r1cs files that will be used for proof generation")
 
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := optionalBlockSizesInt()
