@@ -20,10 +20,15 @@ package solidity
 import (
 	"flag"
 	"fmt"
+	"github.com/DmitriyVTitov/size"
+	"github.com/consensys/gnark-crypto/ecc/bn254"
+	cs_bn254 "github.com/consensys/gnark/constraint/bn254"
+	"github.com/consensys/gnark/test"
 	"os"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
@@ -49,7 +54,7 @@ func TestCompileCircuit(t *testing.T) {
 		blockConstraints.GasAssetIds = gasAssetIds
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
+		oR1cs, err := frontend.Compile(bn254.ID.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {
 			panic(err)
 		}
@@ -80,14 +85,14 @@ func exportSol(differentBlockSizes []int) {
 		blockConstraints.GasAssetIds = gasAssetIds
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
+		oR1cs, err := frontend.Compile(bn254.ID.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		fmt.Printf("Constraints num=%v\n", oR1cs.GetNbConstraints())
 		if err != nil {
 			panic(err)
 		}
 
 		// pk, vk, err := groth16.Setup(oR1cs)
-		err = groth16.SetupLazyWithDump(oR1cs, sessionName+fmt.Sprint(differentBlockSizes[i]))
+		err = groth16.SetupDumpKeys(oR1cs, sessionName+fmt.Sprint(differentBlockSizes[i]))
 		if err != nil {
 			panic(err)
 		}
@@ -122,4 +127,49 @@ func optionalBlockSizesInt() []int {
 		blockSizesInt[i] = v
 	}
 	return blockSizesInt
+}
+
+func TestE2ECompile(t *testing.T) {
+	mainStart := time.Now()
+	assert := test.NewAssert(t)
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Init operator and create witness
+	gasAssetIds := []int64{0, 1}
+	gasAccountIndex := int64(1)
+	var blockConstraints circuit.BlockConstraints
+	blockConstraints.TxsCount = 256
+	blockConstraints.Txs = make([]circuit.TxConstraints, blockConstraints.TxsCount)
+	for i := 0; i < blockConstraints.TxsCount; i++ {
+		blockConstraints.Txs[i] = circuit.GetZeroTxConstraint()
+	}
+	blockConstraints.GasAssetIds = gasAssetIds
+	blockConstraints.GasAccountIndex = gasAccountIndex
+	blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Compile circuit
+	{
+		fmt.Println("Compile circuit", time.Since(mainStart))
+		ccs, err := frontend.Compile(bn254.ID.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs()) //, frontend.WithCompressThreshold(10))
+		assert.NoError(err, "compile")
+		fmt.Println("NbCons:", ccs.GetNbConstraints())
+		// ccs.Lazify()
+		session := "stest"
+		batchSize := 1000000
+		err = ccs.SplitDumpBinary(session, batchSize)
+		// fmt.Println("Size of ccs:", size.Of(ccs))
+		cs := ccs.(*cs_bn254.R1CS)
+		fmt.Println("Size of ccs.All:         ", size.Of(cs))
+		fmt.Println("Size of ccs.CoeffTable:  ", size.Of(cs.CoeffTable))
+		fmt.Println("Size of ccs.R1CSCore:    ", size.Of(cs.R1CSCore))
+		fmt.Println("Size of ccs..System:     ", size.Of(cs.R1CSCore.System))
+		fmt.Println("Size of ccs..Constraints:", size.Of(cs.R1CSCore.Constraints))
+		fmt.Println("Size of ccs..LazyCons:   ", size.Of(cs.R1CSCore.LazyCons))
+		fmt.Println("Size of ccs..LazyConsMap:", size.Of(cs.R1CSCore.LazyConsMap))
+		fmt.Println("Size of ccs..StaticCons: ", size.Of(cs.R1CSCore.StaticConstraints))
+
+		// err = groth16.SetupDumpKeys(ccs, "session1")
+		// assert.NoError(err, "setup")
+		// fmt.Println("Finished setup", time.Since(mainStart))
+	}
 }
