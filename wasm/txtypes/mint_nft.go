@@ -184,6 +184,13 @@ func (txInfo *MintNftTxInfo) Validate() error {
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
 	}
+	// NftCollectionId
+	if txInfo.NftContentType < minNftContentType {
+		return ErrNftContentTypeTooLow
+	}
+	if txInfo.NftContentType > maxNftContentType {
+		return ErrNftContentTypeTooHigh
+	}
 	return nil
 }
 
