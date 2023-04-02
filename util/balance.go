@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math/big"
 	"strconv"
@@ -105,42 +106,30 @@ func CleanPackedFee(amount *big.Int) (nAmount *big.Int, err error) {
 	return nAmount, nil
 }
 
-func UnpackFee(packedFee *big.Int) (nAmount *big.Int, err error) {
-	amountBits := strconv.FormatInt(packedFee.Int64(), 2)
-	mantissa, err := strconv.ParseInt(amountBits[:len(amountBits)-5], 2, 12)
-	if err != nil {
-		return nil, err
+func UnpackAmount(packedAmount *big.Int) (nAmount *big.Int, err error) {
+	if packedAmount.Cmp(big.NewInt(0)) == 0 {
+		return big.NewInt(0), nil
 	}
-	exponent, err := strconv.ParseInt(amountBits[len(amountBits)-5:], 2, 6)
-	if err != nil {
-		return nil, err
+	amountBits := fmt.Sprintf("%b", packedAmount)
+	mantissa, success := new(big.Int).SetString(amountBits[:len(amountBits)-5], 2)
+	if !success {
+		return nil, fmt.Errorf("[UnpackAmount] failed to convert to bigint，%s", packedAmount.String())
 	}
+	exponentBigInt, success := new(big.Int).SetString(amountBits[len(amountBits)-5:], 2)
+	if !success {
+		return nil, fmt.Errorf("[UnpackAmount] failed to convert to bigint，%s", packedAmount.String())
+	}
+	exponent := exponentBigInt.Int64()
 	for i := 0; i < 32; i++ {
 		isRemain := exponent != 0
 		if isRemain {
-			mantissa = mantissa * 10
+			mantissa = ffmath.Multiply(mantissa, new(big.Int).SetInt64(10))
 			exponent = exponent - 1
 		}
 	}
-	return new(big.Int).SetInt64(mantissa), nil
+	return mantissa, nil
 }
 
-func UnpackAmount(packedAmount *big.Int) (nAmount *big.Int, err error) {
-	amountBits := strconv.FormatInt(packedAmount.Int64(), 2)
-	mantissa, err := strconv.ParseInt(amountBits[:len(amountBits)-5], 2, 36)
-	if err != nil {
-		return nil, err
-	}
-	exponent, err := strconv.ParseInt(amountBits[len(amountBits)-5:], 2, 6)
-	if err != nil {
-		return nil, err
-	}
-	for i := 0; i < 32; i++ {
-		isRemain := exponent != 0
-		if isRemain {
-			mantissa = mantissa * 10
-			exponent = exponent - 1
-		}
-	}
-	return new(big.Int).SetInt64(mantissa), nil
+func UnpackFee(packedFee *big.Int) (nAmount *big.Int, err error) {
+	return UnpackAmount(packedFee)
 }
