@@ -18,11 +18,10 @@
 package solidity
 
 import (
-	"encoding/gob"
 	"flag"
 	"fmt"
-	"github.com/consensys/gnark/constraint/lazy"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -72,7 +71,6 @@ func TestExportSolSmall(t *testing.T) {
 func exportSol(differentBlockSizes []int) {
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
-	gob.Register(lazy.GeneralLazyInputs{})
 	sessionName := "zkbnb"
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
@@ -94,8 +92,12 @@ func exportSol(differentBlockSizes []int) {
 
 		oR1cs.Lazify()
 
-		batch, err := strconv.Atoi(*batchSize)
+		batch, _ := strconv.Atoi(*batchSize)
+
 		err = oR1cs.SplitDumpBinary(sessionNameForBlock, batch)
+
+		oR1cs2 := groth16.NewCS(ecc.BN254)
+		oR1cs2.LoadFromSplitBinaryConcurrent(sessionNameForBlock, oR1cs.GetNbR1C(), batch, runtime.NumCPU())
 		if err != nil {
 			panic(err)
 		}
@@ -104,13 +106,13 @@ func exportSol(differentBlockSizes []int) {
 		if err != nil {
 			panic(err)
 		}
-		_, err = f.WriteString(fmt.Sprint(oR1cs.GetNbR1C()))
+		_, err = f.WriteString(fmt.Sprint(oR1cs2.GetNbR1C()))
 		if err != nil {
 			panic(err)
 		}
 		f.Close()
 
-		err = groth16.SetupDumpKeys(oR1cs, sessionNameForBlock)
+		err = groth16.SetupDumpKeys(oR1cs2, sessionNameForBlock)
 		if err != nil {
 			panic(err)
 		}
