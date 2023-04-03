@@ -131,6 +131,10 @@ func (txInfo *WithdrawTxInfo) Validate() error {
 	if txInfo.AssetAmount.Cmp(maxAssetAmount) > 0 {
 		return ErrAssetAmountTooHigh
 	}
+	assetAmount, _ := CleanPackedAmount(txInfo.AssetAmount)
+	if txInfo.AssetAmount.Cmp(assetAmount) != 0 {
+		return ErrAssetAmountPrecision
+	}
 
 	if txInfo.GasAccountIndex < minAccountIndex {
 		return ErrGasAccountIndexTooLow
@@ -155,7 +159,10 @@ func (txInfo *WithdrawTxInfo) Validate() error {
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
 		return ErrGasFeeAssetAmountTooHigh
 	}
-
+	gasFeeAmount, _ := CleanPackedFee(txInfo.GasFeeAssetAmount)
+	if txInfo.GasFeeAssetAmount.Cmp(gasFeeAmount) != 0 {
+		return ErrGasFeeAssetAmountPrecision
+	}
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
 	}

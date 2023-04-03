@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bnb-chain/zkbnb-crypto/circuit/types"
+	"github.com/bnb-chain/zkbnb-crypto/ffmath"
 	"github.com/bnb-chain/zkbnb-crypto/util"
 	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
 	"github.com/ethereum/go-ethereum/common"
@@ -174,6 +176,10 @@ func (txInfo *OfferTxInfo) Validate() error {
 	if txInfo.AssetAmount.Cmp(maxAssetAmount) > 0 {
 		return ErrAssetAmountTooHigh
 	}
+	assetAmount, _ := CleanPackedAmount(txInfo.AssetAmount)
+	if txInfo.AssetAmount.Cmp(assetAmount) != 0 {
+		return ErrAssetAmountPrecision
+	}
 
 	// ChannelAccountIndex
 	if txInfo.ChannelAccountIndex < minAccountIndex {
@@ -195,6 +201,7 @@ func (txInfo *OfferTxInfo) Validate() error {
 		if txInfo.ChannelRate > maxRate {
 			return ErrChannelRateTooHigh
 		}
+
 		//ProtocolRate
 		if txInfo.ProtocolRate < minRate {
 			return ErrProtocolRateTooLow
@@ -212,6 +219,14 @@ func (txInfo *OfferTxInfo) Validate() error {
 		if txInfo.ProtocolAmount.Cmp(maxAssetAmount) > 0 {
 			return ErrProtocolAmountTooHigh
 		}
+		protocolAmount, _ := CleanPackedAmount(txInfo.ProtocolAmount)
+		if protocolAmount.Cmp(txInfo.ProtocolAmount) != 0 {
+			return ErrProtocolAmountPrecision
+		}
+		protocolAmount = ffmath.Div(ffmath.Multiply(txInfo.AssetAmount, big.NewInt(txInfo.ProtocolRate)), big.NewInt(types.RateBase))
+		if protocolAmount.Cmp(txInfo.ProtocolAmount) != 0 {
+			return ErrProtocolAmountInvalid
+		}
 	} else {
 		//ChannelRate
 		if txInfo.ChannelRate < minRate {
@@ -220,6 +235,26 @@ func (txInfo *OfferTxInfo) Validate() error {
 		if txInfo.ChannelRate > maxSellRate {
 			return ErrChannelRateTooHigh
 		}
+	}
+
+	//ChannelAmount
+	channelAmount := ffmath.Div(ffmath.Multiply(txInfo.AssetAmount, big.NewInt(txInfo.ChannelRate)), big.NewInt(types.RateBase))
+	channelAmountPrecision, _ := CleanPackedAmount(channelAmount)
+	if channelAmount.Cmp(channelAmountPrecision) != 0 {
+		return ErrChannelAmountPrecision
+	}
+
+	// RoyaltyRate
+	if txInfo.RoyaltyRate < minRate {
+		return ErrRoyaltyRateTooLow
+	}
+	if txInfo.RoyaltyRate > maxRate {
+		return ErrRoyaltyRateTooHigh
+	}
+	royaltyAmount := ffmath.Div(ffmath.Multiply(txInfo.AssetAmount, big.NewInt(txInfo.RoyaltyRate)), big.NewInt(types.RateBase))
+	royaltyAmountPrecision, _ := CleanPackedAmount(royaltyAmount)
+	if royaltyAmount.Cmp(royaltyAmountPrecision) != 0 {
+		return ErrRoyaltyAmountPrecision
 	}
 	return nil
 }
