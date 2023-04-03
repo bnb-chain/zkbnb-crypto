@@ -92,6 +92,8 @@ func exportSol(differentBlockSizes []int) {
 		}
 		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
 
+		oR1cs.Lazify()
+
 		batch, err := strconv.Atoi(*batchSize)
 		err = oR1cs.SplitDumpBinary(sessionNameForBlock, batch)
 		if err != nil {
@@ -102,7 +104,7 @@ func exportSol(differentBlockSizes []int) {
 		if err != nil {
 			panic(err)
 		}
-		_, err = f.WriteString(fmt.Sprint(oR1cs.GetNbConstraints()))
+		_, err = f.WriteString(fmt.Sprint(oR1cs.GetNbR1C()))
 		if err != nil {
 			panic(err)
 		}
