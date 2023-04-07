@@ -80,6 +80,10 @@ func PaddingAddressToBytes32(addr string) []byte {
 	return new(big.Int).SetBytes(common.FromHex(addr)).FillBytes(make([]byte, 32))
 }
 
+func PaddingAddressToBytes20(addr string) []byte {
+	return new(big.Int).SetBytes(common.FromHex(addr)).FillBytes(make([]byte, 20))
+}
+
 /*
 ToPackedAmount: convert big int to 40 bit, 5 bits for 10^x, 35 bits for a * 10^x
 */
@@ -126,7 +130,7 @@ func IsValidHash(hash string) bool {
 	if err != nil {
 		return false
 	}
-	if len(hashBytes) != HashLength {
+	if len(hashBytes) != l1AddressHashLength {
 		return false
 	}
 

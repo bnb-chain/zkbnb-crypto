@@ -1,6 +1,7 @@
 package txtypes
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"math/big"
 )
@@ -12,7 +13,17 @@ type TxInfo interface {
 
 	VerifySignature(pubKey string) error
 
+	GetPubKey() string
+
+	GetAccountIndex() int64
+
 	GetFromAccountIndex() int64
+
+	GetToAccountIndex() int64
+
+	GetL1SignatureBody() string
+
+	GetL1AddressBySignature() common.Address
 
 	GetNonce() int64
 

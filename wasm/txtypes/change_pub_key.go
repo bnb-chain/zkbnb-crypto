@@ -1,28 +1,11 @@
-/*
- * Copyright © 2022 ZkBNB Protocol
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package txtypes
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bnb-chain/zkbnb-crypto/util"
 	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
+	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
@@ -31,9 +14,10 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
-type CancelOfferSegmentFormat struct {
+type ChangePubKeySegmentFormat struct {
 	AccountIndex      int64  `json:"account_index"`
-	OfferId           int64  `json:"offer_id"`
+	L1Address         string `json:"l1_address"`
+	PubKey            string `json:"pub_key"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -41,75 +25,80 @@ type CancelOfferSegmentFormat struct {
 	Nonce             int64  `json:"nonce"`
 }
 
-func ConstructCancelOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *CancelOfferTxInfo, err error) {
-	var segmentFormat *CancelOfferSegmentFormat
+func ConstructChangePubKeyInfo(sk *PrivateKey, segmentStr string) (txInfo *ChangePubKeyInfo, err error) {
+	var segmentFormat *ChangePubKeySegmentFormat
 	err = json.Unmarshal([]byte(segmentStr), &segmentFormat)
 	if err != nil {
-		log.Println("[ConstructMintNftTxInfo] err info:", err)
+		log.Println("[ConstructChangePubKeyInfo] err info:", err)
 		return nil, err
 	}
 	gasFeeAmount, err := StringToBigInt(segmentFormat.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ConstructBuyNftTxInfo] unable to convert string to big int:", err)
+		log.Println("[ConstructChangePubKeyInfo] unable to convert string to big int:", err)
 		return nil, err
 	}
 	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
-	txInfo = &CancelOfferTxInfo{
+	txInfo = &ChangePubKeyInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
-		OfferId:           segmentFormat.OfferId,
+		L1Address:         segmentFormat.L1Address,
+		Nonce:             segmentFormat.Nonce,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
 		ExpiredAt:         segmentFormat.ExpiredAt,
-		Nonce:             segmentFormat.Nonce,
 		Sig:               nil,
 	}
+	pk, err := ParsePublicKey(segmentFormat.PubKey)
+	if err != nil {
+		return nil, err
+	}
+	txInfo.PubKeyX = pk.A.X.Marshal()
+	txInfo.PubKeyY = pk.A.Y.Marshal()
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
 	// compute msg hash
 	msgHash, err := txInfo.Hash(hFunc)
 	if err != nil {
-		log.Println("[ConstructMintNftTxInfo] unable to compute hash:", err)
+		log.Println("[ConstructChangePubKeyInfo] unable to compute hash:", err)
 		return nil, err
 	}
 	// compute signature
 	hFunc.Reset()
 	sigBytes, err := sk.Sign(msgHash, hFunc)
 	if err != nil {
-		log.Println("[ConstructMintNftTxInfo] unable to sign:", err)
+		log.Println("[ConstructChangePubKeyInfo] unable to sign:", err)
 		return nil, err
 	}
 	txInfo.Sig = sigBytes
 	return txInfo, nil
 }
 
-type CancelOfferTxInfo struct {
+type ChangePubKeyInfo struct {
 	AccountIndex      int64
-	OfferId           int64
+	L1Address         string
+	Nonce             int64
+	PubKeyX           []byte
+	PubKeyY           []byte
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
 	ExpiredAt         int64
-	Nonce             int64
 	Sig               []byte
 	L1Sig             string
 }
 
-func (txInfo *CancelOfferTxInfo) Validate() error {
-	// AccountIndex
+func (txInfo *ChangePubKeyInfo) GetTxType() int {
+	return TxTypeChangePubKey
+}
+
+func (txInfo *ChangePubKeyInfo) Validate() error {
 	if txInfo.AccountIndex < minAccountIndex {
-		return ErrAccountIndexTooLow
+		return ErrFromAccountIndexTooLow
 	}
 	if txInfo.AccountIndex > maxAccountIndex {
-		return ErrAccountIndexTooHigh
+		return ErrFromAccountIndexTooHigh
 	}
 
-	// OfferId
-	if txInfo.OfferId < 0 {
-		return ErrOfferIdTooLow
-	}
-
-	// GasAccountIndex
 	if txInfo.GasAccountIndex < minAccountIndex {
 		return ErrGasAccountIndexTooLow
 	}
@@ -117,7 +106,6 @@ func (txInfo *CancelOfferTxInfo) Validate() error {
 		return ErrGasAccountIndexTooHigh
 	}
 
-	// GasFeeAssetId
 	if txInfo.GasFeeAssetId < minAssetId {
 		return ErrGasFeeAssetIdTooLow
 	}
@@ -125,7 +113,6 @@ func (txInfo *CancelOfferTxInfo) Validate() error {
 		return ErrGasFeeAssetIdTooHigh
 	}
 
-	// GasFeeAssetAmount
 	if txInfo.GasFeeAssetAmount == nil {
 		return fmt.Errorf("GasFeeAssetAmount should not be nil")
 	}
@@ -139,15 +126,27 @@ func (txInfo *CancelOfferTxInfo) Validate() error {
 	if txInfo.GasFeeAssetAmount.Cmp(gasFeeAmount) != 0 {
 		return ErrGasFeeAssetAmountPrecision
 	}
-	// Nonce
+
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
 	}
 
+	// PubKeyX
+	if !IsValidHashBytes(txInfo.PubKeyX) {
+		return ErrPubKeyXYInvalid
+	}
+	// PubKeyY
+	if !IsValidHashBytes(txInfo.PubKeyY) {
+		return ErrPubKeyXYInvalid
+	}
+	// L1Address
+	if !IsValidHash(txInfo.L1Address) {
+		return ErrToL1AddressInvalid
+	}
 	return nil
 }
 
-func (txInfo *CancelOfferTxInfo) VerifySignature(pubKey string) error {
+func (txInfo *ChangePubKeyInfo) VerifySignature(pubKey string) error {
 	// compute hash
 	hFunc := mimc.NewMiMC()
 	msgHash, err := txInfo.Hash(hFunc)
@@ -171,55 +170,54 @@ func (txInfo *CancelOfferTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
-func (txInfo *CancelOfferTxInfo) GetTxType() int {
-	return TxTypeCancelOffer
+func (txInfo *ChangePubKeyInfo) GetPubKey() string {
+	pk := new(eddsa.PublicKey)
+	pk.A.X.SetBytes(txInfo.PubKeyX)
+	pk.A.Y.SetBytes(txInfo.PubKeyY)
+	return common.Bytes2Hex(pk.Bytes())
 }
 
-func (txInfo *CancelOfferTxInfo) GetPubKey() string {
-	return ""
-}
-
-func (txInfo *CancelOfferTxInfo) GetAccountIndex() int64 {
+func (txInfo *ChangePubKeyInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
 }
 
-func (txInfo *CancelOfferTxInfo) GetFromAccountIndex() int64 {
+func (txInfo *ChangePubKeyInfo) GetFromAccountIndex() int64 {
 	return txInfo.AccountIndex
 }
 
-func (txInfo *CancelOfferTxInfo) GetToAccountIndex() int64 {
+func (txInfo *ChangePubKeyInfo) GetToAccountIndex() int64 {
 	return txInfo.AccountIndex
 }
 
-func (txInfo *CancelOfferTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateCancelOffer, txInfo.OfferId,
-		txInfo.AccountIndex, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+func (txInfo *ChangePubKeyInfo) GetL1SignatureBody() string {
+	signatureBody := fmt.Sprintf(signature.SignatureTemplateChangePubKey, common.Bytes2Hex(txInfo.PubKeyX),
+		common.Bytes2Hex(txInfo.PubKeyY), signature.GetHex10FromInt64(txInfo.Nonce), signature.GetHex10FromInt64(txInfo.AccountIndex))
 	return signatureBody
 }
 
-func (txInfo *CancelOfferTxInfo) GetL1AddressBySignature() common.Address {
+func (txInfo *ChangePubKeyInfo) GetL1AddressBySignature() common.Address {
 	return signature.CalculateL1AddressBySignature(txInfo.GetL1SignatureBody(), txInfo.L1Sig)
 }
 
-func (txInfo *CancelOfferTxInfo) GetNonce() int64 {
+func (txInfo *ChangePubKeyInfo) GetNonce() int64 {
 	return txInfo.Nonce
 }
 
-func (txInfo *CancelOfferTxInfo) GetExpiredAt() int64 {
+func (txInfo *ChangePubKeyInfo) GetExpiredAt() int64 {
 	return txInfo.ExpiredAt
 }
 
-func (txInfo *CancelOfferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
+func (txInfo *ChangePubKeyInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 	packedFee, err := ToPackedFee(txInfo.GasFeeAssetAmount)
 	if err != nil {
-		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
+		log.Println("[ComputeChangePubKeyMsgHash] unable to packed amount: ", err.Error())
 		return nil, err
 	}
-	msgHash = Poseidon(ChainId, TxTypeCancelOffer, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.OfferId)
+	msgHash = Poseidon(ChainId, TxTypeChangePubKey, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt, txInfo.GasFeeAssetId, packedFee,
+		PaddingAddressToBytes20(txInfo.L1Address), txInfo.PubKeyX, txInfo.PubKeyY)
 	return msgHash, nil
 }
 
-func (txInfo *CancelOfferTxInfo) GetGas() (int64, int64, *big.Int) {
+func (txInfo *ChangePubKeyInfo) GetGas() (int64, int64, *big.Int) {
 	return txInfo.GasAccountIndex, txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount
 }

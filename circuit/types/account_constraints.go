@@ -26,7 +26,7 @@ import (
 
 type AccountConstraints struct {
 	AccountIndex    Variable
-	AccountNameHash Variable
+	L1Address       Variable
 	AccountPk       eddsa.PublicKey
 	Nonce           Variable
 	CollectionNonce Variable
@@ -36,7 +36,7 @@ type AccountConstraints struct {
 }
 
 func CheckEmptyAccountNode(api API, flag Variable, account AccountConstraints) {
-	IsVariableEqual(api, flag, account.AccountNameHash, ZeroInt)
+	IsVariableEqual(api, flag, account.L1Address, ZeroInt)
 	IsVariableEqual(api, flag, account.AccountPk.A.X, ZeroInt)
 	IsVariableEqual(api, flag, account.AccountPk.A.Y, ZeroInt)
 	IsVariableEqual(api, flag, account.Nonce, ZeroInt)
@@ -46,7 +46,7 @@ func CheckEmptyAccountNode(api API, flag Variable, account AccountConstraints) {
 }
 
 func CheckNonEmptyAccountNode(api API, flag Variable, account AccountConstraints) {
-	IsVariableDifferent(api, flag, account.AccountNameHash, ZeroInt)
+	IsVariableDifferent(api, flag, account.L1Address, ZeroInt)
 }
 
 type AccountAssetConstraints struct {
@@ -69,7 +69,7 @@ func SetAccountAssetWitness(asset *AccountAsset) (witness AccountAssetConstraint
 }
 
 /*
-	SetAccountWitness: set account witness
+SetAccountWitness: set account witness
 */
 func SetAccountWitness(account *Account) (witness AccountConstraints, err error) {
 	if account == nil {
@@ -79,7 +79,7 @@ func SetAccountWitness(account *Account) (witness AccountConstraints, err error)
 	// set witness
 	witness = AccountConstraints{
 		AccountIndex:    account.AccountIndex,
-		AccountNameHash: account.AccountNameHash,
+		L1Address:       account.L1Address,
 		AccountPk:       SetPubKeyWitness(account.AccountPk),
 		Nonce:           account.Nonce,
 		CollectionNonce: account.CollectionNonce,

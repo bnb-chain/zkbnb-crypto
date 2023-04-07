@@ -18,19 +18,20 @@
 package types
 
 const (
-	TxTypeBitsSize              = 8
-	CollectionIdBitsSize        = 16
-	OfferIdBitsSize             = 24
-	FeeRateBitsSize             = 16
-	AccountIndexBitsSize        = 32
-	AssetIdBitsSize             = 16
-	NftIndexBitsSize            = 40
-	CreatorTreasuryRateBitsSize = 16
-	StateAmountBitsSize         = 128
-	PackedAmountBitsSize        = 40
-	PackedFeeBitsSize           = 16
-	AddressBitsSize             = 160
-	AccountNameBitsSize         = 160
-	HashBitsSize                = 256
-	PubkeyBitsSize              = 256
+	TxTypeBitsSize       = 8
+	CollectionIdBitsSize = 16
+	OfferIdBitsSize      = 24
+	FeeRateBitsSize      = 16
+	AccountIndexBitsSize = 32
+	NonceBitsSize        = 32
+	AssetIdBitsSize      = 16
+	NftIndexBitsSize     = 40
+	RoyaltyRateBitsSize  = 16
+	StateAmountBitsSize  = 128
+	PackedAmountBitsSize = 40
+	PackedFeeBitsSize    = 16
+	AddressBitsSize      = 160
+	AccountNameBitsSize  = 160
+	HashBitsSize         = 256
+	PubkeyBitsSize       = 256
 )

@@ -21,6 +21,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bnb-chain/zkbnb-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
@@ -83,20 +86,22 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 }
 
 type WithdrawNftTxInfo struct {
-	AccountIndex           int64
-	CreatorAccountIndex    int64
-	CreatorAccountNameHash []byte
-	CreatorTreasuryRate    int64
-	NftIndex               int64
-	NftContentHash         []byte
-	CollectionId           int64
-	ToAddress              string
-	GasAccountIndex        int64
-	GasFeeAssetId          int64
-	GasFeeAssetAmount      *big.Int
-	ExpiredAt              int64
-	Nonce                  int64
-	Sig                    []byte
+	AccountIndex        int64
+	CreatorAccountIndex int64
+	CreatorL1Address    string
+	RoyaltyRate         int64
+	NftIndex            int64
+	NftContentHash      []byte
+	NftContentType      int64
+	CollectionId        int64
+	ToAddress           string
+	GasAccountIndex     int64
+	GasFeeAssetId       int64
+	GasFeeAssetAmount   *big.Int
+	ExpiredAt           int64
+	Nonce               int64
+	Sig                 []byte
+	L1Sig               string
 }
 
 func (txInfo *WithdrawNftTxInfo) Validate() error {
@@ -147,12 +152,15 @@ func (txInfo *WithdrawNftTxInfo) Validate() error {
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
 		return ErrGasFeeAssetAmountTooHigh
 	}
+	gasFeeAmount, _ := CleanPackedFee(txInfo.GasFeeAssetAmount)
+	if txInfo.GasFeeAssetAmount.Cmp(gasFeeAmount) != 0 {
+		return ErrGasFeeAssetAmountPrecision
+	}
 
 	// Nonce
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
 	}
-
 	return nil
 }
 
@@ -184,8 +192,30 @@ func (txInfo *WithdrawNftTxInfo) GetTxType() int {
 	return TxTypeWithdrawNft
 }
 
+func (txInfo *WithdrawNftTxInfo) GetPubKey() string {
+	return ""
+}
+
+func (txInfo *WithdrawNftTxInfo) GetAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *WithdrawNftTxInfo) GetFromAccountIndex() int64 {
 	return txInfo.AccountIndex
+}
+
+func (txInfo *WithdrawNftTxInfo) GetToAccountIndex() int64 {
+	return NilAccountIndex
+}
+
+func (txInfo *WithdrawNftTxInfo) GetL1SignatureBody() string {
+	signatureBody := fmt.Sprintf(signature.SignatureTemplateWithdrawalNft, txInfo.NftIndex,
+		txInfo.ToAddress, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	return signatureBody
+}
+
+func (txInfo *WithdrawNftTxInfo) GetL1AddressBySignature() common.Address {
+	return signature.CalculateL1AddressBySignature(txInfo.GetL1SignatureBody(), txInfo.L1Sig)
 }
 
 func (txInfo *WithdrawNftTxInfo) GetNonce() int64 {
@@ -203,7 +233,7 @@ func (txInfo *WithdrawNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeWithdrawNft, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.NftIndex, PaddingAddressToBytes32(txInfo.ToAddress))
+		txInfo.GasFeeAssetId, packedFee, txInfo.NftIndex, PaddingAddressToBytes20(txInfo.ToAddress))
 	return msgHash, nil
 }
 

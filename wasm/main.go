@@ -34,8 +34,6 @@ func main() {
 	// util
 	js.Global().Set("cleanPackedAmount", src2.CleanPackedAmountUtil())
 	js.Global().Set("cleanPackedFee", src2.CleanPackedFeeUtil())
-	// account
-	js.Global().Set("getAccountNameHash", src2.AccountNameHash())
 	// eddsa
 	js.Global().Set("getEddsaPublicKey", src2.GetEddsaPublicKey())
 	js.Global().Set("getEddsaCompressedPublicKey", src2.GetEddsaCompressedPublicKey())
@@ -44,9 +42,11 @@ func main() {
 	js.Global().Set("eddsaVerify", src2.EddsaVerify())
 
 	// transaction
+	js.Global().Set("signChangePubKeyTx", src2.ChangePubKeyTx())
 	// asset
 	js.Global().Set("signTransfer", src2.TransferTx())
 	js.Global().Set("signWithdraw", src2.WithdrawTx())
+	js.Global().Set("signChangePubKey", src2.ChangePubKeyTx())
 
 	// nft
 	js.Global().Set("signAtomicMatch", src2.AtomicMatchTx())

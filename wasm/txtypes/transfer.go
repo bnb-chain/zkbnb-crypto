@@ -21,6 +21,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bnb-chain/zkbnb-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
@@ -30,8 +33,7 @@ import (
 
 type TransferSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
-	ToAccountIndex    int64  `json:"to_account_index"`
-	ToAccountNameHash string `json:"to_account_name"`
+	ToL1Address       string `json:"to_l1_address"`
 	AssetId           int64  `json:"asset_id"`
 	AssetAmount       string `json:"asset_amount"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
@@ -64,8 +66,7 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 	gasFeeAmount, _ = CleanPackedFee(gasFeeAmount)
 	txInfo = &TransferTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
-		ToAccountIndex:    segmentFormat.ToAccountIndex,
-		ToAccountNameHash: segmentFormat.ToAccountNameHash,
+		ToL1Address:       segmentFormat.ToL1Address,
 		AssetId:           segmentFormat.AssetId,
 		AssetAmount:       assetAmount,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
@@ -103,7 +104,7 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 type TransferTxInfo struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
-	ToAccountNameHash string
+	ToL1Address       string
 	AssetId           int64
 	AssetAmount       *big.Int
 	GasAccountIndex   int64
@@ -115,6 +116,7 @@ type TransferTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+	L1Sig             string
 }
 
 func (txInfo *TransferTxInfo) Validate() error {
@@ -125,11 +127,11 @@ func (txInfo *TransferTxInfo) Validate() error {
 		return ErrFromAccountIndexTooHigh
 	}
 
-	if txInfo.ToAccountIndex < minAccountIndex {
-		return ErrToAccountIndexTooLow
+	if txInfo.ToAccountIndex < minAccountIndex-1 {
+		return ErrFromAccountIndexTooLow
 	}
 	if txInfo.ToAccountIndex > maxAccountIndex {
-		return ErrToAccountIndexTooHigh
+		return ErrFromAccountIndexTooHigh
 	}
 
 	if txInfo.AssetId < minAssetId {
@@ -147,6 +149,10 @@ func (txInfo *TransferTxInfo) Validate() error {
 	}
 	if txInfo.AssetAmount.Cmp(maxAssetAmount) > 0 {
 		return ErrAssetAmountTooHigh
+	}
+	assetAmount, _ := CleanPackedAmount(txInfo.AssetAmount)
+	if txInfo.AssetAmount.Cmp(assetAmount) != 0 {
+		return ErrAssetAmountPrecision
 	}
 
 	if txInfo.GasAccountIndex < minAccountIndex {
@@ -172,21 +178,34 @@ func (txInfo *TransferTxInfo) Validate() error {
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
 		return ErrGasFeeAssetAmountTooHigh
 	}
+	gasFeeAmount, _ := CleanPackedFee(txInfo.GasFeeAssetAmount)
+	if txInfo.GasFeeAssetAmount.Cmp(gasFeeAmount) != 0 {
+		return ErrGasFeeAssetAmountPrecision
+	}
 
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
 	}
 
-	// ToAccountNameHash
-	if !IsValidHash(txInfo.ToAccountNameHash) {
-		return ErrToAccountNameHashInvalid
+	// ToL1Address
+	if !IsValidHash(txInfo.ToL1Address) {
+		return ErrToL1AddressInvalid
+	}
+
+	// CallData
+	if len(txInfo.CallData) > maxLength {
+		return ErrCallDataInvalid
+	}
+
+	// Memo
+	if len(txInfo.Memo) > maxLength {
+		return ErrMemoInvalid
 	}
 
 	// CallDataHash
 	if !IsValidHashBytes(txInfo.CallDataHash) {
 		return ErrCallDataHashInvalid
 	}
-
 	return nil
 }
 
@@ -218,8 +237,30 @@ func (txInfo *TransferTxInfo) GetTxType() int {
 	return TxTypeTransfer
 }
 
+func (txInfo *TransferTxInfo) GetPubKey() string {
+	return ""
+}
+
+func (txInfo *TransferTxInfo) GetAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *TransferTxInfo) GetFromAccountIndex() int64 {
 	return txInfo.FromAccountIndex
+}
+
+func (txInfo *TransferTxInfo) GetToAccountIndex() int64 {
+	return txInfo.ToAccountIndex
+}
+
+func (txInfo *TransferTxInfo) GetL1SignatureBody() string {
+	signatureBody := fmt.Sprintf(signature.SignatureTemplateTransfer, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.FromAccountIndex,
+		txInfo.ToL1Address, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	return signatureBody
+}
+
+func (txInfo *TransferTxInfo) GetL1AddressBySignature() common.Address {
+	return signature.CalculateL1AddressBySignature(txInfo.GetL1SignatureBody(), txInfo.L1Sig)
 }
 
 func (txInfo *TransferTxInfo) GetNonce() int64 {
@@ -242,8 +283,8 @@ func (txInfo *TransferTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) 
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeTransfer, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.AssetId, packedAmount,
-		txInfo.ToAccountNameHash, txInfo.CallDataHash)
+		txInfo.GasFeeAssetId, packedFee, txInfo.AssetId, packedAmount,
+		PaddingAddressToBytes20(txInfo.ToL1Address), txInfo.CallDataHash)
 	return msgHash, nil
 }
 

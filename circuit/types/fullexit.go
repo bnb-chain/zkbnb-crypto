@@ -22,34 +22,34 @@ import (
 )
 
 type FullExitTx struct {
-	AccountIndex    int64
-	AccountNameHash []byte
-	AssetId         int64
-	AssetAmount     *big.Int
+	AccountIndex int64
+	L1Address    []byte
+	AssetId      int64
+	AssetAmount  *big.Int
 }
 
 type FullExitTxConstraints struct {
-	AccountIndex    Variable
-	AccountNameHash Variable
-	AssetId         Variable
-	AssetAmount     Variable
+	AccountIndex Variable
+	L1Address    Variable
+	AssetId      Variable
+	AssetAmount  Variable
 }
 
 func EmptyFullExitTxWitness() (witness FullExitTxConstraints) {
 	return FullExitTxConstraints{
-		AccountIndex:    ZeroInt,
-		AccountNameHash: ZeroInt,
-		AssetId:         ZeroInt,
-		AssetAmount:     ZeroInt,
+		AccountIndex: ZeroInt,
+		L1Address:    ZeroInt,
+		AssetId:      ZeroInt,
+		AssetAmount:  ZeroInt,
 	}
 }
 
 func SetFullExitTxWitness(tx *FullExitTx) (witness FullExitTxConstraints) {
 	witness = FullExitTxConstraints{
-		AccountIndex:    tx.AccountIndex,
-		AccountNameHash: tx.AccountNameHash,
-		AssetId:         tx.AssetId,
-		AssetAmount:     tx.AssetAmount,
+		AccountIndex: tx.AccountIndex,
+		L1Address:    tx.L1Address,
+		AssetId:      tx.AssetId,
+		AssetAmount:  tx.AssetAmount,
 	}
 	return witness
 }
@@ -59,11 +59,16 @@ func VerifyFullExitTx(
 	tx FullExitTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 ) (pubData [PubDataBitsSizePerTx]Variable) {
+	txInfoL1Address := api.Select(flag, tx.L1Address, ZeroInt)
+	beforeL1Address := api.Select(flag, accountsBefore[0].L1Address, ZeroInt)
+	isOwner := api.And(api.IsZero(api.Cmp(txInfoL1Address, beforeL1Address)), flag)
+	tx.AssetAmount = api.Select(isOwner, tx.AssetAmount, ZeroInt)
 	pubData = CollectPubDataFromFullExit(api, tx)
 	// verify params
-	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)
+	IsVariableEqual(api, isOwner, tx.L1Address, accountsBefore[0].L1Address)
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
-	IsVariableEqual(api, flag, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
+
+	IsVariableEqual(api, isOwner, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	return pubData
 }

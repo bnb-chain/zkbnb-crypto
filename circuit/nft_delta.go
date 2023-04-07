@@ -25,7 +25,7 @@ type NftDeltaConstraints struct {
 	CreatorAccountIndex Variable
 	OwnerAccountIndex   Variable
 	NftContentHash      [2]Variable
-	CreatorTreasuryRate Variable
+	RoyaltyRate         Variable
 	CollectionId        Variable
 }
 
@@ -34,7 +34,7 @@ func EmptyNftDeltaConstraints() NftDeltaConstraints {
 		CreatorAccountIndex: types.ZeroInt,
 		OwnerAccountIndex:   types.ZeroInt,
 		NftContentHash:      [2]Variable{types.ZeroInt, types.ZeroInt},
-		CreatorTreasuryRate: types.ZeroInt,
+		RoyaltyRate:         types.ZeroInt,
 		CollectionId:        types.ZeroInt,
 	}
 }
@@ -47,7 +47,7 @@ func UpdateNft(
 	nftAfter.CreatorAccountIndex = nftDelta.CreatorAccountIndex
 	nftAfter.OwnerAccountIndex = nftDelta.OwnerAccountIndex
 	nftAfter.NftContentHash = nftDelta.NftContentHash
-	nftAfter.CreatorTreasuryRate = nftDelta.CreatorTreasuryRate
+	nftAfter.RoyaltyRate = nftDelta.RoyaltyRate
 	nftAfter.CollectionId = nftDelta.CollectionId
 	return nftAfter
 }

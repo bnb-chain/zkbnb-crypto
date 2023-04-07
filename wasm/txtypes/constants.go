@@ -44,7 +44,7 @@ const (
 
 const (
 	TxTypeEmpty = iota
-	TxTypeRegisterZns
+	TxTypeChangePubKey
 	TxTypeDeposit
 	TxTypeDepositNft
 	TxTypeTransfer
@@ -58,10 +58,13 @@ const (
 	TxTypeFullExit
 	TxTypeFullExitNft
 	TxTypeOffer
+	TxTypeUpdateNFT
 )
 
 const (
 	HashLength int = 32
+
+	l1AddressHashLength int = 20
 
 	minAccountIndex int64 = 0
 	maxAccountIndex int64 = (1 << 32) - 1
@@ -77,13 +80,19 @@ const (
 
 	minNonce int64 = 0
 
-	minTreasuryRate int64 = 0
-	maxTreasuryRate int64 = 10000
+	minRate     int64 = 0
+	maxRate     int64 = 10000
+	maxSellRate int64 = 5000
 
 	minCollectionNameLength int = 1
 	maxCollectionNameLength int = 64
 
 	maxCollectionIntroductionLength int = 1000
+
+	maxLength int = 2000
+
+	minNftContentType int64 = 0
+	maxNftContentType int64 = (1 << 8) - 1
 )
 
 var (

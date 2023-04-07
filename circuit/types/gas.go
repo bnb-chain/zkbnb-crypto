@@ -26,7 +26,7 @@ import (
 
 type GasAccount struct {
 	AccountIndex    int64
-	AccountNameHash []byte
+	L1Address       []byte
 	AccountPk       *eddsa.PublicKey
 	Nonce           int64
 	CollectionNonce int64
@@ -36,8 +36,8 @@ type GasAccount struct {
 
 func EmptyGasAccount(accountIndex int64, assetRoot []byte) *GasAccount {
 	return &GasAccount{
-		AccountIndex:    accountIndex,
-		AccountNameHash: []byte{},
+		AccountIndex: accountIndex,
+		L1Address:    []byte{},
 		AccountPk: &eddsa.PublicKey{
 			A: curve.Point{
 				X: fr.NewElement(0),

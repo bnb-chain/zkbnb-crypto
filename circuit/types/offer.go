@@ -24,42 +24,54 @@ import (
 )
 
 type OfferTx struct {
-	Type         int64
-	OfferId      int64
-	AccountIndex int64
-	NftIndex     int64
-	AssetId      int64
-	AssetAmount  int64
-	ListedAt     int64
-	ExpiredAt    int64
-	TreasuryRate int64
-	Sig          *oEddsa.Signature
+	Type                int64
+	OfferId             int64
+	AccountIndex        int64
+	NftIndex            int64
+	AssetId             int64
+	AssetAmount         int64
+	ListedAt            int64
+	ExpiredAt           int64
+	RoyaltyRate         int64
+	ChannelAccountIndex int64
+	ChannelRate         int64
+	ProtocolRate        int64
+	ProtocolAmount      int64
+	Sig                 *oEddsa.Signature
 }
 
 type OfferTxConstraints struct {
-	Type         Variable
-	OfferId      Variable
-	AccountIndex Variable
-	NftIndex     Variable
-	AssetId      Variable
-	AssetAmount  Variable
-	ListedAt     Variable
-	ExpiredAt    Variable
-	TreasuryRate Variable
-	Sig          eddsa.Signature
+	Type                Variable
+	OfferId             Variable
+	AccountIndex        Variable
+	NftIndex            Variable
+	AssetId             Variable
+	AssetAmount         Variable
+	ListedAt            Variable
+	ExpiredAt           Variable
+	RoyaltyRate         Variable
+	ChannelAccountIndex Variable
+	ChannelRate         Variable
+	ProtocolRate        Variable
+	ProtocolAmount      Variable
+	Sig                 eddsa.Signature
 }
 
 func EmptyOfferTxWitness() (witness OfferTxConstraints) {
 	return OfferTxConstraints{
-		Type:         ZeroInt,
-		OfferId:      ZeroInt,
-		AccountIndex: ZeroInt,
-		NftIndex:     ZeroInt,
-		AssetId:      ZeroInt,
-		AssetAmount:  ZeroInt,
-		ListedAt:     ZeroInt,
-		ExpiredAt:    ZeroInt,
-		TreasuryRate: ZeroInt,
+		Type:                ZeroInt,
+		OfferId:             ZeroInt,
+		AccountIndex:        ZeroInt,
+		NftIndex:            ZeroInt,
+		AssetId:             ZeroInt,
+		AssetAmount:         ZeroInt,
+		ListedAt:            ZeroInt,
+		ExpiredAt:           ZeroInt,
+		RoyaltyRate:         ZeroInt,
+		ChannelAccountIndex: ZeroInt,
+		ChannelRate:         ZeroInt,
+		ProtocolRate:        ZeroInt,
+		ProtocolAmount:      ZeroInt,
 		Sig: eddsa.Signature{
 			R: twistededwards.Point{
 				X: ZeroInt,
@@ -82,16 +94,20 @@ func SetSignatureWitness(sig *oEddsa.Signature) (witness eddsa.Signature) {
 
 func SetOfferTxWitness(tx *OfferTx) (witness OfferTxConstraints) {
 	witness = OfferTxConstraints{
-		Type:         tx.Type,
-		OfferId:      tx.OfferId,
-		AccountIndex: tx.AccountIndex,
-		NftIndex:     tx.NftIndex,
-		AssetId:      tx.AssetId,
-		AssetAmount:  tx.AssetAmount,
-		ListedAt:     tx.ListedAt,
-		ExpiredAt:    tx.ExpiredAt,
-		TreasuryRate: tx.TreasuryRate,
-		Sig:          SetSignatureWitness(tx.Sig),
+		Type:                tx.Type,
+		OfferId:             tx.OfferId,
+		AccountIndex:        tx.AccountIndex,
+		NftIndex:            tx.NftIndex,
+		AssetId:             tx.AssetId,
+		AssetAmount:         tx.AssetAmount,
+		ListedAt:            tx.ListedAt,
+		ExpiredAt:           tx.ExpiredAt,
+		RoyaltyRate:         tx.RoyaltyRate,
+		ChannelAccountIndex: tx.ChannelAccountIndex,
+		ChannelRate:         tx.ChannelRate,
+		ProtocolRate:        tx.ProtocolRate,
+		ProtocolAmount:      tx.ProtocolAmount,
+		Sig:                 SetSignatureWitness(tx.Sig),
 	}
 	return witness
 }

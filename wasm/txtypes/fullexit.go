@@ -2,6 +2,7 @@ package txtypes
 
 import (
 	"errors"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"math/big"
 )
@@ -10,12 +11,12 @@ type FullExitTxInfo struct {
 	TxType uint8
 
 	// Get from layer1 events.
-	AccountNameHash []byte
-	AssetId         int64
+	L1Address    string
+	AssetId      int64
+	AccountIndex int64
 
 	// Set by layer2.
-	AccountIndex int64
-	AssetAmount  *big.Int
+	AssetAmount *big.Int
 }
 
 func (txInfo *FullExitTxInfo) GetTxType() int {
@@ -30,8 +31,28 @@ func (txInfo *FullExitTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *FullExitTxInfo) GetPubKey() string {
+	return ""
+}
+
+func (txInfo *FullExitTxInfo) GetAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *FullExitTxInfo) GetFromAccountIndex() int64 {
-	return NilAccountIndex
+	return txInfo.AccountIndex
+}
+
+func (txInfo *FullExitTxInfo) GetToAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
+func (txInfo *FullExitTxInfo) GetL1SignatureBody() string {
+	return ""
+}
+
+func (txInfo *FullExitTxInfo) GetL1AddressBySignature() common.Address {
+	return [20]byte{}
 }
 
 func (txInfo *FullExitTxInfo) GetNonce() int64 {

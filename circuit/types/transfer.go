@@ -22,7 +22,7 @@ import "github.com/consensys/gnark/std/hash/poseidon"
 type TransferTx struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
-	ToAccountNameHash []byte
+	ToL1Address       []byte
 	AssetId           int64
 	AssetAmount       int64
 	GasAccountIndex   int64
@@ -34,7 +34,7 @@ type TransferTx struct {
 type TransferTxConstraints struct {
 	FromAccountIndex  Variable
 	ToAccountIndex    Variable
-	ToAccountNameHash Variable
+	ToL1Address       Variable
 	AssetId           Variable
 	AssetAmount       Variable
 	GasAccountIndex   Variable
@@ -47,7 +47,7 @@ func EmptyTransferTxWitness() (witness TransferTxConstraints) {
 	return TransferTxConstraints{
 		FromAccountIndex:  ZeroInt,
 		ToAccountIndex:    ZeroInt,
-		ToAccountNameHash: ZeroInt,
+		ToL1Address:       ZeroInt,
 		AssetId:           ZeroInt,
 		AssetAmount:       ZeroInt,
 		GasAccountIndex:   ZeroInt,
@@ -61,7 +61,7 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints) {
 	witness = TransferTxConstraints{
 		FromAccountIndex:  tx.FromAccountIndex,
 		ToAccountIndex:    tx.ToAccountIndex,
-		ToAccountNameHash: tx.ToAccountNameHash,
+		ToL1Address:       tx.ToL1Address,
 		AssetId:           tx.AssetId,
 		AssetAmount:       tx.AssetAmount,
 		GasAccountIndex:   tx.GasAccountIndex,
@@ -74,7 +74,7 @@ func SetTransferTxWitness(tx *TransferTx) (witness TransferTxConstraints) {
 
 func ComputeHashFromTransferTx(api API, tx TransferTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
 	return poseidon.Poseidon(api, ChainId, TxTypeTransfer, tx.FromAccountIndex, nonce, expiredAt, tx.GasFeeAssetId,
-		tx.GasFeeAssetAmount, tx.ToAccountIndex, tx.AssetId, tx.AssetAmount, tx.ToAccountNameHash, tx.CallDataHash,
+		tx.GasFeeAssetAmount, tx.AssetId, tx.AssetAmount, tx.ToL1Address, tx.CallDataHash,
 	)
 }
 
@@ -91,9 +91,10 @@ func VerifyTransferTx(
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.FromAccountIndex, accountsBefore[fromAccount].AccountIndex)
-	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
-	// account name hash
-	IsVariableEqual(api, flag, tx.ToAccountNameHash, accountsBefore[toAccount].AccountNameHash)
+	// account to l1Address
+	isNewAccount := api.IsZero(api.Cmp(accountsBefore[toAccount].L1Address, ZeroInt))
+	address := api.Select(isNewAccount, tx.ToL1Address, accountsBefore[toAccount].L1Address)
+	IsVariableEqual(api, flag, tx.ToL1Address, address)
 	// asset id
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[toAccount].AssetsInfo[0].AssetId)

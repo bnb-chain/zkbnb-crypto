@@ -24,44 +24,47 @@ import (
 type MintNftTx struct {
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
-	ToAccountNameHash   []byte
+	ToL1Address         []byte
 	NftIndex            int64
 	NftContentHash      []byte
-	CreatorTreasuryRate int64
+	RoyaltyRate         int64
 	GasAccountIndex     int64
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   int64
 	CollectionId        int64
 	ExpiredAt           int64
+	NftContentType      int64
 }
 
 type MintNftTxConstraints struct {
 	CreatorAccountIndex Variable
 	ToAccountIndex      Variable
-	ToAccountNameHash   Variable
+	ToL1Address         Variable
 	NftIndex            Variable
 	NftContentHash      [2]Variable
-	CreatorTreasuryRate Variable
+	RoyaltyRate         Variable
 	GasAccountIndex     Variable
 	GasFeeAssetId       Variable
 	GasFeeAssetAmount   Variable
 	CollectionId        Variable
 	ExpiredAt           Variable
+	NftContentType      Variable
 }
 
 func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 	return MintNftTxConstraints{
 		CreatorAccountIndex: ZeroInt,
 		ToAccountIndex:      ZeroInt,
-		ToAccountNameHash:   ZeroInt,
+		ToL1Address:         ZeroInt,
 		NftIndex:            ZeroInt,
 		NftContentHash:      [2]Variable{ZeroInt, ZeroInt},
-		CreatorTreasuryRate: ZeroInt,
+		RoyaltyRate:         ZeroInt,
 		GasAccountIndex:     ZeroInt,
 		GasFeeAssetId:       ZeroInt,
 		GasFeeAssetAmount:   ZeroInt,
 		CollectionId:        ZeroInt,
 		ExpiredAt:           ZeroInt,
+		NftContentType:      ZeroInt,
 	}
 }
 
@@ -69,15 +72,16 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 	witness = MintNftTxConstraints{
 		CreatorAccountIndex: tx.CreatorAccountIndex,
 		ToAccountIndex:      tx.ToAccountIndex,
-		ToAccountNameHash:   tx.ToAccountNameHash,
+		ToL1Address:         tx.ToL1Address,
 		NftIndex:            tx.NftIndex,
 		NftContentHash:      GetNftContentHashFromBytes(tx.NftContentHash),
-		CreatorTreasuryRate: tx.CreatorTreasuryRate,
+		RoyaltyRate:         tx.RoyaltyRate,
 		GasAccountIndex:     tx.GasAccountIndex,
 		GasFeeAssetId:       tx.GasFeeAssetId,
 		GasFeeAssetAmount:   tx.GasFeeAssetAmount,
 		CollectionId:        tx.CollectionId,
 		ExpiredAt:           tx.ExpiredAt,
+		NftContentType:      tx.NftContentType,
 	}
 	return witness
 }
@@ -85,7 +89,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
 	return poseidon.Poseidon(api, ChainId, TxTypeMintNft, tx.CreatorAccountIndex, nonce, expiredAt,
 		tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.ToAccountIndex,
-		tx.CreatorTreasuryRate, tx.CollectionId, tx.ToAccountNameHash)
+		tx.RoyaltyRate, tx.CollectionId, tx.ToL1Address, tx.NftContentType)
 }
 
 func VerifyMintNftTx(
@@ -103,8 +107,8 @@ func VerifyMintNftTx(
 	// account index
 	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[fromAccount].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
-	// account name hash
-	IsVariableEqual(api, flag, tx.ToAccountNameHash, accountsBefore[toAccount].AccountNameHash)
+	// account address
+	IsVariableEqual(api, flag, tx.ToL1Address, accountsBefore[toAccount].L1Address)
 	// content hash
 	isZero := api.Or(api.IsZero(tx.NftContentHash[0]), api.IsZero(tx.NftContentHash[1]))
 	IsVariableEqual(api, flag, isZero, 0)
@@ -115,5 +119,7 @@ func VerifyMintNftTx(
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	// collection id should be less than creator's collection nonce
 	IsVariableLess(api, flag, tx.CollectionId, accountsBefore[fromAccount].CollectionNonce)
+	//NftContentType
+	IsVariableLessOrEqual(api, flag, 0, tx.NftContentType)
 	return pubData
 }
