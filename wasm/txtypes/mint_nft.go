@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	curve "github.com/bnb-chain/zkbnb-crypto/ecc/ztwistededwards/tebn254"
-	"github.com/bnb-chain/zkbnb-crypto/ffmath"
+	"github.com/bnb-chain/zkbnb-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
 	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
@@ -34,10 +34,11 @@ import (
 type MintNftSegmentFormat struct {
 	CreatorAccountIndex int64  `json:"creator_account_index"`
 	ToAccountIndex      int64  `json:"to_account_index"`
-	ToAccountNameHash   string `json:"to_account_name_hash"`
+	ToL1Address         string `json:"to_l1_address"`
+	NftContentType      int64  `json:"nft_content_type"`
 	NftContentHash      string `json:"nft_content_hash"`
 	NftCollectionId     int64  `json:"nft_collection_id"`
-	CreatorTreasuryRate int64  `json:"creator_treasury_rate"`
+	RoyaltyRate         int64  `json:"royalty_rate"`
 	GasAccountIndex     int64  `json:"gas_account_index"`
 	GasFeeAssetId       int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount   string `json:"gas_fee_asset_amount"`
@@ -61,10 +62,11 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 	txInfo = &MintNftTxInfo{
 		CreatorAccountIndex: segmentFormat.CreatorAccountIndex,
 		ToAccountIndex:      segmentFormat.ToAccountIndex,
-		ToAccountNameHash:   segmentFormat.ToAccountNameHash,
+		ToL1Address:         segmentFormat.ToL1Address,
+		NftContentType:      segmentFormat.NftContentType,
 		NftContentHash:      segmentFormat.NftContentHash,
 		NftCollectionId:     segmentFormat.NftCollectionId,
-		CreatorTreasuryRate: segmentFormat.CreatorTreasuryRate,
+		RoyaltyRate:         segmentFormat.RoyaltyRate,
 		GasAccountIndex:     segmentFormat.GasAccountIndex,
 		GasFeeAssetId:       segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount:   gasFeeAmount,
@@ -94,11 +96,12 @@ func ConstructMintNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *MintNftT
 type MintNftTxInfo struct {
 	CreatorAccountIndex int64
 	ToAccountIndex      int64
-	ToAccountNameHash   string
+	ToL1Address         string
 	NftIndex            int64
 	NftContentHash      string
+	NftContentType      int64
 	NftCollectionId     int64
-	CreatorTreasuryRate int64
+	RoyaltyRate         int64
 	GasAccountIndex     int64
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   *big.Int
@@ -109,6 +112,7 @@ type MintNftTxInfo struct {
 	MutableAttributes   string
 	IpnsName            string
 	IpnsId              string
+	L1Sig               string
 }
 
 func (txInfo *MintNftTxInfo) Validate() error {
@@ -128,15 +132,10 @@ func (txInfo *MintNftTxInfo) Validate() error {
 		return ErrToAccountIndexTooHigh
 	}
 
-	// ToAccountNameHash
-	if !IsValidHash(txInfo.ToAccountNameHash) {
-		return ErrToAccountNameHashInvalid
+	// ToL1Address
+	if !IsValidHash(txInfo.ToL1Address) {
+		return ErrToL1AddressInvalid
 	}
-
-	// NftContentHash
-	//if !IsValidHash(txInfo.NftContentHash) {
-	//	return ErrNftContentHashInvalid
-	//}
 
 	// NftCollectionId
 	if txInfo.NftCollectionId < minCollectionId {
@@ -146,12 +145,12 @@ func (txInfo *MintNftTxInfo) Validate() error {
 		return ErrNftCollectionIdTooHigh
 	}
 
-	// CreatorTreasuryRate
-	if txInfo.CreatorTreasuryRate < minTreasuryRate {
-		return ErrCreatorTreasuryRateTooLow
+	// RoyaltyRate
+	if txInfo.RoyaltyRate < minRate {
+		return ErrRoyaltyRateTooLow
 	}
-	if txInfo.CreatorTreasuryRate > maxTreasuryRate {
-		return ErrCreatorTreasuryRateTooHigh
+	if txInfo.RoyaltyRate > maxRate {
+		return ErrRoyaltyRateTooHigh
 	}
 
 	// GasAccountIndex
@@ -180,12 +179,21 @@ func (txInfo *MintNftTxInfo) Validate() error {
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
 		return ErrGasFeeAssetAmountTooHigh
 	}
-
+	gasFeeAmount, _ := CleanPackedFee(txInfo.GasFeeAssetAmount)
+	if txInfo.GasFeeAssetAmount.Cmp(gasFeeAmount) != 0 {
+		return ErrGasFeeAssetAmountPrecision
+	}
 	// Nonce
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
 	}
-
+	// NftCollectionId
+	if txInfo.NftContentType < minNftContentType {
+		return ErrNftContentTypeTooLow
+	}
+	if txInfo.NftContentType > maxNftContentType {
+		return ErrNftContentTypeTooHigh
+	}
 	return nil
 }
 
@@ -217,8 +225,30 @@ func (txInfo *MintNftTxInfo) GetTxType() int {
 	return TxTypeMintNft
 }
 
+func (txInfo *MintNftTxInfo) GetPubKey() string {
+	return ""
+}
+
+func (txInfo *MintNftTxInfo) GetAccountIndex() int64 {
+	return txInfo.CreatorAccountIndex
+}
+
 func (txInfo *MintNftTxInfo) GetFromAccountIndex() int64 {
 	return txInfo.CreatorAccountIndex
+}
+
+func (txInfo *MintNftTxInfo) GetToAccountIndex() int64 {
+	return txInfo.ToAccountIndex
+}
+
+func (txInfo *MintNftTxInfo) GetL1SignatureBody() string {
+	signatureBody := fmt.Sprintf(signature.SignatureTemplateMintNft, txInfo.ToL1Address,
+		txInfo.ToAccountIndex, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	return signatureBody
+}
+
+func (txInfo *MintNftTxInfo) GetL1AddressBySignature() common.Address {
+	return signature.CalculateL1AddressBySignature(txInfo.GetL1SignatureBody(), txInfo.L1Sig)
 }
 
 func (txInfo *MintNftTxInfo) GetNonce() int64 {
@@ -236,8 +266,8 @@ func (txInfo *MintNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) {
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeMintNft, txInfo.CreatorAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.CreatorTreasuryRate, txInfo.NftCollectionId,
-		ffmath.Mod(new(big.Int).SetBytes(common.FromHex(txInfo.ToAccountNameHash)), curve.Modulus))
+		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.RoyaltyRate, txInfo.NftCollectionId,
+		PaddingAddressToBytes20(txInfo.ToL1Address), txInfo.NftContentType)
 	return msgHash, nil
 }
 

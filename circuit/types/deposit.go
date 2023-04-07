@@ -22,34 +22,34 @@ import (
 )
 
 type DepositTx struct {
-	AccountIndex    int64
-	AccountNameHash []byte
-	AssetId         int64
-	AssetAmount     *big.Int
+	AccountIndex int64
+	L1Address    []byte
+	AssetId      int64
+	AssetAmount  *big.Int
 }
 
 type DepositTxConstraints struct {
-	AccountIndex    Variable
-	AccountNameHash Variable
-	AssetId         Variable
-	AssetAmount     Variable
+	AccountIndex Variable
+	L1Address    Variable
+	AssetId      Variable
+	AssetAmount  Variable
 }
 
 func EmptyDepositTxWitness() (witness DepositTxConstraints) {
 	return DepositTxConstraints{
-		AccountIndex:    ZeroInt,
-		AccountNameHash: ZeroInt,
-		AssetId:         ZeroInt,
-		AssetAmount:     ZeroInt,
+		AccountIndex: ZeroInt,
+		L1Address:    ZeroInt,
+		AssetId:      ZeroInt,
+		AssetAmount:  ZeroInt,
 	}
 }
 
 func SetDepositTxWitness(tx *DepositTx) (witness DepositTxConstraints) {
 	witness = DepositTxConstraints{
-		AccountIndex:    tx.AccountIndex,
-		AccountNameHash: tx.AccountNameHash,
-		AssetId:         tx.AssetId,
-		AssetAmount:     tx.AssetAmount,
+		AccountIndex: tx.AccountIndex,
+		L1Address:    tx.L1Address,
+		AssetId:      tx.AssetId,
+		AssetAmount:  tx.AssetAmount,
 	}
 	return witness
 }
@@ -61,7 +61,9 @@ func VerifyDepositTx(
 ) (pubData [PubDataBitsSizePerTx]Variable) {
 	pubData = CollectPubDataFromDeposit(api, tx)
 	// verify params
-	IsVariableEqual(api, flag, tx.AccountNameHash, accountsBefore[0].AccountNameHash)
+	isNewAccount := api.IsZero(api.Cmp(accountsBefore[0].L1Address, ZeroInt))
+	address := api.Select(isNewAccount, tx.L1Address, accountsBefore[0].L1Address)
+	IsVariableEqual(api, flag, tx.L1Address, address)
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	return pubData

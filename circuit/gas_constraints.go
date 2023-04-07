@@ -27,7 +27,7 @@ import (
 
 type GasAccountConstraints struct {
 	AccountIndex    Variable
-	AccountNameHash Variable
+	L1Address       Variable
 	AccountPk       eddsa.PublicKey
 	Nonce           Variable
 	CollectionNonce Variable
@@ -53,7 +53,7 @@ func VerifyGas(
 	newAccountAssetsRoot := gas.AccountInfoBefore.AssetRoot
 
 	// check the existence of gas account
-	types.IsVariableDifferent(api, needGas, gas.AccountInfoBefore.AccountNameHash, types.ZeroInt)
+	types.IsVariableDifferent(api, needGas, gas.AccountInfoBefore.L1Address, types.ZeroInt)
 
 	gasAssetCount := len(gasAssetDeltas)
 	for i := 0; i < gasAssetCount; i++ {
@@ -78,7 +78,7 @@ func VerifyGas(
 	// verify account node hash
 	accountIndexMerkleHelper := AccountIndexToMerkleHelper(api, gas.AccountInfoBefore.AccountIndex)
 	accountNodeHash := types.MimcWithGkr(api,
-		gas.AccountInfoBefore.AccountNameHash,
+		gas.AccountInfoBefore.L1Address,
 		gas.AccountInfoBefore.AccountPk.A.X,
 		gas.AccountInfoBefore.AccountPk.A.Y,
 		gas.AccountInfoBefore.Nonce,
@@ -94,7 +94,7 @@ func VerifyGas(
 		accountIndexMerkleHelper,
 	)
 	accountNodeHash = types.MimcWithGkr(api,
-		gas.AccountInfoBefore.AccountNameHash,
+		gas.AccountInfoBefore.L1Address,
 		gas.AccountInfoBefore.AccountPk.A.X,
 		gas.AccountInfoBefore.AccountPk.A.Y,
 		gas.AccountInfoBefore.Nonce,
@@ -113,7 +113,7 @@ func GetZeroGasConstraints(gasAssets []int64) GasConstraints {
 	// set witness
 	zeroAccountConstraint := GasAccountConstraints{
 		AccountIndex:    0,
-		AccountNameHash: 0,
+		L1Address:       0,
 		AccountPk:       types.EmptyPublicKeyWitness(),
 		Nonce:           0,
 		CollectionNonce: 0,
@@ -153,7 +153,7 @@ func SetGasAccountWitness(account *types.GasAccount, assetCount int) (witness Ga
 	// set witness
 	witness = GasAccountConstraints{
 		AccountIndex:    account.AccountIndex,
-		AccountNameHash: account.AccountNameHash,
+		L1Address:       account.L1Address,
 		AccountPk:       types.SetPubKeyWitness(account.AccountPk),
 		Nonce:           account.Nonce,
 		CollectionNonce: account.CollectionNonce,

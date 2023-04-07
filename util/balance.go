@@ -2,6 +2,7 @@ package util
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math/big"
 	"strconv"
@@ -103,4 +104,32 @@ func CleanPackedFee(amount *big.Int) (nAmount *big.Int, err error) {
 	}
 	nAmount = ffmath.Multiply(oAmount, new(big.Int).Exp(big.NewInt(10), big.NewInt(exponent), nil))
 	return nAmount, nil
+}
+
+func UnpackAmount(packedAmount *big.Int) (nAmount *big.Int, err error) {
+	if packedAmount.Cmp(big.NewInt(0)) == 0 {
+		return big.NewInt(0), nil
+	}
+	amountBits := fmt.Sprintf("%b", packedAmount)
+	mantissa, success := new(big.Int).SetString(amountBits[:len(amountBits)-5], 2)
+	if !success {
+		return nil, fmt.Errorf("[UnpackAmount] failed to convert to bigint，%s", packedAmount.String())
+	}
+	exponentBigInt, success := new(big.Int).SetString(amountBits[len(amountBits)-5:], 2)
+	if !success {
+		return nil, fmt.Errorf("[UnpackAmount] failed to convert to bigint，%s", packedAmount.String())
+	}
+	exponent := exponentBigInt.Int64()
+	for i := 0; i < 32; i++ {
+		isRemain := exponent != 0
+		if isRemain {
+			mantissa = ffmath.Multiply(mantissa, new(big.Int).SetInt64(10))
+			exponent = exponent - 1
+		}
+	}
+	return mantissa, nil
+}
+
+func UnpackFee(packedFee *big.Int) (nAmount *big.Int, err error) {
+	return UnpackAmount(packedFee)
 }

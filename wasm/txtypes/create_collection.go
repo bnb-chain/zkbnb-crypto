@@ -21,6 +21,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bnb-chain/zkbnb-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
@@ -96,6 +99,7 @@ type CreateCollectionTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+	L1Sig             string
 }
 
 func (txInfo *CreateCollectionTxInfo) Validate() error {
@@ -146,12 +150,14 @@ func (txInfo *CreateCollectionTxInfo) Validate() error {
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
 		return ErrGasFeeAssetAmountTooHigh
 	}
-
+	gasFeeAmount, _ := CleanPackedFee(txInfo.GasFeeAssetAmount)
+	if txInfo.GasFeeAssetAmount.Cmp(gasFeeAmount) != 0 {
+		return ErrGasFeeAssetAmountPrecision
+	}
 	// Nonce
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
 	}
-
 	return nil
 }
 
@@ -183,8 +189,30 @@ func (txInfo *CreateCollectionTxInfo) GetTxType() int {
 	return TxTypeCreateCollection
 }
 
+func (txInfo *CreateCollectionTxInfo) GetPubKey() string {
+	return ""
+}
+
+func (txInfo *CreateCollectionTxInfo) GetAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *CreateCollectionTxInfo) GetFromAccountIndex() int64 {
 	return txInfo.AccountIndex
+}
+
+func (txInfo *CreateCollectionTxInfo) GetToAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
+func (txInfo *CreateCollectionTxInfo) GetL1SignatureBody() string {
+	signatureBody := fmt.Sprintf(signature.SignatureTemplateCreateCollection, txInfo.AccountIndex,
+		txInfo.Name, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	return signatureBody
+}
+
+func (txInfo *CreateCollectionTxInfo) GetL1AddressBySignature() common.Address {
+	return signature.CalculateL1AddressBySignature(txInfo.GetL1SignatureBody(), txInfo.L1Sig)
 }
 
 func (txInfo *CreateCollectionTxInfo) GetNonce() int64 {

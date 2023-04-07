@@ -21,6 +21,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bnb-chain/zkbnb-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
@@ -101,6 +104,7 @@ type WithdrawTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+	L1Sig             string
 }
 
 func (txInfo *WithdrawTxInfo) Validate() error {
@@ -127,6 +131,10 @@ func (txInfo *WithdrawTxInfo) Validate() error {
 	if txInfo.AssetAmount.Cmp(maxAssetAmount) > 0 {
 		return ErrAssetAmountTooHigh
 	}
+	assetAmount, _ := CleanPackedAmount(txInfo.AssetAmount)
+	if txInfo.AssetAmount.Cmp(assetAmount) != 0 {
+		return ErrAssetAmountPrecision
+	}
 
 	if txInfo.GasAccountIndex < minAccountIndex {
 		return ErrGasAccountIndexTooLow
@@ -151,7 +159,10 @@ func (txInfo *WithdrawTxInfo) Validate() error {
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
 		return ErrGasFeeAssetAmountTooHigh
 	}
-
+	gasFeeAmount, _ := CleanPackedFee(txInfo.GasFeeAssetAmount)
+	if txInfo.GasFeeAssetAmount.Cmp(gasFeeAmount) != 0 {
+		return ErrGasFeeAssetAmountPrecision
+	}
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
 	}
@@ -160,7 +171,6 @@ func (txInfo *WithdrawTxInfo) Validate() error {
 	if !IsValidL1Address(txInfo.ToAddress) {
 		return ErrToAddressInvalid
 	}
-
 	return nil
 }
 
@@ -192,8 +202,30 @@ func (txInfo *WithdrawTxInfo) GetTxType() int {
 	return TxTypeWithdraw
 }
 
+func (txInfo *WithdrawTxInfo) GetPubKey() string {
+	return ""
+}
+
+func (txInfo *WithdrawTxInfo) GetAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *WithdrawTxInfo) GetFromAccountIndex() int64 {
 	return txInfo.FromAccountIndex
+}
+
+func (txInfo *WithdrawTxInfo) GetToAccountIndex() int64 {
+	return NilAccountIndex
+}
+
+func (txInfo *WithdrawTxInfo) GetL1SignatureBody() string {
+	signatureBody := fmt.Sprintf(signature.SignatureTemplateWithdrawal, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.ToAddress,
+		util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	return signatureBody
+}
+
+func (txInfo *WithdrawTxInfo) GetL1AddressBySignature() common.Address {
+	return signature.CalculateL1AddressBySignature(txInfo.GetL1SignatureBody(), txInfo.L1Sig)
 }
 
 func (txInfo *WithdrawTxInfo) GetNonce() int64 {
@@ -211,7 +243,7 @@ func (txInfo *WithdrawTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err error) 
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeWithdraw, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt, txInfo.GasFeeAssetId, packedFee,
-		txInfo.AssetId, txInfo.AssetAmount, PaddingAddressToBytes32(txInfo.ToAddress))
+		txInfo.AssetId, txInfo.AssetAmount, PaddingAddressToBytes20(txInfo.ToAddress))
 	return msgHash, nil
 }
 

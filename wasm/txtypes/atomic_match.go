@@ -20,6 +20,7 @@ package txtypes
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
@@ -111,8 +112,9 @@ type AtomicMatchTxInfo struct {
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
-	CreatorAmount     *big.Int
-	TreasuryAmount    *big.Int
+	RoyaltyAmount     *big.Int
+	BuyChannelAmount  *big.Int
+	SellChannelAmount *big.Int
 	Nonce             int64
 	ExpiredAt         int64
 	Sig               []byte
@@ -169,7 +171,10 @@ func (txInfo *AtomicMatchTxInfo) Validate() error {
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
 		return ErrGasFeeAssetAmountTooHigh
 	}
-
+	gasFeeAmount, _ := CleanPackedFee(txInfo.GasFeeAssetAmount)
+	if txInfo.GasFeeAssetAmount.Cmp(gasFeeAmount) != 0 {
+		return ErrGasFeeAssetAmountPrecision
+	}
 	// Nonce
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
@@ -207,8 +212,28 @@ func (txInfo *AtomicMatchTxInfo) GetTxType() int {
 	return TxTypeAtomicMatch
 }
 
-func (txInfo *AtomicMatchTxInfo) GetFromAccountIndex() int64 {
+func (txInfo *AtomicMatchTxInfo) GetPubKey() string {
+	return ""
+}
+
+func (txInfo *AtomicMatchTxInfo) GetAccountIndex() int64 {
 	return txInfo.AccountIndex
+}
+
+func (txInfo *AtomicMatchTxInfo) GetFromAccountIndex() int64 {
+	return txInfo.SellOffer.AccountIndex
+}
+
+func (txInfo *AtomicMatchTxInfo) GetToAccountIndex() int64 {
+	return txInfo.BuyOffer.AccountIndex
+}
+
+func (txInfo *AtomicMatchTxInfo) GetL1SignatureBody() string {
+	return ""
+}
+
+func (txInfo *AtomicMatchTxInfo) GetL1AddressBySignature() common.Address {
+	return [20]byte{}
 }
 
 func (txInfo *AtomicMatchTxInfo) GetNonce() int64 {
@@ -225,6 +250,12 @@ func (txInfo *AtomicMatchTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
 		return nil, err
 	}
+	packedBuyProtocolAmount, err := ToPackedAmount(txInfo.BuyOffer.ProtocolAmount)
+	if err != nil {
+		log.Println("[ComputeTransferMsgHash] packedBuyProtocolAmount unable to packed amount:", err.Error())
+		return nil, err
+	}
+
 	packedSellAmount, err := ToPackedAmount(txInfo.SellOffer.AssetAmount)
 	if err != nil {
 		log.Println("[ComputeTransferMsgHash] unable to packed amount:", err.Error())
@@ -250,10 +281,12 @@ func (txInfo *AtomicMatchTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 	}
 	buyOfferHash := Poseidon(txInfo.BuyOffer.Type, txInfo.BuyOffer.OfferId, txInfo.BuyOffer.AccountIndex, txInfo.BuyOffer.NftIndex,
 		txInfo.BuyOffer.AssetId, packedBuyAmount, txInfo.BuyOffer.ListedAt, txInfo.BuyOffer.ExpiredAt,
-		buyerSig.R.X.Marshal(), buyerSig.R.Y.Marshal(), buyerSig.S[:])
+		buyerSig.R.X.Marshal(), buyerSig.R.Y.Marshal(), buyerSig.S[:], txInfo.BuyOffer.RoyaltyRate, txInfo.BuyOffer.ChannelAccountIndex,
+		txInfo.BuyOffer.ChannelRate, txInfo.BuyOffer.ProtocolRate, packedBuyProtocolAmount)
 	sellOfferHash := Poseidon(txInfo.SellOffer.Type, txInfo.SellOffer.OfferId, txInfo.SellOffer.AccountIndex, txInfo.SellOffer.NftIndex,
 		txInfo.SellOffer.AssetId, packedSellAmount, txInfo.SellOffer.ListedAt, txInfo.SellOffer.ExpiredAt,
-		sellerSig.R.X.Marshal(), sellerSig.R.Y.Marshal(), sellerSig.S[:])
+		sellerSig.R.X.Marshal(), sellerSig.R.Y.Marshal(), sellerSig.S[:], txInfo.SellOffer.ChannelAccountIndex,
+		txInfo.SellOffer.ChannelRate, 0)
 	msgHash = Poseidon(ChainId, TxTypeAtomicMatch, txInfo.AccountIndex, txInfo.Nonce, txInfo.ExpiredAt, txInfo.GasFeeAssetId, packedFee, buyOfferHash, sellOfferHash)
 	return msgHash, nil
 }

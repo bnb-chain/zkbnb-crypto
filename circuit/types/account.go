@@ -28,7 +28,7 @@ import (
 
 type Account struct {
 	AccountIndex    int64
-	AccountNameHash []byte
+	L1Address       []byte
 	AccountPk       *eddsa.PublicKey
 	Nonce           int64
 	CollectionNonce int64
@@ -38,8 +38,8 @@ type Account struct {
 
 func EmptyAccount(accountIndex int64, assetRoot []byte) *Account {
 	return &Account{
-		AccountIndex:    accountIndex,
-		AccountNameHash: []byte{},
+		AccountIndex: accountIndex,
+		L1Address:    []byte{},
 		AccountPk: &eddsa.PublicKey{
 			A: curve.Point{
 				X: fr.NewElement(0),

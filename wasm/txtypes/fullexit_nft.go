@@ -2,6 +2,7 @@ package txtypes
 
 import (
 	"errors"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"math/big"
 )
@@ -10,16 +11,16 @@ type FullExitNftTxInfo struct {
 	TxType uint8
 
 	// Get from layer1 events.
-	NftIndex        int64
-	AccountNameHash []byte
-
+	NftIndex     int64
+	L1Address    string
+	AccountIndex int64
 	// Set by layer2.
-	AccountIndex           int64
-	CreatorAccountIndex    int64
-	CreatorTreasuryRate    int64
-	CreatorAccountNameHash []byte
-	NftContentHash         []byte
-	CollectionId           int64
+	CreatorAccountIndex int64
+	RoyaltyRate         int64
+	CreatorL1Address    string
+	NftContentHash      []byte
+	NftContentType      int64
+	CollectionId        int64
 }
 
 func (txInfo *FullExitNftTxInfo) GetTxType() int {
@@ -34,8 +35,28 @@ func (txInfo *FullExitNftTxInfo) VerifySignature(pubKey string) error {
 	return nil
 }
 
+func (txInfo *FullExitNftTxInfo) GetPubKey() string {
+	return ""
+}
+
+func (txInfo *FullExitNftTxInfo) GetAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
 func (txInfo *FullExitNftTxInfo) GetFromAccountIndex() int64 {
-	return NilAccountIndex
+	return txInfo.AccountIndex
+}
+
+func (txInfo *FullExitNftTxInfo) GetToAccountIndex() int64 {
+	return txInfo.AccountIndex
+}
+
+func (txInfo *FullExitNftTxInfo) GetL1SignatureBody() string {
+	return ""
+}
+
+func (txInfo *FullExitNftTxInfo) GetL1AddressBySignature() common.Address {
+	return [20]byte{}
 }
 
 func (txInfo *FullExitNftTxInfo) GetNonce() int64 {

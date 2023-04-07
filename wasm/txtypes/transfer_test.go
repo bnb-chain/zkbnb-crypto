@@ -199,9 +199,9 @@ func TestValidateTransferTxInfo(t *testing.T) {
 				Nonce:             -1,
 			},
 		},
-		// ToAccountNameHash
+		// ToL1Address
 		{
-			fmt.Errorf("ToAccountNameHash(0000000000000000000000000000000000000000000000000000000000000000) is invalid"),
+			fmt.Errorf("ToL1Address(0000000000000000000000000000000000000000000000000000000000000000) is invalid"),
 			&TransferTxInfo{
 				FromAccountIndex:  1,
 				ToAccountIndex:    1,
@@ -212,11 +212,11 @@ func TestValidateTransferTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(100),
 				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             1,
-				ToAccountNameHash: "0000000000000000000000000000000000000000000000000000000000000000",
+				ToL1Address:       "0000000000000000000000000000000000000000000000000000000000000000",
 			},
 		},
 		{
-			fmt.Errorf("ToAccountNameHash(01010101010101010101010101010101010101010101010101010101010101) is invalid"),
+			fmt.Errorf("ToL1Address(01010101010101010101010101010101010101010101010101010101010101) is invalid"),
 			&TransferTxInfo{
 				FromAccountIndex:  1,
 				ToAccountIndex:    1,
@@ -227,7 +227,7 @@ func TestValidateTransferTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(100),
 				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             1,
-				ToAccountNameHash: "01010101010101010101010101010101010101010101010101010101010101",
+				ToL1Address:       "01010101010101010101010101010101010101010101010101010101010101",
 			},
 		},
 		// CallDataHash
@@ -243,7 +243,7 @@ func TestValidateTransferTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(100),
 				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             1,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:       hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				CallDataHash:      bytes.Repeat([]byte{0}, 32),
 			},
 		},
@@ -259,7 +259,7 @@ func TestValidateTransferTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(100),
 				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             1,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:       hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				CallDataHash:      bytes.Repeat([]byte{1}, 31),
 			},
 		},
@@ -276,7 +276,7 @@ func TestValidateTransferTxInfo(t *testing.T) {
 				GasFeeAssetAmount: big.NewInt(100),
 				ExpiredAt:         time.Now().Add(time.Hour).UnixMilli(),
 				Nonce:             1,
-				ToAccountNameHash: hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
+				ToL1Address:       hex.EncodeToString(bytes.Repeat([]byte{1}, 32)),
 				CallDataHash:      bytes.Repeat([]byte{1}, 32),
 			},
 		},

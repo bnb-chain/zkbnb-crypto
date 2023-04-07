@@ -21,6 +21,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bnb-chain/zkbnb-crypto/util"
+	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
+	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
 	"math/big"
@@ -30,8 +33,7 @@ import (
 
 type TransferNftSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
-	ToAccountIndex    int64  `json:"to_account_index"`
-	ToAccountNameHash string `json:"to_account_name"`
+	ToL1Address       string `json:"to_l1_address"`
 	NftIndex          int64  `json:"nft_index"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
@@ -56,8 +58,7 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 	gasFeeAmount, _ = CleanPackedAmount(gasFeeAmount)
 	txInfo = &TransferNftTxInfo{
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
-		ToAccountIndex:    segmentFormat.ToAccountIndex,
-		ToAccountNameHash: segmentFormat.ToAccountNameHash,
+		ToL1Address:       segmentFormat.ToL1Address,
 		NftIndex:          segmentFormat.NftIndex,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
@@ -91,7 +92,7 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 type TransferNftTxInfo struct {
 	FromAccountIndex  int64
 	ToAccountIndex    int64
-	ToAccountNameHash string
+	ToL1Address       string
 	NftIndex          int64
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
@@ -101,6 +102,7 @@ type TransferNftTxInfo struct {
 	ExpiredAt         int64
 	Nonce             int64
 	Sig               []byte
+	L1Sig             string
 }
 
 func (txInfo *TransferNftTxInfo) Validate() error {
@@ -112,17 +114,16 @@ func (txInfo *TransferNftTxInfo) Validate() error {
 		return ErrFromAccountIndexTooHigh
 	}
 
-	// ToAccountIndex
-	if txInfo.ToAccountIndex < minAccountIndex {
-		return ErrToAccountIndexTooLow
+	if txInfo.ToAccountIndex < minAccountIndex-1 {
+		return ErrFromAccountIndexTooLow
 	}
 	if txInfo.ToAccountIndex > maxAccountIndex {
-		return ErrToAccountIndexTooHigh
+		return ErrFromAccountIndexTooHigh
 	}
 
-	// ToAccountNameHash
-	if !IsValidHash(txInfo.ToAccountNameHash) {
-		return ErrToAccountNameHashInvalid
+	// ToL1Address
+	if !IsValidHash(txInfo.ToL1Address) {
+		return ErrToL1AddressInvalid
 	}
 
 	// NftIndex
@@ -159,6 +160,15 @@ func (txInfo *TransferNftTxInfo) Validate() error {
 	if txInfo.GasFeeAssetAmount.Cmp(maxPackedFeeAmount) > 0 {
 		return ErrGasFeeAssetAmountTooHigh
 	}
+	gasFeeAmount, _ := CleanPackedFee(txInfo.GasFeeAssetAmount)
+	if txInfo.GasFeeAssetAmount.Cmp(gasFeeAmount) != 0 {
+		return ErrGasFeeAssetAmountPrecision
+	}
+
+	// CallData
+	if len(txInfo.CallData) > maxLength {
+		return ErrCallDataInvalid
+	}
 
 	// CallDataHash
 	if !IsValidHashBytes(txInfo.CallDataHash) {
@@ -169,7 +179,6 @@ func (txInfo *TransferNftTxInfo) Validate() error {
 	if txInfo.Nonce < minNonce {
 		return ErrNonceTooLow
 	}
-
 	return nil
 }
 
@@ -201,8 +210,30 @@ func (txInfo *TransferNftTxInfo) GetTxType() int {
 	return TxTypeTransferNft
 }
 
+func (txInfo *TransferNftTxInfo) GetPubKey() string {
+	return ""
+}
+
+func (txInfo *TransferNftTxInfo) GetAccountIndex() int64 {
+	return txInfo.FromAccountIndex
+}
+
 func (txInfo *TransferNftTxInfo) GetFromAccountIndex() int64 {
 	return txInfo.FromAccountIndex
+}
+
+func (txInfo *TransferNftTxInfo) GetToAccountIndex() int64 {
+	return txInfo.ToAccountIndex
+}
+
+func (txInfo *TransferNftTxInfo) GetL1SignatureBody() string {
+	signatureBody := fmt.Sprintf(signature.SignatureTemplateTransferNft, txInfo.NftIndex, txInfo.FromAccountIndex,
+		txInfo.ToL1Address, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	return signatureBody
+}
+
+func (txInfo *TransferNftTxInfo) GetL1AddressBySignature() common.Address {
+	return signature.CalculateL1AddressBySignature(txInfo.GetL1SignatureBody(), txInfo.L1Sig)
 }
 
 func (txInfo *TransferNftTxInfo) GetNonce() int64 {
@@ -220,7 +251,8 @@ func (txInfo *TransferNftTxInfo) Hash(hFunc hash.Hash) (msgHash []byte, err erro
 		return nil, err
 	}
 	msgHash = Poseidon(ChainId, TxTypeTransferNft, txInfo.FromAccountIndex, txInfo.Nonce, txInfo.ExpiredAt,
-		txInfo.GasFeeAssetId, packedFee, txInfo.ToAccountIndex, txInfo.NftIndex, txInfo.ToAccountNameHash, txInfo.CallDataHash)
+		txInfo.GasFeeAssetId, packedFee, txInfo.NftIndex, PaddingAddressToBytes20(txInfo.ToL1Address),
+		txInfo.CallDataHash)
 	return msgHash, nil
 }
 

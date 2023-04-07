@@ -39,14 +39,14 @@ const (
 	DefaultInt = int64(-1)
 
 	NbAccountAssetsPerAccount = 2
-	NbAccountsPerTx           = 4
+	NbAccountsPerTx           = 7
 	NbGasAssetsPerTx          = 2 // at most two assets transferred to gas account
 
 	NbRoots = 2 // account root, nft root
 
 	PubDataSizePerTx = 6
 
-	PubDataBitsSizePerTx = 968 // registerZNS
+	PubDataBitsSizePerTx = 968 // registerZNS to TxTypeChangePubKey
 
 	NftContentHashBytesSize = 16
 
@@ -57,7 +57,7 @@ const (
 
 const (
 	TxTypeEmptyTx = iota
-	TxTypeRegisterZns
+	TxTypeChangePubKey
 	TxTypeDeposit
 	TxTypeDepositNft
 	TxTypeTransfer

@@ -17,15 +17,16 @@
 
 package types
 
-func CollectPubDataFromRegisterZNS(api API, txInfo RegisterZnsTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+func CollectPubDataFromChangePubKey(api API, txInfo ChangePubKeyTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
 	currentOffset := 0
-	copyLittleEndianSliceAndShiftOffset(api, TxTypeRegisterZns, TxTypeBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, TxTypeChangePubKey, TxTypeBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountName, AccountNameBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountNameHash, HashBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.PubKey.A.X, PubkeyBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.PubKey.A.Y, PubkeyBitsSize, &currentOffset, pubData[:])
-
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.L1Address, AddressBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.Nonce, NonceBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetId, AssetIdBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetAmount, PackedFeeBitsSize, &currentOffset, pubData[:])
 	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
@@ -36,9 +37,9 @@ func CollectPubDataFromDeposit(api API, txInfo DepositTxConstraints) (pubData [P
 	currentOffset := 0
 	copyLittleEndianSliceAndShiftOffset(api, TxTypeDeposit, TxTypeBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.L1Address, AddressBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AssetId, AssetIdBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AssetAmount, StateAmountBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountNameHash, HashBitsSize, &currentOffset, pubData[:])
 
 	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
@@ -50,13 +51,14 @@ func CollectPubDataFromDepositNft(api API, txInfo DepositNftTxConstraints) (pubD
 	currentOffset := 0
 	copyLittleEndianSliceAndShiftOffset(api, TxTypeDepositNft, TxTypeBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftIndex, NftIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorAccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorTreasuryRate, CreatorTreasuryRateBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.RoyaltyRate, RoyaltyRateBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftIndex, NftIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.CollectionId, CollectionIdBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.L1Address, AddressBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentHash[0], HashBitsSize/2, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentHash[1], HashBitsSize/2, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountNameHash, HashBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentType, TxTypeBitsSize, &currentOffset, pubData[:])
 
 	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
@@ -69,6 +71,7 @@ func CollectPubDataFromTransfer(api API, txInfo TransferTxConstraints) (pubData 
 	copyLittleEndianSliceAndShiftOffset(api, TxTypeTransfer, TxTypeBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.FromAccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.ToAccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.ToL1Address, AddressBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AssetId, AssetIdBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AssetAmount, PackedAmountBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetId, AssetIdBitsSize, &currentOffset, pubData[:])
@@ -119,10 +122,11 @@ func CollectPubDataFromMintNft(api API, txInfo MintNftTxConstraints) (pubData [P
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftIndex, NftIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetId, AssetIdBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetAmount, PackedFeeBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorTreasuryRate, CreatorTreasuryRateBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.RoyaltyRate, RoyaltyRateBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.CollectionId, CollectionIdBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentHash[0], HashBitsSize/2, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentHash[1], HashBitsSize/2, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentType, TxTypeBitsSize, &currentOffset, pubData[:])
 
 	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
@@ -135,6 +139,7 @@ func CollectPubDataFromTransferNft(api API, txInfo TransferNftTxConstraints) (pu
 	copyLittleEndianSliceAndShiftOffset(api, TxTypeTransferNft, TxTypeBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.FromAccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.ToAccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.ToL1Address, AddressBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftIndex, NftIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetId, AssetIdBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetAmount, PackedFeeBitsSize, &currentOffset, pubData[:])
@@ -157,10 +162,14 @@ func CollectPubDataFromAtomicMatch(api API, txInfo AtomicMatchTxConstraints) (pu
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.BuyOffer.NftIndex, NftIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.SellOffer.AssetId, AssetIdBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.SellOffer.AssetAmount, PackedAmountBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorAmount, PackedAmountBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.TreasuryAmount, PackedAmountBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.RoyaltyAmount, PackedAmountBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetId, AssetIdBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetAmount, PackedFeeBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.BuyOffer.ProtocolAmount, PackedAmountBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.BuyOffer.ChannelAccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.BuyChannelAmount, PackedAmountBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.SellOffer.ChannelAccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.SellChannelAmount, PackedAmountBitsSize, &currentOffset, pubData[:])
 
 	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
@@ -187,15 +196,16 @@ func CollectPubDataFromWithdrawNft(api API, txInfo WithdrawNftTxConstraints) (pu
 	copyLittleEndianSliceAndShiftOffset(api, TxTypeWithdrawNft, TxTypeBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorAccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorTreasuryRate, FeeRateBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.RoyaltyRate, FeeRateBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftIndex, NftIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.CollectionId, CollectionIdBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.ToAddress, AddressBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetId, AssetIdBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetAmount, PackedFeeBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.ToAddress, AddressBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorL1Address, AddressBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentHash[0], HashBitsSize/2, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentHash[1], HashBitsSize/2, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorAccountNameHash, HashBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentType, TxTypeBitsSize, &currentOffset, pubData[:])
 
 	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
@@ -209,7 +219,7 @@ func CollectPubDataFromFullExit(api API, txInfo FullExitTxConstraints) (pubData 
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AssetId, AssetIdBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AssetAmount, StateAmountBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountNameHash, HashBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.L1Address, AddressBitsSize, &currentOffset, pubData[:])
 
 	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
@@ -222,14 +232,14 @@ func CollectPubDataFromFullExitNft(api API, txInfo FullExitNftTxConstraints) (pu
 	copyLittleEndianSliceAndShiftOffset(api, TxTypeFullExitNft, TxTypeBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorAccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorTreasuryRate, FeeRateBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.RoyaltyRate, FeeRateBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftIndex, NftIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.CollectionId, CollectionIdBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountNameHash, HashBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorAccountNameHash, HashBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.L1Address, AddressBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.CreatorL1Address, AddressBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentHash[0], HashBitsSize/2, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentHash[1], HashBitsSize/2, &currentOffset, pubData[:])
-
+	copyLittleEndianSliceAndShiftOffset(api, txInfo.NftContentType, TxTypeBitsSize, &currentOffset, pubData[:])
 	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
