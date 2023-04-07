@@ -7,7 +7,7 @@
 ### Exporting groth16 proving/verifying key, verifier contract
 
 ```shell
-go test -v ./circuit/solidity -run "^TestExportSol$" -timeout 600m -blocksizes=1 -batchsize=100000
+go test -v ./circuit/solidity -run "^TestExportSol$" -timeout 600m -blocksizes 1 -batchsize 100000
 ```
 After this command is finished, there will be generated files: 
 * R1CS files `*.r1cs.*.save` 

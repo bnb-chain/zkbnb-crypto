@@ -34,8 +34,11 @@ import (
 	"github.com/bnb-chain/zkbnb-crypto/circuit"
 )
 
-var optionalBlockSizes = flag.String("blocksizes", "1,10", "block size that will be used for proof generation and verification")
-var batchSize = flag.String("batchsize", "1000000", "number of r1cs files that will be used for proof generation")
+var (
+	optionalBlockSizes = flag.String("blocksizes", "1,10", "block size that will be used for proof generation and verification")
+	batchSize          = flag.String("batchsize", "100000", "number of r1cs files that will be used for proof generation")
+	bN                 = flag.Int("bN", 0, "bN is the bits of N Hashes, if we got 1024 hashes to prove, the bN should be set to 10")
+)
 
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := optionalBlockSizesInt()
@@ -50,26 +53,27 @@ func TestCompileCircuit(t *testing.T) {
 		}
 		blockConstraints.GasAssetIds = gasAssetIds
 		blockConstraints.GasAccountIndex = gasAccountIndex
-		blockConstraints.GKRs.AllocateGKRCircuit(circuit.BN)
+		bn := chooseBN(*bN, differentBlockSizes[i])
+		blockConstraints.GKRs.AllocateGKRCircuit(bn)
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGKRBN(circuit.BN))
+		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGKRBN(bn))
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("Number of constraints: %d\n", oR1cs.GetNbConstraints())
+		t.Logf("Number of constraints: %d\n", oR1cs.GetNbConstraints())
 	}
 }
 
 func TestExportSol(t *testing.T) {
-	exportSol(optionalBlockSizesInt())
+	exportSol(t, optionalBlockSizesInt())
 }
 
 func TestExportSolSmall(t *testing.T) {
 	differentBlockSizes := []int{1}
-	exportSol(differentBlockSizes)
+	exportSol(t, differentBlockSizes)
 }
 
-func exportSol(differentBlockSizes []int) {
+func exportSol(t *testing.T, differentBlockSizes []int) {
 	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	sessionName := "zkbnb"
@@ -84,16 +88,18 @@ func exportSol(differentBlockSizes []int) {
 		blockConstraints.GasAssetIds = gasAssetIds
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		blockConstraints.GKRs.AllocateGKRCircuit(circuit.BN)
-		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGKRBN(circuit.BN))
+		bn := chooseBN(*bN, differentBlockSizes[i])
+		t.Logf("block size: %d, bN: %d", differentBlockSizes[i], bn)
+		blockConstraints.GKRs.AllocateGKRCircuit(bn)
+		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGKRBN(bn))
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("Constraints num=%d\n", oR1cs.GetNbConstraints())
+		t.Logf("Constraints num=%d\n", oR1cs.GetNbConstraints())
 		nbPublicVariables := oR1cs.GetNbPublicVariables()
 		nbSecretVariables := oR1cs.GetNbSecretVariables()
 		nbInternalVariables := oR1cs.GetNbInternalVariables()
-		fmt.Printf("Variables total=%d, nbPublicVariables=%d, nbSecretVariables=%d, nbInternalVariables=%d\n",
+		t.Logf("Variables total=%d, nbPublicVariables=%d, nbSecretVariables=%d, nbInternalVariables=%d\n",
 			nbPublicVariables+nbSecretVariables+nbInternalVariables, nbPublicVariables, nbSecretVariables, nbInternalVariables)
 		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
 
@@ -155,4 +161,15 @@ func optionalBlockSizesInt() []int {
 		blockSizesInt[i] = v
 	}
 	return blockSizesInt
+}
+
+func chooseBN(bNFromFlag int, blockSize int) int {
+	if bNFromFlag != 0 {
+		return bNFromFlag
+	}
+	bn, err := circuit.ChooseBN(blockSize)
+	if err != nil {
+		panic(err)
+	}
+	return bn
 }
