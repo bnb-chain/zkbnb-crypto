@@ -142,6 +142,10 @@ func (txInfo *OfferTxInfo) Validate() error {
 		return ErrOfferIdTooLow
 	}
 
+	if txInfo.OfferId > maxOfferId {
+		return ErrOfferIdTooHigh
+	}
+
 	// AccountIndex
 	if txInfo.AccountIndex < minAccountIndex {
 		return ErrAccountIndexTooLow
