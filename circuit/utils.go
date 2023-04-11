@@ -89,7 +89,7 @@ func EmptySignatureWitness() (sig eddsa.Signature) {
 // ChooseBN chooses the bN value for the given block size.
 // The bN value stands for the bits of N Hashes, if we got 1024 hashes to prove, the bN should be set to 10.
 func ChooseBN(blockSize int) (int, error) {
-	bN := 10
+	bN := 11
 	switch {
 	case blockSize <= 1:
 		return bN, nil
