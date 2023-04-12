@@ -9,7 +9,7 @@ const (
 	// SignatureTemplateCreateCollection /* CreateCollection ${accountIndex} ${collectionName} \nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
 	SignatureTemplateCreateCollection = "CreateCollection %d %s \nFee: %s %d\nNonce: %d"
 	// SignatureTemplateMintNft /* MintNFT to: ${recipient.toLowerCase()}\nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
-	SignatureTemplateMintNft = "MintNFT to: %s \nFee: %s %d\nNonce: %d"
+	SignatureTemplateMintNft = "MintNFT to: %s\nFee: %s %d\nNonce: %d"
 	// SignatureTemplateTransferNft /* TransferNFT ${NftIndex} ${fromAccountIndex} to ${toAddress} \nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
 	SignatureTemplateTransferNft = "TransferNFT %d %d to %s \nFee: %s %d\nNonce: %d"
 	// SignatureTemplateWithdrawalNft /* Withdrawal ${tokenIndex} to: ${to.toLowerCase()}\nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
