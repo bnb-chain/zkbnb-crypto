@@ -123,7 +123,7 @@ func (txInfo *MintNftTxInfo) Validate() error {
 	}
 
 	// ToAccountIndex
-	if txInfo.ToAccountIndex < minAccountIndex {
+	if txInfo.ToAccountIndex < minAccountIndex-1 {
 		return ErrToAccountIndexTooLow
 	}
 	if txInfo.ToAccountIndex > maxAccountIndex {
