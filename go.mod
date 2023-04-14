@@ -35,6 +35,7 @@ require (
 )
 
 replace (
-	github.com/consensys/gnark => github.com/qct/gnark v0.0.0-20230411115109-41b6ab275825
-	github.com/consensys/gnark-crypto => github.com/bnb-chain/gnark-crypto v0.8.1-0.20230403113149-df3525fa8c14
+	github.com/consensys/gnark => github.com/qct/gnark v0.0.0-20230414105147-03b22f676235
+	//github.com/consensys/gnark => /Users/damon/GolandProjects/bnb-chain/gnark
+	github.com/consensys/gnark-crypto => github.com/bnb-chain/gnark-crypto v0.8.1-0.20230412061827-228166c33652
 )

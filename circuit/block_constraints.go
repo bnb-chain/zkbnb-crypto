@@ -52,7 +52,7 @@ func (circuit BlockConstraints) Define(api API) error {
 	if err != nil {
 		return err
 	}
-	circuit.GKRs.AssertValid(api, circuit.OldStateRoot, circuit.NewStateRoot)
+	circuit.GKRs.AssertValid(api, circuit.BlockCommitment)
 	return nil
 }
 

@@ -51,8 +51,8 @@ github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+Ce
 github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM=
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
 github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40/go.mod h1:8rLXio+WjiTceGBHIoTvn60HIbs7Hm7bcHjyrSqYB9c=
-github.com/bnb-chain/gnark-crypto v0.8.1-0.20230403113149-df3525fa8c14 h1:lOqa4fHavCKnvaJnwGB0qjVrJL5jvmy8KrEDpO7InpU=
-github.com/bnb-chain/gnark-crypto v0.8.1-0.20230403113149-df3525fa8c14/go.mod h1:a2DQL4+5ywF6safEeZFEPGRiiGbjzGFRUN2sg06VuU4=
+github.com/bnb-chain/gnark-crypto v0.8.1-0.20230412061827-228166c33652 h1:M0T89FK94h8iDt12anZE4D6YCWHMUJbOANVnjtwif7A=
+github.com/bnb-chain/gnark-crypto v0.8.1-0.20230412061827-228166c33652/go.mod h1:a2DQL4+5ywF6safEeZFEPGRiiGbjzGFRUN2sg06VuU4=
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
 github.com/btcsuite/btcd/btcec/v2 v2.2.0 h1:fzn1qaOt32TuLjFlkzYSsBC35Q3KUjT1SwPxiMSCF5k=
 github.com/btcsuite/btcd/btcec/v2 v2.2.0/go.mod h1:U7MHm051Al6XmscBQ0BoNydpOTsFAn707034b5nY8zU=
@@ -330,8 +330,8 @@ github.com/prometheus/procfs v0.0.0-20181005140218-185b4288413d/go.mod h1:c3At6R
 github.com/prometheus/procfs v0.0.2/go.mod h1:TjEm7ze935MbeOT/UhFTIMYKhuLP4wbCsTZCD3I8kEA=
 github.com/prometheus/tsdb v0.7.1 h1:YZcsG11NqnK4czYLrWd9mpEuAJIHVQLwdrleYfszMAA=
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
-github.com/qct/gnark v0.0.0-20230411115109-41b6ab275825 h1:1yFP5u7XH0jlldgSgfpbI1ORcf8WTpMUU7FL3PHO9ak=
-github.com/qct/gnark v0.0.0-20230411115109-41b6ab275825/go.mod h1:RKQzsMKbkBJ/ColFtJsXV4ReoyMKrDdBT6qggs7uu+A=
+github.com/qct/gnark v0.0.0-20230414105147-03b22f676235 h1:QFJBrFlvGuFU1IEuPqwaXOY9OScLI3nNyr6Ix9zRxqM=
+github.com/qct/gnark v0.0.0-20230414105147-03b22f676235/go.mod h1:9qvjCR/SzxLB/D/0VwsMnUZjLZbgJ2Dqyymh8NAKln8=
 github.com/retailnext/hllpp v1.0.1-0.20180308014038-101a6d2f8b52/go.mod h1:RDpi1RftBQPUCDRw6SmxeaREsAaRKnOclghuzp/WRzc=
 github.com/rjeczalik/notify v0.9.1/go.mod h1:rKwnCoCGeuQnwBtTSPL9Dad03Vh2n40ePRrjvIXnJho=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
