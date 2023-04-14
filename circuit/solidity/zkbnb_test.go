@@ -21,6 +21,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -34,6 +35,7 @@ import (
 )
 
 var optionalBlockSizes = flag.String("blocksizes", "1,10", "block size that will be used for proof generation and verification")
+var batchSize = flag.Int("batchsize", 100000, "number of constraints in r1cs file")
 
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := optionalBlockSizesInt()
@@ -49,7 +51,7 @@ func TestCompileCircuit(t *testing.T) {
 		blockConstraints.GasAssetIds = gasAssetIds
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
+		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		if err != nil {
 			panic(err)
 		}
@@ -80,20 +82,40 @@ func exportSol(differentBlockSizes []int) {
 		blockConstraints.GasAssetIds = gasAssetIds
 		blockConstraints.GasAccountIndex = gasAccountIndex
 		blockConstraints.Gas = circuit.GetZeroGasConstraints(gasAssetIds)
-		oR1cs, err := frontend.Compile(ecc.BN254, r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
+
+		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs())
 		fmt.Printf("Constraints num=%v\n", oR1cs.GetNbConstraints())
 		if err != nil {
 			panic(err)
 		}
+		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
+		oR1cs.Lazify()
+		err = oR1cs.SplitDumpBinary(sessionNameForBlock, *batchSize)
 
-		// pk, vk, err := groth16.Setup(oR1cs)
-		err = groth16.SetupLazyWithDump(oR1cs, sessionName+fmt.Sprint(differentBlockSizes[i]))
+		oR1csFull := groth16.NewCS(ecc.BN254)
+		oR1csFull.LoadFromSplitBinaryConcurrent(sessionNameForBlock, oR1cs.GetNbR1C(), *batchSize, runtime.NumCPU())
 		if err != nil {
 			panic(err)
 		}
+
+		f, err := os.Create(sessionNameForBlock + ".r1cslen")
+		if err != nil {
+			panic(err)
+		}
+		_, err = f.WriteString(fmt.Sprint(oR1csFull.GetNbR1C()))
+		if err != nil {
+			panic(err)
+		}
+		f.Close()
+
+		err = groth16.SetupDumpKeys(oR1csFull, sessionNameForBlock)
+		if err != nil {
+			panic(err)
+		}
+
 		{
 			verifyingKey := groth16.NewVerifyingKey(ecc.BN254)
-			f, _ := os.Open(sessionName + fmt.Sprint(differentBlockSizes[i]) + ".vk.save")
+			f, _ := os.Open(sessionNameForBlock + ".vk.save")
 			_, err = verifyingKey.ReadFrom(f)
 			if err != nil {
 				panic(fmt.Errorf("read file error"))

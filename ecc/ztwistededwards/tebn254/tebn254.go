@@ -56,11 +56,11 @@ func Add(a, b *Point) *Point {
 }
 
 func ScalarBaseMul(a *big.Int) *Point {
-	return new(Point).ScalarMul(G, a)
+	return new(Point).ScalarMultiplication(G, a)
 }
 
 func ScalarMul(p *Point, a *big.Int) *Point {
-	return new(Point).ScalarMul(p, a)
+	return new(Point).ScalarMultiplication(p, a)
 }
 
 func Neg(a *Point) *Point {
@@ -99,7 +99,7 @@ func IsInSubGroup(p *Point) bool {
 	if !p.IsOnCurve() {
 		return false
 	}
-	res := new(Point).ScalarMul(p, Order)
+	res := new(Point).ScalarMultiplication(p, Order)
 	return IsZero(res)
 }
 

@@ -18,9 +18,8 @@ import (
 func TestAbiEncodeTransfer(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
-	_scs, _ := frontend.Compile(ecc.BN254, scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	fmt.Println("Schema:", _scs.GetSchema())
-	fmt.Println("SCs:", len(_scs.GetConstraints()))
+	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
 	pk, vk, _ := plonk.Setup(_scs, srs)
@@ -71,13 +70,13 @@ func TestAbiEncodeTransfer(t *testing.T) {
 	}
 	w.Name = 1
 
-	witnessFull, err := frontend.NewWitness(&w, ecc.BN254)
+	witnessFull, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	assert.NoError(t, err)
 
 	proof, err := plonk.Prove(_scs, pk, witnessFull)
 	assert.NoError(t, err)
 
-	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254, frontend.PublicOnly())
+	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	assert.NoError(t, err)
 
 	err = plonk.Verify(proof, vk, witnessPublic)
@@ -100,9 +99,8 @@ func DefaultCircuit() (circuit AbiCircuit) {
 func TestAbiEncodeWithdraw(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
-	_scs, _ := frontend.Compile(ecc.BN254, scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	fmt.Println("Schema:", _scs.GetSchema())
-	fmt.Println("SCs:", len(_scs.GetConstraints()))
+	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
 	pk, vk, _ := plonk.Setup(_scs, srs)
@@ -152,13 +150,13 @@ func TestAbiEncodeWithdraw(t *testing.T) {
 	}
 	w.Name = 1
 
-	witnessFull, err := frontend.NewWitness(&w, ecc.BN254)
+	witnessFull, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	assert.NoError(t, err)
 
 	proof, err := plonk.Prove(_scs, pk, witnessFull)
 	assert.NoError(t, err)
 
-	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254, frontend.PublicOnly())
+	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	assert.NoError(t, err)
 
 	err = plonk.Verify(proof, vk, witnessPublic)
@@ -169,9 +167,8 @@ func TestAbiEncodeWithdraw(t *testing.T) {
 func TestAbiEncodeCreateCollection(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
-	_scs, _ := frontend.Compile(ecc.BN254, scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	fmt.Println("Schema:", _scs.GetSchema())
-	fmt.Println("SCs:", len(_scs.GetConstraints()))
+	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
 	pk, vk, _ := plonk.Setup(_scs, srs)
@@ -208,13 +205,13 @@ func TestAbiEncodeCreateCollection(t *testing.T) {
 	}
 	w.Name = 1
 
-	witnessFull, err := frontend.NewWitness(&w, ecc.BN254)
+	witnessFull, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	assert.NoError(t, err)
 
 	proof, err := plonk.Prove(_scs, pk, witnessFull)
 	assert.NoError(t, err)
 
-	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254, frontend.PublicOnly())
+	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	assert.NoError(t, err)
 
 	err = plonk.Verify(proof, vk, witnessPublic)
@@ -225,9 +222,8 @@ func TestAbiEncodeCreateCollection(t *testing.T) {
 func TestAbiEncodeWithdrawNft(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
-	_scs, _ := frontend.Compile(ecc.BN254, scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	fmt.Println("Schema:", _scs.GetSchema())
-	fmt.Println("SCs:", len(_scs.GetConstraints()))
+	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
 	pk, vk, _ := plonk.Setup(_scs, srs)
@@ -269,13 +265,13 @@ func TestAbiEncodeWithdrawNft(t *testing.T) {
 	}
 	w.Name = 1
 
-	witnessFull, err := frontend.NewWitness(&w, ecc.BN254)
+	witnessFull, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	assert.NoError(t, err)
 
 	proof, err := plonk.Prove(_scs, pk, witnessFull)
 	assert.NoError(t, err)
 
-	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254, frontend.PublicOnly())
+	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	assert.NoError(t, err)
 
 	err = plonk.Verify(proof, vk, witnessPublic)
@@ -286,9 +282,8 @@ func TestAbiEncodeWithdrawNft(t *testing.T) {
 func TestAbiEncodeTransferNft(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
-	_scs, _ := frontend.Compile(ecc.BN254, scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	fmt.Println("Schema:", _scs.GetSchema())
-	fmt.Println("SCs:", len(_scs.GetConstraints()))
+	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
 	pk, vk, _ := plonk.Setup(_scs, srs)
@@ -337,13 +332,13 @@ func TestAbiEncodeTransferNft(t *testing.T) {
 	}
 	w.Name = 1
 
-	witnessFull, err := frontend.NewWitness(&w, ecc.BN254)
+	witnessFull, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	assert.NoError(t, err)
 
 	proof, err := plonk.Prove(_scs, pk, witnessFull)
 	assert.NoError(t, err)
 
-	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254, frontend.PublicOnly())
+	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	assert.NoError(t, err)
 
 	err = plonk.Verify(proof, vk, witnessPublic)
@@ -354,9 +349,8 @@ func TestAbiEncodeTransferNft(t *testing.T) {
 func TestAbiEncodeMintNft(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
-	_scs, _ := frontend.Compile(ecc.BN254, scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	fmt.Println("Schema:", _scs.GetSchema())
-	fmt.Println("SCs:", len(_scs.GetConstraints()))
+	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
 	pk, vk, _ := plonk.Setup(_scs, srs)
@@ -406,13 +400,13 @@ func TestAbiEncodeMintNft(t *testing.T) {
 	}
 	w.Name = 1
 
-	witnessFull, err := frontend.NewWitness(&w, ecc.BN254)
+	witnessFull, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	assert.NoError(t, err)
 
 	proof, err := plonk.Prove(_scs, pk, witnessFull)
 	assert.NoError(t, err)
 
-	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254, frontend.PublicOnly())
+	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	assert.NoError(t, err)
 
 	err = plonk.Verify(proof, vk, witnessPublic)
@@ -423,9 +417,8 @@ func TestAbiEncodeMintNft(t *testing.T) {
 func TestAbiEncodeCancelOffer(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
-	_scs, _ := frontend.Compile(ecc.BN254, scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	fmt.Println("Schema:", _scs.GetSchema())
-	fmt.Println("SCs:", len(_scs.GetConstraints()))
+	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
 	pk, vk, _ := plonk.Setup(_scs, srs)
@@ -463,13 +456,13 @@ func TestAbiEncodeCancelOffer(t *testing.T) {
 	}
 	w.Name = 1
 
-	witnessFull, err := frontend.NewWitness(&w, ecc.BN254)
+	witnessFull, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	assert.NoError(t, err)
 
 	proof, err := plonk.Prove(_scs, pk, witnessFull)
 	assert.NoError(t, err)
 
-	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254, frontend.PublicOnly())
+	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	assert.NoError(t, err)
 
 	err = plonk.Verify(proof, vk, witnessPublic)
@@ -480,9 +473,8 @@ func TestAbiEncodeCancelOffer(t *testing.T) {
 func TestAbiEncodeAtomicMatch(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
-	_scs, _ := frontend.Compile(ecc.BN254, scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	fmt.Println("Schema:", _scs.GetSchema())
-	fmt.Println("SCs:", len(_scs.GetConstraints()))
+	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
+	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
 	pk, vk, _ := plonk.Setup(_scs, srs)
@@ -548,13 +540,13 @@ func TestAbiEncodeAtomicMatch(t *testing.T) {
 	}
 	w.Name = 1
 
-	witnessFull, err := frontend.NewWitness(&w, ecc.BN254)
+	witnessFull, err := frontend.NewWitness(&w, ecc.BN254.ScalarField())
 	assert.NoError(t, err)
 
 	proof, err := plonk.Prove(_scs, pk, witnessFull)
 	assert.NoError(t, err)
 
-	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254, frontend.PublicOnly())
+	witnessPublic, err := frontend.NewWitness(&w, ecc.BN254.ScalarField(), frontend.PublicOnly())
 	assert.NoError(t, err)
 
 	err = plonk.Verify(proof, vk, witnessPublic)

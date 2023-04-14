@@ -19,6 +19,7 @@ package util
 
 import (
 	"bytes"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"hash"
 	"math/big"
 
@@ -28,7 +29,10 @@ import (
 func HashToInt(b bytes.Buffer, h hash.Hash) (*big.Int, error) {
 	h = mimc.NewMiMC()
 	digest := h
-	digest.Write(b.Bytes())
+	var x fr.Element
+	_ = x.SetBytes(b.Bytes())
+	bs := x.Bytes()
+	digest.Write(bs[:])
 	output := digest.Sum(nil)
 	//tmp := output[0:]
 	//return FromByteArray(tmp)
