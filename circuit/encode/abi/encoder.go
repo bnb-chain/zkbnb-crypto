@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/hint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -102,7 +101,7 @@ func (e *pureAbiEncoder) Pack(api frontend.API, name frontend.Variable, args ...
 	return shouldSelectBytes, nil
 }
 
-func (e *pureHintAbiEncoder) HintDefaultAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
+func (e *pureHintAbiEncoder) HintDefaultAbi(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	bytes, err := e.ABI.Pack("")
 	if err != nil {
 		return err
@@ -113,7 +112,7 @@ func (e *pureHintAbiEncoder) HintDefaultAbi(curveId ecc.ID, inputs []*big.Int, r
 	return nil
 }
 
-func (e *pureHintAbiEncoder) HintTransferAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
+func (e *pureHintAbiEncoder) HintTransferAbi(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	bs := make([]byte, 0)
 	bs32 := [32]byte{}
 	nh := make([]byte, 0)
@@ -148,7 +147,7 @@ func (e *pureHintAbiEncoder) HintTransferAbi(curveId ecc.ID, inputs []*big.Int, 
 	return nil
 }
 
-func (e *pureHintAbiEncoder) HintWithdrawAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
+func (e *pureHintAbiEncoder) HintWithdrawAbi(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	aa := make([]byte, 0)
 	aa16 := [16]byte{}
 	ta := make([]byte, 0)
@@ -184,7 +183,7 @@ func (e *pureHintAbiEncoder) HintWithdrawAbi(curveId ecc.ID, inputs []*big.Int, 
 	return nil
 }
 
-func (e *pureHintAbiEncoder) HintCreateCollectionAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
+func (e *pureHintAbiEncoder) HintCreateCollectionAbi(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	bytes, err := e.ABI.Pack("CreateCollection", (uint32)(inputs[0].Uint64()), (uint32)(inputs[1].Uint64()), (uint16)(inputs[2].Uint64()), (uint16)(inputs[3].Uint64()), inputs[4].Uint64(), (uint32)(inputs[5].Uint64()), (uint32)(inputs[6].Uint64()))
 	if err != nil {
 		return err
@@ -198,7 +197,7 @@ func (e *pureHintAbiEncoder) HintCreateCollectionAbi(curveId ecc.ID, inputs []*b
 	return nil
 }
 
-func (e *pureHintAbiEncoder) HintWithdrawNftAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
+func (e *pureHintAbiEncoder) HintWithdrawNftAbi(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	ta := make([]byte, 0)
 	ta20 := [20]byte{}
 
@@ -222,7 +221,7 @@ func (e *pureHintAbiEncoder) HintWithdrawNftAbi(curveId ecc.ID, inputs []*big.In
 	return nil
 }
 
-func (e *pureHintAbiEncoder) HintTransferNftAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
+func (e *pureHintAbiEncoder) HintTransferNftAbi(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	ta := make([]byte, 0)
 	ta32 := [32]byte{}
 
@@ -258,7 +257,7 @@ func (e *pureHintAbiEncoder) HintTransferNftAbi(curveId ecc.ID, inputs []*big.In
 	return nil
 }
 
-func (e *pureHintAbiEncoder) HintMintNftAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
+func (e *pureHintAbiEncoder) HintMintNftAbi(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	ta := make([]byte, 0)
 	ta32 := [32]byte{}
 
@@ -293,7 +292,7 @@ func (e *pureHintAbiEncoder) HintMintNftAbi(curveId ecc.ID, inputs []*big.Int, r
 	return nil
 }
 
-func (e *pureHintAbiEncoder) HintCancelOfferAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
+func (e *pureHintAbiEncoder) HintCancelOfferAbi(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	bytes, err := e.ABI.Pack("CancelOffer", (uint32)(inputs[0].Uint64()), inputs[1], (uint32)(inputs[2].Uint64()), (uint16)(inputs[3].Uint64()), (uint16)(inputs[4].Uint64()), inputs[5].Uint64(), (uint32)(inputs[6].Uint64()), (uint32)(inputs[7].Uint64()))
 	if err != nil {
 		return err
@@ -307,7 +306,7 @@ func (e *pureHintAbiEncoder) HintCancelOfferAbi(curveId ecc.ID, inputs []*big.In
 	return nil
 }
 
-func (e *pureHintAbiEncoder) HintAtomicMatchAbi(curveId ecc.ID, inputs []*big.Int, results []*big.Int) error {
+func (e *pureHintAbiEncoder) HintAtomicMatchAbi(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 
 	buyerOffer := ReadOfferFromArrays(inputs[1:72])
 	sellerOffer := ReadOfferFromArrays(inputs[72:143])

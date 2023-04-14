@@ -3,7 +3,6 @@ package abi
 import (
 	"math/big"
 
-	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/hint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -41,7 +40,7 @@ func (circuit *KeccakCircuit) Define(api frontend.API) error {
 	return nil
 }
 
-func GenerateKeccakHint(curveID ecc.ID, inputs []*big.Int, results []*big.Int) error {
+func GenerateKeccakHint(_ *big.Int, inputs []*big.Int, results []*big.Int) error {
 	preImageBytes := make([]byte, 0)
 
 	for _, bi := range inputs {
