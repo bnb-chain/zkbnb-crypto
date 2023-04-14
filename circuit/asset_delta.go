@@ -249,7 +249,7 @@ func GetAssetDeltasAndNftDeltaFromMintNft(
 	txInfo MintNftTxConstraints,
 ) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
 	nftDelta NftDeltaConstraints,
-	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
+	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints, accountDelta AccountDeltaConstraints) {
 	// from account
 	deltas[0] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 		{
@@ -276,7 +276,10 @@ func GetAssetDeltasAndNftDeltaFromMintNft(
 		CollectionId:        txInfo.CollectionId,
 	}
 	gasDeltas = GetGasDeltas(txInfo.GasFeeAssetId, txInfo.GasFeeAssetAmount)
-	return deltas, nftDelta, gasDeltas
+	accountDelta = AccountDeltaConstraints{
+		L1Address: txInfo.ToL1Address,
+	}
+	return deltas, nftDelta, gasDeltas, accountDelta
 }
 
 func GetAssetDeltasAndNftDeltaFromTransferNft(

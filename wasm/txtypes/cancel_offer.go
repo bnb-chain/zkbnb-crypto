@@ -108,6 +108,9 @@ func (txInfo *CancelOfferTxInfo) Validate() error {
 	if txInfo.OfferId < 0 {
 		return ErrOfferIdTooLow
 	}
+	if txInfo.OfferId > maxOfferId {
+		return ErrOfferIdTooHigh
+	}
 
 	// GasAccountIndex
 	if txInfo.GasAccountIndex < minAccountIndex {

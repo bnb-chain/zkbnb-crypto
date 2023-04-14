@@ -93,6 +93,8 @@ const (
 
 	minNftContentType int64 = 0
 	maxNftContentType int64 = (1 << 8) - 1
+
+	maxOfferId int64 = (1 << 24) - 1
 )
 
 var (
