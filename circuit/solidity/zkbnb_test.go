@@ -36,7 +36,7 @@ import (
 
 var (
 	optionalBlockSizes = flag.String("blocksizes", "1,10", "block size that will be used for proof generation and verification")
-	batchSize          = flag.String("batchsize", "100000", "number of r1cs files that will be used for proof generation")
+	batchSize          = flag.Int("batchsize", 100000, "number of constraints in r1cs file")
 	bN                 = flag.Int("bN", 0, "bN is the bits of N Hashes, if we got 1024 hashes to prove, the bN should be set to 10")
 )
 
@@ -91,6 +91,7 @@ func exportSol(t *testing.T, differentBlockSizes []int) {
 		bn := chooseBN(*bN, differentBlockSizes[i])
 		t.Logf("block size: %d, bN: %d", differentBlockSizes[i], bn)
 		blockConstraints.GKRs.AllocateGKRCircuit(bn)
+
 		oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGKRBN(bn))
 		if err != nil {
 			panic(err)
@@ -101,16 +102,13 @@ func exportSol(t *testing.T, differentBlockSizes []int) {
 		nbInternalVariables := oR1cs.GetNbInternalVariables()
 		t.Logf("Variables total=%d, nbPublicVariables=%d, nbSecretVariables=%d, nbInternalVariables=%d\n",
 			nbPublicVariables+nbSecretVariables+nbInternalVariables, nbPublicVariables, nbSecretVariables, nbInternalVariables)
+
 		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
-
 		oR1cs.Lazify()
+		err = oR1cs.SplitDumpBinary(sessionNameForBlock, *batchSize)
 
-		batch, _ := strconv.Atoi(*batchSize)
-
-		err = oR1cs.SplitDumpBinary(sessionNameForBlock, batch)
-
-		oR1cs2 := groth16.NewCS(ecc.BN254)
-		oR1cs2.LoadFromSplitBinaryConcurrent(sessionNameForBlock, oR1cs.GetNbR1C(), batch, runtime.NumCPU())
+		oR1csFull := groth16.NewCS(ecc.BN254)
+		oR1csFull.LoadFromSplitBinaryConcurrent(sessionNameForBlock, oR1cs.GetNbR1C(), *batchSize, runtime.NumCPU())
 		if err != nil {
 			panic(err)
 		}
@@ -119,13 +117,13 @@ func exportSol(t *testing.T, differentBlockSizes []int) {
 		if err != nil {
 			panic(err)
 		}
-		_, err = f.WriteString(fmt.Sprint(oR1cs2.GetNbR1C()))
+		_, err = f.WriteString(fmt.Sprint(oR1csFull.GetNbR1C()))
 		if err != nil {
 			panic(err)
 		}
 		f.Close()
 
-		err = groth16.SetupDumpKeys(oR1cs2, sessionNameForBlock)
+		err = groth16.SetupDumpKeys(oR1csFull, sessionNameForBlock)
 		if err != nil {
 			panic(err)
 		}

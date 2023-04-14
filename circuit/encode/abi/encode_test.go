@@ -19,7 +19,6 @@ func TestAbiEncodeTransfer(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
 	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	//fmt.Println("Schema:", _scs.GetSchema())
 	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
@@ -101,7 +100,6 @@ func TestAbiEncodeWithdraw(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
 	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	//fmt.Println("Schema:", _scs.GetSchema())
 	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
@@ -170,7 +168,6 @@ func TestAbiEncodeCreateCollection(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
 	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	//fmt.Println("Schema:", _scs.GetSchema())
 	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
@@ -226,7 +223,6 @@ func TestAbiEncodeWithdrawNft(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
 	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	//fmt.Println("Schema:", _scs.GetSchema())
 	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
@@ -287,7 +283,6 @@ func TestAbiEncodeTransferNft(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
 	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	//fmt.Println("Schema:", _scs.GetSchema())
 	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
@@ -355,7 +350,6 @@ func TestAbiEncodeMintNft(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
 	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	//fmt.Println("Schema:", _scs.GetSchema())
 	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
@@ -424,7 +418,6 @@ func TestAbiEncodeCancelOffer(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
 	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	//fmt.Println("Schema:", _scs.GetSchema())
 	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)
@@ -481,7 +474,6 @@ func TestAbiEncodeAtomicMatch(t *testing.T) {
 	// Compile circuit
 	var circuit AbiCircuit = DefaultCircuit()
 	_scs, _ := frontend.Compile(ecc.BN254.ScalarField(), scs.NewBuilder, &circuit, frontend.IgnoreUnconstrainedInputs())
-	//fmt.Println("Schema:", _scs.GetSchema())
 	fmt.Println("SCs:", _scs.GetNbConstraints())
 
 	srs, _ := test.NewKZGSRS(_scs)

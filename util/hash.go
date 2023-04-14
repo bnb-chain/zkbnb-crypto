@@ -31,9 +31,8 @@ func HashToInt(b bytes.Buffer, h hash.Hash) (*big.Int, error) {
 	digest := h
 	var x fr.Element
 	_ = x.SetBytes(b.Bytes())
-
-	byts := x.Bytes()
-	digest.Write(byts[:])
+	bs := x.Bytes()
+	digest.Write(bs[:])
 	output := digest.Sum(nil)
 	//tmp := output[0:]
 	//return FromByteArray(tmp)
