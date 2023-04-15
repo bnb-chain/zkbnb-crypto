@@ -1,6 +1,6 @@
 module github.com/bnb-chain/zkbnb-crypto
 
-go 1.17
+go 1.18
 
 require (
 	github.com/consensys/gnark v0.8.0
