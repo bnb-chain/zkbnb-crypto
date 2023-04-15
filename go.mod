@@ -3,7 +3,7 @@ module github.com/bnb-chain/zkbnb-crypto
 go 1.17
 
 require (
-	github.com/consensys/gnark v0.7.0
+	github.com/consensys/gnark v0.8.0
 	github.com/consensys/gnark-crypto v0.9.1
 	github.com/ethereum/go-ethereum v1.10.26
 	github.com/pkg/errors v0.9.1
@@ -35,7 +35,6 @@ require (
 )
 
 replace (
-	github.com/consensys/gnark => github.com/qct/gnark v0.0.0-20230414105147-03b22f676235
-	//github.com/consensys/gnark => /Users/damon/GolandProjects/bnb-chain/gnark
-	github.com/consensys/gnark-crypto => github.com/bnb-chain/gnark-crypto v0.8.1-0.20230412061827-228166c33652
+	github.com/consensys/gnark => github.com/bnb-chain/gnark v0.7.2-0.20230414030551-8be7c648aadc
+	github.com/consensys/gnark-crypto => github.com/bnb-chain/gnark-crypto v0.8.1-0.20230412133626-30223a679fb7
 )
