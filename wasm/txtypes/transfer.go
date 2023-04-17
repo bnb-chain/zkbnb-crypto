@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"github.com/bnb-chain/zkbnb-crypto/util"
 	"github.com/bnb-chain/zkbnb-crypto/wasm/signature"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/common"
 	"hash"
 	"log"
@@ -80,9 +81,11 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 	}
 	// compute call data hash
 	hFunc := mimc.NewMiMC()
-	hFunc.Write([]byte(txInfo.CallData))
-	callDataHash := hFunc.Sum(nil)
-	txInfo.CallDataHash = callDataHash
+	var x fr.Element
+	_ = x.SetBytes([]byte(txInfo.CallData))
+	b := x.Bytes()
+	hFunc.Write(b[:])
+	txInfo.CallDataHash = hFunc.Sum(nil)
 	hFunc.Reset()
 	// compute msg hash
 	msgHash, err := txInfo.Hash(hFunc)
