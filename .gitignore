@@ -20,6 +20,8 @@
 
 */.idea/
 
+*.save
+*.r1cslen
 *.pk*
 *.vk*
 *.sol

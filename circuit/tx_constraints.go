@@ -19,7 +19,6 @@ package circuit
 
 import (
 	"errors"
-	"github.com/consensys/gnark/std/hash/poseidon"
 	"log"
 
 	"github.com/consensys/gnark/std/hash/mimc"
@@ -315,7 +314,7 @@ func VerifyTransaction(
 	NftAfter := UpdateNft(tx.NftBefore, nftDelta)
 
 	// check old state root
-	oldStateRoot := poseidon.Poseidon(api, tx.AccountRootBefore, tx.NftRootBefore)
+	oldStateRoot := types.MimcWithGkr(api, tx.AccountRootBefore, tx.NftRootBefore)
 	notEmptyTx := api.IsZero(isEmptyTx)
 	types.IsVariableEqual(api, notEmptyTx, oldStateRoot, tx.StateRootBefore)
 
@@ -328,7 +327,7 @@ func VerifyTransaction(
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
 			api.AssertIsLessOrEqual(tx.AccountsInfoBefore[i].AssetsInfo[j].AssetId, LastAccountAssetId)
 			assetMerkleHelper := AssetIdToMerkleHelper(api, tx.AccountsInfoBefore[i].AssetsInfo[j].AssetId)
-			assetNodeHash := poseidon.Poseidon(api,
+			assetNodeHash := types.MimcWithGkr(api,
 				tx.AccountsInfoBefore[i].AssetsInfo[j].Balance,
 				tx.AccountsInfoBefore[i].AssetsInfo[j].OfferCanceledOrFinalized)
 			// verify account asset merkle proof
@@ -340,7 +339,7 @@ func VerifyTransaction(
 				tx.MerkleProofsAccountAssetsBefore[i][j][:],
 				assetMerkleHelper,
 			)
-			assetNodeHash = poseidon.Poseidon(api,
+			assetNodeHash = types.MimcWithGkr(api,
 				AccountsInfoAfter[i].AssetsInfo[j].Balance,
 				AccountsInfoAfter[i].AssetsInfo[j].OfferCanceledOrFinalized)
 
@@ -351,7 +350,7 @@ func VerifyTransaction(
 		// verify account node hash
 		api.AssertIsLessOrEqual(tx.AccountsInfoBefore[i].AccountIndex, LastAccountIndex)
 		accountIndexMerkleHelper := AccountIndexToMerkleHelper(api, tx.AccountsInfoBefore[i].AccountIndex)
-		accountNodeHash := poseidon.Poseidon(api,
+		accountNodeHash := types.MimcWithGkr(api,
 			tx.AccountsInfoBefore[i].L1Address,
 			tx.AccountsInfoBefore[i].AccountPk.A.X,
 			tx.AccountsInfoBefore[i].AccountPk.A.Y,
@@ -367,7 +366,7 @@ func VerifyTransaction(
 			tx.MerkleProofsAccountBefore[i][:],
 			accountIndexMerkleHelper,
 		)
-		accountNodeHash = poseidon.Poseidon(api,
+		accountNodeHash = types.MimcWithGkr(api,
 			AccountsInfoAfter[i].L1Address,
 			AccountsInfoAfter[i].AccountPk.A.X,
 			AccountsInfoAfter[i].AccountPk.A.Y,
@@ -385,14 +384,14 @@ func VerifyTransaction(
 	nftIndexMerkleHelper := NftIndexToMerkleHelper(api, tx.NftBefore.NftIndex)
 
 	isNotIpfsNftContentHash := api.IsZero(api.Sub(tx.NftBefore.NftContentHash[1], types.ZeroInt))
-	nftNotIpfsNodeHash := poseidon.Poseidon(api,
+	nftNotIpfsNodeHash := types.MimcWithGkr(api,
 		tx.NftBefore.CreatorAccountIndex,
 		tx.NftBefore.OwnerAccountIndex,
 		tx.NftBefore.NftContentHash[0],
 		tx.NftBefore.RoyaltyRate,
 		tx.NftBefore.CollectionId,
 	)
-	nftIpfsNodeHash := poseidon.Poseidon(api,
+	nftIpfsNodeHash := types.MimcWithGkr(api,
 		tx.NftBefore.CreatorAccountIndex,
 		tx.NftBefore.OwnerAccountIndex,
 		tx.NftBefore.NftContentHash[0],
@@ -412,14 +411,14 @@ func VerifyTransaction(
 	)
 
 	isNotIpfsNftContentHash = api.IsZero(api.Sub(NftAfter.NftContentHash[1], types.ZeroInt))
-	nftNotIpfsNodeHash = poseidon.Poseidon(api,
+	nftNotIpfsNodeHash = types.MimcWithGkr(api,
 		NftAfter.CreatorAccountIndex,
 		NftAfter.OwnerAccountIndex,
 		NftAfter.NftContentHash[0],
 		NftAfter.RoyaltyRate,
 		NftAfter.CollectionId,
 	)
-	nftIpfsNodeHash = poseidon.Poseidon(api,
+	nftIpfsNodeHash = types.MimcWithGkr(api,
 		NftAfter.CreatorAccountIndex,
 		NftAfter.OwnerAccountIndex,
 		NftAfter.NftContentHash[0],
@@ -433,7 +432,7 @@ func VerifyTransaction(
 	oldRoots[1] = api.Select(isEmptyTx, oldRoots[1], newNftRoot)
 
 	// check state root
-	newStateRoot := poseidon.Poseidon(api, newAccountRoot, newNftRoot)
+	newStateRoot := types.MimcWithGkr(api, newAccountRoot, newNftRoot)
 	types.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
 
 	roots[0] = oldRoots[0]

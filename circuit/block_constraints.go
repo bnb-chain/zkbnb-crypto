@@ -18,7 +18,7 @@
 package circuit
 
 import (
-	"github.com/consensys/gnark/std/hash/poseidon"
+	"github.com/consensys/gnark/std/gkr/gkr"
 	"github.com/consensys/gnark/std/hash/sha256"
 	"log"
 
@@ -38,6 +38,7 @@ type BlockConstraints struct {
 	Gas             GasConstraints
 	GasAssetIds     []int64
 	GasAccountIndex int64
+	GKRs            gkr.GkrCircuit
 }
 
 func (circuit BlockConstraints) Define(api API) error {
@@ -51,6 +52,7 @@ func (circuit BlockConstraints) Define(api API) error {
 	if err != nil {
 		return err
 	}
+	circuit.GKRs.AssertValid(api, circuit.BlockCommitment)
 	return nil
 }
 
@@ -155,7 +157,7 @@ func VerifyBlock(
 		log.Println("unable to verify gas, err:", err)
 		return err
 	}
-	newStateRoot := poseidon.Poseidon(api, roots[:]...)
+	newStateRoot := types.MimcWithGkr(api, roots[:]...)
 	types.IsVariableEqual(api, needGas, block.NewStateRoot, newStateRoot)
 
 	notNeedGas := api.Xor(1, needGas)
@@ -164,12 +166,13 @@ func VerifyBlock(
 	pendingCommitmentData[count] = onChainOpsCount
 	outputBytesCount := blockInfoCount*32 + (types.PubDataBitsSizePerTx*block.TxsCount)/8
 	pubDataBytes, _ := api.Compiler().NewHint(types.PubDataToBytes, outputBytesCount, pendingCommitmentData[:]...)
+
 	commitment := sha256.Sha256Api(api, pubDataBytes[:]...)
 	api.AssertIsEqual(commitment, block.BlockCommitment)
 	return nil
 }
 
-func SetBlockWitness(oBlock *Block) (witness BlockConstraints, err error) {
+func SetBlockWitness(oBlock *Block, bN int) (witness BlockConstraints, err error) {
 	witness = BlockConstraints{
 		BlockNumber:     oBlock.BlockNumber,
 		CreatedAt:       oBlock.CreatedAt,
@@ -191,6 +194,7 @@ func SetBlockWitness(oBlock *Block) (witness BlockConstraints, err error) {
 		log.Println("fail to set gas witness: ", err.Error())
 		return witness, err
 	}
+	witness.GKRs.AllocateGKRCircuit(bN)
 	return witness, nil
 }
 

@@ -21,6 +21,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/twistededwards"
+	"github.com/consensys/gnark/std/hash/mimc_gkr"
 	eddsaConstraints "github.com/consensys/gnark/std/signature/eddsa"
 )
 
@@ -70,4 +71,13 @@ func GetNftContentHashFromBytes(hash []byte) [2]frontend.Variable {
 		nftContentHash = [2]Variable{hash[:], ZeroInt}
 	}
 	return nftContentHash
+}
+
+func MimcWithGkr(api frontend.API, input ...frontend.Variable) frontend.Variable {
+	inputSize := len(input)
+	hash := input[0]
+	for i := 1; i < inputSize; i++ {
+		hash = mimc_gkr.NewMimcWithGKR(api, hash, input[i])
+	}
+	return hash
 }

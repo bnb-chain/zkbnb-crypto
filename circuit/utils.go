@@ -18,6 +18,7 @@
 package circuit
 
 import (
+	"fmt"
 	"github.com/consensys/gnark/std/signature/eddsa"
 
 	"github.com/bnb-chain/zkbnb-crypto/circuit/types"
@@ -83,4 +84,34 @@ func EmptySignatureWitness() (sig eddsa.Signature) {
 	sig.R.Y = types.ZeroInt
 	sig.S = types.ZeroInt
 	return sig
+}
+
+// ChooseBN chooses the bN value for the given block size.
+// The bN value stands for the bits of N Hashes, if we got 1024 hashes to prove, the bN should be set to 10.
+func ChooseBN(blockSize int) (int, error) {
+	bN := 11
+	switch {
+	case blockSize <= 1:
+		return bN, nil
+	case blockSize == 2:
+		return bN + 1, nil
+	case blockSize > 2 && blockSize <= 4:
+		return bN + 2, nil
+	case blockSize > 4 && blockSize <= 8:
+		return bN + 3, nil
+	case blockSize > 8 && blockSize <= 16:
+		return bN + 4, nil
+	case blockSize > 16 && blockSize <= 32:
+		return bN + 5, nil
+	case blockSize > 32 && blockSize <= 64:
+		return bN + 6, nil
+	case blockSize > 64 && blockSize <= 128:
+		return bN + 7, nil
+	case blockSize > 128 && blockSize <= 256:
+		return bN + 8, nil
+	case blockSize > 256 && blockSize <= 512:
+		return bN + 9, nil
+	default:
+		return 0, fmt.Errorf("invalid block size: %d", blockSize)
+	}
 }

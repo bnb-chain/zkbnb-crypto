@@ -77,5 +77,5 @@ const (
 )
 
 var (
-	EmptyAssetRoot, _ = new(big.Int).SetString("1dc295ddb285aa0b61bd42438fbe98c271371c9e8e10f5e5d368bf0faa0a0e55", 16)
+	EmptyAssetRoot, _ = new(big.Int).SetString("0c1a22d8dc7a8c9e102499e8d9112a5b18001eb440744311371ac2ae62de2428", 16)
 )
