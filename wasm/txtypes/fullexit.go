@@ -44,7 +44,7 @@ func (txInfo *FullExitTxInfo) GetFromAccountIndex() int64 {
 }
 
 func (txInfo *FullExitTxInfo) GetToAccountIndex() int64 {
-	return txInfo.AccountIndex
+	return NilAccountIndex
 }
 
 func (txInfo *FullExitTxInfo) GetL1SignatureBody() string {

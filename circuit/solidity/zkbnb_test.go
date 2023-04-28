@@ -42,6 +42,7 @@ var (
 	optionalBlockSizes = flag.String("blocksizes", "1,10", "block size that will be used for proof generation and verification")
 	batchSize          = flag.Int("batchsize", 100000, "number of constraints in r1cs file")
 	bN                 = flag.Int("bN", 0, "bN is the bits of N Hashes, if we got 1024 hashes to prove, the bN should be set to 10")
+	createKeys         = flag.Bool("create_pkvk", true, "if false, the pk and vk will not be created and should be used from mpc setup ceremony")
 )
 
 func TestCompileCircuit(t *testing.T) {
@@ -113,6 +114,8 @@ func exportSol(t *testing.T, differentBlockSizes []int) {
 
 		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
 		oR1cs.Lazify()
+
+		t.Logf("After lazify constraints num=%d, r1c=%d\n", oR1cs.GetNbConstraints(), oR1cs.GetNbR1C())
 		err = oR1cs.SplitDumpBinary(sessionNameForBlock, *batchSize)
 
 		oR1csFull := groth16.NewCS(ecc.BN254)
@@ -131,26 +134,28 @@ func exportSol(t *testing.T, differentBlockSizes []int) {
 		}
 		f.Close()
 
-		err = groth16.SetupDumpKeys(oR1csFull, sessionNameForBlock)
-		if err != nil {
-			panic(err)
-		}
+		if *createKeys {
+			err = groth16.SetupDumpKeys(oR1csFull, sessionNameForBlock)
+			if err != nil {
+				panic(err)
+			}
 
-		{
-			verifyingKey := groth16.NewVerifyingKey(ecc.BN254)
-			f, _ := os.Open(sessionNameForBlock + ".vk.save")
-			_, err = verifyingKey.ReadFrom(f)
-			if err != nil {
-				panic(fmt.Errorf("read file error"))
-			}
-			f.Close()
-			f, err := os.Create("ZkBNBVerifier" + fmt.Sprint(differentBlockSizes[i]) + ".sol")
-			if err != nil {
-				panic(err)
-			}
-			err = verifyingKey.ExportSolidity(f)
-			if err != nil {
-				panic(err)
+			{
+				verifyingKey := groth16.NewVerifyingKey(ecc.BN254)
+				f, _ := os.Open(sessionNameForBlock + ".vk.save")
+				_, err = verifyingKey.ReadFrom(f)
+				if err != nil {
+					panic(fmt.Errorf("read file error"))
+				}
+				f.Close()
+				f, err := os.Create("ZkBNBVerifier" + fmt.Sprint(differentBlockSizes[i]) + ".sol")
+				if err != nil {
+					panic(err)
+				}
+				err = verifyingKey.ExportSolidity(f)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 	}

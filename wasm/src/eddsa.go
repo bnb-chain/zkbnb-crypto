@@ -20,6 +20,7 @@ package src
 import (
 	"bytes"
 	"encoding/hex"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -93,7 +94,7 @@ func EddsaSign() js.Func {
 			return err.Error()
 		}
 		msg := args[1].String()
-		signature, err := sk.Sign([]byte(msg), mimc.NewMiMC())
+		signature, err := sk.Sign(frBytes(msg)[:], mimc.NewMiMC())
 		if err != nil {
 			return err.Error()
 		}
@@ -127,11 +128,18 @@ func EddsaVerify() js.Func {
 		if err != nil {
 			return err.Error()
 		}
-		isValid, err := pk.Verify(signature, []byte(msgStr), mimc.NewMiMC())
+		isValid, err := pk.Verify(signature, frBytes(msgStr)[:], mimc.NewMiMC())
 		if err != nil {
 			return err.Error()
 		}
 		return isValid
 	})
 	return helperFunc
+}
+
+func frBytes(msg string) []byte {
+	var x fr.Element
+	x.SetBytes([]byte(msg))
+	b := x.Bytes()
+	return b[:]
 }
