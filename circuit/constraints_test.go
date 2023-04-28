@@ -8,15 +8,6 @@ import (
 	"testing"
 )
 
-func TestTransactionConstraintsCount(t *testing.T) {
-	var txCircuit TxConstraints
-	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &txCircuit, frontend.IgnoreUnconstrainedInputs())
-	if err != nil {
-		fmt.Println("error occured ", err)
-	}
-	fmt.Println("tx circuit constraints number is ", r1cs.GetNbConstraints())
-}
-
 func TestBlockConstraintsCounts(t *testing.T) {
 	var blockCircuit BlockConstraints
 	blockCircuit.TxsCount = 1
@@ -29,6 +20,7 @@ func TestBlockConstraintsCounts(t *testing.T) {
 	blockCircuit.GasAssetIds = gasAssetIds
 	blockCircuit.GasAccountIndex = gasAccountIndex
 	blockCircuit.Gas = GetZeroGasConstraints(gasAssetIds)
+	blockCircuit.GKRs.AllocateGKRCircuit(11)
 
 	r1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &blockCircuit, frontend.IgnoreUnconstrainedInputs())
 	if err != nil {
