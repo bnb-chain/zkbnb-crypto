@@ -42,7 +42,7 @@ func (txInfo *DepositTxInfo) GetPubKey() string {
 }
 
 func (txInfo *DepositTxInfo) GetAccountIndex() int64 {
-	return NilAccountIndex
+	return txInfo.AccountIndex
 }
 
 func (txInfo *DepositTxInfo) GetFromAccountIndex() int64 {
