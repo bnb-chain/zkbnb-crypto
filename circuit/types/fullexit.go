@@ -72,3 +72,10 @@ func VerifyFullExitTx(
 	IsVariableEqual(api, isOwner, tx.AssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 	return pubData
 }
+
+func VerifyDeltaFullExitTx(api API, flag Variable, tx FullExitTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AccountIndex), tx.AccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AssetId), tx.AssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AssetAmount), tx.AssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.L1Address), tx.L1Address)
+}

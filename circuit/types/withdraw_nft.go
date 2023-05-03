@@ -122,3 +122,19 @@ func VerifyWithdrawNftTx(
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	return pubData
 }
+
+func VerifyDeltaWithdrawNftTx(api API, flag Variable, tx WithdrawNftTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AccountIndex), tx.AccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CreatorAccountIndex), tx.CreatorAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CollectionId), tx.CollectionId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftContentType), tx.NftContentType)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftIndex), tx.NftIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.RoyaltyRate), tx.RoyaltyRate)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftContentHash[0]), tx.NftContentHash[0])
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftContentHash[1]), tx.NftContentHash[1])
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ToAddress), tx.ToAddress)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CreatorL1Address), tx.CreatorL1Address)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasAccountIndex), tx.GasAccountIndex)
+}
