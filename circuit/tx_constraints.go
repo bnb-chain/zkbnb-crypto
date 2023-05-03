@@ -253,7 +253,7 @@ func VerifyTransaction(
 	// deposit
 	assetDeltasCheck, accountDeltaCheckDeposit := GetAssetDeltasFromDeposit(tx.DepositTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isDepositTx, assetDeltasCheck, assetDeltas)
-	types.VerifyDeltaDepositTx(api, isChangePubKey, tx.DepositTxInfo)
+	types.VerifyDeltaDepositTx(api, isDepositTx, tx.DepositTxInfo)
 	// generic transfer
 	assetDeltasCheck, gasDeltasCheck, accountDeltaCheckTransfer := GetAssetDeltasFromTransfer(api, tx.TransferTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isTransferTx, assetDeltasCheck, assetDeltas)
