@@ -258,4 +258,7 @@ func verifyDeltaSellOfferAtomicMatchTx(api API, flag Variable, tx OfferTxConstra
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ChannelRate), tx.ChannelRate)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ProtocolRate), tx.ProtocolRate)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ProtocolAmount), tx.ProtocolAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.Sig.R.X), tx.Sig.R.X)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.Sig.R.Y), tx.Sig.R.Y)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.Sig.S), tx.Sig.S)
 }
