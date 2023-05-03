@@ -46,7 +46,7 @@ func (txInfo *DepositTxInfo) GetAccountIndex() int64 {
 }
 
 func (txInfo *DepositTxInfo) GetFromAccountIndex() int64 {
-	return txInfo.AccountIndex
+	return NilAccountIndex
 }
 
 func (txInfo *DepositTxInfo) GetToAccountIndex() int64 {

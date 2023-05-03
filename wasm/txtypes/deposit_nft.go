@@ -52,7 +52,7 @@ func (txInfo *DepositNftTxInfo) GetAccountIndex() int64 {
 }
 
 func (txInfo *DepositNftTxInfo) GetFromAccountIndex() int64 {
-	return txInfo.AccountIndex
+	return NilAccountIndex
 }
 
 func (txInfo *DepositNftTxInfo) GetToAccountIndex() int64 {

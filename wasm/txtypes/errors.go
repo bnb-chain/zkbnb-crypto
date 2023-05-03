@@ -15,6 +15,7 @@ var (
 	ErrNonceTooLow                = fmt.Errorf("Nonce should not be less than %d", minNonce)
 	ErrOfferTypeInvalid           = fmt.Errorf("Type should only be buy(%d) and sell(%d)", BuyOfferType, SellOfferType)
 	ErrOfferIdTooLow              = fmt.Errorf("OfferId should not be less than 0")
+	ErrOfferIdTooHigh             = fmt.Errorf("OfferId should not be larger than %d", maxOfferId)
 	ErrNftIndexTooLow             = fmt.Errorf("NftIndex should not be less than %d", minNftIndex)
 	ErrNftIndexTooHigh            = fmt.Errorf("NftIndex should not be larger than %d", maxNftIndex)
 	ErrAssetIdTooLow              = fmt.Errorf("AssetId should not be less than %d", minAssetId)

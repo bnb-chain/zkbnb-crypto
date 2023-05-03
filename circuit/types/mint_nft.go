@@ -88,7 +88,7 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 
 func ComputeHashFromMintNftTx(api API, tx MintNftTxConstraints, nonce Variable, expiredAt Variable) (hashVal Variable) {
 	return poseidon.Poseidon(api, ChainId, TxTypeMintNft, tx.CreatorAccountIndex, nonce, expiredAt,
-		tx.GasFeeAssetId, tx.GasFeeAssetAmount, tx.ToAccountIndex,
+		tx.GasFeeAssetId, tx.GasFeeAssetAmount,
 		tx.RoyaltyRate, tx.CollectionId, tx.ToL1Address, tx.NftContentType)
 }
 
@@ -108,7 +108,10 @@ func VerifyMintNftTx(
 	IsVariableEqual(api, flag, tx.CreatorAccountIndex, accountsBefore[fromAccount].AccountIndex)
 	IsVariableEqual(api, flag, tx.ToAccountIndex, accountsBefore[toAccount].AccountIndex)
 	// account address
-	IsVariableEqual(api, flag, tx.ToL1Address, accountsBefore[toAccount].L1Address)
+	// account to l1Address
+	isNewAccount := api.IsZero(api.Cmp(accountsBefore[toAccount].L1Address, ZeroInt))
+	address := api.Select(isNewAccount, tx.ToL1Address, accountsBefore[toAccount].L1Address)
+	IsVariableEqual(api, flag, tx.ToL1Address, address)
 	// content hash
 	isZero := api.Or(api.IsZero(tx.NftContentHash[0]), api.IsZero(tx.NftContentHash[1]))
 	IsVariableEqual(api, flag, isZero, 0)

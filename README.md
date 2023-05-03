@@ -6,13 +6,13 @@
 ## Getting Started
 ### Exporting groth16 proving/verifying key, verifier contract
 
-
+```shell
+go test -v ./circuit/solidity -run "^TestExportSol$" -timeout 600m -blocksizes 1 -batchsize 100000
 ```
-cd circuit/solidity;
-
-go test -run TestExportSolGroth16  -count=1 -timeout 99999s
-```
-After this command is finished, there will be 3 generated files: `zkbnb.pk_groth16`, `zkbnb.vk_groth16` and `ZkBNBVerifier.sol`
+After this command is finished, there will be generated files: 
+* R1CS files `*.r1cs.*.save` 
+* PK VK files `*.pk.*.save`, `*.vk.save` 
+* Verifier contract `ZkBNBVerifier*.sol`
 
 
 ### Exporting plonk proving/verifying key, verifier contract
