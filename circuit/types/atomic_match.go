@@ -160,18 +160,14 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, nftBefore.RoyaltyRate, tx.BuyOffer.RoyaltyRate)
 
 	// verify signature
-	hFunc.Reset()
 	buyOfferHash := ComputeHashFromBuyOfferTx(api, tx.BuyOffer)
-	hFunc.Reset()
 	notBuyer := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.BuyOffer.AccountIndex)))
 	notBuyer = api.And(flag, notBuyer)
 	err = VerifyEddsaSig(notBuyer, api, hFunc, buyOfferHash, accountsBefore[1].AccountPk, tx.BuyOffer.Sig)
 	if err != nil {
 		return pubData, err
 	}
-	hFunc.Reset()
 	sellOfferHash := ComputeHashFromSellOfferTx(api, tx.SellOffer)
-	hFunc.Reset()
 	notSeller := api.IsZero(api.IsZero(api.Sub(tx.AccountIndex, tx.SellOffer.AccountIndex)))
 	notSeller = api.And(flag, notSeller)
 	err = VerifyEddsaSig(notSeller, api, hFunc, sellOfferHash, accountsBefore[2].AccountPk, tx.SellOffer.Sig)
