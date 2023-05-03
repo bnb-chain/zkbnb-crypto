@@ -225,11 +225,13 @@ func VerifyTransaction(
 		assetDeltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints
 		nftDelta    NftDeltaConstraints
 	)
+
 	for i := 0; i < NbAccountsPerTx; i++ {
-		assetDeltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+		emptyAccountAssetConstraint := [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 		}
+		assetDeltas[i] = emptyAccountAssetConstraint
 	}
 	nftDelta = NftDeltaConstraints{
 		CreatorAccountIndex: tx.NftBefore.CreatorAccountIndex,
@@ -239,99 +241,75 @@ func VerifyTransaction(
 		CollectionId:        tx.NftBefore.CollectionId,
 	}
 	for i := 0; i < NbGasAssetsPerTx; i++ {
-		gasDeltas[i] = EmptyGasDeltaConstraints(gasAssetIds[0])
+		emptyGasConstraint := EmptyGasDeltaConstraints(gasAssetIds[0])
+		gasDeltas[i] = emptyGasConstraint
 	}
 
 	// change pub key
 	assetDeltasCheck, gasDeltasCheck, accountDeltaCheckChangePubKey := GetAccountDeltaFromChangePubKey(api, tx.ChangePubKeyTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isChangePubKey, assetDeltasCheck, assetDeltas)
 	gasDeltas = SelectGasDeltas(api, isChangePubKey, gasDeltasCheck, gasDeltas)
-	verifyAssetDeltas(api, isChangePubKey, assetDeltas)
-	verifyGasDeltas(api, isChangePubKey, gasDeltas, gasAssetIds[0])
-
+	types.VerifyDeltaChangePubKeyTx(api, isChangePubKey, tx.ChangePubKeyTxInfo)
 	// deposit
 	assetDeltasCheck, accountDeltaCheckDeposit := GetAssetDeltasFromDeposit(tx.DepositTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isDepositTx, assetDeltasCheck, assetDeltas)
-	verifyAssetDeltas(api, isDepositTx, assetDeltas)
-
+	types.VerifyDeltaDepositTx(api, isChangePubKey, tx.DepositTxInfo)
 	// generic transfer
 	assetDeltasCheck, gasDeltasCheck, accountDeltaCheckTransfer := GetAssetDeltasFromTransfer(api, tx.TransferTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isTransferTx, assetDeltasCheck, assetDeltas)
 	gasDeltas = SelectGasDeltas(api, isTransferTx, gasDeltasCheck, gasDeltas)
-	verifyAssetDeltas(api, isTransferTx, assetDeltas)
-	verifyGasDeltas(api, isTransferTx, gasDeltas, gasAssetIds[0])
-
+	types.VerifyDeltaTransferTx(api, isTransferTx, tx.TransferTxInfo)
 	// withdraw
 	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromWithdraw(api, tx.WithdrawTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isWithdrawTx, assetDeltasCheck, assetDeltas)
 	gasDeltas = SelectGasDeltas(api, isWithdrawTx, gasDeltasCheck, gasDeltas)
-	verifyAssetDeltas(api, isWithdrawTx, assetDeltas)
-	verifyGasDeltas(api, isWithdrawTx, gasDeltas, gasAssetIds[0])
-
+	types.VerifyDeltaWithdrawTx(api, isWithdrawTx, tx.WithdrawTxInfo)
 	// deposit nft
 	nftDeltaCheck, accountDeltaCheckDepositNft := GetNftDeltaFromDepositNft(tx.DepositNftTxInfo)
 	nftDelta = SelectNftDeltas(api, isDepositNftTx, nftDeltaCheck, nftDelta)
-	verifyNftDelta(api, isDepositNftTx, nftDelta)
-
+	types.VerifyDeltaDepositNftTx(api, isDepositNftTx, tx.DepositNftTxInfo)
 	// create collection
 	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromCreateCollection(api, tx.CreateCollectionTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isCreateCollectionTx, assetDeltasCheck, assetDeltas)
 	gasDeltas = SelectGasDeltas(api, isCreateCollectionTx, gasDeltasCheck, gasDeltas)
-	verifyAssetDeltas(api, isCreateCollectionTx, assetDeltas)
-	verifyGasDeltas(api, isCreateCollectionTx, gasDeltas, gasAssetIds[0])
-
+	types.VerifyDeltaCreateCollectionTx(api, isCreateCollectionTx, tx.CreateCollectionTxInfo)
 	// mint nft
 	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck, accountDeltaCheckMintNft := GetAssetDeltasAndNftDeltaFromMintNft(api, tx.MintNftTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isMintNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isMintNftTx, nftDeltaCheck, nftDelta)
 	gasDeltas = SelectGasDeltas(api, isMintNftTx, gasDeltasCheck, gasDeltas)
-	verifyAssetDeltas(api, isMintNftTx, assetDeltas)
-	verifyNftDelta(api, isMintNftTx, nftDelta)
-	verifyGasDeltas(api, isMintNftTx, gasDeltas, gasAssetIds[0])
-
+	types.VerifyDeltaMintNftTx(api, isMintNftTx, tx.MintNftTxInfo)
 	// transfer nft
 	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck, accountDeltaCheckTransferNft := GetAssetDeltasAndNftDeltaFromTransferNft(api, tx.TransferNftTxInfo, tx.NftBefore)
 	assetDeltas = SelectAssetDeltas(api, isTransferNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isTransferNftTx, nftDeltaCheck, nftDelta)
 	gasDeltas = SelectGasDeltas(api, isTransferNftTx, gasDeltasCheck, gasDeltas)
-	verifyAssetDeltas(api, isTransferNftTx, assetDeltas)
-	verifyNftDelta(api, isTransferNftTx, nftDelta)
-	verifyGasDeltas(api, isTransferNftTx, gasDeltas, gasAssetIds[0])
-
+	types.VerifyDeltaTransferNftTx(api, isTransferNftTx, tx.TransferNftTxInfo)
 	// set nft price
 	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromAtomicMatch(api, isAtomicMatchTx, tx.AtomicMatchTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	assetDeltas = SelectAssetDeltas(api, isAtomicMatchTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isAtomicMatchTx, nftDeltaCheck, nftDelta)
 	gasDeltas = SelectGasDeltas(api, isAtomicMatchTx, gasDeltasCheck, gasDeltas)
-	verifyAssetDeltas(api, isAtomicMatchTx, assetDeltas)
-	verifyNftDelta(api, isAtomicMatchTx, nftDelta)
-	verifyGasDeltas(api, isAtomicMatchTx, gasDeltas, gasAssetIds[0])
-
+	types.VerifyDeltaAtomicMatchTx(api, isAtomicMatchTx, tx.AtomicMatchTxInfo)
 	// buy nft
 	assetDeltasCheck, gasDeltasCheck = GetAssetDeltasFromCancelOffer(api, isCancelOfferTx, tx.CancelOfferTxInfo, tx.AccountsInfoBefore)
 	assetDeltas = SelectAssetDeltas(api, isCancelOfferTx, assetDeltasCheck, assetDeltas)
 	gasDeltas = SelectGasDeltas(api, isCancelOfferTx, gasDeltasCheck, gasDeltas)
-	verifyAssetDeltas(api, isCancelOfferTx, assetDeltas)
-	verifyGasDeltas(api, isCancelOfferTx, gasDeltas, gasAssetIds[0])
-
+	types.VerifyDeltaCancelOfferTx(api, isCancelOfferTx, tx.CancelOfferTxInfo)
 	// withdraw nft
 	assetDeltasCheck, nftDeltaCheck, gasDeltasCheck = GetAssetDeltasAndNftDeltaFromWithdrawNft(api, tx.WithdrawNftTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isWithdrawNftTx, assetDeltasCheck, assetDeltas)
 	nftDelta = SelectNftDeltas(api, isWithdrawNftTx, nftDeltaCheck, nftDelta)
 	gasDeltas = SelectGasDeltas(api, isWithdrawNftTx, gasDeltasCheck, gasDeltas)
-	verifyAssetDeltas(api, isWithdrawNftTx, assetDeltas)
-	verifyNftDelta(api, isWithdrawNftTx, nftDelta)
-	verifyGasDeltas(api, isWithdrawNftTx, gasDeltas, gasAssetIds[0])
-
+	types.VerifyDeltaWithdrawNftTx(api, isWithdrawNftTx, tx.WithdrawNftTxInfo)
 	// full exit
 	assetDeltasCheck = GetAssetDeltasFromFullExit(api, tx.FullExitTxInfo)
 	assetDeltas = SelectAssetDeltas(api, isFullExitTx, assetDeltasCheck, assetDeltas)
-	verifyAssetDeltas(api, isFullExitTx, assetDeltas)
-
+	types.VerifyDeltaFullExitTx(api, isFullExitTx, tx.FullExitTxInfo)
 	// full exit nft
 	nftDeltaCheck = GetNftDeltaFromFullExitNft(api, isFullExitNftTx, tx.FullExitNftTxInfo, tx.AccountsInfoBefore, tx.NftBefore)
 	nftDelta = SelectNftDeltas(api, isFullExitNftTx, nftDeltaCheck, nftDelta)
-	verifyNftDelta(api, isFullExitNftTx, nftDelta)
+	types.VerifyDeltaFullExitNftTx(api, isFullExitNftTx, tx.FullExitNftTxInfo)
 
 	// update accounts
 	AccountsInfoAfter := UpdateAccounts(api, tx.AccountsInfoBefore, assetDeltas)
@@ -646,31 +624,4 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		witness.MerkleProofsNftBefore[i] = oTx.MerkleProofsNftBefore[i]
 	}
 	return witness, nil
-}
-
-func verifyAssetDeltas(api API, flag Variable, deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
-	for i := 0; i < NbAccountsPerTx; i++ {
-		for j := 0; j < NbAccountAssetsPerAccount; j++ {
-			empty := EmptyAccountAssetDeltaConstraints()
-			api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.BalanceDelta, deltas[i][j].BalanceDelta), deltas[i][j].BalanceDelta)
-			api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.OfferCanceledOrFinalized, deltas[i][j].OfferCanceledOrFinalized), deltas[i][j].OfferCanceledOrFinalized)
-		}
-	}
-}
-
-func verifyNftDelta(api API, flag Variable, nftDelta NftDeltaConstraints) {
-	empty := NftDeltaConstraints{}
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.NftContentHash[0], nftDelta.NftContentHash[0]), nftDelta.NftContentHash[0])
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.NftContentHash[1], nftDelta.NftContentHash[1]), nftDelta.NftContentHash[1])
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.CollectionId, nftDelta.CollectionId), nftDelta.CollectionId)
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.CreatorAccountIndex, nftDelta.CreatorAccountIndex), nftDelta.CreatorAccountIndex)
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.RoyaltyRate, nftDelta.RoyaltyRate), nftDelta.RoyaltyRate)
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.OwnerAccountIndex, nftDelta.OwnerAccountIndex), nftDelta.OwnerAccountIndex)
-}
-
-func verifyGasDeltas(api API, flag Variable, deltas [NbGasAssetsPerTx]GasDeltaConstraints, assetId Variable) {
-	for i := 0; i < NbGasAssetsPerTx; i++ {
-		empty := EmptyGasDeltaConstraints(assetId)
-		api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.BalanceDelta, deltas[i].BalanceDelta), deltas[i].BalanceDelta)
-	}
 }

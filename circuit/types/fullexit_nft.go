@@ -106,3 +106,16 @@ func VerifyFullExitNftTx(
 	IsVariableEqual(api, flag, tx.NftContentType, nftBefore.NftContentType)
 	return pubData
 }
+
+func VerifyDeltaFullExitNftTx(api API, flag Variable, tx FullExitNftTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AccountIndex), tx.AccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.L1Address), tx.L1Address)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CreatorAccountIndex), tx.CreatorAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CreatorL1Address), tx.CreatorL1Address)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.RoyaltyRate), tx.RoyaltyRate)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftIndex), tx.NftIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CollectionId), tx.CollectionId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftContentHash[0]), tx.NftContentHash[0])
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftContentHash[1]), tx.NftContentHash[1])
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftContentType), tx.NftContentType)
+}

@@ -88,3 +88,13 @@ func VerifyCreateCollectionTx(
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	return pubData
 }
+
+func VerifyDeltaCreateCollectionTx(api API, flag Variable, tx CreateCollectionTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AccountIndex), tx.AccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CollectionId), tx.CollectionId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasAccountIndex), tx.GasAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ExpiredAt), tx.ExpiredAt)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.Nonce), tx.Nonce)
+}

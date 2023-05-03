@@ -107,3 +107,15 @@ func VerifyTransferTx(
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[1].Balance)
 	return pubData
 }
+
+func VerifyDeltaTransferTx(api API, flag Variable, tx TransferTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.FromAccountIndex), tx.FromAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ToAccountIndex), tx.ToAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ToL1Address), tx.ToL1Address)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AssetId), tx.AssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AssetAmount), tx.AssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasAccountIndex), tx.GasAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CallDataHash), tx.CallDataHash)
+}

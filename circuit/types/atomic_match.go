@@ -230,3 +230,32 @@ func VerifyAtomicMatchTx(
 	IsVariableEqual(api, flag, tx.RoyaltyAmount, royaltyAmount)
 	return pubData, nil
 }
+
+func VerifyDeltaAtomicMatchTx(api API, flag Variable, tx AtomicMatchTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AccountIndex), tx.AccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.RoyaltyAmount), tx.RoyaltyAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasAccountIndex), tx.GasAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.BuyChannelAmount), tx.BuyChannelAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.SellChannelAmount), tx.SellChannelAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ProtocolAccountIndex), tx.ProtocolAccountIndex)
+	verifyDeltaSellOfferAtomicMatchTx(api, flag, tx.BuyOffer)
+	verifyDeltaSellOfferAtomicMatchTx(api, flag, tx.SellOffer)
+}
+
+func verifyDeltaSellOfferAtomicMatchTx(api API, flag Variable, tx OfferTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.Type), tx.Type)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.OfferId), tx.OfferId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AccountIndex), tx.AccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftIndex), tx.NftIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AssetId), tx.AssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AssetAmount), tx.AssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ListedAt), tx.ListedAt)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ExpiredAt), tx.ExpiredAt)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.RoyaltyRate), tx.RoyaltyRate)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ChannelAccountIndex), tx.ChannelRate)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ChannelRate), tx.ChannelRate)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ProtocolRate), tx.ProtocolRate)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ProtocolAmount), tx.ProtocolAmount)
+}
