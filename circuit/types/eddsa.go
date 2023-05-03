@@ -29,7 +29,6 @@ import (
 )
 
 func VerifyEddsaSig(flag Variable, api API, hFunc MiMC, hashVal Variable, pk PublicKeyConstraints, sig eddsa.Signature) error {
-	hFunc.Reset()
 	curve, err := twistededwards.NewEdCurve(api, tedwards.BN254)
 	if err != nil {
 		return err
