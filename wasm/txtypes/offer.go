@@ -304,7 +304,7 @@ func (txInfo *OfferTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *OfferTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateOffer, txInfo.AccountIndex,
+	signatureBody := fmt.Sprintf(signature.TemplateOffer, txInfo.AccountIndex,
 		txInfo.NftIndex, txInfo.AssetId, util.FormatWeiToEtherStr(txInfo.AssetAmount))
 	return signatureBody
 }

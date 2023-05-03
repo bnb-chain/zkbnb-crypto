@@ -195,8 +195,8 @@ func (txInfo *CancelOfferTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *CancelOfferTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateCancelOffer, txInfo.OfferId,
-		txInfo.AccountIndex, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	signatureBody := fmt.Sprintf(signature.TemplateCancelOffer, txInfo.OfferId, txInfo.AccountIndex,
+		txInfo.GasFeeAssetId, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.Nonce)
 	return signatureBody
 }
 

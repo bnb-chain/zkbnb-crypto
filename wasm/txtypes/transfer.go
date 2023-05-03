@@ -257,8 +257,8 @@ func (txInfo *TransferTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *TransferTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateTransfer, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.FromAccountIndex,
-		txInfo.ToL1Address, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	signatureBody := fmt.Sprintf(signature.TemplateTransfer, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.FromAccountIndex,
+		txInfo.ToL1Address, txInfo.GasFeeAssetId, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.Nonce)
 	return signatureBody
 }
 

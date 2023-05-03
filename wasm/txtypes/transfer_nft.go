@@ -230,8 +230,8 @@ func (txInfo *TransferNftTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *TransferNftTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateTransferNft, txInfo.NftIndex, txInfo.FromAccountIndex,
-		txInfo.ToL1Address, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	signatureBody := fmt.Sprintf(signature.TemplateTransferNft, txInfo.NftIndex, txInfo.FromAccountIndex,
+		txInfo.ToL1Address, txInfo.GasFeeAssetId, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.Nonce)
 	return signatureBody
 }
 

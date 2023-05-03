@@ -46,7 +46,7 @@ func (txInfo *UpdateNFTTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *UpdateNFTTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateUpdateNFT, txInfo.AccountIndex, txInfo.NftIndex, txInfo.Nonce)
+	signatureBody := fmt.Sprintf(signature.TemplateUpdateNFT, txInfo.AccountIndex, txInfo.NftIndex, txInfo.Nonce)
 	return signatureBody
 }
 
