@@ -651,17 +651,26 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 func verifyAssetDeltas(api API, flag Variable, deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints) {
 	for i := 0; i < NbAccountsPerTx; i++ {
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
-			api.AssertIsEqual(api.Select(api.Sub(1, flag), EmptyAccountAssetDeltaConstraints(), deltas[i][j]), deltas[i][j])
+			empty := EmptyAccountAssetDeltaConstraints()
+			api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.BalanceDelta, deltas[i][j].BalanceDelta), deltas[i][j].BalanceDelta)
+			api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.OfferCanceledOrFinalized, deltas[i][j].BalanceDelta), deltas[i][j].OfferCanceledOrFinalized)
 		}
 	}
 }
 
 func verifyNftDelta(api API, flag Variable, nftDelta NftDeltaConstraints) {
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), NftDeltaConstraints{}, nftDelta), nftDelta)
+	empty := NftDeltaConstraints{}
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.NftContentHash[0], nftDelta.NftContentHash[0]), nftDelta.NftContentHash[0])
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.NftContentHash[1], nftDelta.NftContentHash[1]), nftDelta.NftContentHash[1])
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.CollectionId, nftDelta.CollectionId), nftDelta.CollectionId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.CreatorAccountIndex, nftDelta.CreatorAccountIndex), nftDelta.CreatorAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.RoyaltyRate, nftDelta.RoyaltyRate), nftDelta.RoyaltyRate)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.OwnerAccountIndex, nftDelta.OwnerAccountIndex), nftDelta.OwnerAccountIndex)
 }
 
 func verifyGasDeltas(api API, flag Variable, deltas [NbGasAssetsPerTx]GasDeltaConstraints, assetId Variable) {
 	for i := 0; i < NbGasAssetsPerTx; i++ {
-		api.AssertIsEqual(api.Select(api.Sub(1, flag), EmptyGasDeltaConstraints(assetId), deltas[i]), deltas[i])
+		empty := EmptyGasDeltaConstraints(assetId)
+		api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.BalanceDelta, deltas[i].BalanceDelta), deltas[i].BalanceDelta)
 	}
 }
