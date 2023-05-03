@@ -227,11 +227,10 @@ func VerifyTransaction(
 	)
 
 	for i := 0; i < NbAccountsPerTx; i++ {
-		emptyAccountAssetConstraint := [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
+		assetDeltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
 		}
-		assetDeltas[i] = emptyAccountAssetConstraint
 	}
 	nftDelta = NftDeltaConstraints{
 		CreatorAccountIndex: tx.NftBefore.CreatorAccountIndex,
@@ -241,8 +240,7 @@ func VerifyTransaction(
 		CollectionId:        tx.NftBefore.CollectionId,
 	}
 	for i := 0; i < NbGasAssetsPerTx; i++ {
-		emptyGasConstraint := EmptyGasDeltaConstraints(gasAssetIds[0])
-		gasDeltas[i] = emptyGasConstraint
+		gasDeltas[i] = EmptyGasDeltaConstraints(gasAssetIds[0])
 	}
 
 	// change pub key
