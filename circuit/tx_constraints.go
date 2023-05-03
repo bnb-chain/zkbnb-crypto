@@ -653,7 +653,7 @@ func verifyAssetDeltas(api API, flag Variable, deltas [NbAccountsPerTx][NbAccoun
 		for j := 0; j < NbAccountAssetsPerAccount; j++ {
 			empty := EmptyAccountAssetDeltaConstraints()
 			api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.BalanceDelta, deltas[i][j].BalanceDelta), deltas[i][j].BalanceDelta)
-			api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.OfferCanceledOrFinalized, deltas[i][j].BalanceDelta), deltas[i][j].OfferCanceledOrFinalized)
+			api.AssertIsEqual(api.Select(api.Sub(1, flag), empty.OfferCanceledOrFinalized, deltas[i][j].OfferCanceledOrFinalized), deltas[i][j].OfferCanceledOrFinalized)
 		}
 	}
 }
