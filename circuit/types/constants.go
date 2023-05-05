@@ -40,7 +40,7 @@ const (
 
 	NbAccountAssetsPerAccount = 2
 	NbAccountsPerTx           = 7
-	NbGasAssetsPerTx          = 1 // at most two assets transferred to gas account
+	NbGasAssetsPerTx          = 2 // at most two assets transferred to gas account
 
 	NbRoots = 2 // account root, nft root
 

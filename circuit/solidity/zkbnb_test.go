@@ -47,7 +47,7 @@ var (
 
 func TestCompileCircuit(t *testing.T) {
 	differentBlockSizes := optionalBlockSizesInt()
-	gasAssetIds := []int64{0}
+	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	for i := 0; i < len(differentBlockSizes); i++ {
 		var blockConstraints circuit.BlockConstraints
@@ -79,7 +79,7 @@ func TestExportSolSmall(t *testing.T) {
 }
 
 func exportSol(t *testing.T, differentBlockSizes []int) {
-	gasAssetIds := []int64{0}
+	gasAssetIds := []int64{0, 1}
 	gasAccountIndex := int64(1)
 	sessionName := "zkbnb"
 
