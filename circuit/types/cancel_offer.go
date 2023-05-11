@@ -78,3 +78,11 @@ func VerifyCancelOfferTx(
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	return pubData
 }
+
+func VerifyDeltaCancelOfferTx(api API, flag Variable, tx CancelOfferTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AccountIndex), tx.AccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.OfferId), tx.OfferId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasAccountIndex), tx.GasAccountIndex)
+}

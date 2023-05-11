@@ -68,3 +68,10 @@ func VerifyDepositTx(
 	IsVariableEqual(api, flag, tx.AssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	return pubData
 }
+
+func VerifyDeltaDepositTx(api API, flag Variable, tx DepositTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AccountIndex), tx.AccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.L1Address), tx.L1Address)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AssetId), tx.AssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AssetAmount), tx.AssetAmount)
+}

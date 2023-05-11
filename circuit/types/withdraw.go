@@ -91,3 +91,13 @@ func VerifyWithdrawTx(
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[1].Balance)
 	return pubData
 }
+
+func VerifyDeltaWithdrawTx(api API, flag Variable, tx WithdrawTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.FromAccountIndex), tx.FromAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AssetId), tx.AssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AssetAmount), tx.AssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasAccountIndex), tx.GasAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ToAddress), tx.ToAddress)
+}
