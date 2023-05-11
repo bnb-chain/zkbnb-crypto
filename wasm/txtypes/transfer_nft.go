@@ -36,6 +36,7 @@ type TransferNftSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
 	ToL1Address       string `json:"to_l1_address"`
 	NftIndex          int64  `json:"nft_index"`
+	NftName           string `json:"nft_name"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -61,6 +62,7 @@ func ConstructTransferNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Tran
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		ToL1Address:       segmentFormat.ToL1Address,
 		NftIndex:          segmentFormat.NftIndex,
+		NftName:           segmentFormat.NftName,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -97,6 +99,7 @@ type TransferNftTxInfo struct {
 	ToAccountIndex    int64
 	ToL1Address       string
 	NftIndex          int64
+	NftName           string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
@@ -230,8 +233,8 @@ func (txInfo *TransferNftTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *TransferNftTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.TemplateTransferNft, txInfo.NftIndex, txInfo.FromAccountIndex,
-		txInfo.ToL1Address, txInfo.GasFeeAssetId, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.Nonce)
+	signatureBody := fmt.Sprintf(signature.TemplateTransferNft, txInfo.NftName,
+		txInfo.ToL1Address, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.Nonce)
 	return signatureBody
 }
 
