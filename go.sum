@@ -2,8 +2,8 @@ github.com/StackExchange/wmi v0.0.0-20180116203802-5d049714c4a6 h1:fLjPD/aNc3UIO
 github.com/VictoriaMetrics/fastcache v1.6.0 h1:C/3Oi3EiBCqufydp1neRZkqcwmEiuRT9c3fqvvgKm5o=
 github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM=
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
-github.com/bnb-chain/gnark v0.7.2-0.20230414030551-8be7c648aadc h1:Fk1+2WqK/1crH/EcJV926uHY5tnBXxkWZDiCcLXuNOM=
-github.com/bnb-chain/gnark v0.7.2-0.20230414030551-8be7c648aadc/go.mod h1:fmHUzzss1n32K3COWMvrQj7uo7GjIeIr1wXzjj5gmj8=
+github.com/bnb-chain/gnark v0.7.2-0.20230425010344-8e482963e1ae h1:4b/b0pp1RAWQ60lL+UaL/X9M0zDguukI3+6Yq6ECfD8=
+github.com/bnb-chain/gnark v0.7.2-0.20230425010344-8e482963e1ae/go.mod h1:fmHUzzss1n32K3COWMvrQj7uo7GjIeIr1wXzjj5gmj8=
 github.com/bnb-chain/gnark-crypto v0.8.1-0.20230412133626-30223a679fb7 h1:ME5Nif4WgGgWKH2omB6ybic5bsU22bHy43xBsgMBHgM=
 github.com/bnb-chain/gnark-crypto v0.8.1-0.20230412133626-30223a679fb7/go.mod h1:a2DQL4+5ywF6safEeZFEPGRiiGbjzGFRUN2sg06VuU4=
 github.com/btcsuite/btcd/btcec/v2 v2.2.0 h1:fzn1qaOt32TuLjFlkzYSsBC35Q3KUjT1SwPxiMSCF5k=

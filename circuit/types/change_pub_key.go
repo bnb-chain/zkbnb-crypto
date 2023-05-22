@@ -92,3 +92,13 @@ func VerifyChangePubKeyTx(
 
 	return pubData
 }
+
+func VerifyDeltaChangePubKeyTx(api API, flag Variable, tx ChangePubKeyTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.AccountIndex), tx.AccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.L1Address), tx.L1Address)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.PubKey.A.X), tx.PubKey.A.X)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.PubKey.A.Y), tx.PubKey.A.Y)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.Nonce), tx.Nonce)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
+}

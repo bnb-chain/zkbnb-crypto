@@ -37,6 +37,7 @@ type TransferSegmentFormat struct {
 	ToL1Address       string `json:"to_l1_address"`
 	AssetId           int64  `json:"asset_id"`
 	AssetAmount       string `json:"asset_amount"`
+	AssetName         string `json:"asset_name"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -70,6 +71,7 @@ func ConstructTransferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Transfe
 		ToL1Address:       segmentFormat.ToL1Address,
 		AssetId:           segmentFormat.AssetId,
 		AssetAmount:       assetAmount,
+		AssetName:         segmentFormat.AssetName,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -110,6 +112,7 @@ type TransferTxInfo struct {
 	ToL1Address       string
 	AssetId           int64
 	AssetAmount       *big.Int
+	AssetName         string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
@@ -257,8 +260,8 @@ func (txInfo *TransferTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *TransferTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateTransfer, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.FromAccountIndex,
-		txInfo.ToL1Address, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	signatureBody := fmt.Sprintf(signature.TemplateTransfer, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.AssetName,
+		txInfo.ToL1Address, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.Nonce)
 	return signatureBody
 }
 

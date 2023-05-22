@@ -34,6 +34,7 @@ import (
 type WithdrawNftSegmentFormat struct {
 	AccountIndex      int64  `json:"account_index"`
 	NftIndex          int64  `json:"nft_index"`
+	NftName           string `json:"nft_name"`
 	ToAddress         string `json:"to_address"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
@@ -58,6 +59,7 @@ func ConstructWithdrawNftTxInfo(sk *PrivateKey, segmentStr string) (txInfo *With
 	txInfo = &WithdrawNftTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
 		NftIndex:          segmentFormat.NftIndex,
+		NftName:           segmentFormat.NftName,
 		ToAddress:         segmentFormat.ToAddress,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
@@ -91,6 +93,7 @@ type WithdrawNftTxInfo struct {
 	CreatorL1Address    string
 	RoyaltyRate         int64
 	NftIndex            int64
+	NftName             string
 	NftContentHash      []byte
 	NftContentType      int64
 	CollectionId        int64
@@ -209,8 +212,8 @@ func (txInfo *WithdrawNftTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *WithdrawNftTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateWithdrawalNft, txInfo.NftIndex,
-		txInfo.ToAddress, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	signatureBody := fmt.Sprintf(signature.TemplateWithdrawalNft, txInfo.NftName,
+		txInfo.ToAddress, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.Nonce)
 	return signatureBody
 }
 

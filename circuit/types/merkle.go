@@ -30,7 +30,6 @@ VerifyMerkleProof: takes a Merkle root, a proofSet, and a proofIndex and returns
 */
 func VerifyMerkleProof(api API, isEnabled Variable, merkleRoot Variable, node Variable, proofSet, helper []Variable) {
 	for i := 0; i < len(proofSet); i++ {
-		api.AssertIsBoolean(helper[i])
 		d1 := api.Select(helper[i], proofSet[i], node)
 		d2 := api.Select(helper[i], node, proofSet[i])
 		node = nodeSumMimc(api, d1, d2)
@@ -41,7 +40,6 @@ func VerifyMerkleProof(api API, isEnabled Variable, merkleRoot Variable, node Va
 
 func UpdateMerkleProof(api API, node Variable, proofSet, helper []Variable) (root Variable) {
 	for i := 0; i < len(proofSet); i++ {
-		api.AssertIsBoolean(helper[i])
 		d1 := api.Select(helper[i], proofSet[i], node)
 		d2 := api.Select(helper[i], node, proofSet[i])
 		node = nodeSumMimc(api, d1, d2)

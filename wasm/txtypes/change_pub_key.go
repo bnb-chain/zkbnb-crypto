@@ -190,7 +190,7 @@ func (txInfo *ChangePubKeyInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *ChangePubKeyInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateChangePubKey, common.Bytes2Hex(txInfo.PubKeyX),
+	signatureBody := fmt.Sprintf(signature.TemplateChangePubKey, common.Bytes2Hex(txInfo.PubKeyX),
 		common.Bytes2Hex(txInfo.PubKeyY), signature.GetHex10FromInt64(txInfo.Nonce), signature.GetHex10FromInt64(txInfo.AccountIndex))
 	return signatureBody
 }

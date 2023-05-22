@@ -161,7 +161,6 @@ func TestValidateOfferTxInfo(t *testing.T) {
 				AssetAmount:  big.NewInt(20),
 				ListedAt:     time.Now().Unix(),
 				ExpiredAt:    time.Now().Add(time.Hour).UnixMilli(),
-				TreasuryRate: minRate - 1,
 			},
 		},
 		{
@@ -175,7 +174,6 @@ func TestValidateOfferTxInfo(t *testing.T) {
 				AssetAmount:  big.NewInt(20),
 				ListedAt:     time.Now().Unix(),
 				ExpiredAt:    time.Now().Add(time.Hour).UnixMilli(),
-				TreasuryRate: maxRate + 1,
 			},
 		},
 	}

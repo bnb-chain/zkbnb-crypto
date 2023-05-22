@@ -1,25 +1,23 @@
 package signature
 
 const (
+	TemplateWithdrawal = "Withdrawal \nwithdrawal amount: %s %s \nto account address: %s \ngas fee amount: %s BNB \nnonce: %d"
 
-	// SignatureTemplateWithdrawal /* Withdrawal ${amount} to: ${to.toLowerCase()}\nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
-	SignatureTemplateWithdrawal = "Withdrawal %s to: %s\nFee: %s %d\nNonce: %d"
-	// SignatureTemplateTransfer /* Transfer ${amount} ${tokenAddress} to: ${toAddress}\nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
-	SignatureTemplateTransfer = "Transfer %s %d to: %s\nFee: %s %d\nNonce: %d"
-	// SignatureTemplateCreateCollection /* CreateCollection ${accountIndex} ${collectionName} \nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
-	SignatureTemplateCreateCollection = "CreateCollection %d %s \nFee: %s %d\nNonce: %d"
-	// SignatureTemplateMintNft /* MintNFT to: ${recipient.toLowerCase()}\nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
-	SignatureTemplateMintNft = "MintNFT to: %s\nFee: %s %d\nNonce: %d"
-	// SignatureTemplateTransferNft /* TransferNFT ${NftIndex} ${fromAccountIndex} to ${toAddress} \nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
-	SignatureTemplateTransferNft = "TransferNFT %d %d to %s \nFee: %s %d\nNonce: %d"
-	// SignatureTemplateWithdrawalNft /* Withdrawal ${tokenIndex} to: ${to.toLowerCase()}\nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
-	SignatureTemplateWithdrawalNft = "Withdrawal %d to: %s\nFee: %s %d\nNonce: %d"
-	// SignatureTemplateCancelOffer /* CancelOffer ${offerId} by: ${accountIndex} \nFee: ${fee} ${feeTokenAddress}\nNonce: ${nonce} */
-	SignatureTemplateCancelOffer = "CancelOffer %d by: %d \nFee: %s %d\nNonce: %d"
-	// SignatureTemplateUpdateNFT /* AccountIndex:{AccountIndex}\nNftIndex:{NftIndex}\nNonce:{Nonce} */
-	SignatureTemplateUpdateNFT = "Update NFT \nAccountIndex: %d\nNftIndex: %d\nNonce: %d"
-	// SignatureTemplateChangePubKey /* Change Public Key \nPubKeyX:${pubKeyX} \nPubKeyY:${pubKeyY} \nAccountIndex:${accountIndex} \nNonce: ${nonce} */
-	SignatureTemplateChangePubKey = "Register zkBNB Account\n\npubkeyX: 0x%s\npubkeyY: 0x%s\nnonce: %s\naccount index: %s\n\nOnly sign this message for a trusted client!"
-	// SignatureTemplateOffer /* Offer NFT Tx \nAccountIndex:${accountIndex} \nNftIndex:${nftIndex} \nAssetId:${assetId} \nAssetAmount: ${assetAmount} */
-	SignatureTemplateOffer = "Offer NFT Tx \nAccountIndex:%d \nNftIndex:%d \nAssetId:%d \nAssetAmount:%s"
+	TemplateTransfer = "Transfer \ntransfer amount: %s %s \nto account address: %s \ngas fee amount: %s BNB \nnonce: %d"
+
+	TemplateCreateCollection = "CreateCollection \ncreate collection name: %s \ngas fee amount: %s BNB \nnonce: %d"
+
+	TemplateMintNft = "MintNFT \nto account address: %s \ngas fee amount: %s BNB \nnonce: %d"
+
+	TemplateTransferNft = "TransferNFT \nnft name: %s \nto account address: %s \ngas fee amount: %s BNB \nnonce: %d"
+
+	TemplateWithdrawalNft = "WithdrawalNFT \nnft name: %s \nto account address: %s \ngas fee amount: %s BNB \nnonce: %d"
+
+	TemplateCancelOffer = "CancelOffer \nnft name: %s \ngas fee amount: %s BNB \nnonce: %d"
+
+	TemplateUpdateNFT = "NFT Update \naccount index: %d \nnft index: %d \nnonce: %d"
+
+	TemplateChangePubKey = "Register zkBNB Account\n\npubkeyX: 0x%s\npubkeyY: 0x%s\nnonce: %s\naccount index: %s\n\nOnly sign this message for a trusted client!"
+
+	TemplateOffer = "NFT Offer \nnft name: %s \nnft asset amount:%s %s"
 )

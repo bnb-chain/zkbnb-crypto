@@ -126,3 +126,19 @@ func VerifyMintNftTx(
 	IsVariableLessOrEqual(api, flag, 0, tx.NftContentType)
 	return pubData
 }
+
+func VerifyDeltaMintNftTx(api API, flag Variable, tx MintNftTxConstraints) {
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasAccountIndex), tx.GasAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CollectionId), tx.CollectionId)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ExpiredAt), tx.ExpiredAt)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftContentType), tx.NftContentType)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftIndex), tx.NftIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.RoyaltyRate), tx.RoyaltyRate)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ToAccountIndex), tx.ToAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ToL1Address), tx.ToL1Address)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CreatorAccountIndex), tx.CreatorAccountIndex)
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftContentHash[0]), tx.NftContentHash[0])
+	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftContentHash[1]), tx.NftContentHash[1])
+}

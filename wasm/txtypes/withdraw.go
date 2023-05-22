@@ -35,6 +35,7 @@ type WithdrawSegmentFormat struct {
 	FromAccountIndex  int64  `json:"from_account_index"`
 	AssetId           int64  `json:"asset_id"`
 	AssetAmount       string `json:"asset_amount"`
+	AssetName         string `json:"asset_name"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -66,6 +67,7 @@ func ConstructWithdrawTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Withdra
 		FromAccountIndex:  segmentFormat.FromAccountIndex,
 		AssetId:           segmentFormat.AssetId,
 		AssetAmount:       assetAmount,
+		AssetName:         segmentFormat.AssetName,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -97,6 +99,7 @@ type WithdrawTxInfo struct {
 	FromAccountIndex  int64
 	AssetId           int64
 	AssetAmount       *big.Int
+	AssetName         string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
@@ -219,8 +222,8 @@ func (txInfo *WithdrawTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *WithdrawTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateWithdrawal, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.ToAddress,
-		util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	signatureBody := fmt.Sprintf(signature.TemplateWithdrawal, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.AssetName, txInfo.ToAddress,
+		util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.Nonce)
 	return signatureBody
 }
 

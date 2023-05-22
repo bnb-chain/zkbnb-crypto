@@ -43,7 +43,9 @@ type OfferSegmentFormat struct {
 	OfferId             int64  `json:"offer_id"`
 	AccountIndex        int64  `json:"account_index"`
 	NftIndex            int64  `json:"nft_index"`
+	NftName             string `json:"nft_name"`
 	AssetId             int64  `json:"asset_id"`
+	AssetName           string `json:"asset_name"`
 	AssetAmount         string `json:"asset_amount"`
 	ListedAt            int64  `json:"listed_at"`
 	ExpiredAt           int64  `json:"expired_at"`
@@ -80,7 +82,9 @@ func ConstructOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *OfferTxInf
 		OfferId:             segmentFormat.OfferId,
 		AccountIndex:        segmentFormat.AccountIndex,
 		NftIndex:            segmentFormat.NftIndex,
+		NftName:             segmentFormat.NftName,
 		AssetId:             segmentFormat.AssetId,
+		AssetName:           segmentFormat.AssetName,
 		AssetAmount:         assetAmount,
 		ListedAt:            segmentFormat.ListedAt,
 		ExpiredAt:           segmentFormat.ExpiredAt,
@@ -114,7 +118,9 @@ type OfferTxInfo struct {
 	OfferId             int64
 	AccountIndex        int64
 	NftIndex            int64
+	NftName             string
 	AssetId             int64
+	AssetName           string
 	AssetAmount         *big.Int
 	ListedAt            int64
 	ExpiredAt           int64
@@ -304,8 +310,7 @@ func (txInfo *OfferTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *OfferTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateOffer, txInfo.AccountIndex,
-		txInfo.NftIndex, txInfo.AssetId, util.FormatWeiToEtherStr(txInfo.AssetAmount))
+	signatureBody := fmt.Sprintf(signature.TemplateOffer, txInfo.NftName, util.FormatWeiToEtherStr(txInfo.AssetAmount), txInfo.AssetName)
 	return signatureBody
 }
 

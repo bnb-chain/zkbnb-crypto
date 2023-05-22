@@ -34,6 +34,7 @@ import (
 type CancelOfferSegmentFormat struct {
 	AccountIndex      int64  `json:"account_index"`
 	OfferId           int64  `json:"offer_id"`
+	NftName           string `json:"nft_name"`
 	GasAccountIndex   int64  `json:"gas_account_index"`
 	GasFeeAssetId     int64  `json:"gas_fee_asset_id"`
 	GasFeeAssetAmount string `json:"gas_fee_asset_amount"`
@@ -57,6 +58,7 @@ func ConstructCancelOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Canc
 	txInfo = &CancelOfferTxInfo{
 		AccountIndex:      segmentFormat.AccountIndex,
 		OfferId:           segmentFormat.OfferId,
+		NftName:           segmentFormat.NftName,
 		GasAccountIndex:   segmentFormat.GasAccountIndex,
 		GasFeeAssetId:     segmentFormat.GasFeeAssetId,
 		GasFeeAssetAmount: gasFeeAmount,
@@ -86,6 +88,7 @@ func ConstructCancelOfferTxInfo(sk *PrivateKey, segmentStr string) (txInfo *Canc
 type CancelOfferTxInfo struct {
 	AccountIndex      int64
 	OfferId           int64
+	NftName           string
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount *big.Int
@@ -195,8 +198,7 @@ func (txInfo *CancelOfferTxInfo) GetToAccountIndex() int64 {
 }
 
 func (txInfo *CancelOfferTxInfo) GetL1SignatureBody() string {
-	signatureBody := fmt.Sprintf(signature.SignatureTemplateCancelOffer, txInfo.OfferId,
-		txInfo.AccountIndex, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.GasAccountIndex, txInfo.Nonce)
+	signatureBody := fmt.Sprintf(signature.TemplateCancelOffer, txInfo.NftName, util.FormatWeiToEtherStr(txInfo.GasFeeAssetAmount), txInfo.Nonce)
 	return signatureBody
 }
 
