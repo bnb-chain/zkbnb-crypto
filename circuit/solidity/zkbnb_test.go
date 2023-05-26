@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/bnb-chain/zkbnb-crypto/circuit/desert"
 	"github.com/bnb-chain/zkbnb-crypto/circuit/types"
 	"github.com/consensys/gnark/backend"
 	"github.com/consensys/gnark/constraint"
@@ -71,6 +72,10 @@ func TestCompileCircuit(t *testing.T) {
 
 func TestExportSol(t *testing.T) {
 	exportSol(t, optionalBlockSizesInt())
+}
+
+func TestExportDesertSol(t *testing.T) {
+	exportDesertSol(t)
 }
 
 func TestExportSolSmall(t *testing.T) {
@@ -159,6 +164,78 @@ func exportSol(t *testing.T, differentBlockSizes []int) {
 			}
 		}
 	}
+}
+
+func exportDesertSol(t *testing.T) {
+	sessionName := "zkbnb.desert"
+
+	var desertConstraints desert.DesertConstraints
+	desertConstraints.Tx = desert.GetZeroTxConstraint()
+
+	bn := chooseBN(*bN, 1)
+	t.Logf("block size: %d, bN: %d", 1, bn)
+	desertConstraints.GKRs.AllocateGKRCircuit(bn)
+
+	oR1cs, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &desertConstraints, frontend.IgnoreUnconstrainedInputs(), frontend.WithGKRBN(bn))
+	if err != nil {
+		panic(err)
+	}
+	t.Logf("Constraints num=%d\n", oR1cs.GetNbConstraints())
+	nbPublicVariables := oR1cs.GetNbPublicVariables()
+	nbSecretVariables := oR1cs.GetNbSecretVariables()
+	nbInternalVariables := oR1cs.GetNbInternalVariables()
+	t.Logf("Variables total=%d, nbPublicVariables=%d, nbSecretVariables=%d, nbInternalVariables=%d\n",
+		nbPublicVariables+nbSecretVariables+nbInternalVariables, nbPublicVariables, nbSecretVariables, nbInternalVariables)
+
+	//isSolved(oR1cs, t)
+
+	sessionNameForBlock := sessionName + fmt.Sprint(1)
+	oR1cs.Lazify()
+
+	t.Logf("After lazify constraints num=%d, r1c=%d\n", oR1cs.GetNbConstraints(), oR1cs.GetNbR1C())
+	err = oR1cs.SplitDumpBinary(sessionNameForBlock, *batchSize)
+
+	oR1csFull := groth16.NewCS(ecc.BN254)
+	oR1csFull.LoadFromSplitBinaryConcurrent(sessionNameForBlock, oR1cs.GetNbR1C(), *batchSize, runtime.NumCPU())
+	if err != nil {
+		panic(err)
+	}
+
+	f, err := os.Create(sessionNameForBlock + ".r1cslen")
+	if err != nil {
+		panic(err)
+	}
+	_, err = f.WriteString(fmt.Sprint(oR1csFull.GetNbR1C()))
+	if err != nil {
+		panic(err)
+	}
+	f.Close()
+
+	if *createKeys {
+		err = groth16.SetupDumpKeys(oR1csFull, sessionNameForBlock)
+		if err != nil {
+			panic(err)
+		}
+
+		{
+			verifyingKey := groth16.NewVerifyingKey(ecc.BN254)
+			f, _ := os.Open(sessionNameForBlock + ".vk.save")
+			_, err = verifyingKey.ReadFrom(f)
+			if err != nil {
+				panic(fmt.Errorf("read file error"))
+			}
+			f.Close()
+			f, err := os.Create("ZkBNBDesertVerifier" + fmt.Sprint(1) + ".sol")
+			if err != nil {
+				panic(err)
+			}
+			err = verifyingKey.ExportSolidity(f)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+
 }
 
 func isSolved(oR1cs constraint.ConstraintSystem, t *testing.T) {
