@@ -187,16 +187,16 @@ func exportDesertSol(t *testing.T) {
 	t.Logf("Variables total=%d, nbPublicVariables=%d, nbSecretVariables=%d, nbInternalVariables=%d\n",
 		nbPublicVariables+nbSecretVariables+nbInternalVariables, nbPublicVariables, nbSecretVariables, nbInternalVariables)
 
-	//isSolved(oR1cs, t)
+	isSolvedForDesert(oR1cs, t)
 
 	sessionNameForBlock := sessionName + fmt.Sprint(1)
 	oR1cs.Lazify()
 
 	t.Logf("After lazify constraints num=%d, r1c=%d\n", oR1cs.GetNbConstraints(), oR1cs.GetNbR1C())
-	err = oR1cs.SplitDumpBinary(sessionNameForBlock, *batchSize)
+	err = oR1cs.SplitDumpBinary(sessionNameForBlock, oR1cs.GetNbConstraints())
 
 	oR1csFull := groth16.NewCS(ecc.BN254)
-	oR1csFull.LoadFromSplitBinaryConcurrent(sessionNameForBlock, oR1cs.GetNbR1C(), *batchSize, runtime.NumCPU())
+	oR1csFull.LoadFromSplitBinaryConcurrent(sessionNameForBlock, oR1cs.GetNbR1C(), oR1cs.GetNbConstraints(), runtime.NumCPU())
 	if err != nil {
 		panic(err)
 	}
@@ -225,7 +225,7 @@ func exportDesertSol(t *testing.T) {
 				panic(fmt.Errorf("read file error"))
 			}
 			f.Close()
-			f, err := os.Create("ZkBNBDesertVerifier" + fmt.Sprint(1) + ".sol")
+			f, err := os.Create("DesertVerifier" + fmt.Sprint(1) + ".sol")
 			if err != nil {
 				panic(err)
 			}
@@ -259,6 +259,29 @@ func isSolved(oR1cs constraint.ConstraintSystem, t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("block %d is solved", cryptoBlock.BlockNumber)
+}
+
+func isSolvedForDesert(oR1cs constraint.ConstraintSystem, t *testing.T) {
+	witnessJson := "{\"StateRoot\":\"Bv1ThD5pHkrC5qa5YWNL4XvlRK9wb7vsC57jMQcn9Lw=\",\"Commitment\":\"tK6GjnA8mq1t1nU7fNtMJWY72KefdzqAam7crOUgQic=\",\"Tx\":{\"TxType\":1,\"ExitTxInfo\":{\"AccountIndex\":2,\"L1Address\":\"11fGvbWDfXIbBN6HwVXbpyybB2w=\",\"AssetId\":0,\"AssetAmount\":9777000000000000},\"ExitNftTxInfo\":null,\"AccountRoot\":\"G0gZMxqLkZPbsFk5TVmmQchDh/4e/ysswWQ9S49net8=\",\"AccountsInfo\":[{\"AccountIndex\":2,\"L1Address\":\"11fGvbWDfXIbBN6HwVXbpyybB2w=\",\"AccountPk\":{\"A\":{\"X\":\"19521647268553454890222712039210592845642366357548981786407809821776810334864\",\"Y\":\"8820786324793103074403475882673582644189436281906913464009517377886079178844\"}},\"Nonce\":3,\"CollectionNonce\":1,\"AssetRoot\":\"DAML8I77oYdU/KPn5EeAykIzudOsFgzUpFDGXbc18EE=\",\"AssetsInfo\":{\"AssetId\":0,\"Balance\":9777000000000000,\"OfferCanceledOrFinalized\":0}},{\"AccountIndex\":4294967295,\"L1Address\":\"\",\"AccountPk\":{\"A\":{\"X\":0,\"Y\":0}},\"Nonce\":0,\"CollectionNonce\":0,\"AssetRoot\":\"DBoi2Nx6jJ4QJJno2REqWxgAHrRAdEMRNxrCrmLeJCg=\",\"AssetsInfo\":{\"AssetId\":0,\"Balance\":0,\"OfferCanceledOrFinalized\":0}}],\"NftRoot\":\"KUJ6IMXK7AGtG9g752YlCHDkQLI9ne1SQMjf8/g8rdM=\",\"Nft\":{\"NftIndex\":1099511627775,\"NftContentHash\":\"AA==\",\"CreatorAccountIndex\":0,\"OwnerAccountIndex\":0,\"RoyaltyRate\":0,\"CollectionId\":0,\"NftContentType\":0},\"MerkleProofsAccountAssets\":[[\"KUIKMi/ZoykWWq/6QNECz11hcaLQI09rZlPPw7ya3T4=\",\"AB+eRTI7DbLGXCXNxEwFNoCyvzYMPe+4bu436cU91Hg=\",\"KhWmYLyZ3iAzrY6vHKrB69l+AaB2p4/6g8VGlk15D3s=\",\"EiIgT4wAyKVniDB2mvklyLA/l2eLQvEO3J8sN3qVFLY=\",\"I9t+b0YZqKW9kOgWdiAK9TufUemL6t3mZNF4O4KhpwM=\",\"KxjbbbCpEX490YyopCukV+SiyEnmfP/XrvTSnlBHbIk=\",\"KX/pM1c8Ry8ZXVe/NtB+flPE8E/P8t4gnh7c8/Rmz6k=\",\"H3murXM0pipDr2DZVd4CvPMPEXMsh7OR52Z1RfflR7M=\",\"HkUEhuCgqCpqke/av4x4z/avwh4eZzaAsMYUd2Cz0iM=\",\"FSbDqPNMADcEV5ewR0cdsxoOUfTqqWGMog7k3dpfaw8=\",\"FgmpXO76fss1oqOoksIeBI5AsmxrnDEKyjkQ6Qt0TWc=\",\"Hx4kS6Rt3zmrBZFFrRbUB8MGRTHiwieOCnNewP3HRFE=\",\"B3ID0OW5Xtgh+RNJKzxJBPEdd/uKT1D/I7CN6wC+5IY=\",\"J1iBpjB3SZht+O9IIzbnuenoVyNsyF/GIyRJMm4f08A=\",\"LA+FoICzKzsyahbDsHb1h58aga6ABjAvGFWYUckS7pI=\",\"B+YHo88RgOcP6ADXJMoKtbgL7zYbkTO/FiSxm/JmmGw=\"],[\"KUIKMi/ZoykWWq/6QNECz11hcaLQI09rZlPPw7ya3T4=\",\"AB+eRTI7DbLGXCXNxEwFNoCyvzYMPe+4bu436cU91Hg=\",\"KhWmYLyZ3iAzrY6vHKrB69l+AaB2p4/6g8VGlk15D3s=\",\"EiIgT4wAyKVniDB2mvklyLA/l2eLQvEO3J8sN3qVFLY=\",\"I9t+b0YZqKW9kOgWdiAK9TufUemL6t3mZNF4O4KhpwM=\",\"KxjbbbCpEX490YyopCukV+SiyEnmfP/XrvTSnlBHbIk=\",\"KX/pM1c8Ry8ZXVe/NtB+flPE8E/P8t4gnh7c8/Rmz6k=\",\"H3murXM0pipDr2DZVd4CvPMPEXMsh7OR52Z1RfflR7M=\",\"HkUEhuCgqCpqke/av4x4z/avwh4eZzaAsMYUd2Cz0iM=\",\"FSbDqPNMADcEV5ewR0cdsxoOUfTqqWGMog7k3dpfaw8=\",\"FgmpXO76fss1oqOoksIeBI5AsmxrnDEKyjkQ6Qt0TWc=\",\"Hx4kS6Rt3zmrBZFFrRbUB8MGRTHiwieOCnNewP3HRFE=\",\"B3ID0OW5Xtgh+RNJKzxJBPEdd/uKT1D/I7CN6wC+5IY=\",\"J1iBpjB3SZht+O9IIzbnuenoVyNsyF/GIyRJMm4f08A=\",\"LA+FoICzKzsyahbDsHb1h58aga6ABjAvGFWYUckS7pI=\",\"B+YHo88RgOcP6ADXJMoKtbgL7zYbkTO/FiSxm/JmmGw=\"]],\"MerkleProofsAccounts\":[[\"BCGmR8oAePZ7DJHWiGZxyj83fy8WLiodfCFfDld9Sns=\",\"HlxWpdKPSRMkb07pJq/iTvyYEFCFB32BN1WAkiIBQqs=\",\"IFUVnze68EwhNRCEN0vzYKh8SckfflNewhEtvIdzutc=\",\"CMb1fGawYUtIRhyIh9/ZImdmmsoOMLscLwiTQTCzb1s=\",\"LWE3ax8IKR0C6jKr5j10HnfreqDoUcSaLjihEhre4CY=\",\"HRJ+ly6nheS0b4sAcPG4DdTJlISvATV1FOn6xAXxRk8=\",\"CDJB2XTSlVNBsF55aB2Wl9Hdr6b3oDBUd8lsUFAx5e4=\",\"DTs8Nv9Ea5NhIk8omEZAlrXycADBYvlstUo9e9ihxno=\",\"Hl/qGhWMyjgt5w4ES7R33xllk1Fuj+24pOBVcEIrkk0=\",\"LjPbg4FK8nDhYBgL0PicJSWgUPDEmhIrAkm4Wng6eeM=\",\"JqXGHSe9CoHlpk3F5OZFtml8D37R/G9yiZhg70HCMfQ=\",\"IRAYwiNHdfFe4FZlFQG/tEpm2ZYOKWQUjBiwWCbqXY4=\",\"APmoAKx+ra8o5CXUA1Tx1+ghBKZKWjH+gdS/rZheIrg=\",\"HvUxp5Rfp5QmadZxFrRKKLLEsNF1y0x/0ALaQUXwCLI=\",\"CjfVChSYAtfFm0QNai/fn+L4K7/7Ictko9M/w0BJMiw=\",\"AvGQPimrWouNgceQK3lO/tvK34vWBUEqey4oao0pQCY=\",\"LkcRfT+qHWTYomUreWneK2yry/xpMmPxcnRoTNtvp8E=\",\"HehQ8LbbtfijJDtvkW0eZV3SIsD018RIbob7kPVQsQs=\",\"BfvIDAEWgCIzkdTM5EJTqb2TrjX9BPSNCy67MbnCn48=\",\"HekARcIkSbfNwzLzUpMWCxNRPsi587b4gjVCxUYiflk=\",\"Ewmg/40pr1rYDyzzIlqauol+SswzZ5TVdSTz5SnfWmk=\",\"LLMGzLVXdCHGrXMca1LdTg1wsDI6ZY00MwcmiOwF4KQ=\",\"GODVGBMadOdZoJ6ypUDV0mMKcqV0UAwDmN9JmbmGi/w=\",\"CqXzBK1Ycc0K7ctzQg9x1A/s4Q6rb4QwBSZEssHBmGc=\",\"HnyavbxkomrbuPXQBjWRE4qI4dPOcJhIyd1PfVPKIxQ=\",\"KB6M8IhKV+iuWMJsAEmDreD23jR1zXtGv7wmkxXHHIY=\",\"D3+LN5RFyW0lrYZuF8dTthHcCNvSGQDIWtfU7J+r5PU=\",\"Ga3u1Cpnvdzb7wgqTUOlWZgRAiDUp9p80ZeT9LWhhq4=\",\"F9YrvUK51vd3qp+w1QXgraZcT0g6a8XcH9pOWTuKMmk=\",\"FbzTeQ9+s0b2kShF1UtNDV1dOX10CuHAcVI2bEgylL8=\",\"KXLj4Jhdr9E1fxCYpLM/DCBM4snTb6b8qxq9SWWggvY=\",\"If2BsNzorNWKcMAoLIx45kf6QFnV+sZVvscO9gbRLIQ=\"],[\"BCGmR8oAePZ7DJHWiGZxyj83fy8WLiodfCFfDld9Sns=\",\"JPfzZo6oNgAjlcLtuXa2jBfAJpUwv7EI1wGHQH2JwNM=\",\"IFUVnze68EwhNRCEN0vzYKh8SckfflNewhEtvIdzutc=\",\"CMb1fGawYUtIRhyIh9/ZImdmmsoOMLscLwiTQTCzb1s=\",\"LWE3ax8IKR0C6jKr5j10HnfreqDoUcSaLjihEhre4CY=\",\"HRJ+ly6nheS0b4sAcPG4DdTJlISvATV1FOn6xAXxRk8=\",\"CDJB2XTSlVNBsF55aB2Wl9Hdr6b3oDBUd8lsUFAx5e4=\",\"DTs8Nv9Ea5NhIk8omEZAlrXycADBYvlstUo9e9ihxno=\",\"Hl/qGhWMyjgt5w4ES7R33xllk1Fuj+24pOBVcEIrkk0=\",\"LjPbg4FK8nDhYBgL0PicJSWgUPDEmhIrAkm4Wng6eeM=\",\"JqXGHSe9CoHlpk3F5OZFtml8D37R/G9yiZhg70HCMfQ=\",\"IRAYwiNHdfFe4FZlFQG/tEpm2ZYOKWQUjBiwWCbqXY4=\",\"APmoAKx+ra8o5CXUA1Tx1+ghBKZKWjH+gdS/rZheIrg=\",\"HvUxp5Rfp5QmadZxFrRKKLLEsNF1y0x/0ALaQUXwCLI=\",\"CjfVChSYAtfFm0QNai/fn+L4K7/7Ictko9M/w0BJMiw=\",\"AvGQPimrWouNgceQK3lO/tvK34vWBUEqey4oao0pQCY=\",\"LkcRfT+qHWTYomUreWneK2yry/xpMmPxcnRoTNtvp8E=\",\"HehQ8LbbtfijJDtvkW0eZV3SIsD018RIbob7kPVQsQs=\",\"BfvIDAEWgCIzkdTM5EJTqb2TrjX9BPSNCy67MbnCn48=\",\"HekARcIkSbfNwzLzUpMWCxNRPsi587b4gjVCxUYiflk=\",\"Ewmg/40pr1rYDyzzIlqauol+SswzZ5TVdSTz5SnfWmk=\",\"LLMGzLVXdCHGrXMca1LdTg1wsDI6ZY00MwcmiOwF4KQ=\",\"GODVGBMadOdZoJ6ypUDV0mMKcqV0UAwDmN9JmbmGi/w=\",\"CqXzBK1Ycc0K7ctzQg9x1A/s4Q6rb4QwBSZEssHBmGc=\",\"HnyavbxkomrbuPXQBjWRE4qI4dPOcJhIyd1PfVPKIxQ=\",\"KB6M8IhKV+iuWMJsAEmDreD23jR1zXtGv7wmkxXHHIY=\",\"D3+LN5RFyW0lrYZuF8dTthHcCNvSGQDIWtfU7J+r5PU=\",\"Ga3u1Cpnvdzb7wgqTUOlWZgRAiDUp9p80ZeT9LWhhq4=\",\"F9YrvUK51vd3qp+w1QXgraZcT0g6a8XcH9pOWTuKMmk=\",\"FbzTeQ9+s0b2kShF1UtNDV1dOX10CuHAcVI2bEgylL8=\",\"KXLj4Jhdr9E1fxCYpLM/DCBM4snTb6b8qxq9SWWggvY=\",\"L2DHcX1PWU/ENv1L2V+a0sMbK+J56+LIrLyW7JP78p4=\"]],\"MerkleProofsNft\":[\"H5MB1QbSwkmPGEemLafXBd0PUEPOCfz1wn/Qe0OpOWI=\",\"FkzHIzxoZaJWkSF0KwmSNlQuofWRvMavNow8RlB4AM4=\",\"KtyOsNN9k//9F2oCd4SXxW/eXBoUn6i31Tt9jEj4cx0=\",\"BoQ4RCpJNYbw1ZRGDdIKVDzxUSgSB9iUdJhCpQDHSts=\",\"KRtF8EEMk2A99JoapAmaB3tlg8F04YVzq+dEEzXeGuQ=\",\"KiMn8PHRoFEaHWJUxYaCMnwuNolo79rGJnPt3Qr2ltA=\",\"L7njC7JReH+cF5NaUSifo2A0y87PNE5Fj8BMxHrWKwA=\",\"EzZmWz0jo/dpSZxX5cPjKxLjn3cGqCgnitKfPBn9WaM=\",\"IAZWCdz8//QeBI6skH5sxDqx42O/6na00EXPd+Jkss4=\",\"ESc0M5R50DhsG9NCFoTiiC7ywvooLJQtk0etmlgX+KU=\",\"FRnfz0ePHwdv3Ef0O024R2ov5MPlkCMSt8FJIQwA5iA=\",\"Jk3ph2K49Yz2V4BZE/D7lz2qAS0gf1DoaExg8J2GeNk=\",\"D+QSEB2GB6ixeOh0dGhnhUQBsM23NCeJth6FauKsIAE=\",\"BtvThYPRQaZ7Rs7IwQOOMrMMjzyIpi9HFyotNTfX8IY=\",\"DxQuOwiPtWyz5H4Fqg7RESb2A7Uk0ZTO7xYnhH1IJxQ=\",\"E583ss5ImtBXJekhcWX/Zo/v9D7fK6vqcGquBu4eVDI=\",\"KOyU2paogCalNtdgutJAoGoXwdds0H0uQCoCYVmxvRI=\",\"D123rLRZMQ06khbbgCdOXspqLMNfSQBPwlwJAKx/Bvc=\",\"KGPf0jjOW7rIMW52T04JSfpdDoR7zuILEOpbr0fd1jw=\",\"Ln6kP46Wcn52+ZZD9CB792gDvXQbAq2SNt95tV9Owk0=\",\"HiQocFBnKYCQeMpolOjBjz/uLw6WfBGqPL/dxmIdvCQ=\",\"IT4Us88kRcXtzCq/OQF8ho5UvfMcYH02HvJPRPK+WXU=\",\"FLpTLMHtKCFRk89veJGeyZ01UtstRLWh7LiAolqc2+E=\",\"HeparqzH20xg5TBmXZkBqGIZ+OvxaT7kWveeNX9jaqg=\",\"BnfseWBA/4QroM4CjDlStss8QJl2kIA0kkQoFIXFbpA=\",\"Joy6q1Wc5XVCVMvxuoNHtm4Xvi26u1Zh3478rh6+1NY=\",\"AouNivxTxiUQUatSu+VacKMuEUVstbpFU/h2D3E8PlE=\",\"BqBGXB4MhCDLqV2FK90+ddQ7m2CmaGEZPRJW/DGOSoM=\",\"Ey3L2XIxO+n2eYZoY6MH8a91MErhVuYmPi3uMEdnfwk=\",\"AHA1N7voZZGMWT6pxM0pwniY49w+v3b2xQZwg8GUCDg=\",\"Cj0jo978RyRM0GyKyMErhgf8knEjrMiHp6d68bgdeGE=\",\"Di6QBFfVK2JDGaxikaHkndnk1x+nHM16MUVI7L4yxW0=\",\"C7RGwM2VzB/ZO5q46stHzSSfFd1z4wFylhd0T8etbqU=\",\"AAQ6Y4nKAkYhZMkCoCUJPL3cPYCH6K+EB0cdU4f2YhQ=\",\"GDAMWBV+Ji0/PEQewYQsmAiFyFepzT0dEmy9lQ9ohfY=\",\"Ha8ctmjxS098qowF0/MceSko7q8UC5nTs6nTmnjg9Tg=\",\"EdXI0dNrlc+pxSCXiHfp6a4M8gbVWyI7kliEPSDfCyg=\",\"KL0zG1poB2RkTPLQu5QPphsfeyPI6fHEkM6rhwniOZY=\",\"EOpJg5cORJQWmLZ1aqCwwtKG+wlqjYs0S8wviBuuNDw=\",\"Ki1VZmSvewbYtqEWwIrPPyaSdo4DMYNJfhmmWwvqEhY=\"]}}"
+	var cryptoDesert *desert.Desert
+	err := json.Unmarshal([]byte(witnessJson), &cryptoDesert)
+	if err != nil {
+		t.Fatal(err)
+	}
+	bn, err := circuit.ChooseBN(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	blockWitness, err := desert.SetDesertWitness(cryptoDesert, bn)
+	if err != nil {
+		return
+	}
+	witness, err := frontend.NewWitness(&blockWitness, ecc.BN254.ScalarField())
+	err = oR1cs.IsSolved(witness, backend.WithHints(types.PubDataToBytesForDesert))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("StateRoot %d is solved", cryptoDesert.StateRoot)
 }
 
 func optionalBlockSizesInt() []int {

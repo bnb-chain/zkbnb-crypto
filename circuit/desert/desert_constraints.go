@@ -71,13 +71,12 @@ func VerifyDesert(
 		log.Println("unable to verify transaction, err:", err)
 		return err
 	}
-	pendingCommitmentData[1] = pendingPubData
 	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
 		pendingCommitmentData[count] = pendingPubData[i]
 		count++
 	}
 	outputBytesCount := blockInfoCount*32 + (types.PubDataBitsSizePerTx)/8
-	pubDataBytes, _ := api.Compiler().NewHint(types.PubDataToBytes, outputBytesCount, pendingCommitmentData[:]...)
+	pubDataBytes, _ := api.Compiler().NewHint(types.PubDataToBytesForDesert, outputBytesCount, pendingCommitmentData[:]...)
 
 	commitment := sha256.Sha256Api(api, pubDataBytes[:]...)
 	api.AssertIsEqual(commitment, constraints.Commitment)
@@ -170,7 +169,7 @@ func VerifyTransaction(
 
 	pubDataCheck := desertTypes.VerifyExitTx(api, isExitTx, tx.ExitTxInfo, tx.AccountsInfo)
 	pubData = circuit.SelectPubData(api, isExitTx, pubDataCheck, pubData)
-	desertTypes.VerifyDeltaExitTx(api, isExitNftTx, tx.ExitTxInfo)
+	desertTypes.VerifyDeltaExitTx(api, isExitTx, tx.ExitTxInfo)
 
 	pubDataCheck = desertTypes.VerifyExitNftTx(api, isExitNftTx, tx.ExitNftTxInfo, tx.AccountsInfo, tx.Nft)
 	pubData = circuit.SelectPubData(api, isExitNftTx, pubDataCheck, pubData)

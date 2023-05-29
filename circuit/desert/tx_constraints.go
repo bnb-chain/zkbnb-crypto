@@ -86,11 +86,11 @@ func SetTxWitness(oTx *Tx) (witness TxConstraints, err error) {
 		}
 		for k := 0; k < circuit.AssetMerkleLevels; k++ {
 			// account assets
-			witness.MerkleProofsAccountAssets[i][k] = oTx.MerkleProofsAccountAssets[k]
+			witness.MerkleProofsAccountAssets[i][k] = oTx.MerkleProofsAccountAssets[i][k]
 		}
 		for j := 0; j < circuit.AccountMerkleLevels; j++ {
 			// account
-			witness.MerkleProofsAccounts[i][j] = oTx.MerkleProofsAccounts[j]
+			witness.MerkleProofsAccounts[i][j] = oTx.MerkleProofsAccounts[i][j]
 		}
 	}
 
