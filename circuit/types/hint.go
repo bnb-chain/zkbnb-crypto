@@ -42,6 +42,26 @@ func Keccak256(_ *big.Int, inputs []*big.Int, outputs []*big.Int) error {
 	return nil
 }
 
+func Keccak256ForDesert(_ *big.Int, inputs []*big.Int, outputs []*big.Int) error {
+	var buf bytes.Buffer
+	// first 1 element is: StateRoot
+	// we treat each of them as a 32-bytes variable
+	buf.Write(inputs[0].FillBytes(make([]byte, 32)))
+
+	// and other elements of inputs are tx pubdata. we arrange pubdata as bit, so
+	// we need to convert every 8 elements into a 1 byte, and write it into buf
+	for i := 1; i < len(inputs)-1; i = i + 8 {
+		buf.Write(ConvertBitsToBigInt(inputs[i : i+8]).FillBytes(make([]byte, 1)))
+	}
+
+	// fmt.Printf("commitment is: %x\n", buf.Bytes())
+	hashVal := crypto.Keccak256Hash(buf.Bytes())
+	result := outputs[0]
+	result.SetBytes(hashVal[:])
+	// fmt.Printf("commitment hash is: %x\n", hashVal[:])
+	return nil
+}
+
 func PubDataToBytes(_ *big.Int, inputs []*big.Int, outputs []*big.Int) error {
 	var buf bytes.Buffer
 	// first 4 elements are: BlockNumber, CreatedAt, OldStateRoot, NewStateRoot
@@ -58,6 +78,25 @@ func PubDataToBytes(_ *big.Int, inputs []*big.Int, outputs []*big.Int) error {
 	}
 
 	buf.Write(inputs[len(inputs)-1].FillBytes(make([]byte, 32)))
+	result := buf.Bytes()
+	for i := range result {
+		outputs[i].SetUint64(uint64(result[i]))
+	}
+	return nil
+}
+
+func PubDataToBytesForDesert(_ *big.Int, inputs []*big.Int, outputs []*big.Int) error {
+	var buf bytes.Buffer
+	// first 1 element is: StateRoot
+	// we treat each of them as a 32-bytes variable
+	buf.Write(inputs[0].FillBytes(make([]byte, 32)))
+
+	// and other elements of inputs are tx pubdata. we arrange pubdata as bit, so
+	// we need to convert every 8 elements into a 1 byte, and write it into buf
+	for i := 1; i < len(inputs)-1; i = i + 8 {
+		buf.Write(ConvertBitsToBigInt(inputs[i : i+8]).FillBytes(make([]byte, 1)))
+	}
+
 	result := buf.Bytes()
 	for i := range result {
 		outputs[i].SetUint64(uint64(result[i]))
