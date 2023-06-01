@@ -19,5 +19,5 @@ const (
 
 	TemplateChangePubKey = "Register zkBNB Account\n\npubkeyX: 0x%s\npubkeyY: 0x%s\nnonce: %s\naccount index: %s\n\nOnly sign this message for a trusted client!"
 
-	TemplateOffer = "NFT Offer \nnft name: %s \nnft asset amount:%s %s"
+	TemplateOffer = "NFT Offer \nnft name: %s \nnft asset amount: %s %s"
 )
