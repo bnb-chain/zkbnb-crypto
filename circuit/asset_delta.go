@@ -350,7 +350,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 	buyerDelta := api.Neg(api.Add(txInfo.BuyOffer.AssetAmount, RoyaltyAmountVar, buyChannelAmountVar, txInfo.BuyOffer.ProtocolAmount))
 	sellerDelta := sellerAmount
 	// buyer
-	buyOfferIdBits := api.ToBinary(txInfo.BuyOffer.OfferId, 23)
+	buyOfferIdBits := api.ToBinary(txInfo.BuyOffer.OfferId, types.OfferIdBitsConstrainLen)
 	buyAssetId := api.FromBinary(buyOfferIdBits[7:]...)
 	buyOfferIndex := api.Sub(txInfo.BuyOffer.OfferId, api.Mul(buyAssetId, OfferSizePerAsset))
 	buyOfferBits := api.ToBinary(accountsBefore[1].AssetsInfo[1].OfferCanceledOrFinalized)
@@ -372,7 +372,7 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		},
 	}
 	// sell
-	sellOfferIdBits := api.ToBinary(txInfo.SellOffer.OfferId, 23)
+	sellOfferIdBits := api.ToBinary(txInfo.SellOffer.OfferId, types.OfferIdBitsConstrainLen)
 	sellAssetId := api.FromBinary(sellOfferIdBits[7:]...)
 	sellOfferIndex := api.Sub(txInfo.SellOffer.OfferId, api.Mul(sellAssetId, OfferSizePerAsset))
 	sellOfferBits := api.ToBinary(accountsBefore[2].AssetsInfo[1].OfferCanceledOrFinalized)
@@ -458,7 +458,7 @@ func GetAssetDeltasFromCancelOffer(
 ) (deltas [NbAccountsPerTx][NbAccountAssetsPerAccount]AccountAssetDeltaConstraints,
 	gasDeltas [NbGasAssetsPerTx]GasDeltaConstraints) {
 	// from account
-	offerIdBits := api.ToBinary(txInfo.OfferId, 24)
+	offerIdBits := api.ToBinary(txInfo.OfferId, types.OfferIdBitsConstrainLen)
 	assetId := api.FromBinary(offerIdBits[7:]...)
 	offerIndex := api.Sub(txInfo.OfferId, api.Mul(assetId, OfferSizePerAsset))
 	fromOfferBits := api.ToBinary(accountsBefore[0].AssetsInfo[1].OfferCanceledOrFinalized)
