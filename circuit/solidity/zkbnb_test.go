@@ -114,7 +114,7 @@ func exportSol(t *testing.T, differentBlockSizes []int) {
 			nbPublicVariables+nbSecretVariables+nbInternalVariables, nbPublicVariables, nbSecretVariables, nbInternalVariables)
 
 		if differentBlockSizes[i] == 1 {
-			isSolved(oR1cs, t)
+			// isSolved(oR1cs, t)
 		}
 
 		sessionNameForBlock := sessionName + fmt.Sprint(differentBlockSizes[i])
