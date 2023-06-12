@@ -34,4 +34,7 @@ const (
 	AccountNameBitsSize  = 160
 	HashBitsSize         = 256
 	PubkeyBitsSize       = 256
+
+	// for constrain the offerId is in [0, 2^23-1]
+	OfferIdBitsConstrainLen       = 23
 )

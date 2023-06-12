@@ -70,9 +70,17 @@ func VerifyCancelOfferTx(
 	// verify params
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[fromAccount].AccountIndex)
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
-	offerIdBits := api.ToBinary(tx.OfferId, 24)
+	offerIdBits := api.ToBinary(tx.OfferId, OfferIdBitsConstrainLen)
 	assetId := api.FromBinary(offerIdBits[7:]...)
 	IsVariableEqual(api, flag, assetId, accountsBefore[fromAccount].AssetsInfo[1].AssetId)
+
+	OfferIndexBits := api.ToBinary(accountsBefore[fromAccount].AssetsInfo[1].OfferCanceledOrFinalized, OfferSizePerAsset)
+	offerIndex := api.Sub(tx.OfferId, api.Mul(assetId, OfferSizePerAsset))
+	for i := 0; i < OfferSizePerAsset; i++ {
+		isZero := api.IsZero(api.Sub(offerIndex, i))
+		isCheck := api.And(isZero, flag)
+		IsVariableEqual(api, isCheck, OfferIndexBits[i], 0)
+	}
 	// should have enough balance
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
