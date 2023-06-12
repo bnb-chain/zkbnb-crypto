@@ -113,7 +113,7 @@ func VerifyMintNftTx(
 	address := api.Select(isNewAccount, tx.ToL1Address, accountsBefore[toAccount].L1Address)
 	IsVariableEqual(api, flag, tx.ToL1Address, address)
 	// content hash
-	isZero := api.Or(api.IsZero(tx.NftContentHash[0]), api.IsZero(tx.NftContentHash[1]))
+	isZero := api.And(api.IsZero(tx.NftContentHash[0]), api.IsZero(tx.NftContentHash[1]))
 	IsVariableEqual(api, flag, isZero, 0)
 	// gas asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)

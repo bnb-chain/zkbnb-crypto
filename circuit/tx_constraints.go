@@ -396,15 +396,7 @@ func VerifyTransaction(
 	api.AssertIsLessOrEqual(tx.NftBefore.NftIndex, LastNftIndex)
 	nftIndexMerkleHelper := NftIndexToMerkleHelper(api, tx.NftBefore.NftIndex)
 
-	isNotIpfsNftContentHash := api.IsZero(api.Sub(tx.NftBefore.NftContentHash[1], types.ZeroInt))
-	nftNotIpfsNodeHash := types.MimcWithGkr(api,
-		tx.NftBefore.CreatorAccountIndex,
-		tx.NftBefore.OwnerAccountIndex,
-		tx.NftBefore.NftContentHash[0],
-		tx.NftBefore.RoyaltyRate,
-		tx.NftBefore.CollectionId,
-	)
-	nftIpfsNodeHash := types.MimcWithGkr(api,
+	nftNodeHash := types.MimcWithGkr(api,
 		tx.NftBefore.CreatorAccountIndex,
 		tx.NftBefore.OwnerAccountIndex,
 		tx.NftBefore.NftContentHash[0],
@@ -412,7 +404,7 @@ func VerifyTransaction(
 		tx.NftBefore.RoyaltyRate,
 		tx.NftBefore.CollectionId,
 	)
-	nftNodeHash := api.Select(isNotIpfsNftContentHash, nftNotIpfsNodeHash, nftIpfsNodeHash)
+	
 	// verify account merkle proof
 	types.VerifyMerkleProof(
 		api,
@@ -423,15 +415,7 @@ func VerifyTransaction(
 		nftIndexMerkleHelper,
 	)
 
-	isNotIpfsNftContentHash = api.IsZero(api.Sub(NftAfter.NftContentHash[1], types.ZeroInt))
-	nftNotIpfsNodeHash = types.MimcWithGkr(api,
-		NftAfter.CreatorAccountIndex,
-		NftAfter.OwnerAccountIndex,
-		NftAfter.NftContentHash[0],
-		NftAfter.RoyaltyRate,
-		NftAfter.CollectionId,
-	)
-	nftIpfsNodeHash = types.MimcWithGkr(api,
+	nftNodeHash = types.MimcWithGkr(api,
 		NftAfter.CreatorAccountIndex,
 		NftAfter.OwnerAccountIndex,
 		NftAfter.NftContentHash[0],
@@ -439,7 +423,6 @@ func VerifyTransaction(
 		NftAfter.RoyaltyRate,
 		NftAfter.CollectionId,
 	)
-	nftNodeHash = api.Select(isNotIpfsNftContentHash, nftNotIpfsNodeHash, nftIpfsNodeHash)
 	// update merkle proof
 	newNftRoot = types.UpdateMerkleProof(api, nftNodeHash, tx.MerkleProofsNftBefore[:], nftIndexMerkleHelper)
 	oldRoots[1] = api.Select(isEmptyTx, oldRoots[1], newNftRoot)
