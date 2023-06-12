@@ -108,6 +108,25 @@ func VerifyTransaction(
 	isFullExitTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeFullExit))
 	isFullExitNftTx := api.IsZero(api.Sub(tx.TxType, types.TxTypeFullExitNft))
 
+	// make sure the tx type is supported
+	isSupportedTx := api.Add(
+		isEmptyTx,
+		isChangePubKey,
+		isDepositTx,
+		isDepositNftTx,
+		isTransferTx,
+		isWithdrawTx,
+		isCreateCollectionTx,
+		isMintNftTx,
+		isTransferNftTx,
+		isAtomicMatchTx,
+		isCancelOfferTx,
+		isWithdrawNftTx,
+		isFullExitTx,
+		isFullExitNftTx,
+	)
+	api.AssertIsEqual(isSupportedTx, 1)
+
 	// verify nonce
 	isLayer2Tx := api.Add(
 		isChangePubKey,
