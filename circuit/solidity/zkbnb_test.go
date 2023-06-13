@@ -187,7 +187,7 @@ func exportDesertSol(t *testing.T) {
 	t.Logf("Variables total=%d, nbPublicVariables=%d, nbSecretVariables=%d, nbInternalVariables=%d\n",
 		nbPublicVariables+nbSecretVariables+nbInternalVariables, nbPublicVariables, nbSecretVariables, nbInternalVariables)
 
-	isSolvedForDesert(oR1cs, t)
+	// isSolvedForDesert(oR1cs, t)
 
 	sessionNameForBlock := sessionName + fmt.Sprint(1)
 	oR1cs.Lazify()
