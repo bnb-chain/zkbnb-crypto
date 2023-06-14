@@ -19,20 +19,26 @@ package util
 
 import (
 	"bytes"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
-	"hash"
+	"errors"
 	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
-func HashToInt(b bytes.Buffer, h hash.Hash) (*big.Int, error) {
-	h = mimc.NewMiMC()
-	digest := h
+func HashToInt(b bytes.Buffer) (*big.Int, error) {
+	if b.Len() == 0 {
+		return nil, errors.New("input is empty")
+	}
+	digest := mimc.NewMiMC()
 	var x fr.Element
 	_ = x.SetBytes(b.Bytes())
 	bs := x.Bytes()
-	digest.Write(bs[:])
+	_, err := digest.Write(bs[:])
+	if err != nil {
+		return nil, err
+	}
 	output := digest.Sum(nil)
 	//tmp := output[0:]
 	//return FromByteArray(tmp)

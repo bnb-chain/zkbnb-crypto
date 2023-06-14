@@ -19,20 +19,18 @@ package tebn254
 
 import (
 	"log"
-	"math/big"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
 func TestGenerateEddsaPrivateKey(t *testing.T) {
-	sk, err := GenerateEddsaPrivateKey("testeeetgcxsaahsadcastzxbmjhgmgjhcarwewfseasdasdavacsafaewe")
+	sk, err := GenerateEddsaPrivateKey("0123456789abcdef0123456789abcdef")
 	if err != nil {
 		t.Fatal(err)
 	}
-	log.Println(new(big.Int).SetBytes(sk.Bytes()[32:64]).BitLen())
 	hFunc := mimc.NewMiMC()
-	hFunc.Write([]byte("sher"))
+	hFunc.Write([]byte("0123456789abcdef0123456789abcdef"))
 	msg := hFunc.Sum(nil)
 	hFunc.Reset()
 	signMsg, err := sk.Sign(msg, hFunc)
