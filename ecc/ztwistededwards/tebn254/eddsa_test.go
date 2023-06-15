@@ -18,29 +18,42 @@
 package tebn254
 
 import (
-	"log"
+	"fmt"
 	"testing"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
 
 func TestGenerateEddsaPrivateKey(t *testing.T) {
-	sk, err := GenerateEddsaPrivateKey("0123456789abcdef0123456789abcdef")
-	if err != nil {
-		t.Fatal(err)
+	count := 0
+	hexChars := []byte{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}
+	for {
+		seedFormat := "3123456789abcdef0123456789ae01%c%c"
+		seed := fmt.Sprintf(seedFormat, hexChars[count%16], hexChars[(count/16)%16])
+		count += 1
+		sk, err := GenerateEddsaPrivateKey(seed)
+		if err != nil {
+			t.Fatal(err)
+		}
+		hFunc := mimc.NewMiMC()
+		hFunc.Write([]byte("0123456789abcdef0123456789abcdef"))
+		msg := hFunc.Sum(nil)
+		hFunc.Reset()
+		signMsg, err := sk.Sign(msg, hFunc)
+		if err != nil {
+			t.Fatal(err)
+		}
+		hFunc.Reset()
+		isValid, err := sk.PublicKey.Verify(signMsg, msg, hFunc)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if isValid != true {
+			t.Fatal("invalid signature")
+		}
+		//log.Println(isValid)
+		if count > 256 {
+			break
+		}
 	}
-	hFunc := mimc.NewMiMC()
-	hFunc.Write([]byte("0123456789abcdef0123456789abcdef"))
-	msg := hFunc.Sum(nil)
-	hFunc.Reset()
-	signMsg, err := sk.Sign(msg, hFunc)
-	if err != nil {
-		t.Fatal(err)
-	}
-	hFunc.Reset()
-	isValid, err := sk.PublicKey.Verify(signMsg, msg, hFunc)
-	if err != nil {
-		t.Fatal(err)
-	}
-	log.Println(isValid)
 }
