@@ -27,9 +27,7 @@ func Add(x *big.Int, y *big.Int) *big.Int {
 }
 
 func AddMod(x, y *big.Int, ORDER *big.Int) *big.Int {
-	res := Add(x, y)
-	res = Mod(res, ORDER)
-	return res
+	return Mod(Add(x,y), ORDER)
 }
 
 func Sub(x *big.Int, y *big.Int) *big.Int {
@@ -37,9 +35,7 @@ func Sub(x *big.Int, y *big.Int) *big.Int {
 }
 
 func SubMod(x, y *big.Int, ORDER *big.Int) *big.Int {
-	res := Sub(x, y)
-	res = Mod(res, ORDER)
-	return res
+	return Mod(Sub(x, y), ORDER)
 }
 
 func Mod(base *big.Int, modulo *big.Int) *big.Int {
@@ -51,9 +47,7 @@ func Multiply(factor1 *big.Int, factor2 *big.Int) *big.Int {
 }
 
 func MultiplyMod(factor1 *big.Int, factor2 *big.Int, ORDER *big.Int) *big.Int {
-	res := Multiply(factor1, factor2)
-	res = Mod(res, ORDER)
-	return res
+	return Mod(Multiply(factor1, factor2), ORDER)
 }
 
 func Div(a, b *big.Int) *big.Int {
