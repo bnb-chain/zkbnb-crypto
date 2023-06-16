@@ -161,6 +161,8 @@ func VerifyTransaction(
 	isEmptyTx := api.IsZero(api.Sub(tx.TxType, desertTypes.TxTypeEmptyTx))
 	isExitTx := api.IsZero(api.Sub(tx.TxType, desertTypes.TxTypeExit))
 	isExitNftTx := api.IsZero(api.Sub(tx.TxType, desertTypes.TxTypeExitNft))
+	isSupportedTx := api.Add(isEmptyTx, isExitTx, isExitNftTx)
+	api.AssertIsEqual(isSupportedTx, 1)
 
 	// verify transactions
 	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
@@ -220,15 +222,7 @@ func VerifyTransaction(
 	api.AssertIsLessOrEqual(tx.Nft.NftIndex, circuit.LastNftIndex)
 	nftIndexMerkleHelper := circuit.NftIndexToMerkleHelper(api, tx.Nft.NftIndex)
 
-	isNotIpfsNftContentHash := api.IsZero(api.Sub(tx.Nft.NftContentHash[1], types.ZeroInt))
-	nftNotIpfsNodeHash := types.MimcWithGkr(api,
-		tx.Nft.CreatorAccountIndex,
-		tx.Nft.OwnerAccountIndex,
-		tx.Nft.NftContentHash[0],
-		tx.Nft.RoyaltyRate,
-		tx.Nft.CollectionId,
-	)
-	nftIpfsNodeHash := types.MimcWithGkr(api,
+	nftNodeHash := types.MimcWithGkr(api,
 		tx.Nft.CreatorAccountIndex,
 		tx.Nft.OwnerAccountIndex,
 		tx.Nft.NftContentHash[0],
@@ -236,7 +230,6 @@ func VerifyTransaction(
 		tx.Nft.RoyaltyRate,
 		tx.Nft.CollectionId,
 	)
-	nftNodeHash := api.Select(isNotIpfsNftContentHash, nftNotIpfsNodeHash, nftIpfsNodeHash)
 	// verify account merkle proof
 	types.VerifyMerkleProof(
 		api,
