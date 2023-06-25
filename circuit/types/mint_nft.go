@@ -32,7 +32,6 @@ type MintNftTx struct {
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   int64
 	CollectionId        int64
-	ExpiredAt           int64
 	NftContentType      int64
 }
 
@@ -47,7 +46,6 @@ type MintNftTxConstraints struct {
 	GasFeeAssetId       Variable
 	GasFeeAssetAmount   Variable
 	CollectionId        Variable
-	ExpiredAt           Variable
 	NftContentType      Variable
 }
 
@@ -63,7 +61,6 @@ func EmptyMintNftTxWitness() (witness MintNftTxConstraints) {
 		GasFeeAssetId:       ZeroInt,
 		GasFeeAssetAmount:   ZeroInt,
 		CollectionId:        ZeroInt,
-		ExpiredAt:           ZeroInt,
 		NftContentType:      ZeroInt,
 	}
 }
@@ -80,7 +77,6 @@ func SetMintNftTxWitness(tx *MintNftTx) (witness MintNftTxConstraints) {
 		GasFeeAssetId:       tx.GasFeeAssetId,
 		GasFeeAssetAmount:   tx.GasFeeAssetAmount,
 		CollectionId:        tx.CollectionId,
-		ExpiredAt:           tx.ExpiredAt,
 		NftContentType:      tx.NftContentType,
 	}
 	return witness
@@ -132,7 +128,6 @@ func VerifyDeltaMintNftTx(api API, flag Variable, tx MintNftTxConstraints) {
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.CollectionId), tx.CollectionId)
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ExpiredAt), tx.ExpiredAt)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftContentType), tx.NftContentType)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.NftIndex), tx.NftIndex)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.RoyaltyRate), tx.RoyaltyRate)
