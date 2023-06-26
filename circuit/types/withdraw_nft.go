@@ -26,7 +26,7 @@ type WithdrawNftTx struct {
 	RoyaltyRate         int64
 	NftIndex            int64
 	NftContentHash      []byte
-	ToAddress           string
+	ToAddress           []byte
 	GasAccountIndex     int64
 	GasFeeAssetId       int64
 	GasFeeAssetAmount   int64
