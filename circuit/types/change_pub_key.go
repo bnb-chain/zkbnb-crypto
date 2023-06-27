@@ -27,7 +27,6 @@ type ChangePubKeyTx struct {
 	AccountIndex      int64
 	L1Address         []byte
 	PubKey            *eddsa.PublicKey
-	Nonce             int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
 }
@@ -36,7 +35,6 @@ type ChangePubKeyTxConstraints struct {
 	AccountIndex      Variable
 	L1Address         Variable
 	PubKey            PublicKeyConstraints
-	Nonce             Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
 }
@@ -46,7 +44,6 @@ func EmptyChangePubKeyTxWitness() (witness ChangePubKeyTxConstraints) {
 		AccountIndex:      ZeroInt,
 		L1Address:         ZeroInt,
 		PubKey:            EmptyPublicKeyWitness(),
-		Nonce:             ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
 	}
@@ -57,7 +54,6 @@ func SetChangePubKeyTxWitness(tx *ChangePubKeyTx) (witness ChangePubKeyTxConstra
 		AccountIndex:      tx.AccountIndex,
 		L1Address:         tx.L1Address,
 		PubKey:            SetPubKeyWitness(tx.PubKey),
-		Nonce:             tx.Nonce,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
 	}
@@ -71,19 +67,22 @@ func ComputeHashFromChangePubKeyTx(api API, tx ChangePubKeyTxConstraints, nonce 
 
 func VerifyChangePubKeyTx(
 	api API, flag Variable,
+	nonce Variable,
 	tx *ChangePubKeyTxConstraints,
 	accountsBefore [NbAccountsPerTx]AccountConstraints,
 ) (pubData [PubDataBitsSizePerTx]Variable) {
-	pubData = CollectPubDataFromChangePubKey(api, *tx)
-	//CheckEmptyAccountNode(api, flag, accountsBefore[0])
+	// when the tx is not change pubkey tx, the nonce may be -1 when the tx is Layer1 tx.
+	// and in the `CollectPubDataFromChangePubKey` function, nonce need to be in range [0, 2^32-1],
+	// In order to make `CollectPubDataFromChangePubKey` works correctly, in this case we
+	// just let nonce equal 0
+	newNonce := api.Select(flag, nonce, 0)
+	pubData = CollectPubDataFromChangePubKey(api, *tx, newNonce)
 
 	// verify params
 	// account index
 	IsVariableEqual(api, flag, tx.AccountIndex, accountsBefore[0].AccountIndex)
 	// l1 address
 	IsVariableEqual(api, flag, tx.L1Address, accountsBefore[0].L1Address)
-	// nonce
-	IsVariableEqual(api, flag, tx.Nonce, accountsBefore[0].Nonce)
 	// asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	// should have enough assets
@@ -98,7 +97,6 @@ func VerifyDeltaChangePubKeyTx(api API, flag Variable, tx ChangePubKeyTxConstrai
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.L1Address), tx.L1Address)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.PubKey.A.X), tx.PubKey.A.X)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.PubKey.A.Y), tx.PubKey.A.Y)
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.Nonce), tx.Nonce)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
 }

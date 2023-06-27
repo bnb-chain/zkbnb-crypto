@@ -25,8 +25,6 @@ type CreateCollectionTx struct {
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
-	ExpiredAt         int64
-	Nonce             int64
 }
 
 type CreateCollectionTxConstraints struct {
@@ -35,8 +33,6 @@ type CreateCollectionTxConstraints struct {
 	GasAccountIndex   Variable
 	GasFeeAssetId     Variable
 	GasFeeAssetAmount Variable
-	ExpiredAt         Variable
-	Nonce             Variable
 }
 
 func EmptyCreateCollectionTxWitness() (witness CreateCollectionTxConstraints) {
@@ -46,8 +42,6 @@ func EmptyCreateCollectionTxWitness() (witness CreateCollectionTxConstraints) {
 		GasAccountIndex:   ZeroInt,
 		GasFeeAssetId:     ZeroInt,
 		GasFeeAssetAmount: ZeroInt,
-		ExpiredAt:         ZeroInt,
-		Nonce:             ZeroInt,
 	}
 }
 
@@ -58,8 +52,6 @@ func SetCreateCollectionTxWitness(tx *CreateCollectionTx) (witness CreateCollect
 		GasAccountIndex:   tx.GasAccountIndex,
 		GasFeeAssetId:     tx.GasFeeAssetId,
 		GasFeeAssetAmount: tx.GasFeeAssetAmount,
-		ExpiredAt:         tx.ExpiredAt,
-		Nonce:             tx.Nonce,
 	}
 	return witness
 }
@@ -95,6 +87,4 @@ func VerifyDeltaCreateCollectionTx(api API, flag Variable, tx CreateCollectionTx
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasAccountIndex), tx.GasAccountIndex)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetId), tx.GasFeeAssetId)
 	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.GasFeeAssetAmount), tx.GasFeeAssetAmount)
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.ExpiredAt), tx.ExpiredAt)
-	api.AssertIsEqual(api.Select(api.Sub(1, flag), ZeroInt, tx.Nonce), tx.Nonce)
 }

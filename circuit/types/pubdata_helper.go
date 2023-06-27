@@ -17,14 +17,14 @@
 
 package types
 
-func CollectPubDataFromChangePubKey(api API, txInfo ChangePubKeyTxConstraints) (pubData [PubDataBitsSizePerTx]Variable) {
+func CollectPubDataFromChangePubKey(api API, txInfo ChangePubKeyTxConstraints, nonce Variable) (pubData [PubDataBitsSizePerTx]Variable) {
 	currentOffset := 0
 	copyLittleEndianSliceAndShiftOffset(api, TxTypeChangePubKey, TxTypeBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.AccountIndex, AccountIndexBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.PubKey.A.X, PubkeyBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.PubKey.A.Y, PubkeyBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.L1Address, AddressBitsSize, &currentOffset, pubData[:])
-	copyLittleEndianSliceAndShiftOffset(api, txInfo.Nonce, NonceBitsSize, &currentOffset, pubData[:])
+	copyLittleEndianSliceAndShiftOffset(api, nonce, NonceBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetId, AssetIdBitsSize, &currentOffset, pubData[:])
 	copyLittleEndianSliceAndShiftOffset(api, txInfo.GasFeeAssetAmount, PackedFeeBitsSize, &currentOffset, pubData[:])
 	for i := currentOffset; i < PubDataBitsSizePerTx; i++ {

@@ -202,7 +202,7 @@ func VerifyTransaction(
 	for i := 0; i < types.PubDataBitsSizePerTx; i++ {
 		pubData[i] = 0
 	}
-	pubDataCheck := types.VerifyChangePubKeyTx(api, isChangePubKey, &tx.ChangePubKeyTxInfo, tx.AccountsInfoBefore)
+	pubDataCheck := types.VerifyChangePubKeyTx(api, isChangePubKey, tx.Nonce, &tx.ChangePubKeyTxInfo, tx.AccountsInfoBefore)
 	pubData = SelectPubData(api, isChangePubKey, pubDataCheck, pubData)
 	pubDataCheck = types.VerifyDepositTx(api, isDepositTx, tx.DepositTxInfo, tx.AccountsInfoBefore)
 	pubData = SelectPubData(api, isDepositTx, pubDataCheck, pubData)

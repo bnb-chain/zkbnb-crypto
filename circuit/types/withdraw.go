@@ -29,7 +29,7 @@ type WithdrawTx struct {
 	GasAccountIndex   int64
 	GasFeeAssetId     int64
 	GasFeeAssetAmount int64
-	ToAddress         *big.Int
+	ToAddress         []byte
 }
 
 type WithdrawTxConstraints struct {
