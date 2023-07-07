@@ -86,7 +86,7 @@ func VerifyChangePubKeyTx(
 	// asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[0].AssetsInfo[0].AssetId)
 	// should have enough assets
-	tx.GasFeeAssetAmount = UnpackAmount(api, tx.GasFeeAssetAmount)
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[0].AssetsInfo[0].Balance)
 
 	return pubData

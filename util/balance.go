@@ -23,8 +23,8 @@ var (
 /*
 ToPackedAmount: convert big int to 40 bit, 5 bits for 10^x, 35 bits for a * 10^x
 */
-func ToPackedAmount(amount *big.Int) (res int64, err error) {
-	if amount.Cmp(ZeroBigInt) < 0 || amount.Cmp(PackedAmountMaxAmount) > 0 {
+func ToPackedAmount(amount *big.Int) (int64, error) {
+	if amount == nil || amount.Cmp(ZeroBigInt) < 0 || amount.Cmp(PackedAmountMaxAmount) > 0 {
 		log.Println("[ToPackedAmount] invalid amount")
 		return -1, errors.New("[ToPackedAmount] invalid amount")
 	}
@@ -49,7 +49,7 @@ func ToPackedAmount(amount *big.Int) (res int64, err error) {
 }
 
 func CleanPackedAmount(amount *big.Int) (nAmount *big.Int, err error) {
-	if amount.Cmp(ZeroBigInt) < 0 || amount.Cmp(PackedAmountMaxAmount) > 0 {
+	if amount == nil || amount.Cmp(ZeroBigInt) < 0 || amount.Cmp(PackedAmountMaxAmount) > 0 {
 		log.Println("[ToPackedAmount] invalid amount")
 		return nil, errors.New("[ToPackedAmount] invalid amount")
 	}
@@ -66,8 +66,8 @@ func CleanPackedAmount(amount *big.Int) (nAmount *big.Int, err error) {
 /*
 ToPackedFee: convert big int to 16 bit, 5 bits for 10^x, 11 bits for a * 10^x
 */
-func ToPackedFee(amount *big.Int) (res int64, err error) {
-	if amount.Cmp(ZeroBigInt) < 0 || amount.Cmp(PackedFeeMaxAmount) > 0 {
+func ToPackedFee(amount *big.Int) (int64, error) {
+	if amount == nil || amount.Cmp(ZeroBigInt) < 0 || amount.Cmp(PackedFeeMaxAmount) > 0 {
 		log.Println("[ToPackedFee] invalid amount")
 		return 0, errors.New("[ToPackedFee] invalid amount")
 	}
@@ -92,7 +92,7 @@ func ToPackedFee(amount *big.Int) (res int64, err error) {
 }
 
 func CleanPackedFee(amount *big.Int) (nAmount *big.Int, err error) {
-	if amount.Cmp(ZeroBigInt) < 0 || amount.Cmp(PackedFeeMaxAmount) > 0 {
+	if amount == nil || amount.Cmp(ZeroBigInt) < 0 || amount.Cmp(PackedFeeMaxAmount) > 0 {
 		log.Println("[ToPackedFee] invalid amount")
 		return nil, errors.New("[ToPackedFee] invalid amount")
 	}
@@ -106,7 +106,10 @@ func CleanPackedFee(amount *big.Int) (nAmount *big.Int, err error) {
 	return nAmount, nil
 }
 
-func UnpackAmount(packedAmount *big.Int) (nAmount *big.Int, err error) {
+func UnpackAmount(packedAmount *big.Int) (*big.Int, error) {
+	if packedAmount == nil {
+		return nil, errors.New("[UnpackAmount] invalid amount")
+	}
 	if packedAmount.Cmp(big.NewInt(0)) == 0 {
 		return big.NewInt(0), nil
 	}
@@ -130,6 +133,6 @@ func UnpackAmount(packedAmount *big.Int) (nAmount *big.Int, err error) {
 	return mantissa, nil
 }
 
-func UnpackFee(packedFee *big.Int) (nAmount *big.Int, err error) {
+func UnpackFee(packedFee *big.Int) (*big.Int, error) {
 	return UnpackAmount(packedFee)
 }

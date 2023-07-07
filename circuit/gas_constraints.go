@@ -33,7 +33,6 @@ type GasAccountConstraints struct {
 	CollectionNonce Variable
 	AssetRoot       Variable
 	AssetsInfo      []types.AccountAssetConstraints
-	GasAssetCount   int
 }
 
 type GasConstraints struct {
@@ -118,7 +117,6 @@ func GetZeroGasConstraints(gasAssets []int64) GasConstraints {
 		Nonce:           0,
 		CollectionNonce: 0,
 		AssetRoot:       0,
-		GasAssetCount:   gasAssetCount,
 	}
 	zeroAccountConstraint.AssetsInfo = make([]types.AccountAssetConstraints, gasAssetCount)
 	// set assets witness
