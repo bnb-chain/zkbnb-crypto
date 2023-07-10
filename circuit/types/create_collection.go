@@ -76,7 +76,7 @@ func VerifyCreateCollectionTx(
 	// collection id
 	IsVariableEqual(api, flag, tx.CollectionId, accountsBefore[fromAccount].CollectionNonce)
 	// should have enough assets
-	tx.GasFeeAssetAmount = UnpackAmount(api, tx.GasFeeAssetAmount)
+	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 	return pubData
 }

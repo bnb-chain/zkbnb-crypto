@@ -297,11 +297,7 @@ func GetAssetDeltasAndNftDeltaFromTransferNft(
 		},
 		EmptyAccountAssetDeltaConstraints(),
 	}
-	deltas[1] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
-		EmptyAccountAssetDeltaConstraints(),
-		EmptyAccountAssetDeltaConstraints(),
-	}
-	for i := 2; i < NbAccountsPerTx; i++ {
+	for i := 1; i < NbAccountsPerTx; i++ {
 		deltas[i] = [NbAccountAssetsPerAccount]AccountAssetDeltaConstraints{
 			EmptyAccountAssetDeltaConstraints(),
 			EmptyAccountAssetDeltaConstraints(),
