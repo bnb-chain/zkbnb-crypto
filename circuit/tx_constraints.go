@@ -449,6 +449,7 @@ func VerifyTransaction(
 	// check state root
 	newStateRoot := types.MimcWithGkr(api, newAccountRoot, newNftRoot)
 	types.IsVariableEqual(api, notEmptyTx, newStateRoot, tx.StateRootAfter)
+	types.IsVariableEqual(api, isEmptyTx, tx.StateRootBefore, tx.StateRootAfter)
 
 	roots[0] = oldRoots[0]
 	roots[1] = oldRoots[1]

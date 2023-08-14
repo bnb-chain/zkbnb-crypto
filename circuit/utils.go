@@ -43,13 +43,13 @@ func SelectAssetDeltas(
 func SelectGasDeltas(
 	api API,
 	flag Variable,
-	deltas, deltasCheck [NbGasAssetsPerTx]GasDeltaConstraints,
+	deltasCheck, deltas [NbGasAssetsPerTx]GasDeltaConstraints,
 ) (deltasRes [NbGasAssetsPerTx]GasDeltaConstraints) {
 	for i := 0; i < NbGasAssetsPerTx; i++ {
 		deltasRes[i].AssetId =
-			api.Select(flag, deltas[i].AssetId, deltasCheck[i].AssetId)
+			api.Select(flag, deltasCheck[i].AssetId, deltas[i].AssetId)
 		deltasRes[i].BalanceDelta =
-			api.Select(flag, deltas[i].BalanceDelta, deltasCheck[i].BalanceDelta)
+			api.Select(flag, deltasCheck[i].BalanceDelta, deltas[i].BalanceDelta)
 	}
 	return deltasRes
 }
