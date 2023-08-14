@@ -152,6 +152,10 @@ func VerifyBlock(
 	}
 
 	types.IsVariableEqual(api, needGas, block.Gas.AccountInfoBefore.AccountIndex, block.GasAccountIndex)
+	// check the asset id consistency
+	for i := 0; i < gasAssetCount; i++ {
+		api.AssertIsEqual(block.Gas.AccountInfoBefore.AssetsInfo[i].AssetId, block.GasAssetIds[i])
+	}
 	roots[0], err = VerifyGas(api, block.Gas, needGas, blockGasDeltas, roots[0])
 	if err != nil {
 		log.Println("unable to verify gas, err:", err)
