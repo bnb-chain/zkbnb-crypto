@@ -93,6 +93,7 @@ func VerifyTransferNftTx(
 	// asset id
 	IsVariableEqual(api, flag, tx.GasFeeAssetId, accountsBefore[fromAccount].AssetsInfo[0].AssetId)
 	// nft info
+	CheckNonEmptyNftNode(api, flag, nftBefore)
 	IsVariableEqual(api, flag, tx.NftIndex, nftBefore.NftIndex)
 	IsVariableEqual(api, flag, tx.FromAccountIndex, nftBefore.OwnerAccountIndex)
 	// should have enough balance

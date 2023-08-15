@@ -42,6 +42,12 @@ func CheckEmptyNftNode(api API, flag Variable, nft NftConstraints) {
 	IsVariableEqual(api, flag, nft.NftContentType, ZeroInt)
 }
 
+func CheckNonEmptyNftNode(api API, flag Variable, nft NftConstraints) {
+	isZero0 := api.IsZero(api.IsZero(api.Sub(nft.NftContentHash[0], ZeroInt)))
+	isZero1 := api.IsZero(api.IsZero(api.Sub(nft.NftContentHash[1], ZeroInt)))
+	IsVariableEqual(api, flag, api.Or(isZero0, isZero1), 1)
+}
+
 /*
 SetNftWitness: set nft witness
 */

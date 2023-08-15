@@ -334,13 +334,9 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		},
 		EmptyAccountAssetDeltaConstraints(),
 	}
-	// TODO
-	RoyaltyAmountVar := api.Mul(txInfo.BuyOffer.AssetAmount, nftBefore.RoyaltyRate)
-	buyChannelAmountVar := api.Mul(txInfo.BuyOffer.AssetAmount, txInfo.BuyOffer.ChannelRate)
-	sellChannelAmountVar := api.Mul(txInfo.BuyOffer.AssetAmount, txInfo.SellOffer.ChannelRate)
-	RoyaltyAmountVar = api.Div(RoyaltyAmountVar, RateBase)
-	buyChannelAmountVar = api.Div(buyChannelAmountVar, RateBase)
-	sellChannelAmountVar = api.Div(sellChannelAmountVar, RateBase)
+	RoyaltyAmountVar := txInfo.RoyaltyAmount
+	buyChannelAmountVar := txInfo.BuyChannelAmount
+	sellChannelAmountVar := txInfo.SellChannelAmount
 
 	sellerAmount := api.Sub(txInfo.BuyOffer.AssetAmount, sellChannelAmountVar)
 	buyerDelta := api.Neg(api.Add(txInfo.BuyOffer.AssetAmount, RoyaltyAmountVar, buyChannelAmountVar, txInfo.BuyOffer.ProtocolAmount))
@@ -432,9 +428,6 @@ func GetAssetDeltasAndNftDeltaFromAtomicMatch(
 		RoyaltyRate:         nftBefore.RoyaltyRate,
 		CollectionId:        nftBefore.CollectionId,
 	}
-
-	//gasDeltas[0].AssetId = txInfo.BuyOffer.AssetId
-	//gasDeltas[0].BalanceDelta = txInfo.BuyOffer.ProtocolAmount
 
 	gasDeltas[0].AssetId = txInfo.GasFeeAssetId
 	gasDeltas[0].BalanceDelta = txInfo.GasFeeAssetAmount
