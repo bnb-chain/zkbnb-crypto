@@ -158,6 +158,8 @@ func VerifyAtomicMatchTx(
 	IsVariableLessOrEqual(api, flag, blockCreatedAt, tx.SellOffer.ExpiredAt)
 	IsVariableEqual(api, flag, nftBefore.NftIndex, tx.SellOffer.NftIndex)
 	IsVariableEqual(api, flag, nftBefore.RoyaltyRate, tx.BuyOffer.RoyaltyRate)
+	// nft Before can't be empty
+	CheckNonEmptyNftNode(api, flag, nftBefore)
 
 	// verify signature
 	buyOfferHash := ComputeHashFromBuyOfferTx(api, tx.BuyOffer)
@@ -215,6 +217,8 @@ func VerifyAtomicMatchTx(
 	// buyer should have enough balance
 	tx.BuyOffer.AssetAmount = UnpackAmount(api, tx.BuyOffer.AssetAmount)
 	tx.BuyOffer.ProtocolAmount = UnpackAmount(api, tx.BuyOffer.ProtocolAmount)
+	tx.SellOffer.AssetAmount = UnpackAmount(api, tx.SellOffer.AssetAmount)
+	tx.SellChannelAmount = UnpackAmount(api, tx.SellChannelAmount)
 	tx.BuyChannelAmount = UnpackAmount(api, tx.BuyChannelAmount)
 	tx.RoyaltyAmount = UnpackAmount(api, tx.RoyaltyAmount)
 	totalAmount := api.Add(tx.BuyOffer.AssetAmount, tx.BuyOffer.ProtocolAmount, tx.BuyChannelAmount, tx.RoyaltyAmount)
@@ -223,16 +227,40 @@ func VerifyAtomicMatchTx(
 	tx.GasFeeAssetAmount = UnpackFee(api, tx.GasFeeAssetAmount)
 	IsVariableLessOrEqual(api, flag, tx.GasFeeAssetAmount, accountsBefore[fromAccount].AssetsInfo[0].Balance)
 
+	// make sure the fee is less than the asset amount
+	IsVariableLessOrEqual(api, flag, tx.BuyChannelAmount, tx.BuyOffer.AssetAmount)
+	IsVariableLessOrEqual(api, flag, tx.SellChannelAmount, tx.SellOffer.AssetAmount)
+	IsVariableLessOrEqual(api, flag, tx.BuyOffer.ProtocolAmount, tx.BuyOffer.AssetAmount)
+	IsVariableLessOrEqual(api, flag, tx.RoyaltyAmount, tx.BuyOffer.AssetAmount)
+
+	// make sure the rate is less than RateBase
+	IsVariableLessOrEqual(api, flag, tx.BuyOffer.ChannelRate, RateBase)
+	IsVariableLessOrEqual(api, flag, tx.SellOffer.ChannelRate, RateBase)
+	IsVariableLessOrEqual(api, flag, tx.BuyOffer.ProtocolRate, RateBase)
+	IsVariableLessOrEqual(api, flag, tx.BuyOffer.RoyaltyRate, RateBase)
+
+	// verify buyChannel amount
+	CheckDivMod(api, flag, tx.BuyOffer.AssetAmount, tx.BuyChannelAmount, tx.BuyOffer.ChannelRate)
+	
+	// verify sellChannel amount
+	CheckDivMod(api, flag, tx.SellOffer.AssetAmount, tx.SellChannelAmount, tx.SellOffer.ChannelRate)
+
 	// verify protocol amount
-	protocolAmount := api.Mul(tx.BuyOffer.AssetAmount, tx.BuyOffer.ProtocolRate)
-	protocolAmount = api.Div(protocolAmount, RateBase)
-	IsVariableEqual(api, flag, tx.BuyOffer.ProtocolAmount, protocolAmount)
+	CheckDivMod(api, flag, tx.BuyOffer.AssetAmount, tx.BuyOffer.ProtocolAmount, tx.BuyOffer.ProtocolRate)
 
 	// verify royalty amount
-	royaltyAmount := api.Mul(tx.BuyOffer.AssetAmount, tx.BuyOffer.RoyaltyRate)
-	royaltyAmount = api.Div(royaltyAmount, RateBase)
-	IsVariableEqual(api, flag, tx.RoyaltyAmount, royaltyAmount)
+	CheckDivMod(api, flag, tx.BuyOffer.AssetAmount, tx.RoyaltyAmount, tx.BuyOffer.RoyaltyRate)
 	return pubData, nil
+}
+
+// check b <= a * rate / RateBase < b+1
+// => check b * RateBase <= a*rate < (b+1) * RateBase
+func CheckDivMod(api API, flag Variable, a Variable, b Variable, rate Variable) {
+	bLower := api.Mul(b, RateBase)
+	bHigher := api.Mul(api.Add(b, 1), RateBase)
+	aValue := api.Mul(a, rate)
+	IsVariableLessOrEqual(api, flag, bLower, aValue)
+	IsVariableLess(api, flag, aValue, bHigher)
 }
 
 func VerifyDeltaAtomicMatchTx(api API, flag Variable, tx AtomicMatchTxConstraints) {
